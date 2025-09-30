@@ -1,0 +1,27 @@
+# Core libraries
+requests
+pydantic
+python-dotenv
+tenacity
+markdown
+
+# CrewAI
+crewai
+crewai_tools
+
+# AI & ML
+accelerate
+torch
+transformers
+ollama
+
+# Google Cloud
+google-cloud-storage
+google-cloud-firestore
+google-api-python-client
+google-auth-httplib2
+google-auth-oauthlib
+
+# Image Generation
+diffusers
+Pillow

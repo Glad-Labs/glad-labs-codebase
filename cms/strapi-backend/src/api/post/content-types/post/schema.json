@@ -1,0 +1,54 @@
+{
+  "kind": "collectionType",
+  "collectionName": "posts",
+  "info": {
+    "singularName": "post",
+    "pluralName": "posts",
+    "displayName": "Post"
+  },
+  "options": {
+    "draftAndPublish": true
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "Title": {
+      "type": "string"
+    },
+    "Slug": {
+      "type": "string"
+    },
+    "BodyContent": {
+      "type": "blocks"
+    },
+    "PostStatus": {
+      "type": "enumeration",
+      "enum": [
+        "Draft",
+        "Published",
+        "Scheduled"
+      ]
+    },
+    "Keywords": {
+      "type": "string"
+    },
+    "MetaDescription": {
+      "type": "text"
+    },
+    "FeaturedImage": {
+      "type": "media",
+      "multiple": false,
+      "allowedTypes": [
+        "images",
+        "files",
+        "videos",
+        "audios"
+      ]
+    },
+    "ImageAltText": {
+      "type": "string"
+    },
+    "Author": {
+      "type": "string"
+    }
+  }
+}
