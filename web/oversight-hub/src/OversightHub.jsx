@@ -95,61 +95,66 @@ const OversightHub = () => {
 
   return (
     <div className="bg-gray-900 text-white min-h-screen p-8 font-sans">
-      <header className="flex justify-between items-center mb-8">
-        <h1 className="text-4xl font-bold text-cyan-400">Oversight Hub</h1>
-        <button
-          onClick={handleIntervene}
-          className="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-lg shadow-lg transition-transform transform hover:scale-105"
-        >
-          // INTERVENE
-        </button>
+      <header className="App-header">
+        <h1>Glad Labs - AI Agent Oversight Hub</h1>
+        {/* This is the correct way to comment inside JSX */}
       </header>
+      <main>
+        <div className="monitoring-grid">
+          <button
+            onClick={handleIntervene}
+            className="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-lg shadow-lg transition-transform transform hover:scale-105"
+          >
+            // INTERVENE
+          </button>
 
-      {error && <div className="bg-red-800 text-white p-4 rounded-lg mb-8">{error}</div>}
+          {error && <div className="bg-red-800 text-white p-4 rounded-lg mb-8">{error}</div>}
 
-      <main className="grid grid-cols-1 md:grid-cols-3 gap-8">
-        {/* Column 1: Tasks */}
-        <div className="bg-gray-800 p-6 rounded-lg shadow-xl">
-          <h2 className="text-2xl font-semibold text-cyan-300 mb-4">Active Tasks</h2>
-          {loading.tasks ? <p>Loading tasks...</p> : (
-            <ul>
-              {tasks.length > 0 ? tasks.map(task => (
-                <li key={task.id} className="p-3 mb-2 bg-gray-700 rounded-md border-l-4 border-cyan-500">
-                  <div className="flex justify-between items-center">
-                    <span className="font-bold">{task.taskName}</span>
-                    {renderStatus(task.status)}
-                  </div>
-                  <div className="text-xs text-gray-400 mt-1">
-                    Last Updated: {formatTimestamp(task.updatedAt)}
-                  </div>
-                </li>
-              )) : <p>No active tasks.</p>}
-            </ul>
-          )}
-        </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            {/* Column 1: Tasks */}
+            <div className="bg-gray-800 p-6 rounded-lg shadow-xl">
+              <h2 className="text-2xl font-semibold text-cyan-300 mb-4">Active Tasks</h2>
+              {loading.tasks ? <p>Loading tasks...</p> : (
+                <ul>
+                  {tasks.length > 0 ? tasks.map(task => (
+                    <li key={task.id} className="p-3 mb-2 bg-gray-700 rounded-md border-l-4 border-cyan-500">
+                      <div className="flex justify-between items-center">
+                        <span className="font-bold">{task.taskName}</span>
+                        {renderStatus(task.status)}
+                      </div>
+                      <div className="text-xs text-gray-400 mt-1">
+                        Last Updated: {formatTimestamp(task.updatedAt)}
+                      </div>
+                    </li>
+                  )) : <p>No active tasks.</p>}
+                </ul>
+              )}
+            </div>
 
-        {/* Column 2: Financials */}
-        <div className="bg-gray-800 p-6 rounded-lg shadow-xl">
-          <h2 className="text-2xl font-semibold text-cyan-300 mb-4">Financials</h2>
-          {loading.financials ? <p>Loading financials...</p> : (
-            <ul>
-              {financials.length > 0 ? financials.map(fin => (
-                <li key={fin.id} className="p-2 border-b border-gray-700">{fin.metric}: <span className="text-green-400">{fin.value}</span></li>
-              )) : <p>No financial data available.</p>}
-            </ul>
-          )}
-        </div>
+            {/* Column 2: Financials */}
+            <div className="bg-gray-800 p-6 rounded-lg shadow-xl">
+              <h2 className="text-2xl font-semibold text-cyan-300 mb-4">Financials</h2>
+              {loading.financials ? <p>Loading financials...</p> : (
+                <ul>
+                  {financials.length > 0 ? financials.map(fin => (
+                    <li key={fin.id} className="p-2 border-b border-gray-700">{fin.metric}: <span className="text-green-400">{fin.value}</span></li>
+                  )) : <p>No financial data available.</p>}
+                </ul>
+              )}
+            </div>
 
-        {/* Column 3: Metrics */}
-        <div className="bg-gray-800 p-6 rounded-lg shadow-xl">
-          <h2 className="text-2xl font-semibold text-cyan-300 mb-4">Content Metrics</h2>
-          {loading.metrics ? <p>Loading metrics...</p> : (
-            <ul>
-              {metrics.length > 0 ? metrics.map(metric => (
-                <li key={metric.id} className="p-2 border-b border-gray-700">{metric.name}: <span className="text-blue-400">{metric.value}</span></li>
-              )) : <p>No content metrics available.</p>}
-            </ul>
-          )}
+            {/* Column 3: Metrics */}
+            <div className="bg-gray-800 p-6 rounded-lg shadow-xl">
+              <h2 className="text-2xl font-semibold text-cyan-300 mb-4">Content Metrics</h2>
+              {loading.metrics ? <p>Loading metrics...</p> : (
+                <ul>
+                  {metrics.length > 0 ? metrics.map(metric => (
+                    <li key={metric.id} className="p-2 border-b border-gray-700">{metric.name}: <span className="text-blue-400">{metric.value}</span></li>
+                  )) : <p>No content metrics available.</p>}
+                </ul>
+              )}
+            </div>
+          </div>
         </div>
       </main>
     </div>
