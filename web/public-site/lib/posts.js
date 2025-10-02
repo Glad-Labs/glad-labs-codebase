@@ -33,10 +33,10 @@ export async function getSortedPostsData() {
       posts(sort: "publishedAt:desc") {
         data {
           attributes {
-            title
-            slug
+            Title
+            Slug
             publishedAt
-            excerpt
+            MetaDescription
           }
         }
       }
@@ -49,18 +49,14 @@ export async function getAllPostSlugs() {
   const data = await fetchAPI(`
     query {
       posts {
-        data {
-          attributes {
-            slug
-          }
-        }
+        slug
       }
     }
   `);
-  return data.posts.data.map((post) => {
+  return data.posts.map((post) => {
     return {
       params: {
-        slug: post.attributes.slug,
+        slug: post.slug,
       },
     };
   });
@@ -69,14 +65,13 @@ export async function getAllPostSlugs() {
 export async function getPostData(slug) {
   const data = await fetchAPI(`
     query PostBySlug($slug: String!) {
-      posts(filters: { slug: { eq: $slug } }) {
+      posts(filters: { Slug: { eq: $slug } }) {
         data {
           attributes {
-            title
+            Title
             publishedAt
-            excerpt
-            content
-            featuredImage {
+            Content
+            FeaturedImage {
               data {
                 attributes {
                   url
@@ -93,7 +88,7 @@ export async function getPostData(slug) {
   const post = data.posts.data[0].attributes;
 
   // Process markdown to HTML
-  const processedContent = await remark().use(html).process(post.content);
+  const processedContent = await remark().use(html).process(post.Content);
   const contentHtml = processedContent.toString();
 
   return {
