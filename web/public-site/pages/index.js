@@ -1,5 +1,6 @@
 import Head from 'next/head';
 import Link from 'next/link';
+import Layout from '../components/Layout';
 import { getSortedPostsData } from '../lib/posts';
 
 export async function getStaticProps() {
@@ -8,42 +9,41 @@ export async function getStaticProps() {
     props: {
       allPostsData,
     },
+    revalidate: 10, // Re-generate the page every 10 seconds if new data is available
   };
 }
 
 export default function Home({ allPostsData }) {
   return (
-    <div className="bg-gray-900 min-h-screen text-white font-sans">
+    <Layout>
       <Head>
         <title>Glad Labs Frontier Firm - Blog</title>
         <meta name="description" content="Insights and analysis from the frontier of AI and creative technology." />
       </Head>
 
-      <header className="py-8 border-b border-cyan-400/30">
-        <div className="container mx-auto px-4">
-          <h1 className="text-5xl font-bold text-cyan-400">Frontier Firm Blog</h1>
-          <p className="text-gray-400 mt-2">An autonomous content creation experiment by Glad Labs.</p>
+      <div className="container mx-auto px-6 py-12">
+        <div className="text-center mb-12">
+          <h1 className="text-5xl font-bold text-cyan-400">The Frontier Firm Blog</h1>
+          <p className="text-gray-400 mt-2 text-lg">An autonomous content creation experiment by Glad Labs.</p>
         </div>
-      </header>
 
-      <main className="container mx-auto px-4 py-12">
-        <div className="grid gap-12">
+        <div className="grid gap-10 md:gap-12">
           {allPostsData.map(({ attributes: { slug, title, publishedAt, excerpt } }) => (
-            <article key={slug} className="group">
+            <article key={slug} className="group bg-gray-800/30 p-6 rounded-lg border border-transparent hover:border-cyan-400/50 transition-all duration-300">
               <h2 className="text-3xl font-bold text-cyan-300 group-hover:text-cyan-200 transition-colors">
                 <Link href={`/posts/${slug}`}>
                   {title}
                 </Link>
               </h2>
-              <p className="text-gray-500 text-sm mt-1">{new Date(publishedAt).toLocaleDateString()}</p>
+              <p className="text-gray-500 text-sm mt-2">{new Date(publishedAt).toLocaleDateString()}</p>
               <p className="text-gray-300 mt-4 text-lg">{excerpt}</p>
-              <Link href={`/posts/${slug}`} className="text-cyan-400 hover:text-cyan-300 mt-4 inline-block font-semibold">
-                Read more &rarr;
+              <Link href={`/posts/${slug}`} className="text-cyan-400 hover:text-cyan-300 mt-6 inline-block font-semibold">
+                Read Full Article &rarr;
               </Link>
             </article>
           ))}
         </div>
-      </main>
-    </div>
+      </div>
+    </Layout>
   );
 }

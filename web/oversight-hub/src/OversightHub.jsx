@@ -40,19 +40,48 @@ const OversightHub = () => {
 
 // --- Sub-components for a cleaner structure ---
 
-const Header = () => (
-  <header className="bg-gray-800/50 backdrop-blur-sm sticky top-0 z-10">
-    <div className="container mx-auto p-4 flex justify-between items-center border-b border-cyan-400/20">
-      <div>
-        <h1 className="text-3xl font-bold text-cyan-400">Oversight Hub</h1>
-        <p className="text-sm text-gray-400">Real-Time Agent Monitoring</p>
+const Header = () => {
+  const [isLoading, setIsLoading] = useState(false);
+
+  const handleRunAgent = async () => {
+    setIsLoading(true);
+    try {
+      // Replace with your actual Cloud Function URL
+      const response = await fetch('YOUR_CLOUD_FUNCTION_URL_HERE', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+      if (!response.ok) {
+        throw new Error('Network response was not ok');
+      }
+      alert('"RUN_JOB" command sent to the agent network.');
+    } catch (error) {
+      console.error('Failed to send command:', error);
+      alert('Error: Could not send command to the agent.');
+    }
+    setIsLoading(false);
+  };
+
+  return (
+    <header className="bg-gray-800/50 backdrop-blur-sm sticky top-0 z-10">
+      <div className="container mx-auto p-4 flex justify-between items-center border-b border-cyan-400/20">
+        <div>
+          <h1 className="text-3xl font-bold text-cyan-400">Oversight Hub</h1>
+          <p className="text-sm text-gray-400">Real-Time Agent Monitoring</p>
+        </div>
+        <button 
+          onClick={handleRunAgent}
+          disabled={isLoading}
+          className="bg-cyan-600 hover:bg-cyan-700 text-white font-bold py-2 px-4 rounded-lg shadow-lg transition-transform transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          {isLoading ? 'Sending...' : '// INTERVENE: RUN JOB'}
+        </button>
       </div>
-      <button className="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-lg shadow-lg transition-transform transform hover:scale-105">
-        // INTERVENE
-      </button>
-    </div>
-  </header>
-);
+    </header>
+  );
+};
 
 const TaskList = ({ tasks, loading }) => {
   if (loading) {
