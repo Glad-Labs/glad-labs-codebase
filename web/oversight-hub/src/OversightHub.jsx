@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { db } from './firebaseConfig';
+import { db } from './firebaseConfig'; // Changed from '../firebaseConfig'
 import { collection, onSnapshot, query, orderBy } from 'firebase/firestore';
 
 // Placeholder for a real Pub/Sub client library
