@@ -69,7 +69,9 @@ const OversightHub = () => {
 
   const renderStatus = (status) => {
     const baseClasses = "px-2 py-1 text-xs font-semibold rounded-full";
-    switch (status.toLowerCase()) {
+    // Defensive check: if status is missing, default to 'unknown'
+    const currentStatus = status ? status.toLowerCase() : 'unknown';
+    switch (currentStatus) {
       case 'completed':
         return <span className={`${baseClasses} bg-green-500 text-green-900`}>Completed</span>;
       case 'in_progress':
@@ -79,12 +81,13 @@ const OversightHub = () => {
       case 'failed':
         return <span className={`${baseClasses} bg-red-500 text-red-900`}>Failed</span>;
       default:
-        return <span className={`${baseClasses} bg-gray-600 text-gray-200`}>{status}</span>;
+        return <span className={`${baseClasses} bg-gray-600 text-gray-200`}>{status || 'Unknown'}</span>;
     }
   };
 
   const formatTimestamp = (timestamp) => {
-    if (timestamp && timestamp.toDate) {
+    // Defensive check: ensure timestamp and toDate method exist
+    if (timestamp && typeof timestamp.toDate === 'function') {
       return timestamp.toDate().toLocaleString();
     }
     return 'N/A';
