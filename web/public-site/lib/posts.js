@@ -74,6 +74,7 @@ export async function getPostData(slug) {
           attributes {
             title
             publishedAt
+            excerpt
             content
             featuredImage {
               data {
