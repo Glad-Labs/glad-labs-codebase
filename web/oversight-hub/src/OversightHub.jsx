@@ -47,11 +47,12 @@ const Header = () => {
     setIsLoading(true);
     try {
       // Replace with your actual Cloud Function URL
-      const response = await fetch('YOUR_CLOUD_FUNCTION_URL_HERE', {
+      const response = await fetch('https://us-central1-gen-lang-client-0031944915.cloudfunctions.net/intervene', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
+        body: JSON.stringify({ command: 'RUN_ALL_JOBS' }) // Send the correct command
       });
       if (!response.ok) {
         throw new Error('Network response was not ok');
