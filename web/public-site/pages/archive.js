@@ -1,6 +1,6 @@
 import Head from 'next/head';
-import Link from 'next/link';
 import Layout from '../components/Layout';
+import PostList from '../components/PostList'; // Import the new component
 import { getSortedPostsData } from '../lib/posts';
 
 export async function getStaticProps() {
@@ -21,16 +21,7 @@ export default function Archive({ allPostsData }) {
       <div className="container mx-auto px-6 py-12">
         <div className="max-w-4xl mx-auto">
           <h1 className="text-5xl font-bold text-cyan-400 mb-8">Content Archive</h1>
-          <ul>
-            {allPostsData.map(({ Slug, Title, publishedAt }) => (
-              <li key={Slug} className="mb-4">
-                <Link href={`/posts/${Slug}`} className="text-xl text-cyan-300 hover:text-cyan-200">
-                  {Title}
-                </Link>
-                <p className="text-sm text-gray-500">{new Date(publishedAt).toLocaleDateString()}</p>
-              </li>
-            ))}
-          </ul>
+          <PostList posts={allPostsData} />
         </div>
       </div>
     </Layout>
