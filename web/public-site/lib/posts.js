@@ -20,9 +20,12 @@ async function fetchAPI(query, { variables } = {}) {
   };
 
   try {
-    const res = await fetch(`${STRAPI_URL}/graphql`, {
+    const res = await fetch(`${process.env.NEXT_PUBLIC_STRAPI_API_URL}/graphql`, {
       method: 'POST',
-      headers,
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${process.env.STRAPI_API_TOKEN}`,
+      },
       body: JSON.stringify({
         query,
         variables,
@@ -30,9 +33,8 @@ async function fetchAPI(query, { variables } = {}) {
     });
 
     const json = await res.json();
-
     if (json.errors) {
-      console.error("GraphQL Errors:", JSON.stringify(json.errors, null, 2));
+      console.error('GraphQL Errors:', JSON.stringify(json.errors, null, 2));
       throw new Error('Failed to fetch API');
     }
 
@@ -45,38 +47,34 @@ async function fetchAPI(query, { variables } = {}) {
 }
 
 export async function getSortedPostsData() {
-  const data = await fetchAPI(`
+  const query = `
     query GetSortedPosts {
-      posts(sort: "Date:desc") {
+      posts(sort: "publishedAt:desc") {
         data {
+          id
           attributes {
             Title
             Slug
-            Date
-            Excerpt
-            FeaturedImage {
-              data {
-                attributes {
-                  url
-                  alternativeText
-                }
-              }
-            }
+            publishedAt
+            MetaDescription
           }
         }
       }
     }
-  `);
-  // Defensive check to prevent crashes
-  if (!data || !data.posts || !data.posts.data) {
-    console.error("getSortedPostsData: Received null or invalid data from API.");
-    return []; // Return an empty array to prevent the page from crashing
+  `;
+  try {
+    const data = await fetchAPI(query);
+    // Ensure we return the array of attributes, or an empty array if null
+    return data?.posts?.data || [];
+  } catch (error) {
+    console.error("Error in getSortedPostsData:", error);
+    console.log("getSortedPostsData: Received null or invalid data from API.");
+    return []; // Return an empty array on error
   }
-  return data.posts.data.map(post => post.attributes);
 }
 
 export async function getAllPostSlugs() {
-  const data = await fetchAPI(`
+  const query = `
     query GetAllPostSlugs {
       posts {
         data {
@@ -86,29 +84,22 @@ export async function getAllPostSlugs() {
         }
       }
     }
-  `);
-  // Defensive check
-  if (!data || !data.posts || !data.posts.data) {
-    console.error("getAllPostSlugs: Received null or invalid data from API.");
-    return [];
-  }
-  return data.posts.data.map((post) => ({
-    params: {
-      slug: post.attributes.Slug,
-    },
-  }));
+  `;
+  const data = await fetchAPI(query);
+  return data?.posts?.data || [];
 }
 
 export async function getPostData(slug) {
-  const data = await fetchAPI(`
+  const query = `
     query GetPostBySlug($slug: String!) {
       posts(filters: { Slug: { eq: $slug } }) {
         data {
+          id
           attributes {
             Title
             Slug
-            Date
-            BodyContent
+            Content
+            publishedAt
             FeaturedImage {
               data {
                 attributes {
@@ -121,26 +112,8 @@ export async function getPostData(slug) {
         }
       }
     }
-  `, { variables: { slug } });
-
-  // Add a more robust check for the data object itself
-  if (!data || !data.posts || !data.posts.data || data.posts.data.length === 0) {
-    return null;
-  }
-
-  const postData = data.posts.data[0].attributes;
-
-  // Convert markdown BodyContent to HTML
-  if (postData.BodyContent) {
-    const contentHtml = marked(postData.BodyContent);
-    return {
-      ...postData,
-      contentHtml,
-    };
-  }
-
-  return {
-    ...postData,
-    contentHtml: '',
-  };
+  `;
+  const data = await fetchAPI(query, { variables: { slug } });
+  // The filter returns an array, so we return the first element
+  return data?.posts?.data[0] || null;
 }
