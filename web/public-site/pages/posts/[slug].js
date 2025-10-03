@@ -2,25 +2,14 @@ import Head from 'next/head';
 import Layout from '../../components/Layout';
 import { getAllPostSlugs, getPostData } from '../../lib/posts';
 
-export async function getStaticPaths() {
-  const paths = await getAllPostSlugs();
-  return {
-    paths,
-    fallback: 'blocking', // Allows for new pages to be generated on the fly
-  };
-}
-
-export async function getStaticProps({ params }) {
-  const postData = await getPostData(params.slug);
-  return {
-    props: {
-      postData,
-    },
-    revalidate: 10,
-  };
-}
-
 export default function Post({ postData }) {
+  if (!postData) {
+    return <div>Post not found.</div>; // Or a proper 404 component
+  }
+  
+  // The featuredImage is now directly on postData.FeaturedImage
+  const featuredImage = postData.FeaturedImage;
+
   return (
     <Layout>
       <Head>
@@ -36,10 +25,10 @@ export default function Post({ postData }) {
             </p>
           </header>
           
-          {postData.FeaturedImage?.data && (
+          {featuredImage && (
             <img 
-              src={`${process.env.NEXT_PUBLIC_STRAPI_URL || 'http://localhost:1337'}${postData.FeaturedImage.data.attributes.url}`}
-              alt={postData.FeaturedImage.data.attributes.alternativeText || postData.Title}
+              src={`${process.env.NEXT_PUBLIC_STRAPI_URL || 'http://localhost:1337'}${featuredImage.url}`}
+              alt={featuredImage.alternativeText || postData.Title}
               className="w-full h-auto object-cover rounded-lg shadow-lg mb-8"
             />
           )}
@@ -52,4 +41,29 @@ export default function Post({ postData }) {
       </div>
     </Layout>
   );
+}
+
+export async function getStaticPaths() {
+  const paths = await getAllPostSlugs();
+  return {
+    paths,
+    fallback: 'blocking', // Allows for new pages to be generated on the fly
+  };
+}
+
+export async function getStaticProps({ params }) {
+  const postData = await getPostData(params.slug);
+
+  if (!postData) {
+    return {
+      notFound: true,
+    };
+  }
+
+  return {
+    props: {
+      postData,
+    },
+    revalidate: 10, // In seconds
+  };
 }

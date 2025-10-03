@@ -22,10 +22,10 @@ export default function Archive({ allPostsData }) {
         <div className="max-w-4xl mx-auto">
           <h1 className="text-5xl font-bold text-cyan-400 mb-8">Content Archive</h1>
           <ul>
-            {allPostsData.map(({ attributes: { slug, title, publishedAt } }) => (
-              <li key={slug} className="mb-4">
-                <Link href={`/posts/${slug}`} className="text-xl text-cyan-300 hover:text-cyan-200">
-                  {title}
+            {allPostsData.map(({ Slug, Title, publishedAt }) => (
+              <li key={Slug} className="mb-4">
+                <Link href={`/posts/${Slug}`} className="text-xl text-cyan-300 hover:text-cyan-200">
+                  {Title}
                 </Link>
                 <p className="text-sm text-gray-500">{new Date(publishedAt).toLocaleDateString()}</p>
               </li>
