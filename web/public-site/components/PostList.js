@@ -2,26 +2,25 @@ import Link from 'next/link';
 
 const PostList = ({ posts }) => {
   if (!posts || posts.length === 0) {
-    return <p className="text-gray-500">No posts found.</p>;
+    return <p className="text-center text-gray-400">No posts found.</p>;
   }
 
   return (
-    <div className="grid gap-10 md:gap-12">
-      {posts.map(({ Slug, Title, publishedAt, MetaDescription }) => (
-        <article key={Slug} className="group bg-gray-800/30 p-6 rounded-lg border border-transparent hover:border-cyan-400/50 transition-all duration-300">
-          <h2 className="text-3xl font-bold text-cyan-300 group-hover:text-cyan-200 transition-colors">
-            <Link href={`/posts/${Slug}`}>
-              {Title}
-            </Link>
-          </h2>
-          <p className="text-gray-500 text-sm mt-2">{new Date(publishedAt).toLocaleDateString()}</p>
-          <p className="text-gray-300 mt-4 text-lg">{MetaDescription}</p>
-          <Link href={`/posts/${Slug}`} className="text-cyan-400 hover:text-cyan-300 mt-6 inline-block font-semibold">
-            Read Full Article &rarr;
+    <ul className="space-y-8 max-w-4xl mx-auto">
+      {posts.map((post) => (
+        <li key={post.Slug} className="border-b border-gray-700 pb-4">
+          <Link href={`/posts/${post.Slug}`}>
+            <h2 className="text-3xl font-bold text-cyan-400 hover:text-cyan-300 transition-colors duration-200">
+              {post.Title}
+            </h2>
           </Link>
-        </article>
+          <p className="text-gray-400 mt-2 text-sm">
+            {new Date(post.publishedAt).toLocaleDateString()}
+          </p>
+          <p className="mt-4 text-lg text-gray-300">{post.MetaDescription}</p>
+        </li>
       ))}
-    </div>
+    </ul>
   );
 };
 

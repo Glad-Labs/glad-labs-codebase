@@ -1,14 +1,15 @@
 import Head from 'next/head';
 import Layout from '../../components/Layout';
 import { getAllPostSlugs, getPostData } from '../../lib/posts';
+import { marked } from 'marked';
 
 export default function Post({ postData }) {
   if (!postData) {
     return <div>Post not found.</div>; // Or a proper 404 component
   }
   
-  // The featuredImage is now nested under data.attributes
-  const featuredImage = postData.FeaturedImage?.data?.attributes;
+  // The featuredImage is now a direct attribute
+  const featuredImage = postData.FeaturedImage;
 
   return (
     <Layout>
@@ -52,13 +53,20 @@ export async function getStaticPaths() {
 }
 
 export async function getStaticProps({ params }) {
-  const postData = await getPostData(params.slug);
+  const postDataFromApi = await getPostData(params.slug);
 
-  if (!postData) {
+  if (!postDataFromApi) {
     return {
       notFound: true,
     };
   }
+
+  // Convert markdown content to HTML using the correct field name
+  const contentHtml = marked(postDataFromApi.BodyContent || '');
+  const postData = {
+    ...postDataFromApi,
+    contentHtml,
+  };
 
   return {
     props: {
