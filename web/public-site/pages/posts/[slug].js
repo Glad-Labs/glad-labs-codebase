@@ -27,7 +27,7 @@ export default function Post({ postData }) {
           
           {featuredImage && (
             <img 
-              src={`${process.env.NEXT_PUBLIC_STRAPI_URL || 'http://localhost:1337'}${featuredImage.url}`}
+              src={`${process.env.NEXT_PUBLIC_STRAPI_URL}${featuredImage.url}`}
               alt={featuredImage.alternativeText || postData.Title}
               className="w-full h-auto object-cover rounded-lg shadow-lg mb-8"
             />
