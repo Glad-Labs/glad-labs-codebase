@@ -7,8 +7,8 @@ export default function Post({ postData }) {
     return <div>Post not found.</div>; // Or a proper 404 component
   }
   
-  // The featuredImage is now directly on postData.FeaturedImage
-  const featuredImage = postData.FeaturedImage;
+  // The featuredImage is now nested under data.attributes
+  const featuredImage = postData.FeaturedImage?.data?.attributes;
 
   return (
     <Layout>

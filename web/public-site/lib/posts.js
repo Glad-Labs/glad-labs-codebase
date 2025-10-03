@@ -37,27 +37,35 @@ export async function getSortedPostsData() {
   const data = await fetchAPI(`
     query {
       posts(sort: "publishedAt:desc") {
-        Title
-        Slug
-        publishedAt
-        MetaDescription
+        data {
+          attributes {
+            Title
+            Slug
+            publishedAt
+            MetaDescription
+          }
+        }
       }
     }
   `);
-  return data.posts;
+  return data.posts.data.map(post => post.attributes);
 }
 
 export async function getAllPostSlugs() {
   const data = await fetchAPI(`
     query {
       posts {
-        Slug
+        data {
+          attributes {
+            Slug
+          }
+        }
       }
     }
   `);
-  return data.posts.map((post) => ({
+  return data.posts.data.map((post) => ({
     params: {
-      slug: post.Slug,
+      slug: post.attributes.Slug,
     },
   }));
 }
@@ -66,25 +74,51 @@ export async function getPostData(slug) {
   const data = await fetchAPI(`
     query PostBySlug($slug: String!) {
       posts(filters: { Slug: { eq: $slug } }) {
-        Title
-        publishedAt
-        Content
-        FeaturedImage {
-          url
-          alternativeText
+        data {
+          attributes {
+            Title
+            publishedAt
+            BodyContent
+            FeaturedImage {
+              data {
+                attributes {
+                  url
+                  alternativeText
+                }
+              }
+            }
+            MetaDescription
+          }
         }
-        MetaDescription
       }
     }
   `, { variables: { slug } });
 
-  if (!data.posts || data.posts.length === 0) {
+  if (!data.posts || !data.posts.data || data.posts.data.length === 0) {
     return null;
   }
 
-  const postData = data.posts[0];
+  const postData = data.posts.data[0].attributes;
 
-  const processedContent = await remark().use(html).process(postData.Content || '');
+  // Convert Strapi's block content to a markdown string
+  let contentMarkdown = '';
+  if (postData.BodyContent) {
+    contentMarkdown = postData.BodyContent.map(block => {
+      if (block.type === 'paragraph') {
+        return block.children.map(child => child.text).join('');
+      }
+      if (block.type === 'heading') {
+        return `${'#'.repeat(block.level)} ${block.children.map(child => child.text).join('')}`;
+      }
+      if (block.type === 'list') {
+        return block.children.map(li => `* ${li.children.map(child => child.text).join('')}`).join('\n');
+      }
+      // Add more block types here as needed (e.g., images, quotes)
+      return '';
+    }).join('\n\n');
+  }
+
+  const processedContent = await remark().use(html).process(contentMarkdown);
   const contentHtml = processedContent.toString();
 
   return {
