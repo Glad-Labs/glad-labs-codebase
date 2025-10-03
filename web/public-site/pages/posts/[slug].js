@@ -61,8 +61,19 @@ export async function getStaticProps({ params }) {
     };
   }
 
-  // Convert markdown content to HTML using the correct field name
-  const contentHtml = marked(postDataFromApi.BodyContent || '');
+  // Strapi's 'blocks' field type returns an array of block objects.
+  // We must iterate through all blocks and join their text content
+  // to reconstruct the full markdown string.
+  const markdownText = (postDataFromApi.BodyContent || [])
+    .map(block => 
+      (block.children || [])
+        .map(child => child.text)
+        .join('')
+    )
+    .join('\n\n'); // Join paragraphs with double newlines for proper markdown spacing
+
+  const contentHtml = marked(markdownText);
+  
   const postData = {
     ...postDataFromApi,
     contentHtml,
