@@ -48,6 +48,11 @@ export async function getSortedPostsData() {
       }
     }
   `);
+  // Add a defensive check to prevent crashes
+  if (!data || !data.posts || !data.posts.data) {
+    console.error("getSortedPostsData: Received null or invalid data from API.");
+    return []; // Return an empty array to prevent the page from crashing
+  }
   return data.posts.data.map(post => post.attributes);
 }
 
@@ -63,6 +68,11 @@ export async function getAllPostSlugs() {
       }
     }
   `);
+  // Add a defensive check
+  if (!data || !data.posts || !data.posts.data) {
+    console.error("getAllPostSlugs: Received null or invalid data from API.");
+    return [];
+  }
   return data.posts.data.map((post) => ({
     params: {
       slug: post.attributes.Slug,
@@ -94,7 +104,8 @@ export async function getPostData(slug) {
     }
   `, { variables: { slug } });
 
-  if (!data.posts || !data.posts.data || data.posts.data.length === 0) {
+  // Add a more robust check for the data object itself
+  if (!data || !data.posts || !data.posts.data || data.posts.data.length === 0) {
     return null;
   }
 
