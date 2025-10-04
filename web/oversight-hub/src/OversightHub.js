@@ -1,4 +1,6 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
+import { auth } from './firebaseConfig';
+import { onAuthStateChanged, signInAnonymously } from 'firebase/auth';
 import useFirestoreCollection from './hooks/useFirestoreCollection';
 import { sendIntervention } from './services/pubsub';
 import TaskList from './components/TaskList';
@@ -6,6 +8,32 @@ import FinancialsList from './components/FinancialsList';
 import MetricsList from './components/MetricsList';
 
 const OversightHub = () => {
+  const [user, setUser] = useState(null);
+  const [authLoading, setAuthLoading] = useState(true);
+
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+      if (currentUser) {
+        setUser(currentUser);
+        setAuthLoading(false);
+      } else {
+        signInAnonymously(auth).catch((error) => {
+          console.error("Anonymous sign-in failed:", error);
+          setAuthLoading(false);
+        });
+      }
+    });
+    return () => unsubscribe();
+  }, []);
+
+  if (authLoading) {
+    return <div className="bg-gray-900 text-white min-h-screen p-8 font-sans">Signing in...</div>;
+  }
+
+  return <AuthenticatedApp />;
+};
+
+const AuthenticatedApp = () => {
   const { data: tasks, loading: tasksLoading, error: tasksError } = useFirestoreCollection('tasks');
   const { data: financials, loading: financialsLoading, error: financialsError } = useFirestoreCollection('financials');
   const { data: metrics, loading: metricsLoading, error: metricsError } = useFirestoreCollection('content_metrics');
@@ -20,7 +48,7 @@ const OversightHub = () => {
           onClick={sendIntervention}
           className="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-lg shadow-lg transition-transform transform hover:scale-105"
         >
-          {/* INTERVENE */}
+          INTERVENE
         </button>
       </header>
 
