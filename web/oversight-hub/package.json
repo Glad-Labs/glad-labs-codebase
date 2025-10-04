@@ -1,11 +1,19 @@
 {
   "name": "oversight-hub",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "private": true,
+  "description": "React-based dashboard for monitoring and interacting with the GLAD Labs AI agents.",
+  "author": "Matthew M. Gladding (Glad Labs, LLC)",
+  "license": "UNLICENSED",
   "dependencies": {
-    "firebase": "^10.14.1",
+    "//": "Core React library and DOM renderer.",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
+
+    "//": "Firebase for backend services like authentication and Firestore.",
+    "firebase": "^10.12.2",
+
+    "//": "Create React App scripts for development and building.",
     "react-scripts": "5.0.1"
   },
   "scripts": {
@@ -33,8 +41,10 @@
     ]
   },
   "devDependencies": {
-    "autoprefixer": "^10.4.21",
-    "postcss": "^8.5.6",
-    "tailwindcss": "^4.1.14"
+    "//": "Tailwind CSS and its dependencies for styling.",
+    "autoprefixer": "^10.4.17",
+    "postcss": "^8.4.33",
+    "tailwindcss": "^3.4.1"
   }
 }
+
