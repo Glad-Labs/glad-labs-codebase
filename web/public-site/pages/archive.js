@@ -12,7 +12,8 @@
 import Head from 'next/head';
 import Layout from '../components/Layout';
 import PostList from '../components/PostList';
-import { getSortedPostsData } from '../lib/posts';
+// Correcting the import to use the function designed for the archive.
+import { getAllPostsForArchive } from '../lib/posts';
 
 /**
  * Fetches all post data at build time.
@@ -21,11 +22,13 @@ import { getSortedPostsData } from '../lib/posts';
  * @returns {Promise<Object>} An object containing the props to be passed to the Archive component.
  */
 export async function getStaticProps() {
-  const allPostsData = await getSortedPostsData();
+  // Using the correct function to fetch ALL posts for the archive page.
+  const allPostsData = await getAllPostsForArchive();
   return {
     props: {
       allPostsData,
     },
+    revalidate: 60, // Can be revalidated less frequently than the homepage.
   };
 }
 
