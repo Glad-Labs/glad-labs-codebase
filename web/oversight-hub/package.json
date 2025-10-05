@@ -2,23 +2,16 @@
   "name": "oversight-hub",
   "version": "0.1.0",
   "private": true,
+  "author": "Matthew M. Gladding (Glad Labs, LLC)",
+  "license": "UNLICENSED",
   "dependencies": {
-    "//": "Core React library and DOM renderer.",
+    "@testing-library/jest-dom": "^5.17.0",
+    "@testing-library/react": "^13.4.0",
+    "@testing-library/user-event": "^13.5.0",
+    "firebase": "^10.12.3",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
-
-    "//": "Firebase for backend services like authentication and Firestore.",
-    "firebase": "^10.12.2",
-
-    "//": "Create React App scripts for development and building.",
     "react-scripts": "5.0.1",
-
-    "//": "Testing library for React.",
-    "@testing-library/react": "^13.4.0",
-    "@testing-library/jest-dom": "^5.17.0",
-    "@testing-library/user-event": "^13.5.0",
-
-    "//": "Utilities for measuring performance in React apps.",
     "web-vitals": "^2.1.4"
   },
   "scripts": {
@@ -46,9 +39,7 @@
     ]
   },
   "devDependencies": {
-    "//": "Tailwind CSS and its dependencies for styling.",
-    "tailwindcss": "^3.4.4",
-    "postcss": "^8.4.38"
+    "postcss": "^8.4.38",
+    "tailwindcss": "^3.4.4"
   }
 }
-
