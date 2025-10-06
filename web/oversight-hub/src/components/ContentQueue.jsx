@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from "react";
-import { db } from "../firebaseConfig";
-import { collection, onSnapshot, query, orderBy } from "firebase/firestore";
+import React, { useState, useEffect } from 'react';
+import { db } from '../firebaseConfig';
+import { collection, onSnapshot, query, orderBy } from 'firebase/firestore';
 
 const ContentQueue = () => {
   const [tasks, setTasks] = useState([]);
@@ -8,8 +8,8 @@ const ContentQueue = () => {
 
   useEffect(() => {
     const q = query(
-      collection(db, "content-tasks"),
-      orderBy("createdAt", "desc")
+      collection(db, 'content-tasks'),
+      orderBy('createdAt', 'desc')
     );
     const unsubscribe = onSnapshot(q, (querySnapshot) => {
       const tasksData = querySnapshot.docs.map((doc) => ({

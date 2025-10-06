@@ -1,8 +1,8 @@
-import React, { useState, useEffect, useCallback } from "react";
-import { getTasks } from "../../services/taskService";
-import TaskItem from "./TaskItem";
-import CreateTaskModal from "./CreateTaskModal";
-import { PlusCircleIcon } from "@heroicons/react/24/solid";
+import React, { useState, useEffect, useCallback } from 'react';
+import { getTasks } from '../../services/taskService';
+import TaskItem from './TaskItem';
+import CreateTaskModal from './CreateTaskModal';
+import { PlusCircleIcon } from '@heroicons/react/24/solid';
 
 const TaskQueue = () => {
   const [tasks, setTasks] = useState([]);
@@ -18,7 +18,7 @@ const TaskQueue = () => {
       setTasks(tasksData);
     } catch (err) {
       setError(
-        "Failed to load tasks. Please ensure you are connected to the database and refresh the page."
+        'Failed to load tasks. Please ensure you are connected to the database and refresh the page.'
       );
       console.error(err);
     } finally {

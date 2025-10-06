@@ -29,9 +29,9 @@ module.exports = {
    * to find class names. This is crucial for tree-shaking unused styles in production.
    */
   content: [
-    "./app/**/*.{js,ts,jsx,tsx,mdx}",
-    "./pages/**/*.{js,ts,jsx,tsx,mdx}",
-    "./components/**/*.{js,ts,jsx,tsx,mdx}",
+    './app/**/*.{js,ts,jsx,tsx,mdx}',
+    './pages/**/*.{js,ts,jsx,tsx,mdx}',
+    './components/**/*.{js,ts,jsx,tsx,mdx}',
   ],
   /**
    * @property {Object} theme - The theme object where you can customize Tailwind's
@@ -49,7 +49,5 @@ module.exports = {
    * The `@tailwindcss/typography` plugin provides the `prose` classes for styling
    * blocks of text content, like markdown-rendered blog posts.
    */
-  plugins: [
-    require('@tailwindcss/typography'),
-  ],
+  plugins: [require('@tailwindcss/typography')],
 };

@@ -1,4 +1,4 @@
-import { db } from "../firebaseConfig";
+import { db } from '../firebaseConfig';
 import {
   collection,
   getDocs,
@@ -8,9 +8,9 @@ import {
   serverTimestamp,
   query,
   orderBy,
-} from "firebase/firestore";
+} from 'firebase/firestore';
 
-const tasksCollectionRef = collection(db, "tasks");
+const tasksCollectionRef = collection(db, 'tasks');
 
 /**
  * Fetches all tasks from the Firestore 'tasks' collection, ordered by creation date.
@@ -18,7 +18,7 @@ const tasksCollectionRef = collection(db, "tasks");
  */
 export const getTasks = async () => {
   try {
-    const q = query(tasksCollectionRef, orderBy("createdAt", "desc"));
+    const q = query(tasksCollectionRef, orderBy('createdAt', 'desc'));
     const querySnapshot = await getDocs(q);
     const tasks = querySnapshot.docs.map((doc) => ({
       id: doc.id,
@@ -29,8 +29,8 @@ export const getTasks = async () => {
     }));
     return tasks;
   } catch (error) {
-    console.error("Error fetching tasks: ", error);
-    throw new Error("Could not fetch tasks from Firestore.");
+    console.error('Error fetching tasks: ', error);
+    throw new Error('Could not fetch tasks from Firestore.');
   }
 };
 
@@ -43,14 +43,14 @@ export const createTask = async (taskData) => {
   try {
     const docRef = await addDoc(tasksCollectionRef, {
       ...taskData,
-      status: "New", // Initial status for all new tasks
+      status: 'New', // Initial status for all new tasks
       createdAt: serverTimestamp(),
       updatedAt: serverTimestamp(),
     });
     return docRef.id;
   } catch (error) {
-    console.error("Error creating task: ", error);
-    throw new Error("Could not create a new task in Firestore.");
+    console.error('Error creating task: ', error);
+    throw new Error('Could not create a new task in Firestore.');
   }
 };
 
@@ -62,13 +62,13 @@ export const createTask = async (taskData) => {
  */
 export const updateTask = async (taskId, updates) => {
   try {
-    const taskDocRef = doc(db, "tasks", taskId);
+    const taskDocRef = doc(db, 'tasks', taskId);
     await updateDoc(taskDocRef, {
       ...updates,
       updatedAt: serverTimestamp(),
     });
   } catch (error) {
-    console.error("Error updating task: ", error);
+    console.error('Error updating task: ', error);
     throw new Error(`Could not update task ${taskId} in Firestore.`);
   }
 };

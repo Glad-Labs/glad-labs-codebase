@@ -27,13 +27,18 @@
  * exposing credentials in the source code.
  */
 async function fetchAPI(query, { variables } = {}) {
-  const apiUrl = process.env.NEXT_PUBLIC_STRAPI_API_URL || 'http://localhost:1337';
+  const apiUrl =
+    process.env.NEXT_PUBLIC_STRAPI_API_URL || 'http://localhost:1337';
   const apiToken = process.env.STRAPI_API_TOKEN;
 
   // Critical check to ensure the API token is configured.
   if (!apiToken) {
-    console.error("FATAL: STRAPI_API_TOKEN is not set in your environment variables.");
-    throw new Error("The Strapi API token is missing. Please check your .env.local file.");
+    console.error(
+      'FATAL: STRAPI_API_TOKEN is not set in your environment variables.'
+    );
+    throw new Error(
+      'The Strapi API token is missing. Please check your .env.local file.'
+    );
   }
 
   try {
@@ -41,31 +46,37 @@ async function fetchAPI(query, { variables } = {}) {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${apiToken}`,
+        Authorization: `Bearer ${apiToken}`,
       },
       body: JSON.stringify({
         query,
         variables,
       }),
       // Revalidate cache every 60 seconds to ensure data is reasonably fresh.
-      next: { revalidate: 60 }
+      next: { revalidate: 60 },
     });
 
     if (!res.ok) {
       const errorDetails = await res.text();
-      throw new Error(`API request failed with status ${res.status}: ${errorDetails}`);
+      throw new Error(
+        `API request failed with status ${res.status}: ${errorDetails}`
+      );
     }
 
     const json = await res.json();
     if (json.errors) {
       console.error('GraphQL Errors:', JSON.stringify(json.errors, null, 2));
-      throw new Error('A GraphQL error occurred. Check the server console for details.');
+      throw new Error(
+        'A GraphQL error occurred. Check the server console for details.'
+      );
     }
 
     return json.data;
-
   } catch (error) {
-    console.error("There was a problem with the fetch operation:", error.message);
+    console.error(
+      'There was a problem with the fetch operation:',
+      error.message
+    );
     // Re-throw the error to be caught by the calling function.
     throw error;
   }
@@ -96,9 +107,9 @@ export async function getSortedPostsData() {
   try {
     const data = await fetchAPI(query);
     // The data structure from Strapi v4+ nests attributes.
-    return data?.posts?.data.map(post => post.attributes) || [];
+    return data?.posts?.data.map((post) => post.attributes) || [];
   } catch (error) {
-    console.error("Error in getSortedPostsData:", error.message);
+    console.error('Error in getSortedPostsData:', error.message);
     return []; // Return an empty array to prevent the site from crashing.
   }
 }
@@ -132,13 +143,12 @@ export async function getAllPostsForArchive() {
   `;
   try {
     const data = await fetchAPI(query);
-    return data?.posts?.data.map(post => post.attributes) || [];
+    return data?.posts?.data.map((post) => post.attributes) || [];
   } catch (error) {
-    console.error("Error in getAllPostsForArchive:", error.message);
+    console.error('Error in getAllPostsForArchive:', error.message);
     return [];
   }
 }
-
 
 /**
  * Fetches all post slugs for generating static paths in Next.js.
@@ -161,13 +171,15 @@ export async function getAllPostSlugs() {
   `;
   try {
     const data = await fetchAPI(query);
-    return data?.posts?.data.map(post => ({
-      params: {
-        slug: post.attributes.Slug,
-      },
-    })) || [];
+    return (
+      data?.posts?.data.map((post) => ({
+        params: {
+          slug: post.attributes.Slug,
+        },
+      })) || []
+    );
   } catch (error) {
-    console.error("Error in getAllPostSlugs:", error.message);
+    console.error('Error in getAllPostSlugs:', error.message);
     return [];
   }
 }
@@ -215,7 +227,10 @@ export async function getPostData(slug) {
 
     return post;
   } catch (error) {
-    console.error(`Error fetching post data for slug "${slug}":`, error.message);
+    console.error(
+      `Error fetching post data for slug "${slug}":`,
+      error.message
+    );
     return null;
   }
 }

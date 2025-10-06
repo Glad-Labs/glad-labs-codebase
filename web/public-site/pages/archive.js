@@ -49,11 +49,16 @@ export default function Archive({ allPostsData }) {
     <Layout>
       <Head>
         <title>Archive - Glad Labs Frontier</title>
-        <meta name="description" content="A complete archive of all articles from the Glad Labs Frontier blog." />
+        <meta
+          name="description"
+          content="A complete archive of all articles from the Glad Labs Frontier blog."
+        />
       </Head>
       <div className="container mx-auto px-6 py-12">
         <div className="max-w-4xl mx-auto">
-          <h1 className="text-5xl font-bold text-cyan-400 mb-8">Content Archive</h1>
+          <h1 className="text-5xl font-bold text-cyan-400 mb-8">
+            Content Archive
+          </h1>
           <PostList posts={allPostsData} />
         </div>
       </div>

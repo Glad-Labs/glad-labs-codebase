@@ -20,9 +20,9 @@
  * to secure the dashboard and potentially introduce user-specific views or controls.
  */
 
-import React, { useState, useEffect } from "react";
-import { BrowserRouter as Router, Route, Switch } from "react-router-dom";
-import { db } from "./firebaseConfig";
+import React, { useState, useEffect } from 'react';
+import { BrowserRouter as Router, Route, Switch } from 'react-router-dom';
+import { db } from './firebaseConfig';
 import {
   collection,
   onSnapshot,
@@ -31,18 +31,18 @@ import {
   doc,
   updateDoc,
   addDoc,
-} from "firebase/firestore";
-import Sidebar from "./components/Sidebar";
-import Header from "./components/Header";
-import Dashboard from "./components/Dashboard";
-import ContentQueue from "./components/ContentQueue";
-import StrapiPosts from "./components/StrapiPosts";
-import NewTaskModal from "./components/NewTaskModal";
-import "./OversightHub.css";
+} from 'firebase/firestore';
+import Sidebar from './components/Sidebar';
+import Header from './components/Header';
+import Dashboard from './components/Dashboard';
+import ContentQueue from './components/ContentQueue';
+import StrapiPosts from './components/StrapiPosts';
+import NewTaskModal from './components/NewTaskModal';
+import './OversightHub.css';
 
 // --- Helper Functions ---
 const formatTimestamp = (timestamp) => {
-  if (!timestamp) return "N/A";
+  if (!timestamp) return 'N/A';
   return new Date(timestamp.seconds * 1000).toLocaleString();
 };
 
@@ -66,8 +66,8 @@ const OversightHub = () => {
   useEffect(() => {
     setLoading(true);
     const q = query(
-      collection(db, "content-tasks"),
-      orderBy("createdAt", "desc")
+      collection(db, 'content-tasks'),
+      orderBy('createdAt', 'desc')
     );
     const unsubscribe = onSnapshot(
       q,
@@ -81,7 +81,7 @@ const OversightHub = () => {
       },
       (err) => {
         setError(
-          "Failed to fetch tasks. Please check Firestore connection and permissions."
+          'Failed to fetch tasks. Please check Firestore connection and permissions.'
         );
         setLoading(false);
         console.error(err);
@@ -94,7 +94,7 @@ const OversightHub = () => {
     if (selectedTask) {
       const runsQuery = query(
         collection(db, `content-tasks/${selectedTask.id}/runs`),
-        orderBy("startTime", "desc")
+        orderBy('startTime', 'desc')
       );
       const unsubscribe = onSnapshot(runsQuery, (querySnapshot) => {
         const runsData = querySnapshot.docs.map((doc) => ({
@@ -117,25 +117,25 @@ const OversightHub = () => {
     const functionUrl = process.env.REACT_APP_INTERVENE_FUNCTION_URL;
     if (!functionUrl) {
       alert(
-        "Intervention Function URL is not configured. Please set REACT_APP_INTERVENE_FUNCTION_URL in your .env.local file."
+        'Intervention Function URL is not configured. Please set REACT_APP_INTERVENE_FUNCTION_URL in your .env.local file.'
       );
       return;
     }
     try {
       const response = await fetch(functionUrl, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          command: "INTERVENE",
-          reason: "Manual intervention from Oversight Hub",
+          command: 'INTERVENE',
+          reason: 'Manual intervention from Oversight Hub',
         }),
       });
-      if (!response.ok) throw new Error("Failed to send intervention signal.");
-      alert("Intervention signal sent successfully.");
+      if (!response.ok) throw new Error('Failed to send intervention signal.');
+      alert('Intervention signal sent successfully.');
     } catch (err) {
-      console.error("Intervention failed:", err);
+      console.error('Intervention failed:', err);
       alert(
-        "Failed to send intervention signal. Check the console for details."
+        'Failed to send intervention signal. Check the console for details.'
       );
     }
   };
@@ -145,9 +145,9 @@ const OversightHub = () => {
     <span
       className={`status-badge status-${status
         ?.toLowerCase()
-        .replace(" ", "-")}`}
+        .replace(' ', '-')}`}
     >
-      {status || "Unknown"}
+      {status || 'Unknown'}
     </span>
   );
 
@@ -244,7 +244,7 @@ const TaskDetailModal = ({ task, runs, onClose, renderStatus }) => (
         </p>
         {task.publishedUrl && (
           <p>
-            <strong>Published URL:</strong>{" "}
+            <strong>Published URL:</strong>{' '}
             <a
               href={task.publishedUrl}
               target="_blank"

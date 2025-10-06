@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect } from 'react';
 
 const StrapiPosts = () => {
   const [posts, setPosts] = useState([]);
@@ -12,7 +12,7 @@ const StrapiPosts = () => {
           `${process.env.REACT_APP_STRAPI_API_URL}/api/posts`
         );
         if (!response.ok) {
-          throw new Error("Failed to fetch posts from Strapi.");
+          throw new Error('Failed to fetch posts from Strapi.');
         }
         const data = await response.json();
         setPosts(data.data);

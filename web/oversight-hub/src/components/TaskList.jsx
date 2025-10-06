@@ -1,6 +1,6 @@
-import React from "react";
-import { formatTimestamp, renderStatus } from "../utils/helpers";
-import "./TaskList.css";
+import React from 'react';
+import { formatTimestamp, renderStatus } from '../utils/helpers';
+import './TaskList.css';
 
 const TaskList = ({ tasks, onTaskClick }) => (
   <div className="task-list">

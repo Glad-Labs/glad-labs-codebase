@@ -1,35 +1,35 @@
-import React, { useState } from "react";
-import { db } from "../firebaseConfig";
-import { collection, addDoc } from "firebase/firestore";
-import "./Modal.css";
+import React, { useState } from 'react';
+import { db } from '../firebaseConfig';
+import { collection, addDoc } from 'firebase/firestore';
+import './Modal.css';
 
 const NewTaskModal = ({ onClose, setError }) => {
-  const [topic, setTopic] = useState("");
-  const [primaryKeyword, setPrimaryKeyword] = useState("");
-  const [targetAudience, setTargetAudience] = useState("");
-  const [category, setCategory] = useState("");
+  const [topic, setTopic] = useState('');
+  const [primaryKeyword, setPrimaryKeyword] = useState('');
+  const [targetAudience, setTargetAudience] = useState('');
+  const [category, setCategory] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!topic || !primaryKeyword || !targetAudience || !category) {
-      setError("All fields are required to create a new task.");
+      setError('All fields are required to create a new task.');
       return;
     }
     setIsSubmitting(true);
     setError(null);
     try {
-      await addDoc(collection(db, "content-tasks"), {
+      await addDoc(collection(db, 'content-tasks'), {
         topic,
         primary_keyword: primaryKeyword,
         target_audience: targetAudience,
         category,
-        status: "Ready",
+        status: 'Ready',
         createdAt: new Date(),
       });
       onClose();
     } catch (err) {
-      setError("Failed to create task. Please check Firestore permissions.");
+      setError('Failed to create task. Please check Firestore permissions.');
       console.error(err);
     } finally {
       setIsSubmitting(false);
@@ -73,7 +73,7 @@ const NewTaskModal = ({ onClose, setError }) => {
             required
           />
           <button type="submit" disabled={isSubmitting}>
-            {isSubmitting ? "Creating..." : "Create Task"}
+            {isSubmitting ? 'Creating...' : 'Create Task'}
           </button>
         </form>
       </div>

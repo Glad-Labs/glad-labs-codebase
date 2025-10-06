@@ -13,34 +13,49 @@ const pubsub = {
   }),
 };
 
-
 const OversightHub = () => {
   const [tasks, setTasks] = useState([]);
   const [financials, setFinancials] = useState([]);
   const [metrics, setMetrics] = useState([]);
-  const [loading, setLoading] = useState({ tasks: true, financials: true, metrics: true });
+  const [loading, setLoading] = useState({
+    tasks: true,
+    financials: true,
+    metrics: true,
+  });
   const [error, setError] = useState(null);
 
   // Hook for real-time Firestore data
   const useFirestoreCollection = (collectionName, setData) => {
     useEffect(() => {
       try {
-        const q = query(collection(db, collectionName), orderBy('updatedAt', 'desc'));
-        
-        const unsubscribe = onSnapshot(q, (querySnapshot) => {
-          const items = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-          setData(items);
-          setLoading(prev => ({ ...prev, [collectionName]: false }));
-        }, (err) => {
-          console.error(`Error listening to ${collectionName}:`, err);
-          setError(`Failed to load ${collectionName}. Please check console for details.`);
-          setLoading(prev => ({ ...prev, [collectionName]: false }));
-        });
+        const q = query(
+          collection(db, collectionName),
+          orderBy('updatedAt', 'desc')
+        );
+
+        const unsubscribe = onSnapshot(
+          q,
+          (querySnapshot) => {
+            const items = querySnapshot.docs.map((doc) => ({
+              id: doc.id,
+              ...doc.data(),
+            }));
+            setData(items);
+            setLoading((prev) => ({ ...prev, [collectionName]: false }));
+          },
+          (err) => {
+            console.error(`Error listening to ${collectionName}:`, err);
+            setError(
+              `Failed to load ${collectionName}. Please check console for details.`
+            );
+            setLoading((prev) => ({ ...prev, [collectionName]: false }));
+          }
+        );
 
         return () => unsubscribe();
       } catch (err) {
-        console.error("Firestore query error:", err);
-        setError("An error occurred while setting up the data listener.");
+        console.error('Firestore query error:', err);
+        setError('An error occurred while setting up the data listener.');
       }
     }, [collectionName, setData]);
   };
@@ -68,18 +83,38 @@ const OversightHub = () => {
   };
 
   const renderStatus = (status) => {
-    const baseClasses = "px-2 py-1 text-xs font-semibold rounded-full";
+    const baseClasses = 'px-2 py-1 text-xs font-semibold rounded-full';
     switch (status.toLowerCase()) {
       case 'completed':
-        return <span className={`${baseClasses} bg-green-500 text-green-900`}>Completed</span>;
+        return (
+          <span className={`${baseClasses} bg-green-500 text-green-900`}>
+            Completed
+          </span>
+        );
       case 'in_progress':
-        return <span className={`${baseClasses} bg-yellow-500 text-yellow-900`}>In Progress</span>;
+        return (
+          <span className={`${baseClasses} bg-yellow-500 text-yellow-900`}>
+            In Progress
+          </span>
+        );
       case 'queued':
-        return <span className={`${baseClasses} bg-blue-500 text-blue-900`}>Queued</span>;
+        return (
+          <span className={`${baseClasses} bg-blue-500 text-blue-900`}>
+            Queued
+          </span>
+        );
       case 'failed':
-        return <span className={`${baseClasses} bg-red-500 text-red-900`}>Failed</span>;
+        return (
+          <span className={`${baseClasses} bg-red-500 text-red-900`}>
+            Failed
+          </span>
+        );
       default:
-        return <span className={`${baseClasses} bg-gray-600 text-gray-200`}>{status}</span>;
+        return (
+          <span className={`${baseClasses} bg-gray-600 text-gray-200`}>
+            {status}
+          </span>
+        );
     }
   };
 
@@ -102,49 +137,84 @@ const OversightHub = () => {
         </button>
       </header>
 
-      {error && <div className="bg-red-800 text-white p-4 rounded-lg mb-8">{error}</div>}
+      {error && (
+        <div className="bg-red-800 text-white p-4 rounded-lg mb-8">{error}</div>
+      )}
 
       <main className="grid grid-cols-1 md:grid-cols-3 gap-8">
         {/* Column 1: Tasks */}
         <div className="bg-gray-800 p-6 rounded-lg shadow-xl">
-          <h2 className="text-2xl font-semibold text-cyan-300 mb-4">Active Tasks</h2>
-          {loading.tasks ? <p>Loading tasks...</p> : (
+          <h2 className="text-2xl font-semibold text-cyan-300 mb-4">
+            Active Tasks
+          </h2>
+          {loading.tasks ? (
+            <p>Loading tasks...</p>
+          ) : (
             <ul>
-              {tasks.length > 0 ? tasks.map(task => (
-                <li key={task.id} className="p-3 mb-2 bg-gray-700 rounded-md border-l-4 border-cyan-500">
-                  <div className="flex justify-between items-center">
-                    <span className="font-bold">{task.taskName}</span>
-                    {renderStatus(task.status)}
-                  </div>
-                  <div className="text-xs text-gray-400 mt-1">
-                    Last Updated: {formatTimestamp(task.updatedAt)}
-                  </div>
-                </li>
-              )) : <p>No active tasks.</p>}
+              {tasks.length > 0 ? (
+                tasks.map((task) => (
+                  <li
+                    key={task.id}
+                    className="p-3 mb-2 bg-gray-700 rounded-md border-l-4 border-cyan-500"
+                  >
+                    <div className="flex justify-between items-center">
+                      <span className="font-bold">{task.taskName}</span>
+                      {renderStatus(task.status)}
+                    </div>
+                    <div className="text-xs text-gray-400 mt-1">
+                      Last Updated: {formatTimestamp(task.updatedAt)}
+                    </div>
+                  </li>
+                ))
+              ) : (
+                <p>No active tasks.</p>
+              )}
             </ul>
           )}
         </div>
 
         {/* Column 2: Financials */}
         <div className="bg-gray-800 p-6 rounded-lg shadow-xl">
-          <h2 className="text-2xl font-semibold text-cyan-300 mb-4">Financials</h2>
-          {loading.financials ? <p>Loading financials...</p> : (
+          <h2 className="text-2xl font-semibold text-cyan-300 mb-4">
+            Financials
+          </h2>
+          {loading.financials ? (
+            <p>Loading financials...</p>
+          ) : (
             <ul>
-              {financials.length > 0 ? financials.map(fin => (
-                <li key={fin.id} className="p-2 border-b border-gray-700">{fin.metric}: <span className="text-green-400">{fin.value}</span></li>
-              )) : <p>No financial data available.</p>}
+              {financials.length > 0 ? (
+                financials.map((fin) => (
+                  <li key={fin.id} className="p-2 border-b border-gray-700">
+                    {fin.metric}:{' '}
+                    <span className="text-green-400">{fin.value}</span>
+                  </li>
+                ))
+              ) : (
+                <p>No financial data available.</p>
+              )}
             </ul>
           )}
         </div>
 
         {/* Column 3: Metrics */}
         <div className="bg-gray-800 p-6 rounded-lg shadow-xl">
-          <h2 className="text-2xl font-semibold text-cyan-300 mb-4">Content Metrics</h2>
-          {loading.metrics ? <p>Loading metrics...</p> : (
+          <h2 className="text-2xl font-semibold text-cyan-300 mb-4">
+            Content Metrics
+          </h2>
+          {loading.metrics ? (
+            <p>Loading metrics...</p>
+          ) : (
             <ul>
-              {metrics.length > 0 ? metrics.map(metric => (
-                <li key={metric.id} className="p-2 border-b border-gray-700">{metric.name}: <span className="text-blue-400">{metric.value}</span></li>
-              )) : <p>No content metrics available.</p>}
+              {metrics.length > 0 ? (
+                metrics.map((metric) => (
+                  <li key={metric.id} className="p-2 border-b border-gray-700">
+                    {metric.name}:{' '}
+                    <span className="text-blue-400">{metric.value}</span>
+                  </li>
+                ))
+              ) : (
+                <p>No content metrics available.</p>
+              )}
             </ul>
           )}
         </div>

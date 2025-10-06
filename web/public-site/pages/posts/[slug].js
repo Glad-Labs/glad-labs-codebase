@@ -16,7 +16,9 @@ export default function Post({ postData }) {
       </Head>
       <div className="container mx-auto px-4 py-12">
         <article className="max-w-4xl mx-auto">
-          <h1 className="text-4xl md:text-5xl font-bold text-cyan-300 mb-4 leading-tight">{postData.Title}</h1>
+          <h1 className="text-4xl md:text-5xl font-bold text-cyan-300 mb-4 leading-tight">
+            {postData.Title}
+          </h1>
           <p className="text-lg text-gray-400 mb-8">{postData.Excerpt}</p>
 
           {featuredImage && (

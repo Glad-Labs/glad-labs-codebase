@@ -1,6 +1,6 @@
-import React from "react";
-import { formatTimestamp, renderStatus } from "../utils/helpers";
-import "./Modal.css";
+import React from 'react';
+import { formatTimestamp, renderStatus } from '../utils/helpers';
+import './Modal.css';
 
 const TaskDetailModal = ({ task, runs, onClose }) => (
   <div className="modal-backdrop" onClick={onClose}>
@@ -24,7 +24,7 @@ const TaskDetailModal = ({ task, runs, onClose }) => (
         </p>
         {task.publishedUrl && (
           <p>
-            <strong>Published URL:</strong>{" "}
+            <strong>Published URL:</strong>{' '}
             <a
               href={task.publishedUrl}
               target="_blank"

@@ -1,18 +1,18 @@
-import React, { useState } from "react";
-import { createTask } from "../../services/taskService";
+import React, { useState } from 'react';
+import { createTask } from '../../services/taskService';
 
 const CreateTaskModal = ({ isOpen, onClose, onTaskCreated }) => {
-  const [topic, setTopic] = useState("");
-  const [primaryKeyword, setPrimaryKeyword] = useState("");
-  const [targetAudience, setTargetAudience] = useState("");
-  const [category, setCategory] = useState("");
+  const [topic, setTopic] = useState('');
+  const [primaryKeyword, setPrimaryKeyword] = useState('');
+  const [targetAudience, setTargetAudience] = useState('');
+  const [category, setCategory] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState(null);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!topic || !primaryKeyword || !targetAudience || !category) {
-      setError("All fields are required.");
+      setError('All fields are required.');
       return;
     }
 
@@ -29,12 +29,12 @@ const CreateTaskModal = ({ isOpen, onClose, onTaskCreated }) => {
       await createTask(newTask);
       onTaskCreated();
       // Reset form for next use
-      setTopic("");
-      setPrimaryKeyword("");
-      setTargetAudience("");
-      setCategory("");
+      setTopic('');
+      setPrimaryKeyword('');
+      setTargetAudience('');
+      setCategory('');
     } catch (err) {
-      setError("Failed to create task. Please try again.");
+      setError('Failed to create task. Please try again.');
       console.error(err);
     } finally {
       setSubmitting(false);
@@ -123,7 +123,7 @@ const CreateTaskModal = ({ isOpen, onClose, onTaskCreated }) => {
               disabled={submitting}
               className="py-2 px-6 bg-cyan-500 hover:bg-cyan-600 text-white font-bold rounded-lg transition duration-300 disabled:opacity-50"
             >
-              {submitting ? "Creating..." : "Create Task"}
+              {submitting ? 'Creating...' : 'Create Task'}
             </button>
           </div>
         </form>
