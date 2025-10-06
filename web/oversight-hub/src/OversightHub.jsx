@@ -21,6 +21,7 @@
  */
 
 import React, { useState, useEffect } from "react";
+import { BrowserRouter as Router, Route, Switch } from "react-router-dom";
 import { db } from "./firebaseConfig";
 import {
   collection,
@@ -31,6 +32,12 @@ import {
   updateDoc,
   addDoc,
 } from "firebase/firestore";
+import Sidebar from "./components/Sidebar";
+import Header from "./components/Header";
+import Dashboard from "./components/Dashboard";
+import ContentQueue from "./components/ContentQueue";
+import StrapiPosts from "./components/StrapiPosts";
+import NewTaskModal from "./components/NewTaskModal";
 import "./OversightHub.css";
 
 // --- Helper Functions ---
@@ -145,49 +152,46 @@ const OversightHub = () => {
   );
 
   return (
-    <div className="oversight-hub">
-      <header>
-        <h1>Glad Labs - Content Agent Oversight Hub</h1>
-        <div className="header-actions">
-          <button
-            onClick={() => setIsNewTaskModalOpen(true)}
-            className="new-task-btn"
-          >
-            Create New Task
-          </button>
-          <button onClick={handleIntervene} className="intervene-btn">
-            Intervene
-          </button>
+    <Router>
+      <div className="oversight-hub-layout">
+        <Sidebar />
+        <div className="main-content">
+          <Header
+            onNewTask={() => setIsNewTaskModalOpen(true)}
+            onIntervene={handleIntervene}
+          />
+          <div className="content-area">
+            {error && <div className="error-message">{error}</div>}
+            <Switch>
+              <Route path="/" exact>
+                <Dashboard />
+              </Route>
+              <Route path="/content-queue">
+                <ContentQueue
+                  tasks={tasks}
+                  onTaskClick={handleTaskClick}
+                  renderStatus={renderStatus}
+                  loading={loading}
+                  error={error}
+                  setError={setError}
+                  handleIntervene={handleIntervene}
+                  isNewTaskModalOpen={isNewTaskModalOpen}
+                  setIsNewTaskModalOpen={setIsNewTaskModalOpen}
+                />
+              </Route>
+              <Route path="/strapi-posts" component={StrapiPosts} />
+              {/* Add routes for future components here */}
+            </Switch>
+          </div>
         </div>
-      </header>
-
-      {loading && <p>Loading tasks...</p>}
-      {error && <ErrorMessage message={error} />}
-
-      <main>
-        <TaskList
-          tasks={tasks}
-          onTaskClick={handleTaskClick}
-          renderStatus={renderStatus}
-        />
-      </main>
-
-      {isModalOpen && selectedTask && (
-        <TaskDetailModal
-          task={selectedTask}
-          runs={runs[selectedTask.id] || []}
-          onClose={() => setIsModalOpen(false)}
-          renderStatus={renderStatus}
-        />
-      )}
-
-      {isNewTaskModalOpen && (
-        <NewTaskModal
-          onClose={() => setIsNewTaskModalOpen(false)}
-          setError={setError}
-        />
-      )}
-    </div>
+        {isNewTaskModalOpen && (
+          <NewTaskModal
+            onClose={() => setIsNewTaskModalOpen(false)}
+            setError={setError}
+          />
+        )}
+      </div>
+    </Router>
   );
 };
 
@@ -274,83 +278,5 @@ const RunHistory = ({ runs }) => (
     )}
   </div>
 );
-
-const NewTaskModal = ({ onClose, setError }) => {
-  const [topic, setTopic] = useState("");
-  const [primaryKeyword, setPrimaryKeyword] = useState("");
-  const [targetAudience, setTargetAudience] = useState("");
-  const [category, setCategory] = useState("");
-  const [isSubmitting, setIsSubmitting] = useState(false);
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    if (!topic || !primaryKeyword || !targetAudience || !category) {
-      setError("All fields are required to create a new task.");
-      return;
-    }
-    setIsSubmitting(true);
-    setError(null);
-    try {
-      await addDoc(collection(db, "content-tasks"), {
-        topic,
-        primary_keyword: primaryKeyword,
-        target_audience: targetAudience,
-        category,
-        status: "Ready",
-        createdAt: new Date(),
-      });
-      onClose();
-    } catch (err) {
-      setError("Failed to create task. Please check Firestore permissions.");
-      console.error(err);
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  return (
-    <div className="modal-backdrop" onClick={onClose}>
-      <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-        <button className="close-btn" onClick={onClose}>
-          &times;
-        </button>
-        <h2>Create New Content Task</h2>
-        <form onSubmit={handleSubmit} className="new-task-form">
-          <input
-            type="text"
-            value={topic}
-            onChange={(e) => setTopic(e.target.value)}
-            placeholder="Topic"
-            required
-          />
-          <input
-            type="text"
-            value={primaryKeyword}
-            onChange={(e) => setPrimaryKeyword(e.target.value)}
-            placeholder="Primary Keyword"
-            required
-          />
-          <input
-            type="text"
-            value={targetAudience}
-            onChange={(e) => setTargetAudience(e.target.value)}
-            placeholder="Target Audience"
-            required
-          />
-          <input
-            type="text"
-            value={category}
-            onChange={(e) => setCategory(e.target.value)}
-            placeholder="Category"
-            required
-          />
-          <button type="submit" disabled={isSubmitting}>
-            {isSubmitting ? "Creating..." : "Create Task"}
-          </button>
-        </form>
-      </div>
-    </div>
-  );
-};
 
 export default OversightHub;
