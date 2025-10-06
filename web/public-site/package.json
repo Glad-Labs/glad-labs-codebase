@@ -2,13 +2,13 @@
   "name": "glad-labs-public-site",
   "version": "0.1.0",
   "private": true,
+  "license": "MIT",
   "author": "Matthew M. Gladding (Glad Labs, LLC)",
-  "license": "UNLICENSED",
   "scripts": {
-    "dev": "next dev",
     "build": "next build",
-    "start": "next start",
-    "lint": "next lint"
+    "dev": "next dev",
+    "lint": "next lint",
+    "start": "next start"
   },
   "dependencies": {
     "@strapi/blocks-react-renderer": "^1.0.2",
