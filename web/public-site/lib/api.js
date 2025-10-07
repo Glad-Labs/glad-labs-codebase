@@ -47,7 +47,7 @@ async function fetchAPI(path, urlParamsObject = {}, options = {}) {
 
 export async function getPaginatedPosts(page = 1, pageSize = 10) {
   const query = qs.stringify({
-    populate: ['author', 'category', 'tags', 'coverImage'],
+    populate: '*',
     sort: { publishedAt: 'desc' },
     pagination: {
       page,
@@ -64,7 +64,7 @@ export async function getPaginatedPosts(page = 1, pageSize = 10) {
 export async function getPostBySlug(slug) {
   const query = qs.stringify({
     filters: { slug: { $eq: slug } },
-    populate: ['author', 'category', 'tags', 'coverImage', 'metrics'],
+    populate: '*',
   });
   const data = await fetchAPI(`/posts?${query}`);
   // The response for a filtered query is always an array, so we return the first item
