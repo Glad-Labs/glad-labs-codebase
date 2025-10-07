@@ -1,81 +1,76 @@
+import qs from 'qs';
+
 const STRAPI_API_URL = process.env.NEXT_PUBLIC_STRAPI_API_URL;
 
-async function fetchAPI(query, { variables } = {}) {
-  const res = await fetch(`${STRAPI_API_URL}/graphql`, {
-    method: 'POST',
+/**
+ * Get full Strapi URL from path
+ * @param {string} path Path of the URL
+ * @returns {string} Full Strapi URL
+ */
+export function getStrapiURL(path = '') {
+  return `${STRAPI_API_URL || 'http://localhost:1337'}${path}`;
+}
+
+/**
+ * Helper to make GET requests to Strapi API endpoints
+ * @param {string} path Path of the API route
+ * @param {object} urlParamsObject URL params object, will be stringified
+ * @param {object} options Options passed to fetch
+ * @returns Parsed API call response
+ */
+async function fetchAPI(path, urlParamsObject = {}, options = {}) {
+  // Merge default and user options
+  const mergedOptions = {
     headers: {
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify({
-      query,
-      variables,
-    }),
-  });
+    ...options,
+  };
 
-  const json = await res.json();
-  if (json.errors) {
-    console.error(json.errors);
-    throw new Error('Failed to fetch API');
+  // Build request URL
+  const queryString = qs.stringify(urlParamsObject);
+  const requestUrl = `${getStrapiURL(
+    `${path}${queryString ? `?${queryString}` : ''}`
+  )}`;
+
+  // Trigger API call
+  const response = await fetch(requestUrl, mergedOptions);
+
+  // Handle response
+  if (!response.ok) {
+    console.error(response.statusText);
+    throw new Error(`An error occurred please try again`);
   }
-
-  return json.data;
+  const data = await response.json();
+  return data;
 }
 
 export async function getPaginatedPosts(page = 1, pageSize = 10) {
-  const data = await fetchAPI(
-    `
-    query GetPosts($page: Int, $pageSize: Int) {
-      posts(pagination: { page: $page, pageSize: $pageSize }, sort: "publishedAt:desc") {
-        data {
-          id
-          attributes {
-            Title
-            Slug
-            publishedAt
-            Excerpt
-          }
-        }
-        meta {
-          pagination {
-            page
-            pageSize
-            total
-            pageCount
-          }
-        }
-      }
-    }
-  `,
-    { variables: { page, pageSize } }
-  );
-  return data.posts;
+  const query = qs.stringify({
+    populate: ['author', 'category', 'tags', 'coverImage'],
+    sort: { publishedAt: 'desc' },
+    pagination: {
+      page,
+      pageSize,
+    },
+  });
+  const data = await fetchAPI(`/posts?${query}`);
+  return {
+    ...data,
+    data: data.data.map((post) => ({ id: post.id, ...post.attributes })),
+  };
 }
 
 export async function getPostBySlug(slug) {
-  const data = await fetchAPI(
-    `
-    query GetPostBySlug($slug: String!) {
-      posts(filters: { Slug: { eq: $slug } }) {
-        data {
-          id
-          attributes {
-            Title
-            BodyContent
-            publishedAt
-            FeaturedImage {
-              data {
-                attributes {
-                  url
-                  alternativeText
-                }
-              }
-            }
-          }
-        }
-      }
-    }
-  `,
-    { variables: { slug } }
-  );
-  return data.posts.data[0];
+  const query = qs.stringify({
+    filters: { slug: { $eq: slug } },
+    populate: ['author', 'category', 'tags', 'coverImage', 'metrics'],
+  });
+  const data = await fetchAPI(`/posts?${query}`);
+  // The response for a filtered query is always an array, so we return the first item
+  if (data && data.data && data.data.length > 0) {
+    const post = data.data[0];
+    return { id: post.id, ...post.attributes };
+  }
+  return null;
 }

@@ -51,15 +51,13 @@ export default function Home({ posts }) {
         <main>
           <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
             {posts.map((post) => (
-              <Link key={post.id} href={`/posts/${post.attributes.Slug}`}>
+              <Link key={post.id} href={`/posts/${post.Slug}`}>
                 <a className="block p-6 bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow">
-                  <h2 className="text-2xl font-bold mb-2">
-                    {post.attributes.Title}
-                  </h2>
+                  <h2 className="text-2xl font-bold mb-2">{post.Title}</h2>
                   <p className="text-gray-600 mb-4">
-                    {new Date(post.attributes.publishedAt).toLocaleDateString()}
+                    {new Date(post.publishedAt).toLocaleDateString()}
                   </p>
-                  <p className="text-gray-700">{post.attributes.Excerpt}</p>
+                  <p className="text-gray-700">{post.Excerpt}</p>
                 </a>
               </Link>
             ))}

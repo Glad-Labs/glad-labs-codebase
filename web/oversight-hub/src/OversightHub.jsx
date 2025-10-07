@@ -21,24 +21,10 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import { BrowserRouter as Router, Route, Switch } from 'react-router-dom';
+import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import { db } from './firebaseConfig';
-import {
-  collection,
-  onSnapshot,
-  query,
-  orderBy,
-  doc,
-  updateDoc,
-  addDoc,
-} from 'firebase/firestore';
+import { collection, onSnapshot, query, orderBy } from 'firebase/firestore';
 import Sidebar from './components/Sidebar';
-import Header from './components/Header';
-import Dashboard from './components/Dashboard';
-import ContentQueue from './components/ContentQueue';
-import StrapiPosts from './components/StrapiPosts';
-import Financials from './components/Financials';
-import NewTaskModal from './components/NewTaskModal';
 import DataPane from './components/DataPane';
 import CommandPane from './components/CommandPane';
 import './OversightHub.css';
@@ -155,7 +141,9 @@ const OversightHub = () => {
       <div className="oversight-hub-layout">
         <Sidebar />
         <main className="main-content">
-          <DataPane />
+          <Routes>
+            <Route path="/" element={<DataPane />} />
+          </Routes>
           <CommandPane />
         </main>
       </div>

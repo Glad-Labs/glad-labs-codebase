@@ -7,22 +7,34 @@ const Sidebar = () => (
     <h2>Glad Labs</h2>
     <ul>
       <li>
-        <NavLink to="/" exact activeClassName="active">
+        <NavLink
+          to="/"
+          className={({ isActive }) => (isActive ? 'active' : '')}
+        >
           Dashboard
         </NavLink>
       </li>
       <li>
-        <NavLink to="/content-queue" activeClassName="active">
+        <NavLink
+          to="/content-queue"
+          className={({ isActive }) => (isActive ? 'active' : '')}
+        >
           Content Queue
         </NavLink>
       </li>
       <li>
-        <NavLink to="/strapi-posts" activeClassName="active">
+        <NavLink
+          to="/strapi-posts"
+          className={({ isActive }) => (isActive ? 'active' : '')}
+        >
           Strapi Posts
         </NavLink>
       </li>
       <li>
-        <NavLink to="/financials" activeClassName="active">
+        <NavLink
+          to="/financials"
+          className={({ isActive }) => (isActive ? 'active' : '')}
+        >
           Financials
         </NavLink>
       </li>
@@ -30,8 +42,9 @@ const Sidebar = () => (
       <li>
         <NavLink
           to="/marketing"
-          activeClassName="active"
-          className="disabled-link"
+          className={({ isActive }) =>
+            isActive ? 'active disabled-link' : 'disabled-link'
+          }
         >
           Marketing
         </NavLink>

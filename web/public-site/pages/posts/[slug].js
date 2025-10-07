@@ -8,8 +8,8 @@ import { BlocksRenderer } from '@strapi/blocks-react-renderer';
 export default function Post({ post }) {
   if (!post) return <div>Loading...</div>;
 
-  const { Title, BodyContent, publishedAt, FeaturedImage } = post.attributes;
-  const imageUrl = FeaturedImage?.data?.attributes?.url;
+  const { Title, BodyContent, publishedAt, FeaturedImage } = post;
+  const imageUrl = FeaturedImage?.data?.url;
 
   return (
     <Layout>
@@ -29,7 +29,7 @@ export default function Post({ post }) {
             <div className="relative h-96 mb-8">
               <Image
                 src={imageUrl}
-                alt={FeaturedImage.data.attributes.alternativeText || Title}
+                alt={FeaturedImage.data.alternativeText || Title}
                 layout="fill"
                 objectFit="cover"
                 className="rounded-lg"
@@ -50,7 +50,7 @@ export default function Post({ post }) {
 export async function getStaticPaths() {
   const postsData = await getPaginatedPosts(1, 100); // Fetch all posts to generate paths
   const paths = postsData.data.map((post) => ({
-    params: { slug: post.attributes.Slug },
+    params: { slug: post.Slug },
   }));
 
   return { paths, fallback: 'blocking' };
