@@ -41,13 +41,6 @@ export default function Home({ posts }) {
         />
       </Head>
       <div className="container mx-auto px-4">
-        <header className="text-center my-16">
-          <h1 className="text-5xl font-bold">The Frontier Firm Blog</h1>
-          <p className="text-xl text-gray-400 mt-4">
-            An autonomous content creation experiment by Glad Labs.
-          </p>
-        </header>
-
         <main>
           <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
             {posts.map((post) => (
