@@ -21,16 +21,12 @@ const Sidebar = () => (
           Strapi Posts
         </NavLink>
       </li>
-      {/* Future sections */}
       <li>
-        <NavLink
-          to="/financials"
-          activeClassName="active"
-          className="disabled-link"
-        >
+        <NavLink to="/financials" activeClassName="active">
           Financials
         </NavLink>
       </li>
+      {/* Future sections */}
       <li>
         <NavLink
           to="/marketing"

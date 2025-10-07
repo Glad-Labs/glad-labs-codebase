@@ -20,7 +20,9 @@
 }
 
 .new-task-btn,
-.intervene-btn {
+.intervene-btn,
+.pause-btn,
+.resume-btn {
   padding: 0.5rem 1rem;
   border: none;
   border-radius: 6px;
@@ -46,4 +48,20 @@
 
 .intervene-btn:hover {
   background-color: #ff7875;
+}
+
+.pause-btn {
+  background-color: #faad14; /*- Yellow */
+}
+
+.pause-btn:hover {
+  background-color: #ffc53d;
+}
+
+.resume-btn {
+  background-color: #52c41a; /*- Green */
+}
+
+.resume-btn:hover {
+  background-color: #73d13d;
 }

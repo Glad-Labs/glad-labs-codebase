@@ -1,60 +1,152 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
+import { db } from '../firebaseConfig';
+import {
+  doc,
+  updateDoc,
+  collection,
+  onSnapshot,
+  query,
+  orderBy,
+} from 'firebase/firestore';
 import { formatTimestamp, renderStatus } from '../utils/helpers';
 import './Modal.css';
 
-const TaskDetailModal = ({ task, runs, onClose }) => (
-  <div className="modal-backdrop" onClick={onClose}>
-    <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-      <button className="close-btn" onClick={onClose}>
-        &times;
-      </button>
-      <h2>Task Details: {task.topic}</h2>
-      <div className="task-details">
-        <p>
-          <strong>Status:</strong> {renderStatus(task.status)}
-        </p>
-        <p>
-          <strong>ID:</strong> {task.id}
-        </p>
-        <p>
-          <strong>Category:</strong> {task.category}
-        </p>
-        <p>
-          <strong>Target Audience:</strong> {task.target_audience}
-        </p>
-        {task.publishedUrl && (
-          <p>
-            <strong>Published URL:</strong>{' '}
-            <a
-              href={task.publishedUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              {task.publishedUrl}
-            </a>
-          </p>
-        )}
-        {task.error && <div className="error-message">Error: {task.error}</div>}
-      </div>
-      <RunHistory runs={runs} />
-    </div>
-  </div>
-);
+const TaskDetailModal = ({ task, onClose }) => {
+  const [runs, setRuns] = useState([]);
+  const [logs, setLogs] = useState({});
 
-const RunHistory = ({ runs }) => (
+  useEffect(() => {
+    if (!task) return;
+    const runsQuery = query(
+      collection(db, `content-tasks/${task.id}/runs`),
+      orderBy('startTime', 'desc')
+    );
+    const unsubscribeRuns = onSnapshot(runsQuery, (querySnapshot) => {
+      const runsData = querySnapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+      }));
+      setRuns(runsData);
+    });
+    return () => unsubscribeRuns();
+  }, [task]);
+
+  useEffect(() => {
+    if (runs.length > 0) {
+      const latestRunId = runs[0].id;
+      const logsQuery = query(
+        collection(db, `content-tasks/${task.id}/runs/${latestRunId}/logs`),
+        orderBy('timestamp', 'asc')
+      );
+      const unsubscribeLogs = onSnapshot(logsQuery, (querySnapshot) => {
+        const logsData = querySnapshot.docs.map((doc) => ({
+          id: doc.id,
+          ...doc.data(),
+        }));
+        setLogs((prevLogs) => ({ ...prevLogs, [latestRunId]: logsData }));
+      });
+      return () => unsubscribeLogs();
+    }
+  }, [runs, task.id]);
+
+  const handleUpdateStatus = async (newStatus) => {
+    try {
+      const taskRef = doc(db, 'content-tasks', task.id);
+      await updateDoc(taskRef, { status: newStatus });
+      onClose();
+    } catch (error) {
+      console.error('Failed to update task status:', error);
+      alert('Failed to update task status. Check the console for details.');
+    }
+  };
+
+  return (
+    <div className="modal-backdrop" onClick={onClose}>
+      <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+        <button className="close-btn" onClick={onClose}>
+          &times;
+        </button>
+        <h2>Task Details: {task.topic}</h2>
+        <div className="task-actions">
+          <button
+            onClick={() => handleUpdateStatus('Cancelled')}
+            className="action-btn cancel-btn"
+          >
+            Cancel Task
+          </button>
+          <button
+            onClick={() => handleUpdateStatus('Ready')}
+            className="action-btn rerun-btn"
+          >
+            Re-run Task
+          </button>
+        </div>
+        <div className="task-details">
+          <p>
+            <strong>Status:</strong> {renderStatus(task.status)}
+          </p>
+          <p>
+            <strong>ID:</strong> {task.id}
+          </p>
+          <p>
+            <strong>Category:</strong> {task.category}
+          </p>
+          <p>
+            <strong>Target Audience:</strong> {task.target_audience}
+          </p>
+          {task.publishedUrl && (
+            <p>
+              <strong>Published URL:</strong>{' '}
+              <a
+                href={task.publishedUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                {task.publishedUrl}
+              </a>
+            </p>
+          )}
+          {task.error && (
+            <div className="error-message">Error: {task.error}</div>
+          )}
+        </div>
+        <RunHistory runs={runs} logs={logs} />
+      </div>
+    </div>
+  );
+};
+
+const RunHistory = ({ runs, logs }) => (
   <div className="run-history">
     <h3>Run History</h3>
     {runs.length === 0 ? (
       <p>No runs found for this task.</p>
     ) : (
-      <ul>
-        {runs.map((run) => (
-          <li key={run.id}>
-            <strong>{formatTimestamp(run.startTime)}:</strong> {run.status}
-            {run.error && <p className="run-error">Error: {run.error}</p>}
-          </li>
-        ))}
-      </ul>
+      runs.map((run) => (
+        <div key={run.id} className="run-item">
+          <h4>
+            Run at {formatTimestamp(run.startTime)} - Status: {run.status}
+          </h4>
+          <LogViewer logs={logs[run.id] || []} />
+        </div>
+      ))
+    )}
+  </div>
+);
+
+const LogViewer = ({ logs }) => (
+  <div className="log-viewer">
+    {logs.length === 0 ? (
+      <p>No logs for this run.</p>
+    ) : (
+      <pre>
+        {logs.map(
+          (log) =>
+            `[${formatTimestamp(log.timestamp)}] ${log.level}: ${
+              log.message
+            }\\n`
+        )}
+      </pre>
     )}
   </div>
 );

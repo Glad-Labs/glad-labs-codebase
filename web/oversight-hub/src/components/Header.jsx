@@ -8,8 +8,17 @@ const Header = ({ onNewTask, onIntervene }) => (
       <button onClick={onNewTask} className="new-task-btn">
         Create New Task
       </button>
-      <button onClick={onIntervene} className="intervene-btn">
-        Intervene
+      <button
+        onClick={() => onIntervene('PAUSE_AGENT')}
+        className="intervene-btn pause-btn"
+      >
+        Pause Agent
+      </button>
+      <button
+        onClick={() => onIntervene('RESUME_AGENT')}
+        className="intervene-btn resume-btn"
+      >
+        Resume Agent
       </button>
     </div>
   </header>

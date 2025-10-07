@@ -1,0 +1,91 @@
+import React, { useState, useEffect } from 'react';
+import { db } from '../firebaseConfig';
+import { collection, onSnapshot, query, orderBy } from 'firebase/firestore';
+import { formatTimestamp } from '../utils/helpers';
+import './Financials.css';
+
+const Financials = () => {
+  const [entries, setEntries] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    const q = query(collection(db, 'financials'), orderBy('date', 'desc'));
+    const unsubscribe = onSnapshot(
+      q,
+      (querySnapshot) => {
+        const entriesData = querySnapshot.docs.map((doc) => ({
+          id: doc.id,
+          ...doc.data(),
+        }));
+        setEntries(entriesData);
+        setLoading(false);
+      },
+      (err) => {
+        setError(
+          'Failed to fetch financial data. Please check Firestore connection and permissions.'
+        );
+        setLoading(false);
+        console.error(err);
+      }
+    );
+    return () => unsubscribe();
+  }, []);
+
+  // --- Calculations ---
+  const totalSpend = entries.reduce(
+    (acc, entry) => acc + (entry.amount || 0),
+    0
+  );
+  const costPerArticle =
+    entries.length > 0 ? (totalSpend / entries.length).toFixed(2) : 0;
+
+  if (loading) return <p>Loading financial data...</p>;
+  if (error) return <div className="error-message">{error}</div>;
+
+  return (
+    <div className="financials-dashboard">
+      <h2>Financials</h2>
+      <div className="metrics-summary">
+        <div className="metric-card">
+          <h3>Total Spend</h3>
+          <p>${totalSpend.toFixed(2)}</p>
+        </div>
+        <div className="metric-card">
+          <h3>Cost Per Article</h3>
+          <p>${costPerArticle}</p>
+        </div>
+        <div className="metric-card">
+          <h3>Weekly Burn Rate (Est.)</h3>
+          <p>$--.--</p>
+          <small>(Feature coming soon)</small>
+        </div>
+      </div>
+      <div className="transactions-list">
+        <h3>Transaction History</h3>
+        <table>
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Description</th>
+              <th>Category</th>
+              <th>Amount</th>
+            </tr>
+          </thead>
+          <tbody>
+            {entries.map((entry) => (
+              <tr key={entry.id}>
+                <td>{formatTimestamp(entry.date)}</td>
+                <td>{entry.description}</td>
+                <td>{entry.category}</td>
+                <td>${(entry.amount || 0).toFixed(2)}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+};
+
+export default Financials;

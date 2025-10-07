@@ -37,7 +37,10 @@ import Header from './components/Header';
 import Dashboard from './components/Dashboard';
 import ContentQueue from './components/ContentQueue';
 import StrapiPosts from './components/StrapiPosts';
+import Financials from './components/Financials';
 import NewTaskModal from './components/NewTaskModal';
+import DataPane from './components/DataPane';
+import CommandPane from './components/CommandPane';
 import './OversightHub.css';
 
 // --- Helper Functions ---
@@ -113,12 +116,10 @@ const OversightHub = () => {
     setIsModalOpen(true);
   };
 
-  const handleIntervene = async () => {
+  const handleIntervene = async (command) => {
     const functionUrl = process.env.REACT_APP_INTERVENE_FUNCTION_URL;
     if (!functionUrl) {
-      alert(
-        'Intervention Function URL is not configured. Please set REACT_APP_INTERVENE_FUNCTION_URL in your .env.local file.'
-      );
+      alert('Intervention Function URL is not configured.');
       return;
     }
     try {
@@ -126,17 +127,15 @@ const OversightHub = () => {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          command: 'INTERVENE',
-          reason: 'Manual intervention from Oversight Hub',
+          command,
+          reason: `Manual intervention: ${command}`,
         }),
       });
-      if (!response.ok) throw new Error('Failed to send intervention signal.');
-      alert('Intervention signal sent successfully.');
+      if (!response.ok) throw new Error(`Failed to send ${command} signal.`);
+      alert(`${command} signal sent successfully.`);
     } catch (err) {
-      console.error('Intervention failed:', err);
-      alert(
-        'Failed to send intervention signal. Check the console for details.'
-      );
+      console.error(`${command} failed:`, err);
+      alert(`Failed to send ${command} signal.`);
     }
   };
 
@@ -155,41 +154,10 @@ const OversightHub = () => {
     <Router>
       <div className="oversight-hub-layout">
         <Sidebar />
-        <div className="main-content">
-          <Header
-            onNewTask={() => setIsNewTaskModalOpen(true)}
-            onIntervene={handleIntervene}
-          />
-          <div className="content-area">
-            {error && <div className="error-message">{error}</div>}
-            <Switch>
-              <Route path="/" exact>
-                <Dashboard />
-              </Route>
-              <Route path="/content-queue">
-                <ContentQueue
-                  tasks={tasks}
-                  onTaskClick={handleTaskClick}
-                  renderStatus={renderStatus}
-                  loading={loading}
-                  error={error}
-                  setError={setError}
-                  handleIntervene={handleIntervene}
-                  isNewTaskModalOpen={isNewTaskModalOpen}
-                  setIsNewTaskModalOpen={setIsNewTaskModalOpen}
-                />
-              </Route>
-              <Route path="/strapi-posts" component={StrapiPosts} />
-              {/* Add routes for future components here */}
-            </Switch>
-          </div>
-        </div>
-        {isNewTaskModalOpen && (
-          <NewTaskModal
-            onClose={() => setIsNewTaskModalOpen(false)}
-            setError={setError}
-          />
-        )}
+        <main className="main-content">
+          <DataPane />
+          <CommandPane />
+        </main>
       </div>
     </Router>
   );
