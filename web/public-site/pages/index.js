@@ -12,14 +12,14 @@
 
 import Head from 'next/head';
 import Layout from '../components/Layout';
-import PostList from '../components/PostList';
-import { getSortedPostsData } from '../lib/posts';
+import { getPaginatedPosts } from '../lib/api';
+import Link from 'next/link';
 
 /**
  * The Home component for the blog's main page.
  *
  * @param {Object} props
- * @param {Array<Object>} props.allPostsData - An array of post data fetched at build time.
+ * @param {Array<Object>} props.posts - An array of post data fetched at build time.
  * @returns {JSX.Element} The rendered home page.
  *
  * @suggestion FUTURE_ENHANCEMENT: Implement pagination. As the number of posts grows,
@@ -30,7 +30,7 @@ import { getSortedPostsData } from '../lib/posts';
  * highlight a specific article. This could be controlled by a `featured: true`
  * flag in the post's front-matter.
  */
-export default function Home({ allPostsData }) {
+export default function Home({ posts }) {
   return (
     <Layout>
       <Head>
@@ -49,7 +49,21 @@ export default function Home({ allPostsData }) {
         </header>
 
         <main>
-          <PostList posts={allPostsData} />
+          <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
+            {posts.map((post) => (
+              <Link key={post.id} href={`/posts/${post.attributes.Slug}`}>
+                <a className="block p-6 bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow">
+                  <h2 className="text-2xl font-bold mb-2">
+                    {post.attributes.Title}
+                  </h2>
+                  <p className="text-gray-600 mb-4">
+                    {new Date(post.attributes.publishedAt).toLocaleDateString()}
+                  </p>
+                  <p className="text-gray-700">{post.attributes.Excerpt}</p>
+                </a>
+              </Link>
+            ))}
+          </div>
         </main>
       </div>
     </Layout>
@@ -63,19 +77,17 @@ export default function Home({ allPostsData }) {
  * @returns {Promise<Object>} An object containing the props for the page and revalidation settings.
  *
  * @property {Object} props - The props to be passed to the component.
- * @property {Array<Object>} props.allPostsData - The sorted list of all blog posts.
+ * @property {Array<Object>} props.posts - The sorted list of all blog posts.
  * @property {number} revalidate - Enables Incremental Static Regeneration (ISR).
- * Next.js will attempt to re-generate the page at most once every 10 seconds,
+ * Next.js will attempt to re-generate the page at most once every 60 seconds,
  * allowing the blog to update with new posts without a full site rebuild.
  * @see {@link https://nextjs.org/docs/basic-features/data-fetching/incremental-static-regeneration}
  */
 export async function getStaticProps() {
-  const allPostsData = await getSortedPostsData();
+  const postsData = await getPaginatedPosts(1, 6); // Fetch the 6 most recent posts
   return {
-    props: {
-      allPostsData,
-    },
-    // Re-generate the page in the background if a request comes in after 10 seconds.
-    revalidate: 10,
+    props: { posts: postsData.data },
+    // Re-generate the page in the background if a request comes in after 60 seconds.
+    revalidate: 60,
   };
 }

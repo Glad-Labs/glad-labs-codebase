@@ -29,7 +29,6 @@ module.exports = {
    * to find class names. This is crucial for tree-shaking unused styles in production.
    */
   content: [
-    './app/**/*.{js,ts,jsx,tsx,mdx}',
     './pages/**/*.{js,ts,jsx,tsx,mdx}',
     './components/**/*.{js,ts,jsx,tsx,mdx}',
   ],

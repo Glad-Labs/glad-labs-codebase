@@ -12,8 +12,8 @@
 import Head from 'next/head';
 import Layout from '../components/Layout';
 import PostList from '../components/PostList';
-// Correcting the import to use the function designed for the archive.
-import { getAllPostsForArchive } from '../lib/posts';
+import { getPaginatedPosts } from '../lib/api';
+import Link from 'next/link';
 
 /**
  * Fetches all post data at build time.
@@ -22,13 +22,13 @@ import { getAllPostsForArchive } from '../lib/posts';
  * @returns {Promise<Object>} An object containing the props to be passed to the Archive component.
  */
 export async function getStaticProps() {
-  // Using the correct function to fetch ALL posts for the archive page.
-  const allPostsData = await getAllPostsForArchive();
+  const postsData = await getPaginatedPosts(1, 100); // Fetch all posts
   return {
     props: {
-      allPostsData,
+      posts: postsData.data,
+      pagination: postsData.meta.pagination,
     },
-    revalidate: 60, // Can be revalidated less frequently than the homepage.
+    revalidate: 60,
   };
 }
 
@@ -37,14 +37,14 @@ export async function getStaticProps() {
  * Renders a list of all blog posts.
  *
  * @param {Object} props
- * @param {Array<Object>} props.allPostsData - The complete, sorted list of posts from `getStaticProps`.
+ * @param {Array<Object>} props.posts - The complete, sorted list of posts from `getStaticProps`.
  * @returns {JSX.Element} The rendered archive page.
  *
  * @suggestion FUTURE_ENHANCEMENT: For a large number of posts, this page could become
  * very long. Consider grouping posts by year or month, or adding client-side
  * filtering and sorting options to improve usability.
  */
-export default function Archive({ allPostsData }) {
+export default function Archive({ posts, pagination }) {
   return (
     <Layout>
       <Head>
@@ -59,7 +59,22 @@ export default function Archive({ allPostsData }) {
           <h1 className="text-5xl font-bold text-cyan-400 mb-8">
             Content Archive
           </h1>
-          <PostList posts={allPostsData} />
+          <div className="space-y-8">
+            {posts.map((post) => (
+              <Link key={post.id} href={`/posts/${post.attributes.Slug}`}>
+                <a className="block p-6 bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow">
+                  <h2 className="text-2xl font-bold mb-2">
+                    {post.attributes.Title}
+                  </h2>
+                  <p className="text-gray-600 mb-4">
+                    {new Date(post.attributes.publishedAt).toLocaleDateString()}
+                  </p>
+                  <p className="text-gray-700">{post.attributes.Excerpt}</p>
+                </a>
+              </Link>
+            ))}
+          </div>
+          {/* Add pagination controls here in the future */}
         </div>
       </div>
     </Layout>

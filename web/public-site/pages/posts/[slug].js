@@ -1,39 +1,45 @@
 import Layout from '../../components/Layout';
-import { getAllPostSlugs, getPostData } from '../../lib/posts';
+import { getPostBySlug, getPaginatedPosts } from '../../lib/api';
 import Head from 'next/head';
 import Image from 'next/image';
 // Import the new blocks renderer
 import { BlocksRenderer } from '@strapi/blocks-react-renderer';
 
-export default function Post({ postData }) {
-  const featuredImage = postData.FeaturedImage?.data?.attributes;
+export default function Post({ post }) {
+  if (!post) return <div>Loading...</div>;
+
+  const { Title, BodyContent, publishedAt, FeaturedImage } = post.attributes;
+  const imageUrl = FeaturedImage?.data?.attributes?.url;
 
   return (
     <Layout>
       <Head>
-        <title>{postData.Title} | GLAD Labs</title>
-        <meta name="description" content={postData.Excerpt} />
+        <title>{Title} | GLAD Labs Blog</title>
       </Head>
       <div className="container mx-auto px-4 py-12">
         <article className="max-w-4xl mx-auto">
           <h1 className="text-4xl md:text-5xl font-bold text-cyan-300 mb-4 leading-tight">
-            {postData.Title}
+            {Title}
           </h1>
-          <p className="text-lg text-gray-400 mb-8">{postData.Excerpt}</p>
+          <p className="text-lg text-gray-400 mb-8">
+            Published on {new Date(publishedAt).toLocaleDateString()}
+          </p>
 
-          {featuredImage && (
-            <Image
-              src={featuredImage.url}
-              width={featuredImage.width}
-              height={featuredImage.height}
-              alt={featuredImage.alternativeText || postData.Title}
-              className="w-full h-auto object-cover rounded-lg shadow-lg mb-8"
-            />
+          {imageUrl && (
+            <div className="relative h-96 mb-8">
+              <Image
+                src={imageUrl}
+                alt={FeaturedImage.data.attributes.alternativeText || Title}
+                layout="fill"
+                objectFit="cover"
+                className="rounded-lg"
+              />
+            </div>
           )}
 
-          <div className="prose prose-invert lg:prose-xl mx-auto prose-h1:text-cyan-300 prose-h2:text-cyan-300 prose-a:text-cyan-400 hover:prose-a:text-cyan-300">
+          <div className="prose prose-invert lg:prose-xl mx-auto">
             {/* Replace the dangerouslySetInnerHTML with the BlocksRenderer */}
-            <BlocksRenderer content={postData.BodyContent} />
+            <BlocksRenderer content={BodyContent} />
           </div>
         </article>
       </div>
@@ -42,30 +48,18 @@ export default function Post({ postData }) {
 }
 
 export async function getStaticPaths() {
-  const paths = await getAllPostSlugs();
-  return {
-    paths,
-    fallback: 'blocking', // Allows for new pages to be generated on the fly
-  };
+  const postsData = await getPaginatedPosts(1, 100); // Fetch all posts to generate paths
+  const paths = postsData.data.map((post) => ({
+    params: { slug: post.attributes.Slug },
+  }));
+
+  return { paths, fallback: 'blocking' };
 }
 
 export async function getStaticProps({ params }) {
-  const postData = await getPostData(params.slug);
-
-  if (!postData) {
-    return {
-      notFound: true,
-    };
-  }
-
-  // The 'marked' processing is no longer needed.
-  // We pass the raw 'BodyContent' (the blocks array) directly to the component.
-
+  const post = await getPostBySlug(params.slug);
   return {
-    props: {
-      // Pass postData directly without modification
-      postData,
-    },
-    revalidate: 10, // In seconds
+    props: { post },
+    revalidate: 60,
   };
 }
