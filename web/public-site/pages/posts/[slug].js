@@ -2,28 +2,72 @@ import Layout from '../../components/Layout';
 import { getPostBySlug, getPaginatedPosts } from '../../lib/api';
 import Head from 'next/head';
 import Image from 'next/image';
-// Import the new blocks renderer
+import Link from 'next/link';
 import { BlocksRenderer } from '@strapi/blocks-react-renderer';
+
+const PostMeta = ({ category, tags }) => (
+  <div className="flex items-center space-x-4 text-gray-400">
+    {category && (
+      <Link
+        href={`/category/${category.data.attributes.Slug}`}
+        className="hover:text-cyan-400"
+      >
+        {category.data.attributes.Name}
+      </Link>
+    )}
+    {tags && tags.data.length > 0 && <span>|</span>}
+    <div className="flex space-x-2">
+      {tags &&
+        tags.data.map((tag) => (
+          <Link
+            key={tag.id}
+            href={`/tag/${tag.attributes.Slug}`}
+            className="hover:text-cyan-400"
+          >
+            #{tag.attributes.Name}
+          </Link>
+        ))}
+    </div>
+  </div>
+);
 
 export default function Post({ post }) {
   if (!post) return <div>Loading...</div>;
 
-  const { Title, BodyContent, publishedAt, FeaturedImage } = post;
+  const { Title, BodyContent, publishedAt, FeaturedImage, category, tags } = post;
   const imageUrl = FeaturedImage?.data?.url;
 
   return (
     <Layout>
       <Head>
         <title>{Title} | GLAD Labs Blog</title>
+        <meta name="description" content={post.Excerpt} />
+        {/* Open Graph */}
+        <meta property="og:title" content={Title} />
+        <meta property="og:description" content={post.Excerpt} />
+        <meta property="og:image" content={imageUrl} />
+        <meta property="og:url" content={`https://www.glad-labs.com/posts/${post.Slug}`} />
+        <meta property="og:type" content="article" />
+        {/* Twitter Card */}
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content={Title} />
+        <meta name="twitter:description" content={post.Excerpt} />
+        <meta name="twitter:image" content={imageUrl} />
       </Head>
       <div className="container mx-auto px-4 py-12">
         <article className="max-w-4xl mx-auto">
-          <h1 className="text-4xl md:text-5xl font-bold text-cyan-300 mb-4 leading-tight">
-            {Title}
-          </h1>
-          <p className="text-lg text-gray-400 mb-8">
-            Published on {new Date(publishedAt).toLocaleDateString()}
-          </p>
+          <div className="mb-8 text-center">
+            <h1 className="text-4xl md:text-5xl font-bold text-cyan-300 mb-4 leading-tight">
+              {Title}
+            </h1>
+            <p className="text-lg text-gray-400 mb-4">
+              Published on {new Date(publishedAt).toLocaleDateString()}
+            </p>
+            <PostMeta category={category} tags={tags} />
+            <p className="text-sm text-gray-500 mt-2">
+              Note: For categories and tags to appear, ensure you have set up the relations in your Strapi Post content type.
+            </p>
+          </div>
 
           {imageUrl && (
             <div className="relative h-96 mb-8">
@@ -38,7 +82,6 @@ export default function Post({ post }) {
           )}
 
           <div className="prose prose-invert lg:prose-xl mx-auto">
-            {/* Replace the dangerouslySetInnerHTML with the BlocksRenderer */}
             <BlocksRenderer content={BodyContent} />
           </div>
         </article>
@@ -48,7 +91,7 @@ export default function Post({ post }) {
 }
 
 export async function getStaticPaths() {
-  const postsData = await getPaginatedPosts(1, 100); // Fetch all posts to generate paths
+  const postsData = await getPaginatedPosts(1, 100);
   const paths = postsData.data.map((post) => ({
     params: { slug: post.Slug },
   }));

@@ -1,36 +1,46 @@
-/**
- * @file pages/index.js
- * @description The home page for the GLAD Labs blog. It displays a list of the
- * most recent blog posts using Static Site Generation (SSG) with Incremental
- * Static Regeneration (ISR) for frequent updates.
- *
- * @requires next/head - For managing the document head (e.g., title, meta tags).
- * @requires ../components/Layout - The main layout component for the site.
- * @requires ../components/PostList - The component that renders the list of posts.
- * @requires ../lib/posts - The library function for fetching post data.
- */
-
 import Head from 'next/head';
 import Layout from '../components/Layout';
-import { getPaginatedPosts } from '../lib/api';
+import { getPaginatedPosts, getFeaturedPost } from '../lib/api';
 import Link from 'next/link';
+import Image from 'next/image';
+import PostCard from '../components/PostCard';
 
-/**
- * The Home component for the blog's main page.
- *
- * @param {Object} props
- * @param {Array<Object>} props.posts - An array of post data fetched at build time.
- * @returns {JSX.Element} The rendered home page.
- *
- * @suggestion FUTURE_ENHANCEMENT: Implement pagination. As the number of posts grows,
- * displaying all of them on one page will become slow. `getStaticProps` can be
- * extended to support paginated routes.
- *
- * @suggestion FUTURE_ENHANCEMENT: Add a "Featured Post" section at the top to
- * highlight a specific article. This could be controlled by a `featured: true`
- * flag in the post's front-matter.
- */
-export default function Home({ posts }) {
+const FeaturedPost = ({ post }) => {
+  if (!post) return null;
+
+  const { Title, Excerpt, Slug, FeaturedImage } = post;
+  const imageUrl = FeaturedImage?.data?.url;
+
+  return (
+    <div className="mb-12">
+      <h2 className="text-3xl font-bold text-cyan-400 mb-4">Featured Post</h2>
+      <p className="text-sm text-gray-400 mb-4">
+        To set the featured post, go to the Strapi admin, edit a post, and check the "Featured" boolean.
+      </p>
+      <Link
+        href={`/posts/${Slug}`}
+        className="block bg-gray-800 rounded-lg shadow-lg overflow-hidden"
+      >
+        {imageUrl && (
+          <div className="relative h-64">
+            <Image
+              src={imageUrl}
+              alt={FeaturedImage.data.alternativeText || Title}
+              layout="fill"
+              objectFit="cover"
+            />
+          </div>
+        )}
+        <div className="p-6">
+          <h3 className="text-2xl font-bold mb-2">{Title}</h3>
+          <p className="text-gray-400">{Excerpt}</p>
+        </div>
+      </Link>
+    </div>
+  );
+};
+
+export default function Home({ featuredPost, posts }) {
   return (
     <Layout>
       <Head>
@@ -39,21 +49,35 @@ export default function Home({ posts }) {
           name="description"
           content="An autonomous content creation experiment by Glad Labs."
         />
+        {/* Open Graph */}
+        <meta property="og:title" content="Glad Labs Frontier" />
+        <meta property="og:description" content="An autonomous content creation experiment by Glad Labs." />
+        <meta property="og:image" content="https://www.glad-labs.com/og-image.jpg" />
+        <meta property="og:url" content="https://www.glad-labs.com" />
+        <meta property="og:type" content="website" />
+        {/* Twitter Card */}
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content="Glad Labs Frontier" />
+        <meta name="twitter:description" content="An autonomous content creation experiment by Glad Labs." />
+        <meta name="twitter:image" content="https://www.glad-labs.com/og-image.jpg" />
       </Head>
-      <div className="container mx-auto px-4">
+      <div className="container mx-auto px-4 py-12">
         <main>
+          <FeaturedPost post={featuredPost} />
+
+          <h2 className="text-3xl font-bold text-cyan-400 mb-8">Recent Posts</h2>
           <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
             {posts.map((post) => (
-              <Link key={post.id} href={`/posts/${post.Slug}`}>
-                <a className="block p-6 bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow">
-                  <h2 className="text-2xl font-bold mb-2">{post.Title}</h2>
-                  <p className="text-gray-600 mb-4">
-                    {new Date(post.publishedAt).toLocaleDateString()}
-                  </p>
-                  <p className="text-gray-700">{post.Excerpt}</p>
-                </a>
-              </Link>
+              <PostCard key={post.id} post={post} />
             ))}
+          </div>
+          <div className="text-center mt-12">
+            <Link
+              href="/archive/1"
+              className="inline-block bg-cyan-500 text-white px-6 py-3 rounded-lg hover:bg-cyan-600 transition-colors"
+            >
+              View All Posts
+            </Link>
           </div>
         </main>
       </div>
@@ -61,24 +85,15 @@ export default function Home({ posts }) {
   );
 }
 
-/**
- * Fetches data at build time using Static Site Generation (SSG).
- * This function gets a sorted list of all posts and passes it as props to the Home component.
- *
- * @returns {Promise<Object>} An object containing the props for the page and revalidation settings.
- *
- * @property {Object} props - The props to be passed to the component.
- * @property {Array<Object>} props.posts - The sorted list of all blog posts.
- * @property {number} revalidate - Enables Incremental Static Regeneration (ISR).
- * Next.js will attempt to re-generate the page at most once every 60 seconds,
- * allowing the blog to update with new posts without a full site rebuild.
- * @see {@link https://nextjs.org/docs/basic-features/data-fetching/incremental-static-regeneration}
- */
 export async function getStaticProps() {
-  const postsData = await getPaginatedPosts(1, 6); // Fetch the 6 most recent posts
+  const featuredPost = await getFeaturedPost();
+  const postsData = await getPaginatedPosts(1, 6, featuredPost?.id);
+
   return {
-    props: { posts: postsData.data },
-    // Re-generate the page in the background if a request comes in after 60 seconds.
+    props: {
+      featuredPost: featuredPost || null,
+      posts: postsData.data,
+    },
     revalidate: 60,
   };
 }

@@ -45,7 +45,7 @@ async function fetchAPI(path, urlParamsObject = {}, options = {}) {
   return data;
 }
 
-export async function getPaginatedPosts(page = 1, pageSize = 10) {
+export async function getPaginatedPosts(page = 1, pageSize = 10, excludeId = null) {
   const query = qs.stringify({
     populate: '*',
     sort: { publishedAt: 'desc' },
@@ -53,12 +53,34 @@ export async function getPaginatedPosts(page = 1, pageSize = 10) {
       page,
       pageSize,
     },
-  });
+    filters: {
+      id: {
+        $ne: excludeId,
+      },
+    },
+  }, { encode: false });
   const data = await fetchAPI(`/posts?${query}`);
   return {
     ...data,
     data: data.data.map((post) => ({ id: post.id, ...post.attributes })),
   };
+}
+
+export async function getFeaturedPost() {
+  const query = qs.stringify({
+    filters: { Featured: { $eq: true } },
+    sort: { publishedAt: 'desc' },
+    pagination: {
+      limit: 1,
+    },
+    populate: '*',
+  });
+  const data = await fetchAPI(`/posts?${query}`);
+  if (data && data.data && data.data.length > 0) {
+    const post = data.data[0];
+    return { id: post.id, ...post.attributes };
+  }
+  return null;
 }
 
 export async function getPostBySlug(slug) {
@@ -73,4 +95,61 @@ export async function getPostBySlug(slug) {
     return { id: post.id, ...post.attributes };
   }
   return null;
+}
+
+export async function getAboutPage() {
+  const query = qs.stringify({ populate: '*' });
+  const data = await fetchAPI(`/about?${query}`);
+  if (data && data.data) {
+    return { id: data.data.id, ...data.data.attributes };
+  }
+  return null;
+}
+
+export async function getCategories() {
+  const data = await fetchAPI('/categories');
+  return data.data.map((category) => ({ id: category.id, ...category.attributes }));
+}
+
+export async function getTags() {
+  const data = await fetchAPI('/tags');
+  return data.data.map((tag) => ({ id: tag.id, ...tag.attributes }));
+}
+
+export async function getCategoryBySlug(slug) {
+  const query = qs.stringify({ filters: { slug: { $eq: slug } } });
+  const data = await fetchAPI(`/categories?${query}`);
+  if (data && data.data && data.data.length > 0) {
+    const category = data.data[0];
+    return { id: category.id, ...category.attributes };
+  }
+  return null;
+}
+
+export async function getTagBySlug(slug) {
+  const query = qs.stringify({ filters: { slug: { $eq: slug } } });
+  const data = await fetchAPI(`/tags?${query}`);
+  if (data && data.data && data.data.length > 0) {
+    const tag = data.data[0];
+    return { id: tag.id, ...tag.attributes };
+  }
+  return null;
+}
+
+export async function getPostsByCategory(categorySlug) {
+  const query = qs.stringify({
+    filters: { category: { slug: { $eq: categorySlug } } },
+    populate: '*',
+  });
+  const data = await fetchAPI(`/posts?${query}`);
+  return data.data.map((post) => ({ id: post.id, ...post.attributes }));
+}
+
+export async function getPostsByTag(tagSlug) {
+  const query = qs.stringify({
+    filters: { tags: { slug: { $eq: tagSlug } } },
+    populate: '*',
+  });
+  const data = await fetchAPI(`/posts?${query}`);
+  return data.data.map((post) => ({ id: post.id, ...post.attributes }));
 }
