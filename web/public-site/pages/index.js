@@ -15,7 +15,8 @@ const FeaturedPost = ({ post }) => {
     <div className="mb-12">
       <h2 className="text-3xl font-bold text-cyan-400 mb-4">Featured Post</h2>
       <p className="text-sm text-gray-400 mb-4">
-        To set the featured post, go to the Strapi admin, edit a post, and check the "Featured" boolean.
+        To set the featured post, go to the Strapi admin, edit a post, and check
+        the "Featured" boolean.
       </p>
       <Link
         href={`/posts/${Slug}`}
@@ -51,21 +52,35 @@ export default function Home({ featuredPost, posts }) {
         />
         {/* Open Graph */}
         <meta property="og:title" content="Glad Labs Frontier" />
-        <meta property="og:description" content="An autonomous content creation experiment by Glad Labs." />
-        <meta property="og:image" content="https://www.glad-labs.com/og-image.jpg" />
+        <meta
+          property="og:description"
+          content="An autonomous content creation experiment by Glad Labs."
+        />
+        <meta
+          property="og:image"
+          content="https://www.glad-labs.com/og-image.jpg"
+        />
         <meta property="og:url" content="https://www.glad-labs.com" />
         <meta property="og:type" content="website" />
         {/* Twitter Card */}
         <meta name="twitter:card" content="summary_large_image" />
         <meta name="twitter:title" content="Glad Labs Frontier" />
-        <meta name="twitter:description" content="An autonomous content creation experiment by Glad Labs." />
-        <meta name="twitter:image" content="https://www.glad-labs.com/og-image.jpg" />
+        <meta
+          name="twitter:description"
+          content="An autonomous content creation experiment by Glad Labs."
+        />
+        <meta
+          name="twitter:image"
+          content="https://www.glad-labs.com/og-image.jpg"
+        />
       </Head>
       <div className="container mx-auto px-4 py-12">
         <main>
           <FeaturedPost post={featuredPost} />
 
-          <h2 className="text-3xl font-bold text-cyan-400 mb-8">Recent Posts</h2>
+          <h2 className="text-3xl font-bold text-cyan-400 mb-8">
+            Recent Posts
+          </h2>
           <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
             {posts.map((post) => (
               <PostCard key={post.id} post={post} />

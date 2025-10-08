@@ -1,11 +1,15 @@
 import React from 'react';
+import useStore from '../../store/useStore';
 import StatusBadge from '../common/StatusBadge';
 import ErrorMessage from '../common/ErrorMessage';
 import RunHistory from './RunHistory';
 import { useRuns } from '../../features/tasks/useRuns';
 
-const TaskDetailModal = ({ task, onClose }) => {
-  const { runs, loading } = useRuns(task?.id);
+const TaskDetailModal = ({ onClose }) => {
+  const { selectedTask } = useStore();
+  const { runs, loading } = useRuns(selectedTask?.id);
+
+  if (!selectedTask) return null;
 
   return (
     <div className="modal-backdrop" onClick={onClose}>
@@ -13,33 +17,34 @@ const TaskDetailModal = ({ task, onClose }) => {
         <button className="close-btn" onClick={onClose}>
           &times;
         </button>
-        <h2>Task Details: {task.topic}</h2>
+        <h2>Task Details: {selectedTask.topic}</h2>
         <div className="task-details">
           <p>
-            <strong>Status:</strong> <StatusBadge status={task.status} />
+            <strong>Status:</strong>{' '}
+            <StatusBadge status={selectedTask.status} />
           </p>
           <p>
-            <strong>ID:</strong> {task.id}
+            <strong>ID:</strong> {selectedTask.id}
           </p>
           <p>
-            <strong>Category:</strong> {task.category}
+            <strong>Category:</strong> {selectedTask.category}
           </p>
           <p>
-            <strong>Target Audience:</strong> {task.target_audience}
+            <strong>Target Audience:</strong> {selectedTask.target_audience}
           </p>
-          {task.publishedUrl && (
+          {selectedTask.publishedUrl && (
             <p>
               <strong>Published URL:</strong>{' '}
               <a
-                href={task.publishedUrl}
+                href={selectedTask.publishedUrl}
                 target="_blank"
                 rel="noopener noreferrer"
               >
-                {task.publishedUrl}
+                {selectedTask.publishedUrl}
               </a>
             </p>
           )}
-          {task.error && <ErrorMessage message={task.error} />}
+          {selectedTask.error && <ErrorMessage message={selectedTask.error} />}
         </div>
         {loading ? <p>Loading run history...</p> : <RunHistory runs={runs} />}
       </div>

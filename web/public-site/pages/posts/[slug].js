@@ -34,7 +34,8 @@ const PostMeta = ({ category, tags }) => (
 export default function Post({ post }) {
   if (!post) return <div>Loading...</div>;
 
-  const { Title, BodyContent, publishedAt, FeaturedImage, category, tags } = post;
+  const { Title, BodyContent, publishedAt, FeaturedImage, category, tags } =
+    post;
   const imageUrl = FeaturedImage?.data?.url;
 
   return (
@@ -46,7 +47,10 @@ export default function Post({ post }) {
         <meta property="og:title" content={Title} />
         <meta property="og:description" content={post.Excerpt} />
         <meta property="og:image" content={imageUrl} />
-        <meta property="og:url" content={`https://www.glad-labs.com/posts/${post.Slug}`} />
+        <meta
+          property="og:url"
+          content={`https://www.glad-labs.com/posts/${post.Slug}`}
+        />
         <meta property="og:type" content="article" />
         {/* Twitter Card */}
         <meta name="twitter:card" content="summary_large_image" />
@@ -65,7 +69,8 @@ export default function Post({ post }) {
             </p>
             <PostMeta category={category} tags={tags} />
             <p className="text-sm text-gray-500 mt-2">
-              Note: For categories and tags to appear, ensure you have set up the relations in your Strapi Post content type.
+              Note: For categories and tags to appear, ensure you have set up
+              the relations in your Strapi Post content type.
             </p>
           </div>
 

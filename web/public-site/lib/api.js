@@ -45,20 +45,27 @@ async function fetchAPI(path, urlParamsObject = {}, options = {}) {
   return data;
 }
 
-export async function getPaginatedPosts(page = 1, pageSize = 10, excludeId = null) {
-  const query = qs.stringify({
-    populate: '*',
-    sort: { publishedAt: 'desc' },
-    pagination: {
-      page,
-      pageSize,
-    },
-    filters: {
-      id: {
-        $ne: excludeId,
+export async function getPaginatedPosts(
+  page = 1,
+  pageSize = 10,
+  excludeId = null
+) {
+  const query = qs.stringify(
+    {
+      populate: '*',
+      sort: { publishedAt: 'desc' },
+      pagination: {
+        page,
+        pageSize,
+      },
+      filters: {
+        id: {
+          $ne: excludeId,
+        },
       },
     },
-  }, { encode: false });
+    { encode: false }
+  );
   const data = await fetchAPI(`/posts?${query}`);
   return {
     ...data,
@@ -108,7 +115,10 @@ export async function getAboutPage() {
 
 export async function getCategories() {
   const data = await fetchAPI('/categories');
-  return data.data.map((category) => ({ id: category.id, ...category.attributes }));
+  return data.data.map((category) => ({
+    id: category.id,
+    ...category.attributes,
+  }));
 }
 
 export async function getTags() {

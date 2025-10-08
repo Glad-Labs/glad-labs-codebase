@@ -18,7 +18,9 @@ const TaskList = ({ tasks, onTaskClick }) => (
         {tasks.map((task) => (
           <tr key={task.id} onClick={() => onTaskClick(task)}>
             <td>{task.topic}</td>
-            <td><StatusBadge status={task.status} /></td>
+            <td>
+              <StatusBadge status={task.status} />
+            </td>
             <td>{formatTimestamp(task.createdAt)}</td>
             <td>{task.primary_keyword}</td>
           </tr>

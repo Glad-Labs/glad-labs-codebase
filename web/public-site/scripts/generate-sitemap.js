@@ -1,8 +1,8 @@
-
 const fs = require('fs');
 const qs = require('qs');
 
-const STRAPI_API_URL = process.env.NEXT_PUBLIC_STRAPI_API_URL || 'http://localhost:1337';
+const STRAPI_API_URL =
+  process.env.NEXT_PUBLIC_STRAPI_API_URL || 'http://localhost:1337';
 const SITE_URL = 'https://www.glad-labs.com'; // Replace with your actual site URL
 
 async function fetchAPI(path, urlParamsObject = {}, options = {}) {
@@ -11,7 +11,9 @@ async function fetchAPI(path, urlParamsObject = {}, options = {}) {
     ...options,
   };
   const queryString = qs.stringify(urlParamsObject);
-  const requestUrl = `${STRAPI_API_URL}${path}${queryString ? `?${queryString}` : ''}`;
+  const requestUrl = `${STRAPI_API_URL}${path}${
+    queryString ? `?${queryString}` : ''
+  }`;
   const response = await fetch(requestUrl, mergedOptions);
   if (!response.ok) {
     console.error(response.statusText);
@@ -30,7 +32,10 @@ async function getAllContent() {
 
   return {
     posts: posts.data.map((post) => ({ id: post.id, ...post.attributes })),
-    categories: categories.data.map((category) => ({ id: category.id, ...category.attributes })),
+    categories: categories.data.map((category) => ({
+      id: category.id,
+      ...category.attributes,
+    })),
     tags: tags.data.map((tag) => ({ id: tag.id, ...tag.attributes })),
   };
 }

@@ -16,37 +16,26 @@ const Sidebar = () => (
       </li>
       <li>
         <NavLink
-          to="/content-queue"
+          to="/content"
           className={({ isActive }) => (isActive ? 'active' : '')}
         >
-          Content Queue
+          Content
         </NavLink>
       </li>
       <li>
         <NavLink
-          to="/strapi-posts"
+          to="/analytics"
           className={({ isActive }) => (isActive ? 'active' : '')}
         >
-          Strapi Posts
+          Analytics
         </NavLink>
       </li>
       <li>
         <NavLink
-          to="/financials"
+          to="/settings"
           className={({ isActive }) => (isActive ? 'active' : '')}
         >
-          Financials
-        </NavLink>
-      </li>
-      {/* Future sections */}
-      <li>
-        <NavLink
-          to="/marketing"
-          className={({ isActive }) =>
-            isActive ? 'active disabled-link' : 'disabled-link'
-          }
-        >
-          Marketing
+          Settings
         </NavLink>
       </li>
     </ul>

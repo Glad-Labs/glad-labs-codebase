@@ -10,9 +10,12 @@ import {
 import '@chatscope/chat-ui-kit-styles/dist/default/styles.min.css';
 import './CommandPane.css';
 
+import useStore from '../../store/useStore';
+
 const COFOUNDER_API_URL = 'http://localhost:8000/command';
 
 const CommandPane = () => {
+  const { selectedTask } = useStore();
   const [messages, setMessages] = useState([
     {
       message:
@@ -41,7 +44,7 @@ const CommandPane = () => {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ command: message }),
+        body: JSON.stringify({ command: message, task: selectedTask }),
       });
 
       if (!response.ok) {
@@ -71,6 +74,22 @@ const CommandPane = () => {
 
   return (
     <div className="command-pane">
+      {selectedTask ? (
+        <div className="p-4 border-b">
+          <h2 className="text-lg font-semibold">{selectedTask.title}</h2>
+          <p className="text-sm text-gray-500">Status: {selectedTask.status}</p>
+          <p className="text-sm text-gray-500">
+            Priority: {selectedTask.priority}
+          </p>
+          <p className="text-sm text-gray-500">
+            Due Date: {selectedTask.dueDate}
+          </p>
+        </div>
+      ) : (
+        <div className="p-4 border-b">
+          <p>Select a task to see the details here.</p>
+        </div>
+      )}
       <MainContainer>
         <ChatContainer>
           <MessageList
@@ -85,6 +104,7 @@ const CommandPane = () => {
           <MessageInput
             placeholder="Type your command here..."
             onSend={handleSend}
+            disabled={!selectedTask}
           />
         </ChatContainer>
       </MainContainer>

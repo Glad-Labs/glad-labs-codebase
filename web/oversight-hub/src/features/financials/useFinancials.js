@@ -22,7 +22,9 @@ export const useFinancials = () => {
         setLoading(false);
       },
       (err) => {
-        setError('Failed to fetch financial data. Please check Firestore connection and permissions.');
+        setError(
+          'Failed to fetch financial data. Please check Firestore connection and permissions.'
+        );
         setLoading(false);
         console.error(err);
       }

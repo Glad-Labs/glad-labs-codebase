@@ -1,7 +1,10 @@
-
 import Head from 'next/head';
 import Layout from '../../components/Layout';
-import { getCategories, getCategoryBySlug, getPostsByCategory } from '../../lib/api';
+import {
+  getCategories,
+  getCategoryBySlug,
+  getPostsByCategory,
+} from '../../lib/api';
 import Link from 'next/link';
 
 export default function CategoryPage({ category, posts }) {
