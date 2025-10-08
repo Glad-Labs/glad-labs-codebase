@@ -40,6 +40,13 @@ const Financials = () => {
   const costPerArticle =
     entries.length > 0 ? (totalSpend / entries.length).toFixed(2) : 0;
 
+  // Calculate weekly burn rate
+  const oneWeekAgo = new Date();
+  oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
+  const weeklySpend = entries
+    .filter((entry) => entry.timestamp && entry.timestamp.toDate() > oneWeekAgo)
+    .reduce((acc, entry) => acc + (entry.amount || 0), 0);
+
   if (loading) return <p>Loading financial data...</p>;
   if (error) return <div className="error-message">{error}</div>;
 
@@ -56,13 +63,13 @@ const Financials = () => {
           <p>${costPerArticle}</p>
         </div>
         <div className="metric-card">
-          <h3>Weekly Burn Rate (Est.)</h3>
-          <p>$--.--</p>
-          <small>(Feature coming soon)</small>
+          <h3>Weekly Burn Rate</h3>
+          <p>${weeklySpend.toFixed(2)}</p>
+          <small>(Last 7 days)</small>
         </div>
       </div>
+      <h3>Recent Transactions</h3>
       <div className="transactions-list">
-        <h3>Transaction History</h3>
         <table>
           <thead>
             <tr>
