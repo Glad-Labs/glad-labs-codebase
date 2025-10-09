@@ -8,7 +8,7 @@ import {
   TypingIndicator,
 } from '@chatscope/chat-ui-kit-react';
 import '@chatscope/chat-ui-kit-styles/dist/default/styles.min.css';
-import './CommandPane.css';
+import '../CommandPane.css';
 
 import useStore from '../../store/useStore';
 

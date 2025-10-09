@@ -16,7 +16,7 @@ const FeaturedPost = ({ post }) => {
       <h2 className="text-3xl font-bold text-cyan-400 mb-4">Featured Post</h2>
       <p className="text-sm text-gray-400 mb-4">
         To set the featured post, go to the Strapi admin, edit a post, and check
-        the "Featured" boolean.
+        the &ldquo;Featured&rdquo; boolean.
       </p>
       <Link
         href={`/posts/${Slug}`}

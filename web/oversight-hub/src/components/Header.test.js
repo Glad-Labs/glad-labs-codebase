@@ -16,7 +16,7 @@ test('renders header and handles button clicks', () => {
   fireEvent.click(screen.getByText(/Create New Task/i));
   expect(handleNewTask).toHaveBeenCalledTimes(1);
 
-  // Simulate a click on the "Intervene" button
-  fireEvent.click(screen.getByText(/Intervene/i));
+  // Simulate a click on the "Pause Agent" button
+  fireEvent.click(screen.getByText(/Pause Agent/i));
   expect(handleIntervene).toHaveBeenCalledTimes(1);
 });

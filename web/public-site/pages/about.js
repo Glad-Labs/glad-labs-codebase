@@ -45,8 +45,9 @@ export default function About({ content }) {
               <h1>About Glad Labs</h1>
               <p>This content should be editable in the Strapi CMS.</p>
               <p>
-                To set this up, create a new "Single Type" in Strapi called
-                "About" with a "Rich Text" field named "Content".
+                To set this up, create a new &ldquo;Single Type&rdquo; in Strapi
+                called &ldquo;About&rdquo; with a &ldquo;Rich Text&rdquo; field
+                named &ldquo;Content&rdquo;.
               </p>
             </>
           )}
