@@ -9,9 +9,7 @@ const formatTimestamp = (timestamp) => {
 
 const renderStatus = (status) => (
   <span
-    className={`status-badge status-${status
-      ?.toLowerCase()
-      .replace(' ', '-')}`}
+    className={`status-badge status-${status?.toLowerCase().replace(' ', '-')}`}
   >
     {status || 'Unknown'}
   </span>

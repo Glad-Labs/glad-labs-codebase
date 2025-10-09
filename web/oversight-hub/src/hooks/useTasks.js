@@ -9,7 +9,10 @@ const useTasks = () => {
   const setTasks = useStore((state) => state.setTasks);
 
   useEffect(() => {
-    const q = query(collection(db, 'content-tasks'), orderBy('createdAt', 'desc'));
+    const q = query(
+      collection(db, 'content-tasks'),
+      orderBy('createdAt', 'desc')
+    );
     const unsubscribe = onSnapshot(
       q,
       (querySnapshot) => {
@@ -21,7 +24,9 @@ const useTasks = () => {
         setLoading(false);
       },
       (err) => {
-        setError('Failed to fetch tasks. Please check Firestore connection and permissions.');
+        setError(
+          'Failed to fetch tasks. Please check Firestore connection and permissions.'
+        );
         setLoading(false);
         console.error(err);
       }
