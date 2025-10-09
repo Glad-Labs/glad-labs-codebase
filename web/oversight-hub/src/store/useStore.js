@@ -1,10 +1,12 @@
 import create from 'zustand';
 
 const useStore = create((set) => ({
+  tasks: [],
   selectedTask: null,
   isModalOpen: false,
+  setTasks: (tasks) => set({ tasks }),
   setSelectedTask: (task) => set({ selectedTask: task, isModalOpen: !!task }),
-  clearSelectedTask: () => set({ selectedTask: null, isModalOpen: false }),
+  setIsModalOpen: (isOpen) => set({ isModalOpen: isOpen }),
 }));
 
 export default useStore;

@@ -1,5 +1,9 @@
 import React from 'react';
-import { formatTimestamp } from '../../lib/date';
+
+const formatTimestamp = (timestamp) => {
+  if (!timestamp) return 'N/A';
+  return new Date(timestamp.seconds * 1000).toLocaleString();
+};
 
 const RunHistory = ({ runs }) => (
   <div className="run-history">

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { useFinancials } from '../../features/financials/useFinancials';
 import { formatTimestamp } from '../../lib/date';
 import './Financials.css';
@@ -7,19 +7,29 @@ const Financials = () => {
   const { entries, loading, error } = useFinancials();
 
   // --- Calculations ---
-  const totalSpend = entries.reduce(
-    (acc, entry) => acc + (entry.amount || 0),
-    0
-  );
-  const costPerArticle =
-    entries.length > 0 ? (totalSpend / entries.length).toFixed(2) : 0;
+  const { totalSpend, costPerArticle, weeklySpend } = useMemo(() => {
+    const totalSpend = entries.reduce(
+      (acc, entry) => acc + (entry.amount || 0),
+      0
+    );
 
-  // Calculate weekly burn rate
-  const oneWeekAgo = new Date();
-  oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
-  const weeklySpend = entries
-    .filter((entry) => entry.timestamp && entry.timestamp.toDate() > oneWeekAgo)
-    .reduce((acc, entry) => acc + (entry.amount || 0), 0);
+    // TODO: This logic assumes every entry is a unique article.
+    // This should be updated to count unique articles if the data allows.
+    const articleCount = entries.length; // Placeholder for actual unique article count
+    const costPerArticle =
+      articleCount > 0 ? (totalSpend / articleCount).toFixed(2) : '0.00';
+
+    // Calculate weekly burn rate
+    const oneWeekAgo = new Date();
+    oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
+    const weeklySpend = entries
+      .filter(
+        (entry) => entry.timestamp && entry.timestamp.toDate() > oneWeekAgo
+      )
+      .reduce((acc, entry) => acc + (entry.amount || 0), 0);
+
+    return { totalSpend, costPerArticle, weeklySpend };
+  }, [entries]);
 
   if (loading) return <p>Loading financial data...</p>;
   if (error) return <div className="error-message">{error}</div>;

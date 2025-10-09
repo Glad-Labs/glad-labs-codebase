@@ -1,53 +1,16 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { getTasks } from '../../services/taskService';
+import React from 'react';
+import useStore from '../../store/useStore';
 import TaskItem from './TaskItem';
 import CreateTaskModal from './CreateTaskModal';
 import { PlusCircleIcon } from '@heroicons/react/24/solid';
 
 const TaskQueue = () => {
-  const [tasks, setTasks] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [isModalOpen, setIsModalOpen] = useState(false);
-
-  const fetchTasks = useCallback(async () => {
-    try {
-      setLoading(true);
-      setError(null);
-      const tasksData = await getTasks();
-      setTasks(tasksData);
-    } catch (err) {
-      setError(
-        'Failed to load tasks. Please ensure you are connected to the database and refresh the page.'
-      );
-      console.error(err);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    fetchTasks();
-  }, [fetchTasks]);
+  const tasks = useStore((state) => state.tasks);
+  const { isModalOpen, setIsModalOpen } = useStore();
 
   const handleTaskCreated = () => {
-    fetchTasks(); // Refetch tasks when a new one is created
     setIsModalOpen(false);
   };
-
-  if (loading) {
-    return (
-      <div className="text-center p-8 text-gray-400">Loading tasks...</div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="text-center p-8 text-red-500 bg-red-100 border border-red-400 rounded-lg">
-        {error}
-      </div>
-    );
-  }
 
   return (
     <div className="bg-gray-900 text-white p-6 rounded-lg shadow-xl">

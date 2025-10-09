@@ -1,6 +1,19 @@
 import React from 'react';
-import { formatTimestamp } from '../../lib/date';
-import StatusBadge from '../common/StatusBadge';
+
+const formatTimestamp = (timestamp) => {
+  if (!timestamp) return 'N/A';
+  return new Date(timestamp.seconds * 1000).toLocaleString();
+};
+
+const renderStatus = (status) => (
+  <span
+    className={`status-badge status-${status
+      ?.toLowerCase()
+      .replace(' ', '-')}`}
+  >
+    {status || 'Unknown'}
+  </span>
+);
 
 const TaskList = ({ tasks, onTaskClick }) => (
   <div className="task-list">
@@ -18,9 +31,7 @@ const TaskList = ({ tasks, onTaskClick }) => (
         {tasks.map((task) => (
           <tr key={task.id} onClick={() => onTaskClick(task)}>
             <td>{task.topic}</td>
-            <td>
-              <StatusBadge status={task.status} />
-            </td>
+            <td>{renderStatus(task.status)}</td>
             <td>{formatTimestamp(task.createdAt)}</td>
             <td>{task.primary_keyword}</td>
           </tr>

@@ -1,9 +1,29 @@
 import React from 'react';
 import useStore from '../../store/useStore';
-import StatusBadge from '../common/StatusBadge';
-import ErrorMessage from '../common/ErrorMessage';
+import useRuns from '../../hooks/useRuns';
+
+const formatTimestamp = (timestamp) => {
+  if (!timestamp) return 'N/A';
+  return new Date(timestamp.seconds * 1000).toLocaleString();
+};
+
+const renderStatus = (status) => (
+  <span
+    className={`status-badge status-${status
+      ?.toLowerCase()
+      .replace(' ', '-')}`}
+  >
+    {status || 'Unknown'}
+  </span>
+);
+
+const ErrorMessage = ({ message }) => (
+  <div className="error-message">
+    <p>⚠️ {message}</p>
+  </div>
+);
+
 import RunHistory from './RunHistory';
-import { useRuns } from '../../features/tasks/useRuns';
 
 const TaskDetailModal = ({ onClose }) => {
   const { selectedTask } = useStore();
@@ -20,8 +40,7 @@ const TaskDetailModal = ({ onClose }) => {
         <h2>Task Details: {selectedTask.topic}</h2>
         <div className="task-details">
           <p>
-            <strong>Status:</strong>{' '}
-            <StatusBadge status={selectedTask.status} />
+            <strong>Status:</strong> {renderStatus(selectedTask.status)}
           </p>
           <p>
             <strong>ID:</strong> {selectedTask.id}
@@ -46,7 +65,7 @@ const TaskDetailModal = ({ onClose }) => {
           )}
           {selectedTask.error && <ErrorMessage message={selectedTask.error} />}
         </div>
-        {loading ? <p>Loading run history...</p> : <RunHistory runs={runs} />}
+        <RunHistory runs={runs} />
       </div>
     </div>
   );
