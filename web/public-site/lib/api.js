@@ -75,7 +75,7 @@ export async function getPaginatedPosts(
 
 export async function getFeaturedPost() {
   const query = qs.stringify({
-    filters: { Featured: { $eq: true } },
+    filters: { featured: { $eq: true } },
     sort: { publishedAt: 'desc' },
     pagination: {
       limit: 1,
