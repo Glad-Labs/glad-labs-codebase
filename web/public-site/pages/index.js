@@ -1,7 +1,9 @@
-import Head from "next/head";
-import Layout from "../components/Layout";
-import PostList from "../components/PostList";
-import { getFeaturedPost, getPaginatedPosts } from "../lib/api";
+import Head from 'next/head';
+import Link from 'next/link';
+import Image from 'next/image';
+// import Layout from "../components/Layout"; // Remove this line
+import PostCard from '../components/PostCard';
+import { getFeaturedPost, getPaginatedPosts } from '../lib/api';
 
 const FeaturedPost = ({ post }) => {
   if (!post) return null;
@@ -41,60 +43,42 @@ const FeaturedPost = ({ post }) => {
 
 export default function Home({ featuredPost, posts, pagination }) {
   return (
-    <Layout>
+    // Remove the <Layout> wrapper from here
+    <>
       <Head>
-        <title>Glad Labs Frontier</title>
+        <title>GLAD Labs Frontier | Autonomous Content Generation</title>
         <meta
           name="description"
-          content="An autonomous content creation experiment by Glad Labs."
-        />
-        {/* Open Graph */}
-        <meta property="og:title" content="Glad Labs Frontier" />
-        <meta
-          property="og:description"
-          content="An autonomous content creation experiment by Glad Labs."
-        />
-        <meta
-          property="og:image"
-          content="https://www.glad-labs.com/og-image.jpg"
-        />
-        <meta property="og:url" content="https://www.glad-labs.com" />
-        <meta property="og:type" content="website" />
-        {/* Twitter Card */}
-        <meta name="twitter:card" content="summary_large_image" />
-        <meta name="twitter:title" content="Glad Labs Frontier" />
-        <meta
-          name="twitter:description"
-          content="An autonomous content creation experiment by Glad Labs."
-        />
-        <meta
-          name="twitter:image"
-          content="https://www.glad-labs.com/og-image.jpg"
+          content="GLAD Labs Frontier is an autonomous content generation experiment..."
         />
       </Head>
-      <div className="container mx-auto px-4 py-12">
-        <main>
-          <FeaturedPost post={featuredPost} />
 
-          <h2 className="text-3xl font-bold text-cyan-400 mb-8">
-            Recent Posts
-          </h2>
-          <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
+      {featuredPost && <FeaturedPost post={featuredPost} />}
+
+      <div className="container mx-auto px-4 py-12">
+        <h2 className="text-3xl font-bold text-cyan-300 mb-8 text-center">
+          Recent Posts
+        </h2>
+        {posts && posts.length > 0 ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {posts.map((post) => (
-              <PostCard key={post.id} post={post} />
+              <PostCard key={post.id} post={post.attributes} />
             ))}
           </div>
-          <div className="text-center mt-12">
-            <Link
-              href="/archive/1"
-              className="inline-block bg-cyan-500 text-white px-6 py-3 rounded-lg hover:bg-cyan-600 transition-colors"
-            >
-              View All Posts
-            </Link>
-          </div>
-        </main>
+        ) : (
+          <p className="text-center text-gray-400">No recent posts found.</p>
+        )}
+        <div className="text-center mt-12">
+          <Link
+            href="/archive/1"
+            className="inline-block bg-cyan-500 text-white px-6 py-3 rounded-lg hover:bg-cyan-600 transition-colors"
+          >
+            View All Posts
+          </Link>
+        </div>
       </div>
-    </Layout>
+    </>
+    // And remove the closing </Layout> tag
   );
 }
 

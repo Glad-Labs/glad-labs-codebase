@@ -1,5 +1,4 @@
-import Layout from '../../components/Layout';
-import { getPostBySlug, getPaginatedPosts } from '../../lib/api';
+import { getPostBySlug, getAllPosts } from '../../lib/api';
 import Head from 'next/head';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -39,7 +38,7 @@ export default function Post({ post }) {
   const imageUrl = FeaturedImage?.data?.url;
 
   return (
-    <Layout>
+    <>
       <Head>
         <title>{Title} | GLAD Labs Blog</title>
         <meta name="description" content={post.Excerpt} />
@@ -91,23 +90,40 @@ export default function Post({ post }) {
           </div>
         </article>
       </div>
-    </Layout>
+    </>
   );
 }
 
 export async function getStaticPaths() {
-  const postsData = await getPaginatedPosts(1, 100);
-  const paths = postsData.data.map((post) => ({
-    params: { slug: post.Slug },
-  }));
+  // Use getAllPosts to fetch all posts for path generation
+  const posts = (await getAllPosts()) || [];
 
-  return { paths, fallback: 'blocking' };
+  const paths = posts
+    // Add a filter to ensure we only process valid post objects with slugs
+    .filter((post) => post?.attributes?.slug)
+    .map((post) => ({
+      // This line is now safe because the filter removed any invalid posts
+      params: { slug: post.attributes.slug },
+    }));
+
+  return {
+    paths,
+    fallback: 'blocking',
+  };
 }
 
 export async function getStaticProps({ params }) {
   const post = await getPostBySlug(params.slug);
+
+  // If no post is found for the given slug, return a 404 page
+  if (!post) {
+    return {
+      notFound: true,
+    };
+  }
+
   return {
     props: { post },
-    revalidate: 60,
+    revalidate: 60, // Re-generate the page every 60 seconds if needed
   };
 }

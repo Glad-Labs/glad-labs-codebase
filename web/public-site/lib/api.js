@@ -91,17 +91,11 @@ export async function getFeaturedPost() {
 }
 
 export async function getPostBySlug(slug) {
-  const query = qs.stringify({
+  const data = await fetchAPI(`/posts`, {
     filters: { slug: { $eq: slug } },
     populate: '*',
   });
-  const data = await fetchAPI(`/posts?${query}`);
-  // The response for a filtered query is always an array, so we return the first item
-  if (data && data.data && data.data.length > 0) {
-    const post = data.data[0];
-    return { id: post.id, ...post.attributes };
-  }
-  return null;
+  return data?.data[0]?.attributes;
 }
 
 export async function getAboutPage() {
@@ -162,4 +156,16 @@ export async function getPostsByTag(tagSlug) {
   });
   const data = await fetchAPI(`/posts?${query}`);
   return data.data.map((post) => ({ id: post.id, ...post.attributes }));
+}
+
+export async function getAllPosts() {
+  const data = await fetchAPI('/posts', {
+    pagination: {
+      // Set a high page size to fetch all posts
+      pageSize: 1000,
+    },
+    // Only fetch the slug for performance
+    fields: ['slug'], // Corrected from 'Slug' to 'slug'
+  });
+  return data?.data;
 }
