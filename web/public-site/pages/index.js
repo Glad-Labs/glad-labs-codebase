@@ -1,9 +1,7 @@
-import Head from 'next/head';
-import Layout from '../components/Layout';
-import { getPaginatedPosts, getFeaturedPost } from '../lib/api';
-import Link from 'next/link';
-import Image from 'next/image';
-import PostCard from '../components/PostCard';
+import Head from "next/head";
+import Layout from "../components/Layout";
+import PostList from "../components/PostList";
+import { getFeaturedPost, getPaginatedPosts } from "../lib/api";
 
 const FeaturedPost = ({ post }) => {
   if (!post) return null;
@@ -41,7 +39,7 @@ const FeaturedPost = ({ post }) => {
   );
 };
 
-export default function Home({ featuredPost, posts }) {
+export default function Home({ featuredPost, posts, pagination }) {
   return (
     <Layout>
       <Head>
@@ -102,20 +100,21 @@ export default function Home({ featuredPost, posts }) {
 
 export async function getStaticProps() {
   const featuredPost = (await getFeaturedPost()) || null;
-  const posts =
-    (await getPosts({
-      filters: {
-        id: {
-          $ne: featuredPost ? featuredPost.id : -1, // Use -1 or another non-existent ID if no featured post
-        },
-      },
-    })) || null;
+
+  const postsData = await getPaginatedPosts(
+    1, // page
+    6, // pageSize
+    featuredPost ? featuredPost.id : null // excludeId
+  );
+
+  const posts = postsData ? postsData.data : null;
 
   return {
     props: {
-      featuredPost: featuredPost || null,
-      posts: postsData.data,
+      featuredPost,
+      posts,
+      pagination: postsData ? postsData.meta.pagination : null,
     },
-    revalidate: 60,
+    revalidate: 1,
   };
 }
