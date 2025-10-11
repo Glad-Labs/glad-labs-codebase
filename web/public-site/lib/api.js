@@ -27,13 +27,13 @@ async function fetchAPI(path, urlParamsObject = {}, options = {}) {
     ...options,
   };
 
-  // Build request URL
   const queryString = qs.stringify(urlParamsObject);
   const requestUrl = `${getStrapiURL(
-    `${path}${queryString ? `?${queryString}` : ''}`
+    `/api${path}${queryString ? `?${queryString}` : ''}`
   )}`;
 
-  // Trigger API call
+  console.log('FETCHING URL:', requestUrl); // <--- ADD THIS LINE
+
   const response = await fetch(requestUrl, mergedOptions);
 
   // Handle response

@@ -101,8 +101,15 @@ export default function Home({ featuredPost, posts }) {
 }
 
 export async function getStaticProps() {
-  const featuredPost = await getFeaturedPost();
-  const postsData = await getPaginatedPosts(1, 6, featuredPost?.id);
+  const featuredPost = (await getFeaturedPost()) || null;
+  const posts =
+    (await getPosts({
+      filters: {
+        id: {
+          $ne: featuredPost ? featuredPost.id : -1, // Use -1 or another non-existent ID if no featured post
+        },
+      },
+    })) || null;
 
   return {
     props: {
