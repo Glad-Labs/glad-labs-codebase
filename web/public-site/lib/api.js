@@ -1,6 +1,8 @@
 import qs from 'qs';
 
 const STRAPI_API_URL = process.env.NEXT_PUBLIC_STRAPI_API_URL;
+const STRAPI_API_TOKEN =
+  process.env.NEXT_PUBLIC_STRAPI_API_TOKEN || process.env.STRAPI_API_TOKEN;
 
 /**
  * Get full Strapi URL from path
@@ -23,6 +25,9 @@ async function fetchAPI(path, urlParamsObject = {}, options = {}) {
   const mergedOptions = {
     headers: {
       'Content-Type': 'application/json',
+      ...(STRAPI_API_TOKEN
+        ? { Authorization: `Bearer ${STRAPI_API_TOKEN}` }
+        : {}),
     },
     ...options,
   };
@@ -100,9 +105,35 @@ export async function getPostBySlug(slug) {
 
 export async function getAboutPage() {
   const query = qs.stringify({ populate: '*' });
-  const data = await fetchAPI(`/about?${query}`);
-  if (data && data.data) {
-    return { id: data.data.id, ...data.data.attributes };
+  const candidates = ['/about', '/about-page', '/about-us'];
+  for (const path of candidates) {
+    try {
+      const data = await fetchAPI(`${path}?${query}`);
+      if (data && data.data) {
+        return { id: data.data.id, ...data.data.attributes };
+      }
+    } catch (err) {
+      // Try next candidate on 404/NotFound; rethrow on other errors if needed
+      continue;
+    }
+  }
+
+  // Fallback: try a collection type `pages`/`page` with slug 'about'
+  const collectionCandidates = ['/pages', '/page'];
+  const slugFilter = qs.stringify(
+    { filters: { slug: { $eq: 'about' } }, populate: '*' },
+    { encode: false }
+  );
+  for (const base of collectionCandidates) {
+    try {
+      const data = await fetchAPI(`${base}?${slugFilter}`);
+      if (data && Array.isArray(data.data) && data.data.length > 0) {
+        const item = data.data[0];
+        return { id: item.id, ...item.attributes };
+      }
+    } catch (err) {
+      continue;
+    }
   }
   return null;
 }

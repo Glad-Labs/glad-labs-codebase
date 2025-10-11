@@ -3,7 +3,7 @@ import Image from 'next/image';
 
 const PostCard = ({ post }) => {
   const { Title, Excerpt, Slug, publishedAt, FeaturedImage } = post;
-  const imageUrl = FeaturedImage?.data?.url;
+  const imageUrl = FeaturedImage?.data?.attributes?.url;
 
   return (
     <Link
@@ -14,7 +14,7 @@ const PostCard = ({ post }) => {
         <div className="relative h-48">
           <Image
             src={imageUrl}
-            alt={FeaturedImage.data.alternativeText || Title}
+            alt={FeaturedImage?.data?.attributes?.alternativeText || Title}
             layout="fill"
             objectFit="cover"
           />

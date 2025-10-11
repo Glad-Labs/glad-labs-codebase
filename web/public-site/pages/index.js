@@ -9,10 +9,10 @@ const FeaturedPost = ({ post }) => {
   if (!post) return null;
 
   const { Title, Excerpt, Slug, FeaturedImage } = post;
-  const imageUrl = FeaturedImage?.data?.url;
+  const imageUrl = FeaturedImage?.data?.attributes?.url;
 
   return (
-    <div className="mb-12">
+    <div className="container mx-auto px-4 md:px-6 py-12">
       <h2 className="text-3xl font-bold text-cyan-400 mb-4">Featured Post</h2>
       <p className="text-sm text-gray-400 mb-4">
         To set the featured post, go to the Strapi admin, edit a post, and check
@@ -26,7 +26,7 @@ const FeaturedPost = ({ post }) => {
           <div className="relative h-64">
             <Image
               src={imageUrl}
-              alt={FeaturedImage.data.alternativeText || Title}
+              alt={FeaturedImage?.data?.attributes?.alternativeText || Title}
               layout="fill"
               objectFit="cover"
             />
@@ -55,14 +55,14 @@ export default function Home({ featuredPost, posts, pagination }) {
 
       {featuredPost && <FeaturedPost post={featuredPost} />}
 
-      <div className="container mx-auto px-4 py-12">
+      <div className="container mx-auto px-4 md:px-6 py-12">
         <h2 className="text-3xl font-bold text-cyan-300 mb-8 text-center">
           Recent Posts
         </h2>
         {posts && posts.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {posts.map((post) => (
-              <PostCard key={post.id} post={post.attributes} />
+              <PostCard key={post.id} post={post} />
             ))}
           </div>
         ) : (

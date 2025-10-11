@@ -1,16 +1,15 @@
 import Head from 'next/head';
-import Layout from '../../components/Layout';
 import { getTags, getTagBySlug, getPostsByTag } from '../../lib/api';
 import Link from 'next/link';
 
 export default function TagPage({ tag, posts }) {
   return (
-    <Layout>
+    <>
       <Head>
         <title>{tag.Name} - Glad Labs Frontier</title>
         <meta name="description" content={`Posts tagged with: ${tag.Name}`} />
       </Head>
-      <div className="container mx-auto px-6 py-12">
+      <div className="container mx-auto px-4 md:px-6 py-12">
         <div className="max-w-4xl mx-auto">
           <h1 className="text-5xl font-bold text-cyan-400 mb-8">
             Tag: {tag.Name}
@@ -32,7 +31,7 @@ export default function TagPage({ tag, posts }) {
           </div>
         </div>
       </div>
-    </Layout>
+    </>
   );
 }
 

@@ -1,11 +1,15 @@
 import Head from 'next/head';
-import Layout from '../components/Layout';
 import { getAboutPage } from '../lib/api';
 import { BlocksRenderer } from '@strapi/blocks-react-renderer';
 
 export default function About({ content }) {
+  const isBlocksArray = Array.isArray(content);
+  const blocksFromObject =
+    content && typeof content === 'object' && Array.isArray(content.blocks)
+      ? content.blocks
+      : null;
   return (
-    <Layout>
+    <>
       <Head>
         <title>About - Glad Labs Frontier</title>
         <meta
@@ -36,10 +40,16 @@ export default function About({ content }) {
           content="https://www.glad-labs.com/og-image.jpg"
         />
       </Head>
-      <div className="container mx-auto px-6 py-12">
+      <div className="container mx-auto px-4 md:px-6 py-12">
         <div className="max-w-4xl mx-auto prose prose-invert lg:prose-xl">
           {content ? (
-            <BlocksRenderer content={content} />
+            isBlocksArray ? (
+              <BlocksRenderer content={content} />
+            ) : blocksFromObject ? (
+              <BlocksRenderer content={blocksFromObject} />
+            ) : typeof content === 'string' ? (
+              <div dangerouslySetInnerHTML={{ __html: content }} />
+            ) : null
           ) : (
             <>
               <h1>About Glad Labs</h1>
@@ -53,16 +63,25 @@ export default function About({ content }) {
           )}
         </div>
       </div>
-    </Layout>
+    </>
   );
 }
 
 export async function getStaticProps() {
   const aboutPageData = await getAboutPage();
 
+  // Support common field names: Content (blocks), content (blocks), body, bodyContent, html
+  const content =
+    aboutPageData?.Content ??
+    aboutPageData?.content ??
+    aboutPageData?.BodyContent ??
+    aboutPageData?.bodyContent ??
+    aboutPageData?.html ??
+    null;
+
   return {
     props: {
-      content: aboutPageData?.Content || null,
+      content,
     },
     revalidate: 60,
   };

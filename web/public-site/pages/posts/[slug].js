@@ -35,7 +35,7 @@ export default function Post({ post }) {
 
   const { Title, BodyContent, publishedAt, FeaturedImage, category, tags } =
     post;
-  const imageUrl = FeaturedImage?.data?.url;
+  const imageUrl = FeaturedImage?.data?.attributes?.url;
 
   return (
     <>
@@ -57,7 +57,7 @@ export default function Post({ post }) {
         <meta name="twitter:description" content={post.Excerpt} />
         <meta name="twitter:image" content={imageUrl} />
       </Head>
-      <div className="container mx-auto px-4 py-12">
+      <div className="container mx-auto px-4 md:px-6 py-12">
         <article className="max-w-4xl mx-auto">
           <div className="mb-8 text-center">
             <h1 className="text-4xl md:text-5xl font-bold text-cyan-300 mb-4 leading-tight">
@@ -77,7 +77,7 @@ export default function Post({ post }) {
             <div className="relative h-96 mb-8">
               <Image
                 src={imageUrl}
-                alt={FeaturedImage.data.alternativeText || Title}
+                alt={FeaturedImage?.data?.attributes?.alternativeText || Title}
                 layout="fill"
                 objectFit="cover"
                 className="rounded-lg"

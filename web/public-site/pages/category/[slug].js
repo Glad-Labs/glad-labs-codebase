@@ -1,5 +1,4 @@
 import Head from 'next/head';
-import Layout from '../../components/Layout';
 import {
   getCategories,
   getCategoryBySlug,
@@ -9,7 +8,7 @@ import Link from 'next/link';
 
 export default function CategoryPage({ category, posts }) {
   return (
-    <Layout>
+    <>
       <Head>
         <title>{category.Name} - Glad Labs Frontier</title>
         <meta
@@ -17,7 +16,7 @@ export default function CategoryPage({ category, posts }) {
           content={`Posts in the category: ${category.Name}`}
         />
       </Head>
-      <div className="container mx-auto px-6 py-12">
+      <div className="container mx-auto px-4 md:px-6 py-12">
         <div className="max-w-4xl mx-auto">
           <h1 className="text-5xl font-bold text-cyan-400 mb-2">
             Category: {category.Name}
@@ -40,7 +39,7 @@ export default function CategoryPage({ category, posts }) {
           </div>
         </div>
       </div>
-    </Layout>
+    </>
   );
 }
 
