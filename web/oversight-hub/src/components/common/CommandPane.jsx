@@ -61,6 +61,11 @@ const CommandPane = () => {
   }, [handleResize]);
 
   const handleSend = async (message) => {
+    if (!selectedTask) {
+      alert('Please select a task before sending a command.');
+      return;
+    }
+
     const newMessage = {
       message,
       direction: 'outgoing',
@@ -114,11 +119,13 @@ const CommandPane = () => {
       {selectedTask ? (
         <div className="p-4 border-b">
           <h2 className="text-lg font-semibold">{selectedTask.title}</h2>
-          <p className="text-sm text-gray-500">Status: {selectedTask.status}</p>
-          <p className="text-sm text-gray-500">
+          <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>
+            Status: {selectedTask.status}
+          </p>
+          <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>
             Priority: {selectedTask.priority}
           </p>
-          <p className="text-sm text-gray-500">
+          <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>
             Due Date: {selectedTask.dueDate}
           </p>
         </div>
@@ -141,7 +148,6 @@ const CommandPane = () => {
           <MessageInput
             placeholder="Type your command here..."
             onSend={handleSend}
-            disabled={!selectedTask}
           />
         </ChatContainer>
       </MainContainer>

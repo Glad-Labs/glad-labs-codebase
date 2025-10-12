@@ -6,6 +6,13 @@ This project is the main interface for overseeing the GLAD Labs AI-powered conte
 
 The Oversight Hub is a React application that provides a dashboard for monitoring the status of content creation tasks, viewing financial data, and interacting with the AI agents.
 
+## Tech Stack
+
+- **React:** The core UI library.
+- **Zustand:** For state management.
+- **@chatscope/chat-ui-kit-react:** For the chat interface.
+- **Firebase:** For real-time data synchronization.
+
 ## Getting Started
 
 ### Prerequisites
@@ -37,8 +44,8 @@ The application will be available at [http://localhost:3001](http://localhost:30
 
 ## Key Features
 
-- **Dashboard:** A central place to view the status of all content creation tasks.
-- **Content Management:** View and manage the content calendar.
-- **Analytics:** View key metrics related to content performance.
-- **Command Pane:** Interact with the AI Co-Founder agent to give commands and receive feedback.
+- **Dashboard:** A central place to view the status of all content creation tasks in a card-based layout.
+- **Settings Page:** A dedicated page to configure the application, including theme settings (light/dark mode), auto-refresh options, and API key management.
+- **Resizable Panes:** The UI features resizable panes for a flexible and customizable layout.
+- **Command Pane:** Interact with the AI Co-Founder agent through a chat interface to give commands and receive feedback.
 - **Real-time Updates:** The application uses Firebase Firestore to provide real-time updates on the status of tasks and other data.
