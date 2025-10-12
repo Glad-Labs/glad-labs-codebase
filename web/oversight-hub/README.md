@@ -24,10 +24,13 @@ The Oversight Hub is a React application that provides a dashboard for monitorin
 
 1. Clone the repository.
 2. Navigate to the `web/oversight-hub` directory:
+
    ```sh
    cd web/oversight-hub
    ```
+
 3. Install the dependencies:
+
    ```sh
    npm install
    ```
