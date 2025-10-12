@@ -38,7 +38,9 @@ function Settings() {
           <button
             className="theme-toggle-btn"
             onClick={toggleTheme}
-            aria-label={`Switch to ${theme === 'light' ? 'dark' : 'light'} theme`}
+            aria-label={`Switch to ${
+              theme === 'light' ? 'dark' : 'light'
+            } theme`}
           >
             {theme === 'light' ? 'Light Mode' : 'Dark Mode'}
           </button>

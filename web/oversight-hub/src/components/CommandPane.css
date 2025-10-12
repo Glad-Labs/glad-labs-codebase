@@ -78,10 +78,17 @@
   color: var(--text-primary);
   transition: all 0.3s ease;
   width: 100%;
+  resize: none;
+  font-family: inherit;
 }
 
 .command-pane .cs-message-input__content-editor:focus {
   outline: none;
+}
+
+.command-pane .cs-message-input__content-editor:focus-visible {
+  outline: 2px solid var(--accent-primary);
+  outline-offset: -2px;
 }
 
 /* Make the input wrapper full width and position icons inside */
