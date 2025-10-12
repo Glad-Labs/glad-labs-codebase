@@ -9,10 +9,14 @@ const App = () => (
   <Router>
     <div className="oversight-hub-layout">
       <Sidebar />
-      <main className="main-content">
-        <AppRoutes />
-        <CommandPane />
-      </main>
+      <div className="main-content">
+        <div className="content-area">
+          <AppRoutes />
+        </div>
+        <div className="command-pane-container">
+          <CommandPane />
+        </div>
+      </div>
     </div>
   </Router>
 );

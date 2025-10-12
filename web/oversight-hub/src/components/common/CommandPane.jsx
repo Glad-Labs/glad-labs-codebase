@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useCallback } from 'react';
 import {
   MainContainer,
   ChatContainer,
@@ -16,6 +16,7 @@ const COFOUNDER_API_URL = 'http://localhost:8000/command';
 
 const CommandPane = () => {
   const { selectedTask } = useStore();
+  const isResizing = useRef(false);
   const [messages, setMessages] = useState([
     {
       message:
@@ -26,6 +27,38 @@ const CommandPane = () => {
     },
   ]);
   const [isTyping, setIsTyping] = useState(false);
+
+  const startResize = useCallback((e) => {
+    isResizing.current = true;
+    document.addEventListener('mousemove', handleResize);
+    document.addEventListener('mouseup', stopResize);
+    document.body.style.cursor = 'col-resize';
+    document.body.style.userSelect = 'none';
+  }, []);
+
+  const handleResize = useCallback((e) => {
+    if (!isResizing.current) return;
+
+    const containerRect = document
+      .querySelector('.oversight-hub-layout')
+      .getBoundingClientRect();
+    const newWidth = containerRect.right - e.clientX;
+
+    if (newWidth >= 300 && newWidth <= 600) {
+      document.documentElement.style.setProperty(
+        '--command-pane-width',
+        `${newWidth}px`
+      );
+    }
+  }, []);
+
+  const stopResize = useCallback(() => {
+    isResizing.current = false;
+    document.removeEventListener('mousemove', handleResize);
+    document.removeEventListener('mouseup', stopResize);
+    document.body.style.cursor = '';
+    document.body.style.userSelect = '';
+  }, [handleResize]);
 
   const handleSend = async (message) => {
     const newMessage = {
@@ -74,6 +107,10 @@ const CommandPane = () => {
 
   return (
     <div className="command-pane">
+      <div
+        className="resize-handle command-pane-resize-handle"
+        onMouseDown={startResize}
+      />
       {selectedTask ? (
         <div className="p-4 border-b">
           <h2 className="text-lg font-semibold">{selectedTask.title}</h2>
