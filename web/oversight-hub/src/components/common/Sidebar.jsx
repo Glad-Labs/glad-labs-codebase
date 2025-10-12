@@ -1,10 +1,11 @@
-import React, { useRef, useCallback, useEffect } from 'react';
+import React, { useRef, useCallback, useEffect, useState } from 'react';
 import { NavLink } from 'react-router-dom';
 import './Sidebar.css';
 
 const Sidebar = () => {
   const sidebarRef = useRef(null);
   const isResizing = useRef(false);
+  const [isCompressed, setIsCompressed] = useState(false);
 
   // Ensure layout is properly initialized
   useEffect(() => {
@@ -46,9 +47,19 @@ const Sidebar = () => {
   }, [handleResize]);
 
   return (
-    <nav className="sidebar" ref={sidebarRef}>
+    <nav
+      className={`sidebar ${isCompressed ? 'compressed' : ''}`}
+      ref={sidebarRef}
+    >
       <div className="sidebar-header">
-        <h2 className="sidebar-title">Glad Labs</h2>
+        <h2 className="sidebar-title">{isCompressed ? 'GL' : 'Glad Labs'}</h2>
+        <button
+          className="sidebar-toggle-btn"
+          onClick={() => setIsCompressed(!isCompressed)}
+          title={isCompressed ? 'Expand sidebar' : 'Collapse sidebar'}
+        >
+          {isCompressed ? '→' : '←'}
+        </button>
       </div>
       <div className="sidebar-nav">
         <ul>
@@ -57,7 +68,8 @@ const Sidebar = () => {
               to="/"
               className={({ isActive }) => (isActive ? 'active' : '')}
             >
-              Dashboard
+              <span className="sidebar-icon">📊</span>
+              <span className="sidebar-label">Dashboard</span>
             </NavLink>
           </li>
           <li>
@@ -65,7 +77,8 @@ const Sidebar = () => {
               to="/content"
               className={({ isActive }) => (isActive ? 'active' : '')}
             >
-              Content
+              <span className="sidebar-icon">📝</span>
+              <span className="sidebar-label">Content</span>
             </NavLink>
           </li>
           <li>
@@ -73,7 +86,8 @@ const Sidebar = () => {
               to="/analytics"
               className={({ isActive }) => (isActive ? 'active' : '')}
             >
-              Analytics
+              <span className="sidebar-icon">📈</span>
+              <span className="sidebar-label">Analytics</span>
             </NavLink>
           </li>
           <li>
@@ -81,7 +95,8 @@ const Sidebar = () => {
               to="/settings"
               className={({ isActive }) => (isActive ? 'active' : '')}
             >
-              Settings
+              <span className="sidebar-icon">⚙️</span>
+              <span className="sidebar-label">Settings</span>
             </NavLink>
           </li>
         </ul>

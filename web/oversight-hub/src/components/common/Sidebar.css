@@ -21,6 +21,26 @@
   border-bottom: 1px solid var(--border-secondary);
   margin-bottom: 2rem;
   transition: border-color 0.3s ease;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.sidebar-toggle-btn {
+  background: transparent;
+  border: 1px solid var(--border-primary);
+  color: var(--text-secondary);
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 0.875rem;
+}
+
+.sidebar-toggle-btn:hover {
+  background: var(--bg-secondary);
+  color: var(--accent-primary);
+  border-color: var(--accent-primary);
 }
 
 .sidebar-title {
@@ -48,7 +68,9 @@
 }
 
 .sidebar-nav a {
-  display: block;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
   padding: 1rem 1.5rem;
   color: var(--text-secondary);
   text-decoration: none;
@@ -58,6 +80,35 @@
   font-size: 0.95rem;
   line-height: 1.4;
   border: 2px solid transparent;
+}
+
+.sidebar-icon {
+  font-size: 1.25rem;
+  flex-shrink: 0;
+}
+
+.sidebar-label {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.sidebar.compressed .sidebar-label {
+  display: none;
+}
+
+.sidebar.compressed .sidebar-nav a {
+  padding: 0.75rem;
+  justify-content: center;
+}
+
+.sidebar.compressed .sidebar-header {
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.sidebar.compressed .sidebar-title {
+  font-size: 1.125rem;
 }
 
 .sidebar-nav a:hover {
