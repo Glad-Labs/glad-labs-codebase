@@ -1,11 +1,23 @@
 import React from 'react';
 import useStore from '../store/useStore';
+import './Settings.css';
 
 function Settings() {
-  const { theme, toggleTheme } = useStore((state) => ({
-    theme: state.theme,
-    toggleTheme: state.toggleTheme,
-  }));
+  const theme = useStore((state) => state.theme);
+  const toggleTheme = useStore((state) => state.toggleTheme);
+  const autoRefresh = useStore((state) => state.autoRefresh);
+  const toggleAutoRefresh = useStore((state) => state.toggleAutoRefresh);
+  const notifications = useStore((state) => state.notifications);
+  const toggleDesktopNotifications = useStore(
+    (state) => state.toggleDesktopNotifications
+  );
+  const apiKeys = useStore((state) => state.apiKeys);
+  const setApiKey = useStore((state) => state.setApiKey);
+
+  const handleApiKeyChange = (e) => {
+    const { name, value } = e.target;
+    setApiKey(name, value);
+  };
 
   return (
     <div className="settings-container">
@@ -26,40 +38,9 @@ function Settings() {
           <button
             className="theme-toggle-btn"
             onClick={toggleTheme}
-            aria-label={`Switch to ${
-              theme === 'light' ? 'dark' : 'light'
-            } theme`}
+            aria-label={`Switch to ${theme === 'light' ? 'dark' : 'light'} theme`}
           >
-            {theme === 'light' ? (
-              <>
-                <svg
-                  width="20"
-                  height="20"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                >
-                  <circle cx="12" cy="12" r="5" />
-                  <path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42" />
-                </svg>
-                Light Mode
-              </>
-            ) : (
-              <>
-                <svg
-                  width="20"
-                  height="20"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                >
-                  <path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z" />
-                </svg>
-                Dark Mode
-              </>
-            )}
+            {theme === 'light' ? 'Light Mode' : 'Dark Mode'}
           </button>
         </div>
       </div>
@@ -73,7 +54,14 @@ function Settings() {
             <h3>Auto-refresh</h3>
             <p>Automatically refresh data every 30 seconds</p>
           </div>
-          <button className="theme-toggle-btn">Enabled</button>
+          <label className="toggle-switch">
+            <input
+              type="checkbox"
+              checked={autoRefresh}
+              onChange={toggleAutoRefresh}
+            />
+            <span className="slider"></span>
+          </label>
         </div>
 
         <div className="setting-item">
@@ -81,7 +69,49 @@ function Settings() {
             <h3>Notifications</h3>
             <p>Receive desktop notifications for important updates</p>
           </div>
-          <button className="theme-toggle-btn">Enabled</button>
+          <label className="toggle-switch">
+            <input
+              type="checkbox"
+              checked={notifications.desktop}
+              onChange={toggleDesktopNotifications}
+            />
+            <span className="slider"></span>
+          </label>
+        </div>
+      </div>
+
+      <div className="settings-section">
+        <h2>API Keys</h2>
+        <p>Manage your API keys for third-party services.</p>
+
+        <div className="setting-item">
+          <div className="setting-info">
+            <h3>Mercury API Key</h3>
+            <p>Used for financial data integration.</p>
+            <input
+              type="password"
+              name="mercury"
+              className="api-key-input"
+              value={apiKeys.mercury}
+              onChange={handleApiKeyChange}
+              placeholder="Enter your Mercury API key"
+            />
+          </div>
+        </div>
+
+        <div className="setting-item">
+          <div className="setting-info">
+            <h3>GCP Billing API Key</h3>
+            <p>Used for Google Cloud Platform cost analysis.</p>
+            <input
+              type="password"
+              name="gcp"
+              className="api-key-input"
+              value={apiKeys.gcp}
+              onChange={handleApiKeyChange}
+              placeholder="Enter your GCP Billing API key"
+            />
+          </div>
         </div>
       </div>
     </div>

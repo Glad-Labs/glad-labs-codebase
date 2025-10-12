@@ -8,6 +8,14 @@ const useStore = create(
       selectedTask: null,
       isModalOpen: false,
       theme: 'dark', // default to dark theme
+      autoRefresh: false,
+      notifications: {
+        desktop: true,
+      },
+      apiKeys: {
+        mercury: '',
+        gcp: '',
+      },
       setTasks: (tasks) => set({ tasks }),
       setSelectedTask: (task) =>
         set({ selectedTask: task, isModalOpen: !!task }),
@@ -15,10 +23,31 @@ const useStore = create(
       setTheme: (theme) => set({ theme }),
       toggleTheme: () =>
         set((state) => ({ theme: state.theme === 'light' ? 'dark' : 'light' })),
+      toggleAutoRefresh: () =>
+        set((state) => ({ autoRefresh: !state.autoRefresh })),
+      toggleDesktopNotifications: () =>
+        set((state) => ({
+          notifications: {
+            ...state.notifications,
+            desktop: !state.notifications.desktop,
+          },
+        })),
+      setApiKey: (key, value) =>
+        set((state) => ({
+          apiKeys: {
+            ...state.apiKeys,
+            [key]: value,
+          },
+        })),
     }),
     {
       name: 'oversight-hub-storage',
-      partialize: (state) => ({ theme: state.theme }), // only persist theme
+      partialize: (state) => ({
+        theme: state.theme,
+        autoRefresh: state.autoRefresh,
+        notifications: state.notifications,
+        apiKeys: state.apiKeys,
+      }), // persist theme and other settings
     }
   )
 );

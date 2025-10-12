@@ -58,16 +58,16 @@
 .command-pane .cs-message-input {
   background-color: var(--bg-tertiary);
   border-top: 1px solid var(--border-primary);
-  padding: 1rem;
+  padding: 0;
   transition: all 0.3s ease;
 }
 
 .command-pane .cs-message-input__content-editor {
-  background-color: var(--bg-primary);
-  border: 1px solid var(--border-secondary);
-  border-radius: 0.75rem;
-  padding: 0.875rem 3rem 0.875rem 1rem;
-  font-size: 0.95rem;
+  background-color: var(--bg-tertiary);
+  border: none;
+  border-radius: 0.5rem;
+  padding: 0.5rem 2.5rem 0.5rem 0.75rem;
+  font-size: 1rem;
   line-height: 1.5;
   color: var(--text-primary);
   transition: all 0.3s ease;
@@ -75,8 +75,6 @@
 }
 
 .command-pane .cs-message-input__content-editor:focus {
-  border-color: var(--accent-primary);
-  box-shadow: 0 0 0 3px var(--shadow-heavy);
   outline: none;
 }
 
@@ -86,24 +84,27 @@
   width: 100%;
   display: flex;
   align-items: center;
+  background: var(--bg-tertiary);
+  border-radius: 0.5rem;
 }
 
 /* Position attach and send buttons inside the input */
 .command-pane .cs-button--attachment,
 .command-pane .cs-button--send {
   position: absolute;
-  right: 0.5rem;
+  top: 50%;
+  transform: translateY(-50%);
   background: transparent;
   border: none;
   color: var(--text-secondary);
   cursor: pointer;
   transition: color 0.2s ease;
   z-index: 10;
-  padding: 0.5rem;
+  padding: 0.25rem;
 }
 
 .command-pane .cs-button--attachment {
-  right: 2.5rem;
+  right: 2rem;
 }
 
 .command-pane .cs-button--send {
