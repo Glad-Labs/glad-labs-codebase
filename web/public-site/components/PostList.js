@@ -28,39 +28,41 @@ const PostList = ({ posts }) => {
 
   return (
     <ul className="space-y-8 max-w-4xl mx-auto">
-      {posts.map((post) => (
-        <li
-          key={post.slug}
-          className="border-b border-gray-700 pb-4 last:border-b-0"
-        >
-          <Link href={`/posts/${post.slug}`} className="group">
-            <h2 className="text-3xl font-bold text-cyan-400 group-hover:text-cyan-300 transition-colors duration-200">
-              {post.title}
-            </h2>
-          </Link>
-          <div className="text-gray-400 mt-2 text-sm">
-            <span>
-              {post.publishedAt || post.date
-                ? new Date(post.date || post.publishedAt).toLocaleDateString(
-                    'en-US',
-                    {
-                      year: 'numeric',
-                      month: 'long',
-                      day: 'numeric',
-                    }
-                  )
-                : ''}
-            </span>
-          </div>
-          <p className="mt-4 text-lg text-gray-300">{post.excerpt}</p>
-          <Link
-            href={`/posts/${post.slug}`}
-            className="text-cyan-500 hover:text-cyan-400 mt-4 inline-block"
+      {posts
+        .filter((post) => Boolean(post.slug))
+        .map((post) => (
+          <li
+            key={post.slug}
+            className="border-b border-gray-700 pb-4 last:border-b-0"
           >
-            Read more &rarr;
-          </Link>
-        </li>
-      ))}
+            <Link href={`/posts/${post.slug}`} className="group">
+              <h2 className="text-3xl font-bold text-cyan-400 group-hover:text-cyan-300 transition-colors duration-200">
+                {post.title}
+              </h2>
+            </Link>
+            <div className="text-gray-400 mt-2 text-sm">
+              <span>
+                {post.publishedAt || post.date
+                  ? new Date(post.date || post.publishedAt).toLocaleDateString(
+                      'en-US',
+                      {
+                        year: 'numeric',
+                        month: 'long',
+                        day: 'numeric',
+                      }
+                    )
+                  : ''}
+              </span>
+            </div>
+            <p className="mt-4 text-lg text-gray-300">{post.excerpt}</p>
+            <Link
+              href={`/posts/${post.slug}`}
+              className="text-cyan-500 hover:text-cyan-400 mt-4 inline-block"
+            >
+              Read more &rarr;
+            </Link>
+          </li>
+        ))}
     </ul>
   );
 };

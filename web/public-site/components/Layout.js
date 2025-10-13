@@ -29,7 +29,7 @@ export default function Layout({ children }) {
           </Link>
           <div className="flex items-center">
             <Link
-              href="/archive"
+              href="/archive/1"
               className="text-gray-300 hover:text-cyan-400 ml-6"
             >
               Archive

@@ -24,9 +24,13 @@ const PostCard = ({ post }) => {
     ? getStrapiURL(coverImage.data.attributes.url)
     : null;
 
+  const href = slug ? `/posts/${slug}` : '#';
+  const isClickable = Boolean(slug);
+
   return (
     <Link
-      href={`/posts/${slug}`}
+      href={href}
+      aria-disabled={!isClickable}
       className="block bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow overflow-hidden"
     >
       {imageUrl && (

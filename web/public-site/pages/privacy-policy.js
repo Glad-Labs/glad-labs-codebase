@@ -3,20 +3,20 @@ import { BlocksRenderer } from '@strapi/blocks-react-renderer';
 import { getStrapiURL } from '../lib/api';
 
 export async function getStaticProps() {
-  // Fetch the single-type privacy policy
-  const res = await fetch(`${getStrapiURL('/api/privacy-policy')}?populate=*`);
-  if (!res.ok) {
-    return { notFound: true };
+  try {
+    const res = await fetch(
+      `${getStrapiURL('/api/privacy-policy')}?populate=*`
+    );
+    if (!res.ok) {
+      return { props: { policy: null }, revalidate: 60 };
+    }
+    const json = await res.json();
+    const data = json?.data?.attributes || null;
+    return { props: { policy: data }, revalidate: 60 };
+  } catch (e) {
+    // Strapi might be rebooting; do not 404 in dev
+    return { props: { policy: null }, revalidate: 60 };
   }
-  const json = await res.json();
-  const data = json?.data?.attributes || null;
-
-  if (!data) return { notFound: true };
-
-  return {
-    props: { policy: data },
-    revalidate: 60,
-  };
 }
 
 export default function PrivacyPolicy({ policy }) {

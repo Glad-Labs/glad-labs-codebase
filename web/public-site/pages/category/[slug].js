@@ -4,7 +4,7 @@ import {
   getCategoryBySlug,
   getPostsByCategory,
 } from '../../lib/api';
-import Link from 'next/link';
+import PostCard from '../../components/PostCard';
 
 export default function CategoryPage({ category, posts }) {
   return (
@@ -22,24 +22,12 @@ export default function CategoryPage({ category, posts }) {
             Category: {category.name}
           </h1>
           <p className="text-lg text-gray-400 mb-8">{category.description}</p>
-          <div className="space-y-8">
-            {posts.map((post) => (
-              <Link
-                key={post.id}
-                href={`/posts/${post.slug}`}
-                className="block p-6 bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow"
-              >
-                <h2 className="text-2xl font-bold mb-2">{post.title}</h2>
-                <p className="text-gray-600 mb-4">
-                  {post.publishedAt || post.date
-                    ? new Date(
-                        post.date || post.publishedAt
-                      ).toLocaleDateString()
-                    : ''}
-                </p>
-                <p className="text-gray-700">{post.excerpt}</p>
-              </Link>
-            ))}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {posts
+              .filter((post) => Boolean(post.slug))
+              .map((post) => (
+                <PostCard key={post.id} post={post} />
+              ))}
           </div>
         </div>
       </div>

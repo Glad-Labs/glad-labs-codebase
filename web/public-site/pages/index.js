@@ -6,7 +6,7 @@ import PostCard from '../components/PostCard';
 import { getFeaturedPost, getPaginatedPosts, getStrapiURL } from '../lib/api';
 
 const FeaturedPost = ({ post }) => {
-  if (!post) return null;
+  if (!post || !post.slug) return null;
 
   const { title, excerpt, slug, coverImage } = post;
   const imageUrl = coverImage?.data?.attributes?.url
@@ -98,12 +98,17 @@ export async function getStaticProps() {
     featuredPost ? featuredPost.id : null // excludeId
   ).catch(() => null);
 
-  let posts = postsData ? postsData.data : [];
+  let posts = postsData ? postsData.data.filter((p) => Boolean(p.slug)) : [];
 
   // Fallback: if no featured post, use first recent post as featured
   if (!featuredPost && posts && posts.length > 0) {
     featuredPost = posts[0];
     posts = posts.slice(1);
+  }
+
+  // Ensure featured post has a slug
+  if (featuredPost && !featuredPost.slug) {
+    featuredPost = null;
   }
 
   return {
