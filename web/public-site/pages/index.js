@@ -3,13 +3,15 @@ import Link from 'next/link';
 import Image from 'next/image';
 // import Layout from "../components/Layout"; // Remove this line
 import PostCard from '../components/PostCard';
-import { getFeaturedPost, getPaginatedPosts } from '../lib/api';
+import { getFeaturedPost, getPaginatedPosts, getStrapiURL } from '../lib/api';
 
 const FeaturedPost = ({ post }) => {
   if (!post) return null;
 
-  const { Title, Excerpt, Slug, FeaturedImage } = post;
-  const imageUrl = FeaturedImage?.data?.attributes?.url;
+  const { title, excerpt, slug, coverImage } = post;
+  const imageUrl = coverImage?.data?.attributes?.url
+    ? getStrapiURL(coverImage.data.attributes.url)
+    : null;
 
   return (
     <div className="container mx-auto px-4 md:px-6 py-12">
@@ -19,22 +21,22 @@ const FeaturedPost = ({ post }) => {
         the &ldquo;Featured&rdquo; boolean.
       </p>
       <Link
-        href={`/posts/${Slug}`}
+        href={`/posts/${slug}`}
         className="block bg-gray-800 rounded-lg shadow-lg overflow-hidden"
       >
         {imageUrl && (
           <div className="relative h-64">
             <Image
               src={imageUrl}
-              alt={FeaturedImage?.data?.attributes?.alternativeText || Title}
-              layout="fill"
-              objectFit="cover"
+              alt={coverImage?.data?.attributes?.alternativeText || title}
+              fill
+              style={{ objectFit: 'cover' }}
             />
           </div>
         )}
         <div className="p-6">
-          <h3 className="text-2xl font-bold mb-2">{Title}</h3>
-          <p className="text-gray-400">{Excerpt}</p>
+          <h3 className="text-2xl font-bold mb-2">{title}</h3>
+          <p className="text-gray-400">{excerpt}</p>
         </div>
       </Link>
     </div>

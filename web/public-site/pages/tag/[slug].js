@@ -6,26 +6,30 @@ export default function TagPage({ tag, posts }) {
   return (
     <>
       <Head>
-        <title>{tag.Name} - Glad Labs Frontier</title>
-        <meta name="description" content={`Posts tagged with: ${tag.Name}`} />
+        <title>{tag.name} - Glad Labs Frontier</title>
+        <meta name="description" content={`Posts tagged with: ${tag.name}`} />
       </Head>
       <div className="container mx-auto px-4 md:px-6 py-12">
         <div className="max-w-4xl mx-auto">
           <h1 className="text-5xl font-bold text-cyan-400 mb-8">
-            Tag: {tag.Name}
+            Tag: {tag.name}
           </h1>
           <div className="space-y-8">
             {posts.map((post) => (
               <Link
                 key={post.id}
-                href={`/posts/${post.Slug}`}
+                href={`/posts/${post.slug}`}
                 className="block p-6 bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow"
               >
-                <h2 className="text-2xl font-bold mb-2">{post.Title}</h2>
+                <h2 className="text-2xl font-bold mb-2">{post.title}</h2>
                 <p className="text-gray-600 mb-4">
-                  {new Date(post.publishedAt).toLocaleDateString()}
+                  {post.publishedAt || post.date
+                    ? new Date(
+                        post.date || post.publishedAt
+                      ).toLocaleDateString()
+                    : ''}
                 </p>
-                <p className="text-gray-700">{post.Excerpt}</p>
+                <p className="text-gray-700">{post.excerpt}</p>
               </Link>
             ))}
           </div>
@@ -38,7 +42,7 @@ export default function TagPage({ tag, posts }) {
 export async function getStaticPaths() {
   const tags = await getTags();
   const paths = tags.map((tag) => ({
-    params: { slug: tag.Slug },
+    params: { slug: tag.slug },
   }));
 
   return {

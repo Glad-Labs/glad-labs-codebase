@@ -100,7 +100,8 @@ export async function getPostBySlug(slug) {
     filters: { slug: { $eq: slug } },
     populate: '*',
   });
-  return data?.data[0]?.attributes;
+  const item = data?.data?.[0];
+  return item ? { id: item.id, ...item.attributes } : null;
 }
 
 export async function getAboutPage() {
@@ -198,5 +199,5 @@ export async function getAllPosts() {
     // Only fetch the slug for performance
     fields: ['slug'], // Corrected from 'Slug' to 'slug'
   });
-  return data?.data;
+  return data?.data || [];
 }

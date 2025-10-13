@@ -13,7 +13,7 @@ import Link from 'next/link';
  *
  * @param {Object} props
  * @param {Array<Object>} props.posts - An array of post objects to be displayed.
- * Each post object should have `Slug`, `Title`, `publishedAt`, and `MetaDescription`.
+ * Each post object should have `slug`, `title`, `publishedAt` or `date`, and `excerpt`.
  * @returns {JSX.Element} An unordered list of posts or a "not found" message.
  */
 const PostList = ({ posts }) => {
@@ -30,32 +30,31 @@ const PostList = ({ posts }) => {
     <ul className="space-y-8 max-w-4xl mx-auto">
       {posts.map((post) => (
         <li
-          key={post.Slug}
+          key={post.slug}
           className="border-b border-gray-700 pb-4 last:border-b-0"
         >
-          <Link href={`/posts/${post.Slug}`} className="group">
+          <Link href={`/posts/${post.slug}`} className="group">
             <h2 className="text-3xl font-bold text-cyan-400 group-hover:text-cyan-300 transition-colors duration-200">
-              {post.Title}
+              {post.title}
             </h2>
           </Link>
           <div className="text-gray-400 mt-2 text-sm">
             <span>
-              {new Date(post.publishedAt).toLocaleDateString('en-US', {
-                year: 'numeric',
-                month: 'long',
-                day: 'numeric',
-              })}
+              {post.publishedAt || post.date
+                ? new Date(post.date || post.publishedAt).toLocaleDateString(
+                    'en-US',
+                    {
+                      year: 'numeric',
+                      month: 'long',
+                      day: 'numeric',
+                    }
+                  )
+                : ''}
             </span>
-            {/* 
-              @suggestion FUTURE_ENHANCEMENT: Add post categories or tags here.
-              This would allow users to filter posts by topic. The data would need
-              to be added to the post front-matter first.
-              e.g., <span className="ml-4">| Category: {post.category}</span>
-            */}
           </div>
-          <p className="mt-4 text-lg text-gray-300">{post.MetaDescription}</p>
+          <p className="mt-4 text-lg text-gray-300">{post.excerpt}</p>
           <Link
-            href={`/posts/${post.Slug}`}
+            href={`/posts/${post.slug}`}
             className="text-cyan-500 hover:text-cyan-400 mt-4 inline-block"
           >
             Read more &rarr;

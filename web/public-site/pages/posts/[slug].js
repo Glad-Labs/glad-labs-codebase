@@ -1,4 +1,4 @@
-import { getPostBySlug, getAllPosts } from '../../lib/api';
+import { getPostBySlug, getAllPosts, getStrapiURL } from '../../lib/api';
 import Head from 'next/head';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -6,24 +6,25 @@ import { BlocksRenderer } from '@strapi/blocks-react-renderer';
 
 const PostMeta = ({ category, tags }) => (
   <div className="flex items-center space-x-4 text-gray-400">
-    {category && (
+    {category && category.data && (
       <Link
-        href={`/category/${category.data.attributes.Slug}`}
+        href={`/category/${category.data.attributes.slug}`}
         className="hover:text-cyan-400"
       >
-        {category.data.attributes.Name}
+        {category.data.attributes.name}
       </Link>
     )}
-    {tags && tags.data.length > 0 && <span>|</span>}
+    {tags && tags.data && tags.data.length > 0 && <span>|</span>}
     <div className="flex space-x-2">
       {tags &&
+        tags.data &&
         tags.data.map((tag) => (
           <Link
             key={tag.id}
-            href={`/tag/${tag.attributes.Slug}`}
+            href={`/tag/${tag.attributes.slug}`}
             className="hover:text-cyan-400"
           >
-            #{tag.attributes.Name}
+            #{tag.attributes.name}
           </Link>
         ))}
     </div>
@@ -33,38 +34,54 @@ const PostMeta = ({ category, tags }) => (
 export default function Post({ post }) {
   if (!post) return <div>Loading...</div>;
 
-  const { Title, BodyContent, publishedAt, FeaturedImage, category, tags } =
-    post;
-  const imageUrl = FeaturedImage?.data?.attributes?.url;
+  // Align with Strapi schema (lowercase fields)
+  const {
+    title,
+    content,
+    excerpt,
+    coverImage,
+    publishedAt,
+    date,
+    category,
+    tags,
+    slug,
+  } = post;
+  const imageUrl = coverImage?.data?.attributes?.url
+    ? getStrapiURL(coverImage.data.attributes.url)
+    : null;
 
   return (
     <>
       <Head>
-        <title>{Title} | GLAD Labs Blog</title>
-        <meta name="description" content={post.Excerpt} />
+        <title>{title} | GLAD Labs Blog</title>
+        <meta name="description" content={excerpt} />
         {/* Open Graph */}
-        <meta property="og:title" content={Title} />
-        <meta property="og:description" content={post.Excerpt} />
-        <meta property="og:image" content={imageUrl} />
+        <meta property="og:title" content={title} />
+        <meta property="og:description" content={excerpt} />
+        {imageUrl && <meta property="og:image" content={imageUrl} />}
         <meta
           property="og:url"
-          content={`https://www.glad-labs.com/posts/${post.Slug}`}
+          content={`https://www.glad-labs.com/posts/${slug}`}
         />
         <meta property="og:type" content="article" />
         {/* Twitter Card */}
         <meta name="twitter:card" content="summary_large_image" />
-        <meta name="twitter:title" content={Title} />
-        <meta name="twitter:description" content={post.Excerpt} />
-        <meta name="twitter:image" content={imageUrl} />
+        <meta name="twitter:title" content={title} />
+        <meta name="twitter:description" content={excerpt} />
+        {imageUrl && <meta name="twitter:image" content={imageUrl} />}
       </Head>
       <div className="container mx-auto px-4 md:px-6 py-12">
         <article className="max-w-4xl mx-auto">
           <div className="mb-8 text-center">
             <h1 className="text-4xl md:text-5xl font-bold text-cyan-300 mb-4 leading-tight">
-              {Title}
+              {title}
             </h1>
             <p className="text-lg text-gray-400 mb-4">
-              Published on {new Date(publishedAt).toLocaleDateString()}
+              {publishedAt || date
+                ? `Published on ${new Date(
+                    date || publishedAt
+                  ).toLocaleDateString()}`
+                : ''}
             </p>
             <PostMeta category={category} tags={tags} />
             <p className="text-sm text-gray-500 mt-2">
@@ -77,16 +94,16 @@ export default function Post({ post }) {
             <div className="relative h-96 mb-8">
               <Image
                 src={imageUrl}
-                alt={FeaturedImage?.data?.attributes?.alternativeText || Title}
-                layout="fill"
-                objectFit="cover"
+                alt={coverImage?.data?.attributes?.alternativeText || title}
+                fill
+                style={{ objectFit: 'cover' }}
                 className="rounded-lg"
               />
             </div>
           )}
 
           <div className="prose prose-invert lg:prose-xl mx-auto">
-            <BlocksRenderer content={BodyContent} />
+            <BlocksRenderer content={content} />
           </div>
         </article>
       </div>
@@ -97,14 +114,10 @@ export default function Post({ post }) {
 export async function getStaticPaths() {
   // Use getAllPosts to fetch all posts for path generation
   const posts = (await getAllPosts()) || [];
-
   const paths = posts
-    // Add a filter to ensure we only process valid post objects with slugs
-    .filter((post) => post?.attributes?.slug)
-    .map((post) => ({
-      // This line is now safe because the filter removed any invalid posts
-      params: { slug: post.attributes.slug },
-    }));
+    .map((p) => p?.attributes?.slug || p?.slug)
+    .filter(Boolean)
+    .map((slug) => ({ params: { slug } }));
 
   return {
     paths,
