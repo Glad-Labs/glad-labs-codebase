@@ -74,7 +74,7 @@ export async function getPaginatedPosts(
   const data = await fetchAPI(`/posts?${query}`);
   return {
     ...data,
-    data: data.data.map((post) => ({ id: post.id, ...post.attributes })),
+    data: data.data,
   };
 }
 
@@ -90,7 +90,7 @@ export async function getFeaturedPost() {
   const data = await fetchAPI(`/posts?${query}`);
   if (data && data.data && data.data.length > 0) {
     const post = data.data[0];
-    return { id: post.id, ...post.attributes };
+    return post;
   }
   return null;
 }
@@ -101,7 +101,7 @@ export async function getPostBySlug(slug) {
     populate: '*',
   });
   const item = data?.data?.[0];
-  return item ? { id: item.id, ...item.attributes } : null;
+  return item || null;
 }
 
 export async function getAboutPage() {
@@ -111,7 +111,7 @@ export async function getAboutPage() {
     try {
       const data = await fetchAPI(`${path}?${query}`);
       if (data && data.data) {
-        return { id: data.data.id, ...data.data.attributes };
+        return data.data;
       }
     } catch (err) {
       // Try next candidate on 404/NotFound; rethrow on other errors if needed
@@ -130,7 +130,7 @@ export async function getAboutPage() {
       const data = await fetchAPI(`${base}?${slugFilter}`);
       if (data && Array.isArray(data.data) && data.data.length > 0) {
         const item = data.data[0];
-        return { id: item.id, ...item.attributes };
+        return item;
       }
     } catch (err) {
       continue;
@@ -141,15 +141,12 @@ export async function getAboutPage() {
 
 export async function getCategories() {
   const data = await fetchAPI('/categories');
-  return data.data.map((category) => ({
-    id: category.id,
-    ...category.attributes,
-  }));
+  return data.data;
 }
 
 export async function getTags() {
   const data = await fetchAPI('/tags');
-  return data.data.map((tag) => ({ id: tag.id, ...tag.attributes }));
+  return data.data;
 }
 
 export async function getCategoryBySlug(slug) {
@@ -157,7 +154,7 @@ export async function getCategoryBySlug(slug) {
   const data = await fetchAPI(`/categories?${query}`);
   if (data && data.data && data.data.length > 0) {
     const category = data.data[0];
-    return { id: category.id, ...category.attributes };
+    return category;
   }
   return null;
 }
@@ -167,7 +164,7 @@ export async function getTagBySlug(slug) {
   const data = await fetchAPI(`/tags?${query}`);
   if (data && data.data && data.data.length > 0) {
     const tag = data.data[0];
-    return { id: tag.id, ...tag.attributes };
+    return tag;
   }
   return null;
 }
@@ -178,7 +175,7 @@ export async function getPostsByCategory(categorySlug) {
     populate: '*',
   });
   const data = await fetchAPI(`/posts?${query}`);
-  return data.data.map((post) => ({ id: post.id, ...post.attributes }));
+  return data.data;
 }
 
 export async function getPostsByTag(tagSlug) {
@@ -187,7 +184,7 @@ export async function getPostsByTag(tagSlug) {
     populate: '*',
   });
   const data = await fetchAPI(`/posts?${query}`);
-  return data.data.map((post) => ({ id: post.id, ...post.attributes }));
+  return data.data;
 }
 
 export async function getAllPosts() {
@@ -197,7 +194,5 @@ export async function getAllPosts() {
     },
     fields: ['slug', 'updatedAt', 'publishedAt'],
   });
-  return Array.isArray(data?.data)
-    ? data.data.map((p) => ({ id: p.id, ...p.attributes }))
-    : [];
+  return Array.isArray(data?.data) ? data.data : [];
 }

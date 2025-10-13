@@ -2,29 +2,25 @@ import { getPostBySlug, getAllPosts, getStrapiURL } from '../../lib/api';
 import Head from 'next/head';
 import Image from 'next/image';
 import Link from 'next/link';
-import { BlocksRenderer } from '@strapi/blocks-react-renderer';
+import ReactMarkdown from 'react-markdown';
 
 const PostMeta = ({ category, tags }) => (
   <div className="flex items-center space-x-4 text-gray-400">
-    {category && category.data && (
-      <Link
-        href={`/category/${category.data.attributes.slug}`}
-        className="hover:text-cyan-400"
-      >
-        {category.data.attributes.name}
+    {category && (
+      <Link href={`/category/${category.slug}`} className="hover:text-cyan-400">
+        {category.name}
       </Link>
     )}
-    {tags && tags.data && tags.data.length > 0 && <span>|</span>}
+    {tags && tags.length > 0 && <span>|</span>}
     <div className="flex space-x-2">
       {tags &&
-        tags.data &&
-        tags.data.map((tag) => (
+        tags.map((tag) => (
           <Link
             key={tag.id}
-            href={`/tag/${tag.attributes.slug}`}
+            href={`/tag/${tag.slug}`}
             className="hover:text-cyan-400"
           >
-            #{tag.attributes.name}
+            #{tag.name}
           </Link>
         ))}
     </div>
@@ -47,9 +43,7 @@ export default function Post({ post }) {
     slug,
     seo,
   } = post;
-  const imageUrl = coverImage?.data?.attributes?.url
-    ? getStrapiURL(coverImage.data.attributes.url)
-    : null;
+  const imageUrl = coverImage?.url ? getStrapiURL(coverImage.url) : null;
   const metaTitle = (seo && seo.metaTitle) || `${title} | GLAD Labs Blog`;
   const metaDescription =
     (seo && seo.metaDescription) ||
@@ -100,7 +94,7 @@ export default function Post({ post }) {
             <div className="relative h-96 mb-8">
               <Image
                 src={imageUrl}
-                alt={coverImage?.data?.attributes?.alternativeText || title}
+                alt={coverImage?.alternativeText || title}
                 fill
                 style={{ objectFit: 'cover' }}
                 className="rounded-lg"
@@ -109,7 +103,7 @@ export default function Post({ post }) {
           )}
 
           <div className="prose prose-invert lg:prose-xl mx-auto">
-            <BlocksRenderer content={content} />
+            <ReactMarkdown>{content}</ReactMarkdown>
           </div>
         </article>
       </div>
@@ -121,7 +115,7 @@ export async function getStaticPaths() {
   // Use getAllPosts to fetch all posts for path generation
   const posts = (await getAllPosts()) || [];
   const paths = posts
-    .map((p) => p?.attributes?.slug || p?.slug)
+    .map((p) => p?.slug)
     .filter(Boolean)
     .map((slug) => ({ params: { slug } }));
 
