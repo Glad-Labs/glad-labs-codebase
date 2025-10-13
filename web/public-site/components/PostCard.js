@@ -10,7 +10,16 @@ const safeFormatDate = (value) => {
 
 const PostCard = ({ post }) => {
   // Strapi schema uses lowercase field names
-  const { title, excerpt, slug, publishedAt, date, coverImage } = post;
+  const {
+    title,
+    excerpt,
+    slug,
+    publishedAt,
+    date,
+    coverImage,
+    category,
+    tags,
+  } = post;
   const imageUrl = coverImage?.data?.attributes?.url
     ? getStrapiURL(coverImage.data.attributes.url)
     : null;
@@ -32,10 +41,30 @@ const PostCard = ({ post }) => {
       )}
       <div className="p-6">
         <h2 className="text-2xl font-bold mb-2 text-gray-800">{title}</h2>
-        <p className="text-gray-600 mb-4">
+        <p className="text-gray-600 mb-2">
           {safeFormatDate(date || publishedAt)}
         </p>
         <p className="text-gray-700">{excerpt}</p>
+        <div className="mt-4 flex flex-wrap items-center gap-2">
+          {category?.data?.attributes?.slug && (
+            <Link
+              href={`/category/${category.data.attributes.slug}`}
+              className="inline-block text-xs px-2 py-1 rounded bg-cyan-100 text-cyan-700 hover:bg-cyan-200"
+            >
+              {category.data.attributes.name}
+            </Link>
+          )}
+          {Array.isArray(tags?.data) &&
+            tags.data.slice(0, 3).map((tag) => (
+              <Link
+                key={tag.id}
+                href={`/tag/${tag.attributes.slug}`}
+                className="inline-block text-xs px-2 py-1 rounded bg-gray-100 text-gray-700 hover:bg-gray-200"
+              >
+                #{tag.attributes.name}
+              </Link>
+            ))}
+        </div>
       </div>
     </Link>
   );

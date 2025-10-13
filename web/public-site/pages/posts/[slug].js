@@ -45,19 +45,25 @@ export default function Post({ post }) {
     category,
     tags,
     slug,
+    seo,
   } = post;
   const imageUrl = coverImage?.data?.attributes?.url
     ? getStrapiURL(coverImage.data.attributes.url)
     : null;
+  const metaTitle = (seo && seo.metaTitle) || `${title} | GLAD Labs Blog`;
+  const metaDescription =
+    (seo && seo.metaDescription) ||
+    excerpt ||
+    'Read this article on GLAD Labs.';
 
   return (
     <>
       <Head>
-        <title>{title} | GLAD Labs Blog</title>
-        <meta name="description" content={excerpt} />
+        <title>{metaTitle}</title>
+        <meta name="description" content={metaDescription} />
         {/* Open Graph */}
-        <meta property="og:title" content={title} />
-        <meta property="og:description" content={excerpt} />
+        <meta property="og:title" content={metaTitle} />
+        <meta property="og:description" content={metaDescription} />
         {imageUrl && <meta property="og:image" content={imageUrl} />}
         <meta
           property="og:url"
@@ -66,8 +72,8 @@ export default function Post({ post }) {
         <meta property="og:type" content="article" />
         {/* Twitter Card */}
         <meta name="twitter:card" content="summary_large_image" />
-        <meta name="twitter:title" content={title} />
-        <meta name="twitter:description" content={excerpt} />
+        <meta name="twitter:title" content={metaTitle} />
+        <meta name="twitter:description" content={metaDescription} />
         {imageUrl && <meta name="twitter:image" content={imageUrl} />}
       </Head>
       <div className="container mx-auto px-4 md:px-6 py-12">

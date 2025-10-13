@@ -50,7 +50,7 @@ export default function CategoryPage({ category, posts }) {
 export async function getStaticPaths() {
   const categories = await getCategories();
   const paths = categories.map((category) => ({
-    params: { slug: category.Slug },
+    params: { slug: category.slug },
   }));
 
   return {

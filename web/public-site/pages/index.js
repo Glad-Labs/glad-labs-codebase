@@ -85,15 +85,26 @@ export default function Home({ featuredPost, posts, pagination }) {
 }
 
 export async function getStaticProps() {
-  const featuredPost = (await getFeaturedPost()) || null;
+  let featuredPost = null;
+  try {
+    featuredPost = await getFeaturedPost();
+  } catch (_) {
+    featuredPost = null;
+  }
 
   const postsData = await getPaginatedPosts(
     1, // page
     6, // pageSize
     featuredPost ? featuredPost.id : null // excludeId
-  );
+  ).catch(() => null);
 
-  const posts = postsData ? postsData.data : null;
+  let posts = postsData ? postsData.data : [];
+
+  // Fallback: if no featured post, use first recent post as featured
+  if (!featuredPost && posts && posts.length > 0) {
+    featuredPost = posts[0];
+    posts = posts.slice(1);
+  }
 
   return {
     props: {

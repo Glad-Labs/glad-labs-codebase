@@ -193,11 +193,11 @@ export async function getPostsByTag(tagSlug) {
 export async function getAllPosts() {
   const data = await fetchAPI('/posts', {
     pagination: {
-      // Set a high page size to fetch all posts
       pageSize: 1000,
     },
-    // Only fetch the slug for performance
-    fields: ['slug'], // Corrected from 'Slug' to 'slug'
+    fields: ['slug', 'updatedAt', 'publishedAt'],
   });
-  return data?.data || [];
+  return Array.isArray(data?.data)
+    ? data.data.map((p) => ({ id: p.id, ...p.attributes }))
+    : [];
 }
