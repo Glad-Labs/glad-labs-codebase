@@ -1,21 +1,20 @@
-# 🌐 **GLAD Labs Public Site - Next.js Frontend**
+# 🌐 GLAD Labs Public Site
 
-![Next.js](https://img.shields.io/badge/Framework-Next.js_14-black)
-![React](https://img.shields.io/badge/React-18-blue)
+![Next.js](https://img.shields.io/badge/Framework-Next.js_15-black)
+![React](https://img.shields.io/badge/React-18.3-blue)
 ![Tailwind](https://img.shields.io/badge/Styling-Tailwind_CSS-38B2AC)
 ![SSG](https://img.shields.io/badge/Rendering-Static_Generation-green)
 
-> **High-performance public website built with Next.js 14, featuring static site generation, SEO optimization, and seamless Strapi v5 integration for content delivery.**
+High-performance public website built with Next.js 15, featuring static site generation, SEO optimization, and seamless Strapi v5 integration.
 
----
+## Overview
 
-## **🎯 Overview**
-
-The GLAD Labs public site serves as the primary content distribution platform, consuming content from the Strapi v5 CMS and presenting it through a fast, SEO-optimized interface. The site leverages Next.js static site generation for optimal performance and user experience.
+The GLAD Labs public site serves as the primary content distribution platform, consuming content from the Strapi v5 CMS and presenting it through a fast, SEO-optimized interface.
 
 **Status:** ✅ Production Ready  
-**Version:** 2.0  
-**Last Updated:** October 13, 2025
+**Version:** 3.0  
+**Last Updated:** October 14, 2025  
+**Technology:** Next.js 15.1.0 + React 18.3.1
 
 ---
 
