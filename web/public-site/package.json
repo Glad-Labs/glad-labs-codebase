@@ -15,24 +15,32 @@
   },
   "dependencies": {
     "@strapi/blocks-react-renderer": "^1.0.2",
-    "@testing-library/jest-dom": "^6.9.1",
-    "@testing-library/react": "^16.3.0",
-    "date-fns": "^3.6.0",
+    "date-fns": "^4.1.0",
     "gray-matter": "^4.0.3",
-    "jest": "^30.2.0",
-    "marked": "^13.0.2",
-    "next": "^14.2.33",
+    "marked": "^14.1.0",
+    "next": "^15.1.0",
     "qs": "^6.14.0",
-    "react": "^18",
-    "react-dom": "^18",
-    "react-markdown": "^10.1.0"
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "react-markdown": "^9.0.1"
   },
   "devDependencies": {
     "@tailwindcss/typography": "^0.5.19",
+    "@testing-library/jest-dom": "^6.9.1",
+    "@testing-library/react": "^16.3.0",
+    "@types/node": "^22.10.0",
+    "@types/react": "^18.3.15",
+    "@types/react-dom": "^18.3.1",
     "autoprefixer": "^10.4.21",
-    "eslint": "^8",
-    "eslint-config-next": "14.2.5",
+    "eslint": "^9.17.0",
+    "eslint-config-next": "^15.1.0",
+    "jest": "^29.7.0",
     "postcss": "^8.5.6",
-    "tailwindcss": "^3.4.18"
+    "tailwindcss": "^3.4.18",
+    "typescript": "^5.7.2"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=9.0.0"
   }
 }
