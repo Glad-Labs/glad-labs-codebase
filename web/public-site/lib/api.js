@@ -37,8 +37,6 @@ async function fetchAPI(path, urlParamsObject = {}, options = {}) {
     `/api${path}${queryString ? `?${queryString}` : ''}`
   )}`;
 
-  console.log('FETCHING URL:', requestUrl); // <--- ADD THIS LINE
-
   const response = await fetch(requestUrl, mergedOptions);
 
   // Handle response

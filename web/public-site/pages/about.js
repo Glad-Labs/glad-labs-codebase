@@ -63,40 +63,40 @@ Ready to transform your business with AI? Contact us to learn more about our AI 
 
 export async function getStaticProps() {
   try {
-    const url = `${getStrapiURL('/api/about')}?populate=*`;
-    console.log('[About getStaticProps] Fetching from:', url);
+    const url = getStrapiURL('/api/about?populate=*');
 
-    const res = await fetch(url);
-    console.log(
-      '[About getStaticProps] Response status:',
-      res.status,
-      res.statusText
-    );
+    const response = await fetch(url, {
+      headers: {
+        Authorization: `Bearer ${process.env.STRAPI_API_TOKEN}`,
+      },
+    });
 
-    if (!res.ok) {
-      console.error('[About getStaticProps] Response not OK');
-      return {
-        props: { about: null },
-        revalidate: 60,
-      };
+    if (!response.ok) {
+      throw new Error(`Failed to fetch about page: ${response.status}`);
     }
 
-    const json = await res.json();
-    console.log('[About getStaticProps] Has data:', !!json.data);
+    const json = await response.json();
 
-    // Strapi v5: data fields are directly on json.data, not json.data.attributes
-    const about = json?.data || null;
-    console.log(
-      '[About getStaticProps] Final about object:',
-      about ? 'SET' : 'NULL'
-    );
+    // Extract about data from Strapi v5 format
+    if (!json.data) {
+      throw new Error('No data in response');
+    }
+
+    const aboutData = json.data;
 
     return {
-      props: { about },
+      props: {
+        about: aboutData,
+      },
       revalidate: 60,
     };
-  } catch (e) {
-    console.error('[About getStaticProps] Fetch error:', e.message);
-    return { props: { about: null }, revalidate: 60 };
+  } catch (error) {
+    console.error('[About getStaticProps] Error:', error.message);
+    return {
+      props: {
+        about: null,
+      },
+      revalidate: 60,
+    };
   }
 }
