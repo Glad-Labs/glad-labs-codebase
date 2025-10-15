@@ -43,8 +43,6 @@ cp .env.example .env.local
 npm run dev
 ```
 
-The application will be available at [http://localhost:3000](http://localhost:3000).
-
 ---
 
 ## **🏗️ Architecture**
@@ -60,7 +58,7 @@ The application will be available at [http://localhost:3000](http://localhost:30
 
 ### **Project Structure**
 
-```
+```text
 web/public-site/
 ├── components/           # Reusable React components
 │   ├── Header.js        # Navigation header
