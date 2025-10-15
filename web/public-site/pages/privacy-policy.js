@@ -4,14 +4,17 @@ import { getStrapiURL } from '../lib/api';
 
 export async function getStaticProps() {
   try {
-    const res = await fetch(
-      `${getStrapiURL('/api/privacy-policy')}?populate=*`
-    );
+    const url = `${getStrapiURL('/api/privacy-policy')}?populate=*`;
+    const res = await fetch(url);
+
     if (!res.ok) {
       return { props: { policy: null }, revalidate: 60 };
     }
+
     const json = await res.json();
-    const data = json?.data?.attributes || null;
+    // Strapi v5: data fields are directly on json.data, not json.data.attributes
+    const data = json?.data || null;
+
     return { props: { policy: data }, revalidate: 60 };
   } catch (e) {
     // Strapi might be rebooting; do not 404 in dev

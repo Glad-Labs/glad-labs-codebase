@@ -63,19 +63,40 @@ Ready to transform your business with AI? Contact us to learn more about our AI 
 
 export async function getStaticProps() {
   try {
-    const res = await fetch(`${getStrapiURL('/api/about')}?populate=*`);
+    const url = `${getStrapiURL('/api/about')}?populate=*`;
+    console.log('[About getStaticProps] Fetching from:', url);
+
+    const res = await fetch(url);
+    console.log(
+      '[About getStaticProps] Response status:',
+      res.status,
+      res.statusText
+    );
+
     if (!res.ok) {
-      return { notFound: true };
+      console.error('[About getStaticProps] Response not OK');
+      return {
+        props: { about: null },
+        revalidate: 60,
+      };
     }
+
     const json = await res.json();
-    const about = json?.data?.attributes || null;
+    console.log('[About getStaticProps] Has data:', !!json.data);
+
+    // Strapi v5: data fields are directly on json.data, not json.data.attributes
+    const about = json?.data || null;
+    console.log(
+      '[About getStaticProps] Final about object:',
+      about ? 'SET' : 'NULL'
+    );
 
     return {
       props: { about },
       revalidate: 60,
     };
   } catch (e) {
-    // If Strapi is down during dev, avoid crashing the page
-    return { notFound: false, props: { about: null }, revalidate: 60 };
+    console.error('[About getStaticProps] Fetch error:', e.message);
+    return { props: { about: null }, revalidate: 60 };
   }
 }
