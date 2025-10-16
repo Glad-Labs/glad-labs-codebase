@@ -150,8 +150,8 @@ const Dashboard = () => {
                 systemHealth === 'healthy'
                   ? 'bg-green-100 text-green-800'
                   : systemHealth === 'degraded'
-                  ? 'bg-yellow-100 text-yellow-800'
-                  : 'bg-gray-100 text-gray-800'
+                    ? 'bg-yellow-100 text-yellow-800'
+                    : 'bg-gray-100 text-gray-800'
               }`}
             >
               <div
@@ -159,8 +159,8 @@ const Dashboard = () => {
                   systemHealth === 'healthy'
                     ? 'bg-green-400'
                     : systemHealth === 'degraded'
-                    ? 'bg-yellow-400'
-                    : 'bg-gray-400'
+                      ? 'bg-yellow-400'
+                      : 'bg-gray-400'
                 }`}
               ></div>
               System {systemHealth}
@@ -325,10 +325,10 @@ const Dashboard = () => {
                               activity.status === 'completed'
                                 ? 'bg-green-500'
                                 : activity.status === 'in_progress'
-                                ? 'bg-blue-500'
-                                : activity.status === 'failed'
-                                ? 'bg-red-500'
-                                : 'bg-gray-400'
+                                  ? 'bg-blue-500'
+                                  : activity.status === 'failed'
+                                    ? 'bg-red-500'
+                                    : 'bg-gray-400'
                             }`}
                           >
                             <svg
@@ -353,10 +353,10 @@ const Dashboard = () => {
                               {activity.status === 'completed'
                                 ? 'completed'
                                 : activity.status === 'in_progress'
-                                ? 'is in progress'
-                                : activity.status === 'failed'
-                                ? 'failed'
-                                : 'created'}
+                                  ? 'is in progress'
+                                  : activity.status === 'failed'
+                                    ? 'failed'
+                                    : 'created'}
                             </p>
                           </div>
                           <div className="text-right text-sm whitespace-nowrap text-gray-500">
