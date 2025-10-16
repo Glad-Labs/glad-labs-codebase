@@ -72,8 +72,35 @@ const Sidebar = () => {
               to="/"
               className={({ isActive }) => (isActive ? 'active' : '')}
             >
-              <span className="sidebar-icon">📊</span>
+              <span className="sidebar-icon">🏠</span>
               <span className="sidebar-label">Dashboard</span>
+            </NavLink>
+          </li>
+          <li>
+            <NavLink
+              to="/tasks"
+              className={({ isActive }) => (isActive ? 'active' : '')}
+            >
+              <span className="sidebar-icon">✅</span>
+              <span className="sidebar-label">Tasks</span>
+            </NavLink>
+          </li>
+          <li>
+            <NavLink
+              to="/models"
+              className={({ isActive }) => (isActive ? 'active' : '')}
+            >
+              <span className="sidebar-icon">🤖</span>
+              <span className="sidebar-label">Models</span>
+            </NavLink>
+          </li>
+          <li>
+            <NavLink
+              to="/social"
+              className={({ isActive }) => (isActive ? 'active' : '')}
+            >
+              <span className="sidebar-icon">📱</span>
+              <span className="sidebar-label">Social Media</span>
             </NavLink>
           </li>
           <li>
@@ -100,7 +127,7 @@ const Sidebar = () => {
               className={({ isActive }) => (isActive ? 'active' : '')}
             >
               <span className="sidebar-icon">💰</span>
-              <span className="sidebar-label">Cost Metrics</span>
+              <span className="sidebar-label">Financials</span>
             </NavLink>
           </li>
           <li>
