@@ -1,69 +1,58 @@
 import Head from 'next/head';
-import Layout from '../components/Layout';
-import { getAboutPage } from '../lib/api';
 import { BlocksRenderer } from '@strapi/blocks-react-renderer';
+import { getStrapiURL } from '../lib/api';
 
-export default function About({ content }) {
+export default function About({ about }) {
+  const title = about?.title || 'About Glad Labs';
+  const content = about?.content ?? [];
+  const seo = about?.seo || {};
+  const metaTitle = seo.metaTitle || title;
+  const metaDescription = seo.metaDescription || 'About GLAD Labs';
+
+  const renderContent = () => {
+    if (Array.isArray(content)) {
+      return <BlocksRenderer content={content} />;
+    }
+    if (typeof content === 'string') {
+      return <div dangerouslySetInnerHTML={{ __html: content }} />;
+    }
+    if (content && Array.isArray(content.blocks)) {
+      return <BlocksRenderer content={content.blocks} />;
+    }
+    return null;
+  };
+
   return (
-    <Layout>
+    <>
       <Head>
-        <title>About - Glad Labs Frontier</title>
-        <meta
-          name="description"
-          content="Learn about the mission and technology behind the Glad Labs autonomous content creation experiment."
-        />
-        {/* Open Graph */}
-        <meta property="og:title" content="About - Glad Labs Frontier" />
-        <meta
-          property="og:description"
-          content="Learn about the mission and technology behind the Glad Labs autonomous content creation experiment."
-        />
-        <meta
-          property="og:image"
-          content="https://www.glad-labs.com/og-image.jpg"
-        />
-        <meta property="og:url" content="https://www.glad-labs.com/about" />
-        <meta property="og:type" content="website" />
-        {/* Twitter Card */}
-        <meta name="twitter:card" content="summary_large_image" />
-        <meta name="twitter:title" content="About - Glad Labs Frontier" />
-        <meta
-          name="twitter:description"
-          content="Learn about the mission and technology behind the Glad Labs autonomous content creation experiment."
-        />
-        <meta
-          name="twitter:image"
-          content="https://www.glad-labs.com/og-image.jpg"
-        />
+        <title>{metaTitle}</title>
+        <meta name="description" content={metaDescription} />
       </Head>
-      <div className="container mx-auto px-6 py-12">
-        <div className="max-w-4xl mx-auto prose prose-invert lg:prose-xl">
-          {content ? (
-            <BlocksRenderer content={content} />
-          ) : (
-            <>
-              <h1>About Glad Labs</h1>
-              <p>This content should be editable in the Strapi CMS.</p>
-              <p>
-                To set this up, create a new &ldquo;Single Type&rdquo; in Strapi
-                called &ldquo;About&rdquo; with a &ldquo;Rich Text&rdquo; field
-                named &ldquo;Content&rdquo;.
-              </p>
-            </>
-          )}
-        </div>
+      <div className="container mx-auto px-4 md:px-6 py-12">
+        <h1 className="text-4xl md:text-5xl font-bold text-cyan-300 mb-8">
+          {title}
+        </h1>
+        <div className="prose prose-invert max-w-none">{renderContent()}</div>
       </div>
-    </Layout>
+    </>
   );
 }
 
 export async function getStaticProps() {
-  const aboutPageData = await getAboutPage();
+  try {
+    const res = await fetch(`${getStrapiURL('/api/about')}?populate=*`);
+    if (!res.ok) {
+      return { notFound: true };
+    }
+    const json = await res.json();
+    const about = json?.data?.attributes || null;
 
-  return {
-    props: {
-      content: aboutPageData?.Content || null,
-    },
-    revalidate: 60,
-  };
+    return {
+      props: { about },
+      revalidate: 60,
+    };
+  } catch (e) {
+    // If Strapi is down during dev, avoid crashing the page
+    return { notFound: false, props: { about: null }, revalidate: 60 };
+  }
 }

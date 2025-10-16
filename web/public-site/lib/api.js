@@ -1,6 +1,8 @@
 import qs from 'qs';
 
 const STRAPI_API_URL = process.env.NEXT_PUBLIC_STRAPI_API_URL;
+const STRAPI_API_TOKEN =
+  process.env.NEXT_PUBLIC_STRAPI_API_TOKEN || process.env.STRAPI_API_TOKEN;
 
 /**
  * Get full Strapi URL from path
@@ -23,17 +25,20 @@ async function fetchAPI(path, urlParamsObject = {}, options = {}) {
   const mergedOptions = {
     headers: {
       'Content-Type': 'application/json',
+      ...(STRAPI_API_TOKEN
+        ? { Authorization: `Bearer ${STRAPI_API_TOKEN}` }
+        : {}),
     },
     ...options,
   };
 
-  // Build request URL
   const queryString = qs.stringify(urlParamsObject);
   const requestUrl = `${getStrapiURL(
-    `${path}${queryString ? `?${queryString}` : ''}`
+    `/api${path}${queryString ? `?${queryString}` : ''}`
   )}`;
 
-  // Trigger API call
+  console.log('FETCHING URL:', requestUrl); // <--- ADD THIS LINE
+
   const response = await fetch(requestUrl, mergedOptions);
 
   // Handle response
@@ -69,7 +74,7 @@ export async function getPaginatedPosts(
   const data = await fetchAPI(`/posts?${query}`);
   return {
     ...data,
-    data: data.data.map((post) => ({ id: post.id, ...post.attributes })),
+    data: data.data,
   };
 }
 
@@ -85,45 +90,63 @@ export async function getFeaturedPost() {
   const data = await fetchAPI(`/posts?${query}`);
   if (data && data.data && data.data.length > 0) {
     const post = data.data[0];
-    return { id: post.id, ...post.attributes };
+    return post;
   }
   return null;
 }
 
 export async function getPostBySlug(slug) {
-  const query = qs.stringify({
+  const data = await fetchAPI(`/posts`, {
     filters: { slug: { $eq: slug } },
     populate: '*',
   });
-  const data = await fetchAPI(`/posts?${query}`);
-  // The response for a filtered query is always an array, so we return the first item
-  if (data && data.data && data.data.length > 0) {
-    const post = data.data[0];
-    return { id: post.id, ...post.attributes };
-  }
-  return null;
+  const item = data?.data?.[0];
+  return item || null;
 }
 
 export async function getAboutPage() {
   const query = qs.stringify({ populate: '*' });
-  const data = await fetchAPI(`/about?${query}`);
-  if (data && data.data) {
-    return { id: data.data.id, ...data.data.attributes };
+  const candidates = ['/about', '/about-page', '/about-us'];
+  for (const path of candidates) {
+    try {
+      const data = await fetchAPI(`${path}?${query}`);
+      if (data && data.data) {
+        return data.data;
+      }
+    } catch (err) {
+      // Try next candidate on 404/NotFound; rethrow on other errors if needed
+      continue;
+    }
+  }
+
+  // Fallback: try a collection type `pages`/`page` with slug 'about'
+  const collectionCandidates = ['/pages', '/page'];
+  const slugFilter = qs.stringify(
+    { filters: { slug: { $eq: 'about' } }, populate: '*' },
+    { encode: false }
+  );
+  for (const base of collectionCandidates) {
+    try {
+      const data = await fetchAPI(`${base}?${slugFilter}`);
+      if (data && Array.isArray(data.data) && data.data.length > 0) {
+        const item = data.data[0];
+        return item;
+      }
+    } catch (err) {
+      continue;
+    }
   }
   return null;
 }
 
 export async function getCategories() {
   const data = await fetchAPI('/categories');
-  return data.data.map((category) => ({
-    id: category.id,
-    ...category.attributes,
-  }));
+  return data.data;
 }
 
 export async function getTags() {
   const data = await fetchAPI('/tags');
-  return data.data.map((tag) => ({ id: tag.id, ...tag.attributes }));
+  return data.data;
 }
 
 export async function getCategoryBySlug(slug) {
@@ -131,7 +154,7 @@ export async function getCategoryBySlug(slug) {
   const data = await fetchAPI(`/categories?${query}`);
   if (data && data.data && data.data.length > 0) {
     const category = data.data[0];
-    return { id: category.id, ...category.attributes };
+    return category;
   }
   return null;
 }
@@ -141,7 +164,7 @@ export async function getTagBySlug(slug) {
   const data = await fetchAPI(`/tags?${query}`);
   if (data && data.data && data.data.length > 0) {
     const tag = data.data[0];
-    return { id: tag.id, ...tag.attributes };
+    return tag;
   }
   return null;
 }
@@ -152,7 +175,7 @@ export async function getPostsByCategory(categorySlug) {
     populate: '*',
   });
   const data = await fetchAPI(`/posts?${query}`);
-  return data.data.map((post) => ({ id: post.id, ...post.attributes }));
+  return data.data;
 }
 
 export async function getPostsByTag(tagSlug) {
@@ -161,5 +184,15 @@ export async function getPostsByTag(tagSlug) {
     populate: '*',
   });
   const data = await fetchAPI(`/posts?${query}`);
-  return data.data.map((post) => ({ id: post.id, ...post.attributes }));
+  return data.data;
+}
+
+export async function getAllPosts() {
+  const data = await fetchAPI('/posts', {
+    pagination: {
+      pageSize: 1000,
+    },
+    fields: ['slug', 'updatedAt', 'publishedAt'],
+  });
+  return Array.isArray(data?.data) ? data.data : [];
 }

@@ -25,9 +25,9 @@ async function fetchAPI(path, urlParamsObject = {}, options = {}) {
 
 async function getAllContent() {
   const [posts, categories, tags] = await Promise.all([
-    fetchAPI('/posts', { populate: '*' }),
-    fetchAPI('/categories'),
-    fetchAPI('/tags'),
+    fetchAPI('/api/posts', { populate: '*' }),
+    fetchAPI('/api/categories'),
+    fetchAPI('/api/tags'),
   ]);
 
   return {
@@ -51,32 +51,37 @@ function generateSitemap(content) {
         <loc>${SITE_URL}/about</loc>
       </url>
       <url>
+        <loc>${SITE_URL}/privacy-policy</loc>
+      </url>
+      <url>
         <loc>${SITE_URL}/archive/1</loc>
       </url>
       ${posts
         .map(
-          ({ Slug, updatedAt }) => `
+          ({ slug, updatedAt, publishedAt }) => `
       <url>
-        <loc>${SITE_URL}/posts/${Slug}</loc>
-        <lastmod>${new Date(updatedAt).toISOString()}</lastmod>
+        <loc>${SITE_URL}/posts/${slug}</loc>
+        <lastmod>${new Date(
+          updatedAt || publishedAt || Date.now()
+        ).toISOString()}</lastmod>
       </url>
       `
         )
         .join('')}
       ${categories
         .map(
-          ({ Slug }) => `
+          ({ slug }) => `
       <url>
-        <loc>${SITE_URL}/category/${Slug}</loc>
+        <loc>${SITE_URL}/category/${slug}</loc>
       </url>
       `
         )
         .join('')}
       ${tags
         .map(
-          ({ Slug }) => `
+          ({ slug }) => `
       <url>
-        <loc>${SITE_URL}/tag/${Slug}</loc>
+        <loc>${SITE_URL}/tag/${slug}</loc>
       </url>
       `
         )

@@ -8,29 +8,12 @@ The public site is responsible for displaying blog posts, pages, and other conte
 
 ## Getting Started
 
-### Prerequisites
+For detailed instructions on how to set up the environment and run the application, please refer to the main [project README.md](../../README.md).
 
-- Node.js (v14 or later)
-- npm
-
-### Installation
-
-1. Clone the repository.
-2. Navigate to the `web/public-site` directory:
-   ```sh
-   cd web/public-site
-   ```
-3. Install the dependencies:
-   ```sh
-   npm install
-   ```
-
-### Running the Application
-
-To start the development server, run the following command:
+To start the development server, run the following command from the root of the project:
 
 ```sh
-npm run dev
+npm run dev:public
 ```
 
 The application will be available at [http://localhost:3000](http://localhost:3000).

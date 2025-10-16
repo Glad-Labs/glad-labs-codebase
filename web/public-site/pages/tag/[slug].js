@@ -1,45 +1,36 @@
 import Head from 'next/head';
-import Layout from '../../components/Layout';
 import { getTags, getTagBySlug, getPostsByTag } from '../../lib/api';
-import Link from 'next/link';
+import PostCard from '../../components/PostCard';
 
 export default function TagPage({ tag, posts }) {
   return (
-    <Layout>
+    <>
       <Head>
-        <title>{tag.Name} - Glad Labs Frontier</title>
-        <meta name="description" content={`Posts tagged with: ${tag.Name}`} />
+        <title>{tag.name} - Glad Labs Frontier</title>
+        <meta name="description" content={`Posts tagged with: ${tag.name}`} />
       </Head>
-      <div className="container mx-auto px-6 py-12">
+      <div className="container mx-auto px-4 md:px-6 py-12">
         <div className="max-w-4xl mx-auto">
           <h1 className="text-5xl font-bold text-cyan-400 mb-8">
-            Tag: {tag.Name}
+            Tag: {tag.name}
           </h1>
-          <div className="space-y-8">
-            {posts.map((post) => (
-              <Link
-                key={post.id}
-                href={`/posts/${post.Slug}`}
-                className="block p-6 bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow"
-              >
-                <h2 className="text-2xl font-bold mb-2">{post.Title}</h2>
-                <p className="text-gray-600 mb-4">
-                  {new Date(post.publishedAt).toLocaleDateString()}
-                </p>
-                <p className="text-gray-700">{post.Excerpt}</p>
-              </Link>
-            ))}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {posts
+              .filter((post) => Boolean(post.slug))
+              .map((post) => (
+                <PostCard key={post.id} post={post} />
+              ))}
           </div>
         </div>
       </div>
-    </Layout>
+    </>
   );
 }
 
 export async function getStaticPaths() {
   const tags = await getTags();
   const paths = tags.map((tag) => ({
-    params: { slug: tag.Slug },
+    params: { slug: tag.slug },
   }));
 
   return {
