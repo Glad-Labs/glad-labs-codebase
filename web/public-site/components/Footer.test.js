@@ -5,7 +5,8 @@ describe('Footer', () => {
   it('renders the copyright notice and privacy policy link', () => {
     render(<Footer />);
 
-    expect(screen.getByText(/Glad Labs, LLC/)).toBeInTheDocument();
+    expect(screen.getByText(/GLAD Labs, LLC/i)).toBeInTheDocument();
     expect(screen.getByText('Privacy Policy')).toBeInTheDocument();
+    expect(screen.getByText(/All rights reserved/i)).toBeInTheDocument();
   });
 });
