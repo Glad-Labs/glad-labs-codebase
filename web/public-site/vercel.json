@@ -1,20 +1,37 @@
 {
+  "$schema": "https://openapi.vercel.sh/vercel.json",
   "buildCommand": "npm run build",
   "devCommand": "npm run dev",
   "installCommand": "npm install",
   "framework": "nextjs",
-  "env": {
-    "NEXT_PUBLIC_STRAPI_API_URL": {
-      "description": "Strapi API URL (e.g., https://glad-labs-strapi-main-production.up.railway.app)",
-      "required": true
+  "cleanUrls": true,
+  "trailingSlash": false,
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        {
+          "key": "X-Content-Type-Options",
+          "value": "nosniff"
+        },
+        {
+          "key": "X-Frame-Options",
+          "value": "DENY"
+        },
+        {
+          "key": "X-XSS-Protection",
+          "value": "1; mode=block"
+        }
+      ]
     },
-    "STRAPI_API_TOKEN": {
-      "description": "Strapi API Token for authentication - Generate from Strapi Admin: Settings -> API Tokens -> Create 'Full access' token",
-      "required": true
-    },
-    "NEXT_PUBLIC_SITE_URL": {
-      "description": "Your site URL (for SEO, sitemaps)",
-      "default": "https://gladlabs.io"
+    {
+      "source": "/service-worker.js",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=0, must-revalidate"
+        }
+      ]
     }
-  }
+  ]
 }
