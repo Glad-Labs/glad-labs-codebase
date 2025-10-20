@@ -28,32 +28,49 @@ export default function TagPage({ tag, posts }) {
 }
 
 export async function getStaticPaths() {
-  const tags = await getTags();
-  const paths = tags.map((tag) => ({
-    params: { slug: tag.slug },
-  }));
+  try {
+    const tags = await getTags();
+    const paths = tags.map((tag) => ({
+      params: { slug: tag.slug },
+    }));
 
-  return {
-    paths,
-    fallback: 'blocking',
-  };
+    return {
+      paths,
+      fallback: 'blocking',
+    };
+  } catch (error) {
+    console.error('Error fetching tags:', error);
+    // Return empty paths if API fails - fallback will handle requests
+    return {
+      paths: [],
+      fallback: 'blocking',
+    };
+  }
 }
 
 export async function getStaticProps({ params }) {
-  const tag = await getTagBySlug(params.slug);
-  const posts = await getPostsByTag(params.slug);
+  try {
+    const tag = await getTagBySlug(params.slug);
+    const posts = await getPostsByTag(params.slug);
 
-  if (!tag) {
+    if (!tag) {
+      return {
+        notFound: true,
+      };
+    }
+
+    return {
+      props: {
+        tag,
+        posts,
+      },
+      revalidate: 60,
+    };
+  } catch (error) {
+    console.error(`Error fetching tag ${params.slug}:`, error);
     return {
       notFound: true,
+      revalidate: 10,
     };
   }
-
-  return {
-    props: {
-      tag,
-      posts,
-    },
-    revalidate: 60,
-  };
 }

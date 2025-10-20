@@ -36,32 +36,49 @@ export default function CategoryPage({ category, posts }) {
 }
 
 export async function getStaticPaths() {
-  const categories = await getCategories();
-  const paths = categories.map((category) => ({
-    params: { slug: category.slug },
-  }));
+  try {
+    const categories = await getCategories();
+    const paths = categories.map((category) => ({
+      params: { slug: category.slug },
+    }));
 
-  return {
-    paths,
-    fallback: 'blocking',
-  };
+    return {
+      paths,
+      fallback: 'blocking',
+    };
+  } catch (error) {
+    console.error('Error fetching categories:', error);
+    // Return empty paths if API fails - fallback will handle requests
+    return {
+      paths: [],
+      fallback: 'blocking',
+    };
+  }
 }
 
 export async function getStaticProps({ params }) {
-  const category = await getCategoryBySlug(params.slug);
-  const posts = await getPostsByCategory(params.slug);
+  try {
+    const category = await getCategoryBySlug(params.slug);
+    const posts = await getPostsByCategory(params.slug);
 
-  if (!category) {
+    if (!category) {
+      return {
+        notFound: true,
+      };
+    }
+
+    return {
+      props: {
+        category,
+        posts,
+      },
+      revalidate: 60,
+    };
+  } catch (error) {
+    console.error(`Error fetching category ${params.slug}:`, error);
     return {
       notFound: true,
+      revalidate: 10,
     };
   }
-
-  return {
-    props: {
-      category,
-      posts,
-    },
-    revalidate: 60,
-  };
 }
