@@ -36,15 +36,27 @@ export default function CategoryPage({ category, posts }) {
 }
 
 export async function getStaticPaths() {
-  const categories = await getCategories();
-  const paths = categories.map((category) => ({
-    params: { slug: category.slug },
-  }));
+  try {
+    const categories = await getCategories();
+    const paths = categories.map((category) => ({
+      params: { slug: category.slug },
+    }));
 
-  return {
-    paths,
-    fallback: 'blocking',
-  };
+    return {
+      paths,
+      fallback: 'blocking',
+    };
+  } catch (error) {
+    console.error(
+      '[Category getStaticPaths] Error fetching categories:',
+      error.message
+    );
+    // Return empty paths during build failures; pages will be generated on-demand
+    return {
+      paths: [],
+      fallback: 'blocking',
+    };
+  }
 }
 
 export async function getStaticProps({ params }) {

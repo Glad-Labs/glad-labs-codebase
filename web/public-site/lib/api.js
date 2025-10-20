@@ -37,15 +37,24 @@ async function fetchAPI(path, urlParamsObject = {}, options = {}) {
     `/api${path}${queryString ? `?${queryString}` : ''}`
   )}`;
 
-  const response = await fetch(requestUrl, mergedOptions);
+  try {
+    const response = await fetch(requestUrl, mergedOptions);
 
-  // Handle response
-  if (!response.ok) {
-    console.error(response.statusText);
-    throw new Error(`An error occurred please try again`);
+    // Handle response
+    if (!response.ok) {
+      console.error(
+        `[Strapi API Error] ${response.status} ${response.statusText} - ${requestUrl}`
+      );
+      throw new Error(
+        `Strapi API returned ${response.status}: ${response.statusText}`
+      );
+    }
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    console.error(`[Strapi API Fetch Error] ${path}:`, error.message);
+    throw error;
   }
-  const data = await response.json();
-  return data;
 }
 
 export async function getPaginatedPosts(
@@ -53,53 +62,90 @@ export async function getPaginatedPosts(
   pageSize = 10,
   excludeId = null
 ) {
-  const query = qs.stringify(
-    {
-      populate: '*',
-      sort: { publishedAt: 'desc' },
-      pagination: {
-        page,
-        pageSize,
-      },
-      filters: {
-        id: {
-          $ne: excludeId,
+  try {
+    const query = qs.stringify(
+      {
+        populate: '*',
+        sort: { publishedAt: 'desc' },
+        pagination: {
+          page,
+          pageSize,
+        },
+        filters: {
+          id: {
+            $ne: excludeId,
+          },
         },
       },
-    },
-    { encode: false }
-  );
-  const data = await fetchAPI(`/posts?${query}`);
-  return {
-    ...data,
-    data: data.data,
-  };
+      { encode: false }
+    );
+    const data = await fetchAPI(`/posts?${query}`);
+    return {
+      ...data,
+      data: Array.isArray(data?.data) ? data.data : [],
+      meta: {
+        pagination: data?.meta?.pagination || {
+          page,
+          pageSize,
+          pageCount: 0,
+          total: 0,
+        },
+      },
+    };
+  } catch (error) {
+    console.error('[getPaginatedPosts] Error fetching posts:', error.message);
+    // Return safe empty response during build failures
+    return {
+      data: [],
+      meta: {
+        pagination: {
+          page,
+          pageSize,
+          pageCount: 0,
+          total: 0,
+        },
+      },
+    };
+  }
 }
 
 export async function getFeaturedPost() {
-  const query = qs.stringify({
-    filters: { featured: { $eq: true } },
-    sort: { publishedAt: 'desc' },
-    pagination: {
-      limit: 1,
-    },
-    populate: '*',
-  });
-  const data = await fetchAPI(`/posts?${query}`);
-  if (data && data.data && data.data.length > 0) {
-    const post = data.data[0];
-    return post;
+  try {
+    const query = qs.stringify({
+      filters: { featured: { $eq: true } },
+      sort: { publishedAt: 'desc' },
+      pagination: {
+        limit: 1,
+      },
+      populate: '*',
+    });
+    const data = await fetchAPI(`/posts?${query}`);
+    if (data && data.data && data.data.length > 0) {
+      const post = data.data[0];
+      return post;
+    }
+    return null;
+  } catch (error) {
+    console.error(
+      '[getFeaturedPost] Error fetching featured post:',
+      error.message
+    );
+    return null;
   }
-  return null;
 }
 
 export async function getPostBySlug(slug) {
-  const data = await fetchAPI(`/posts`, {
-    filters: { slug: { $eq: slug } },
-    populate: '*',
-  });
-  const item = data?.data?.[0];
-  return item || null;
+  try {
+    const data = await fetchAPI(`/posts`, {
+      filters: { slug: { $eq: slug } },
+      populate: '*',
+    });
+    const item = data?.data?.[0];
+    return item || null;
+  } catch (error) {
+    console.error('[getPostBySlug] Error fetching post:', error.message);
+    return null;
+  }
 }
 
 export async function getAboutPage() {
@@ -138,59 +184,101 @@ export async function getAboutPage() {
 }
 
 export async function getCategories() {
-  const data = await fetchAPI('/categories');
-  return data.data;
+  try {
+    const data = await fetchAPI('/categories');
+    return Array.isArray(data?.data) ? data.data : [];
+  } catch (error) {
+    console.error('[getCategories] Failed to fetch categories:', error.message);
+    // Return empty array during build to prevent failure
+    // In production, users can still browse posts but categories page won't work
+    return [];
+  }
 }
 
 export async function getTags() {
-  const data = await fetchAPI('/tags');
-  return data.data;
+  try {
+    const data = await fetchAPI('/tags');
+    return Array.isArray(data?.data) ? data.data : [];
+  } catch (error) {
+    console.error('[getTags] Failed to fetch tags:', error.message);
+    // Return empty array during build to prevent failure
+    // In production, users can still browse posts but tags page won't work
+    return [];
+  }
 }
 
 export async function getCategoryBySlug(slug) {
-  const query = qs.stringify({ filters: { slug: { $eq: slug } } });
-  const data = await fetchAPI(`/categories?${query}`);
-  if (data && data.data && data.data.length > 0) {
-    const category = data.data[0];
-    return category;
+  try {
+    const query = qs.stringify({ filters: { slug: { $eq: slug } } });
+    const data = await fetchAPI(`/categories?${query}`);
+    if (data && data.data && data.data.length > 0) {
+      const category = data.data[0];
+      return category;
+    }
+    return null;
+  } catch (error) {
+    console.error(
+      '[getCategoryBySlug] Error fetching category:',
+      error.message
+    );
+    return null;
   }
-  return null;
 }
 
 export async function getTagBySlug(slug) {
-  const query = qs.stringify({ filters: { slug: { $eq: slug } } });
-  const data = await fetchAPI(`/tags?${query}`);
-  if (data && data.data && data.data.length > 0) {
-    const tag = data.data[0];
-    return tag;
+  try {
+    const query = qs.stringify({ filters: { slug: { $eq: slug } } });
+    const data = await fetchAPI(`/tags?${query}`);
+    if (data && data.data && data.data.length > 0) {
+      const tag = data.data[0];
+      return tag;
+    }
+    return null;
+  } catch (error) {
+    console.error('[getTagBySlug] Error fetching tag:', error.message);
+    return null;
   }
-  return null;
 }
 
 export async function getPostsByCategory(categorySlug) {
-  const query = qs.stringify({
-    filters: { category: { slug: { $eq: categorySlug } } },
-    populate: '*',
-  });
-  const data = await fetchAPI(`/posts?${query}`);
-  return data.data;
+  try {
+    const query = qs.stringify({
+      filters: { category: { slug: { $eq: categorySlug } } },
+      populate: '*',
+    });
+    const data = await fetchAPI(`/posts?${query}`);
+    return Array.isArray(data?.data) ? data.data : [];
+  } catch (error) {
+    console.error('[getPostsByCategory] Error:', error.message);
+    return [];
+  }
 }
 
 export async function getPostsByTag(tagSlug) {
-  const query = qs.stringify({
-    filters: { tags: { slug: { $eq: tagSlug } } },
-    populate: '*',
-  });
-  const data = await fetchAPI(`/posts?${query}`);
-  return data.data;
+  try {
+    const query = qs.stringify({
+      filters: { tags: { slug: { $eq: tagSlug } } },
+      populate: '*',
+    });
+    const data = await fetchAPI(`/posts?${query}`);
+    return Array.isArray(data?.data) ? data.data : [];
+  } catch (error) {
+    console.error('[getPostsByTag] Error:', error.message);
+    return [];
+  }
 }
 
 export async function getAllPosts() {
-  const data = await fetchAPI('/posts', {
-    pagination: {
-      pageSize: 1000,
-    },
-    fields: ['slug', 'updatedAt', 'publishedAt'],
-  });
-  return Array.isArray(data?.data) ? data.data : [];
+  try {
+    const data = await fetchAPI('/posts', {
+      pagination: {
+        pageSize: 1000,
+      },
+      fields: ['slug', 'updatedAt', 'publishedAt'],
+    });
+    return Array.isArray(data?.data) ? data.data : [];
+  } catch (error) {
+    console.error('[getAllPosts] Error fetching all posts:', error.message);
+    return [];
+  }
 }

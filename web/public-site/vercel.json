@@ -1,0 +1,22 @@
+{
+  "buildCommand": "npm run build",
+  "devCommand": "npm run dev",
+  "installCommand": "npm install",
+  "framework": "nextjs",
+  "env": {
+    "NEXT_PUBLIC_STRAPI_API_URL": {
+      "description": "Strapi API URL (e.g., https://glad-labs-strapi-main-production.up.railway.app)",
+      "required": true
+    },
+    "STRAPI_API_TOKEN": {
+      "description": "Strapi API Token for authentication - Generate from Strapi Admin: Settings -> API Tokens -> Create 'Full access' token",
+      "required": true
+    },
+    "NEXT_PUBLIC_SITE_URL": {
+      "description": "Your site URL (for SEO, sitemaps)",
+      "default": "https://gladlabs.io"
+    }
+  },
+  "buildOutputDirectory": ".next",
+  "nodeVersion": "18.x"
+}

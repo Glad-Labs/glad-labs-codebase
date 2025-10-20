@@ -28,15 +28,24 @@ export default function TagPage({ tag, posts }) {
 }
 
 export async function getStaticPaths() {
-  const tags = await getTags();
-  const paths = tags.map((tag) => ({
-    params: { slug: tag.slug },
-  }));
+  try {
+    const tags = await getTags();
+    const paths = tags.map((tag) => ({
+      params: { slug: tag.slug },
+    }));
 
-  return {
-    paths,
-    fallback: 'blocking',
-  };
+    return {
+      paths,
+      fallback: 'blocking',
+    };
+  } catch (error) {
+    console.error('[Tag getStaticPaths] Error fetching tags:', error.message);
+    // Return empty paths during build failures; pages will be generated on-demand
+    return {
+      paths: [],
+      fallback: 'blocking',
+    };
+  }
 }
 
 export async function getStaticProps({ params }) {
