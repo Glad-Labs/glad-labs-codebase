@@ -42,6 +42,7 @@ All pages build successfully with proper error handling and fallbacks.
 ### 1. ❌ Problem: API Call Failures During Build
 
 **Before:**
+
 ```
 Error: An error occurred please try again
   at h (C:\...\pages\category\[slug].js:1:4624)
@@ -50,12 +51,14 @@ Build error occurred
 ```
 
 **Root Causes:**
+
 - No error handling in `getStaticPaths()` when fetching categories/tags
 - No error handling in `getPaginatedPosts()` during static generation
 - Fetch failures would crash the entire build
 - No fallback for missing API data
 
 **Solution Implemented:**
+
 - ✅ Added try-catch blocks to all API functions
 - ✅ Added fallback empty arrays when API calls fail
 - ✅ Added detailed error logging for troubleshooting
@@ -65,12 +68,14 @@ Build error occurred
 ### 2. ❌ Problem: Sitemap Generation Failures
 
 **Before:**
+
 ```
 Error generating sitemap: TypeError: fetch failed
   at async fetchAPI (C:\...\scripts\generate-sitemap.js:17:20)
 ```
 
 **Solution Implemented:**
+
 - ✅ Added try-catch to sitemap generation
 - ✅ Generates minimal fallback sitemap on API failure
 - ✅ Logs detailed information about generated sitemap
@@ -79,6 +84,7 @@ Error generating sitemap: TypeError: fetch failed
 ### 3. ❌ Problem: No Vercel Configuration
 
 **Solution Implemented:**
+
 - ✅ Created `vercel.json` with build configuration
 - ✅ Created `.vercelignore` to exclude unnecessary files
 - ✅ Documented all required environment variables
@@ -86,6 +92,7 @@ Error generating sitemap: TypeError: fetch failed
 ### 4. ❌ Problem: Unclear Deployment Instructions
 
 **Solution Implemented:**
+
 - ✅ Created comprehensive `VERCEL_DEPLOYMENT.md` guide
 - ✅ Updated `README.md` with deployment section
 - ✅ Documented environment variable requirements
@@ -98,6 +105,7 @@ Error generating sitemap: TypeError: fetch failed
 ### A. API Error Handling (`lib/api.js`)
 
 **Functions Enhanced:**
+
 1. `fetchAPI()` - Better error logging and error details
 2. `getPaginatedPosts()` - Returns empty array on failure
 3. `getFeaturedPost()` - Returns null on failure
@@ -113,6 +121,7 @@ Error generating sitemap: TypeError: fetch failed
 ### B. Static Generation Fixes
 
 **Pages Updated:**
+
 1. `pages/index.js` - Already had error handling ✅
 2. `pages/posts/[slug].js` - Already had error handling ✅
 3. `pages/archive/[page].js` - Added comprehensive error handling
@@ -129,6 +138,7 @@ Error generating sitemap: TypeError: fetch failed
 ### C. Sitemap Generation (`scripts/generate-sitemap.js`)
 
 **Improvements:**
+
 - ✅ Error handling for API calls with Promise.allSettled fallback
 - ✅ Filtering of items without slugs
 - ✅ Proper XML formatting with indentation
@@ -173,12 +183,12 @@ Error generating sitemap: TypeError: fetch failed
 
 ### Environment Variables Required
 
-| Variable | Required | Type | Example |
-|----------|----------|------|---------|
-| `NEXT_PUBLIC_STRAPI_API_URL` | Yes | Public | `https://glad-labs-strapi-main-production.up.railway.app` |
-| `STRAPI_API_TOKEN` | Yes | Secret | (Generated from Strapi Admin) |
-| `NEXT_PUBLIC_SITE_URL` | No | Public | `https://gladlabs.io` |
-| `NEXT_PUBLIC_GA_ID` | No | Public | `G-XXXXXXXXXX` |
+| Variable                     | Required | Type   | Example                                                   |
+| ---------------------------- | -------- | ------ | --------------------------------------------------------- |
+| `NEXT_PUBLIC_STRAPI_API_URL` | Yes      | Public | `https://glad-labs-strapi-main-production.up.railway.app` |
+| `STRAPI_API_TOKEN`           | Yes      | Secret | (Generated from Strapi Admin)                             |
+| `NEXT_PUBLIC_SITE_URL`       | No       | Public | `https://gladlabs.io`                                     |
+| `NEXT_PUBLIC_GA_ID`          | No       | Public | `G-XXXXXXXXXX`                                            |
 
 ### Vercel Build Configuration
 
@@ -199,6 +209,7 @@ Error generating sitemap: TypeError: fetch failed
 ### Build Test Results
 
 ✅ **All Static Pages Generated Successfully**
+
 - Homepage: Generated with fallback empty posts
 - About page: Generated with empty content (404 handled gracefully)
 - Archive pages: Generated with pagination fallback
@@ -209,11 +220,13 @@ Error generating sitemap: TypeError: fetch failed
 - 404 page: Generated successfully
 
 ✅ **Sitemap Generated Successfully**
+
 - Minimal sitemap created with core pages
 - No errors during generation
 - Graceful fallback when API unavailable
 
 ✅ **Build Performance**
+
 - Compilation time: ~1.3 seconds
 - Page collection: ~2 seconds
 - Total build time: <5 seconds
@@ -225,6 +238,7 @@ Error generating sitemap: TypeError: fetch failed
 ### Quick Start (Vercel)
 
 1. **Push to GitHub**
+
    ```bash
    git push origin main
    ```
@@ -247,6 +261,7 @@ Error generating sitemap: TypeError: fetch failed
 ### Detailed Instructions
 
 See [VERCEL_DEPLOYMENT.md](./VERCEL_DEPLOYMENT.md) for:
+
 - Step-by-step setup guide
 - Environment variable configuration
 - Troubleshooting guide
@@ -260,6 +275,7 @@ See [VERCEL_DEPLOYMENT.md](./VERCEL_DEPLOYMENT.md) for:
 ### ✅ Graceful Degradation
 
 Even if Strapi API is unavailable:
+
 - Build completes successfully ✅
 - Pages render with fallback empty content ✅
 - Sitemap generates with core pages ✅
@@ -330,6 +346,7 @@ After deployment, monitor:
 ### ✅ API Token Rotation
 
 To rotate API tokens:
+
 1. Generate new token in Strapi Admin
 2. Update in Vercel environment variables
 3. Redeploy to Vercel
@@ -363,13 +380,13 @@ To rotate API tokens:
 
 The public-site is now **production-ready for deployment to Vercel**. All critical issues have been resolved:
 
-| Issue | Status | Impact |
-|-------|--------|--------|
-| Build failures on API errors | ✅ Fixed | High |
-| Sitemap generation crashes | ✅ Fixed | Medium |
-| Missing Vercel config | ✅ Fixed | Medium |
-| No deployment guide | ✅ Fixed | Low |
-| Poor error messages | ✅ Fixed | Low |
+| Issue                        | Status   | Impact |
+| ---------------------------- | -------- | ------ |
+| Build failures on API errors | ✅ Fixed | High   |
+| Sitemap generation crashes   | ✅ Fixed | Medium |
+| Missing Vercel config        | ✅ Fixed | Medium |
+| No deployment guide          | ✅ Fixed | Low    |
+| Poor error messages          | ✅ Fixed | Low    |
 
 **Recommendation:** Deploy to Vercel immediately. The application will operate correctly even if Strapi is temporarily unavailable (showing empty content with fallbacks).
 
