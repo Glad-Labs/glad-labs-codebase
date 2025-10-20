@@ -17,6 +17,5 @@
       "default": "https://gladlabs.io"
     }
   },
-  "buildOutputDirectory": ".next",
   "nodeVersion": "18.x"
 }
