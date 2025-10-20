@@ -14,7 +14,7 @@ async function fetchAPI(path, urlParamsObject = {}, options = {}) {
   const requestUrl = `${STRAPI_API_URL}${path}${
     queryString ? `?${queryString}` : ''
   }`;
-  
+
   try {
     const response = await fetch(requestUrl, {
       ...mergedOptions,
@@ -22,7 +22,9 @@ async function fetchAPI(path, urlParamsObject = {}, options = {}) {
     });
     if (!response.ok) {
       console.warn(`[Sitemap] API returned ${response.status} for ${path}`);
-      throw new Error(`API returned ${response.status}: ${response.statusText}`);
+      throw new Error(
+        `API returned ${response.status}: ${response.statusText}`
+      );
     }
     const data = await response.json();
     return data;
@@ -41,10 +43,8 @@ async function getAllContent() {
     ]);
 
     return {
-      posts: (posts.data || []).map((post) => 
-        post.attributes 
-          ? { id: post.id, ...post.attributes }
-          : post
+      posts: (posts.data || []).map((post) =>
+        post.attributes ? { id: post.id, ...post.attributes } : post
       ),
       categories: (categories.data || []).map((category) =>
         category.attributes
@@ -52,9 +52,7 @@ async function getAllContent() {
           : category
       ),
       tags: (tags.data || []).map((tag) =>
-        tag.attributes
-          ? { id: tag.id, ...tag.attributes }
-          : tag
+        tag.attributes ? { id: tag.id, ...tag.attributes } : tag
       ),
     };
   } catch (error) {
@@ -69,12 +67,12 @@ async function getAllContent() {
 
 function generateSitemap(content) {
   const { posts, categories, tags } = content;
-  
+
   // Filter out items without slugs
-  const validPosts = (posts || []).filter(p => p.slug);
-  const validCategories = (categories || []).filter(c => c.slug);
-  const validTags = (tags || []).filter(t => t.slug);
-  
+  const validPosts = (posts || []).filter((p) => p.slug);
+  const validCategories = (categories || []).filter((c) => c.slug);
+  const validTags = (tags || []).filter((t) => t.slug);
+
   const sitemap = `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
@@ -123,7 +121,9 @@ function generateSitemap(content) {
 </urlset>`;
 
   fs.writeFileSync('public/sitemap.xml', sitemap);
-  console.log(`[Sitemap] Generated sitemap with ${validPosts.length} posts, ${validCategories.length} categories, ${validTags.length} tags`);
+  console.log(
+    `[Sitemap] Generated sitemap with ${validPosts.length} posts, ${validCategories.length} categories, ${validTags.length} tags`
+  );
 }
 
 (async () => {
@@ -142,7 +142,10 @@ function generateSitemap(content) {
       });
       console.log('[Sitemap] ⚠️  Generated minimal fallback sitemap');
     } catch (fallbackError) {
-      console.error('[Sitemap] ❌ Failed to generate even fallback sitemap:', fallbackError.message);
+      console.error(
+        '[Sitemap] ❌ Failed to generate even fallback sitemap:',
+        fallbackError.message
+      );
       process.exit(1);
     }
   }
