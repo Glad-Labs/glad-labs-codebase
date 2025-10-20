@@ -39,8 +39,8 @@ export async function getStaticPaths() {
       fallback: 'blocking',
     };
   } catch (error) {
-    console.error('[Tag getStaticPaths] Error fetching tags:', error.message);
-    // Return empty paths during build failures; pages will be generated on-demand
+    console.error('Error fetching tags:', error);
+    // Return empty paths if API fails - fallback will handle requests
     return {
       paths: [],
       fallback: 'blocking',
@@ -49,20 +49,28 @@ export async function getStaticPaths() {
 }
 
 export async function getStaticProps({ params }) {
-  const tag = await getTagBySlug(params.slug);
-  const posts = await getPostsByTag(params.slug);
+  try {
+    const tag = await getTagBySlug(params.slug);
+    const posts = await getPostsByTag(params.slug);
 
-  if (!tag) {
+    if (!tag) {
+      return {
+        notFound: true,
+      };
+    }
+
+    return {
+      props: {
+        tag,
+        posts,
+      },
+      revalidate: 60,
+    };
+  } catch (error) {
+    console.error(`Error fetching tag ${params.slug}:`, error);
     return {
       notFound: true,
+      revalidate: 10,
     };
   }
-
-  return {
-    props: {
-      tag,
-      posts,
-    },
-    revalidate: 60,
-  };
 }

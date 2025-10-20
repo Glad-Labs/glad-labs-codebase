@@ -47,11 +47,8 @@ export async function getStaticPaths() {
       fallback: 'blocking',
     };
   } catch (error) {
-    console.error(
-      '[Category getStaticPaths] Error fetching categories:',
-      error.message
-    );
-    // Return empty paths during build failures; pages will be generated on-demand
+    console.error('Error fetching categories:', error);
+    // Return empty paths if API fails - fallback will handle requests
     return {
       paths: [],
       fallback: 'blocking',
@@ -60,20 +57,28 @@ export async function getStaticPaths() {
 }
 
 export async function getStaticProps({ params }) {
-  const category = await getCategoryBySlug(params.slug);
-  const posts = await getPostsByCategory(params.slug);
+  try {
+    const category = await getCategoryBySlug(params.slug);
+    const posts = await getPostsByCategory(params.slug);
 
-  if (!category) {
+    if (!category) {
+      return {
+        notFound: true,
+      };
+    }
+
+    return {
+      props: {
+        category,
+        posts,
+      },
+      revalidate: 60,
+    };
+  } catch (error) {
+    console.error(`Error fetching category ${params.slug}:`, error);
     return {
       notFound: true,
+      revalidate: 10,
     };
   }
-
-  return {
-    props: {
-      category,
-      posts,
-    },
-    revalidate: 60,
-  };
 }

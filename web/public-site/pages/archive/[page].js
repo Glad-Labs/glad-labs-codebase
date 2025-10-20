@@ -36,8 +36,8 @@ export default function ArchivePage({ posts, pagination }) {
 export async function getStaticPaths() {
   try {
     const postsData = await getPaginatedPosts(1, 1); // Fetch one post to get pagination info
-    const pageCount = postsData.meta.pagination.pageCount || 0;
-    const paths = Array.from({ length: Math.max(1, pageCount) }, (_, i) => ({
+    const pageCount = postsData.meta?.pagination?.pageCount || 1;
+    const paths = Array.from({ length: Math.min(pageCount, 10) }, (_, i) => ({
       params: { page: (i + 1).toString() },
     }));
 
@@ -46,10 +46,12 @@ export async function getStaticPaths() {
       fallback: 'blocking',
     };
   } catch (error) {
-    console.error('[Archive getStaticPaths] Error:', error.message);
-    // Return first page on error; other pages will be generated on-demand
+    console.error('Error fetching pagination data:', error);
+    // Fallback: generate paths 1-5 if API is unavailable
     return {
-      paths: [{ params: { page: '1' } }],
+      paths: Array.from({ length: 5 }, (_, i) => ({
+        params: { page: (i + 1).toString() },
+      })),
       fallback: 'blocking',
     };
   }
@@ -60,8 +62,7 @@ export async function getStaticProps({ params }) {
     const page = parseInt(params.page, 10) || 1;
     const postsData = await getPaginatedPosts(page, POSTS_PER_PAGE);
 
-    // Check if we have data or if it's the first page (return empty)
-    if (!postsData.data.length && page > 1) {
+    if (!postsData.data.length) {
       return {
         notFound: true,
       };
@@ -75,19 +76,11 @@ export async function getStaticProps({ params }) {
       revalidate: 60,
     };
   } catch (error) {
-    console.error('[Archive getStaticProps] Error:', error.message);
-    // Return empty posts on error but don't fail build
+    console.error(`Error fetching posts for page ${params.page}:`, error);
+    // Return empty page on error instead of failing the build
     return {
-      props: {
-        posts: [],
-        pagination: {
-          page: parseInt(params.page, 10) || 1,
-          pageSize: POSTS_PER_PAGE,
-          pageCount: 0,
-          total: 0,
-        },
-      },
-      revalidate: 60,
+      notFound: true,
+      revalidate: 10, // Retry sooner if there's an error
     };
   }
 }

@@ -14,7 +14,7 @@ export function getStrapiURL(path = '') {
 }
 
 /**
- * Helper to make GET requests to Strapi API endpoints
+ * Helper to make GET requests to Strapi API endpoints with timeout
  * @param {string} path Path of the API route
  * @param {object} urlParamsObject URL params object, will be stringified
  * @param {object} options Options passed to fetch
@@ -38,21 +38,29 @@ async function fetchAPI(path, urlParamsObject = {}, options = {}) {
   )}`;
 
   try {
-    const response = await fetch(requestUrl, mergedOptions);
+    // Add 10 second timeout for API calls
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 10000);
+
+    const response = await fetch(requestUrl, {
+      ...mergedOptions,
+      signal: controller.signal,
+    });
+
+    clearTimeout(timeout);
 
     // Handle response
     if (!response.ok) {
-      console.error(
-        `[Strapi API Error] ${response.status} ${response.statusText} - ${requestUrl}`
-      );
-      throw new Error(
-        `Strapi API returned ${response.status}: ${response.statusText}`
-      );
+      console.error(`API Error: ${response.statusText}`);
+      throw new Error(`API Error: ${response.status} - ${response.statusText}`);
     }
     const data = await response.json();
     return data;
   } catch (error) {
-    console.error(`[Strapi API Fetch Error] ${path}:`, error.message);
+    if (error.name === 'AbortError') {
+      console.error(`API timeout for path: ${path}`);
+      throw new Error(`API request timed out for ${path}`);
+    }
     throw error;
   }
 }
