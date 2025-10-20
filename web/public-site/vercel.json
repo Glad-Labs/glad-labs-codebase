@@ -16,6 +16,5 @@
       "description": "Your site URL (for SEO, sitemaps)",
       "default": "https://gladlabs.io"
     }
-  },
-  "nodeVersion": "18.x"
+  }
 }
