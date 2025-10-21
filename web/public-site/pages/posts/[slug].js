@@ -126,17 +126,33 @@ export async function getStaticPaths() {
 }
 
 export async function getStaticProps({ params }) {
-  const post = await getPostBySlug(params.slug);
+  try {
+    const post = await getPostBySlug(params.slug);
 
-  // If no post is found for the given slug, return a 404 page
-  if (!post) {
+    // If no post is found for the given slug, return a 404 page
+    if (!post) {
+      return {
+        notFound: true,
+        revalidate: 60,
+      };
+    }
+
     return {
-      notFound: true,
+      props: { post },
+      revalidate: 60, // Re-generate the page every 60 seconds if needed
+    };
+  } catch (error) {
+    console.error(`Error fetching post ${params.slug}:`, error);
+    // Return empty post on error instead of failing build
+    return {
+      props: {
+        post: {
+          slug: params.slug,
+          title: params.slug,
+          content: 'Content not available',
+        },
+      },
+      revalidate: 10,
     };
   }
-
-  return {
-    props: { post },
-    revalidate: 60, // Re-generate the page every 60 seconds if needed
-  };
 }

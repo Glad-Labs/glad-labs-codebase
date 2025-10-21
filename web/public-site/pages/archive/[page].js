@@ -62,24 +62,28 @@ export async function getStaticProps({ params }) {
     const page = parseInt(params.page, 10) || 1;
     const postsData = await getPaginatedPosts(page, POSTS_PER_PAGE);
 
-    if (!postsData.data.length) {
+    if (!postsData || !postsData.data || !postsData.data.length) {
       return {
         notFound: true,
+        revalidate: 60,
       };
     }
 
     return {
       props: {
         posts: postsData.data,
-        pagination: postsData.meta.pagination,
+        pagination: postsData.meta?.pagination || { page, pageSize: POSTS_PER_PAGE, pageCount: 1 },
       },
       revalidate: 60,
     };
   } catch (error) {
     console.error(`Error fetching posts for page ${params.page}:`, error);
-    // Return empty page on error instead of failing the build
+    // Return fallback page on error instead of failing the build
     return {
-      notFound: true,
+      props: {
+        posts: [],
+        pagination: { page: parseInt(params.page, 10) || 1, pageSize: POSTS_PER_PAGE, pageCount: 1 },
+      },
       revalidate: 10, // Retry sooner if there's an error
     };
   }

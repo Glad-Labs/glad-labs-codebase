@@ -56,20 +56,25 @@ export async function getStaticProps({ params }) {
     if (!tag) {
       return {
         notFound: true,
+        revalidate: 60,
       };
     }
 
     return {
       props: {
         tag,
-        posts,
+        posts: posts || [],
       },
       revalidate: 60,
     };
   } catch (error) {
     console.error(`Error fetching tag ${params.slug}:`, error);
+    // Return empty tag page on error instead of failing build
     return {
-      notFound: true,
+      props: {
+        tag: { slug: params.slug, name: params.slug },
+        posts: [],
+      },
       revalidate: 10,
     };
   }

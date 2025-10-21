@@ -64,20 +64,25 @@ export async function getStaticProps({ params }) {
     if (!category) {
       return {
         notFound: true,
+        revalidate: 60,
       };
     }
 
     return {
       props: {
         category,
-        posts,
+        posts: posts || [],
       },
       revalidate: 60,
     };
   } catch (error) {
     console.error(`Error fetching category ${params.slug}:`, error);
+    // Return empty category page on error instead of failing build
     return {
-      notFound: true,
+      props: {
+        category: { slug: params.slug, name: params.slug },
+        posts: [],
+      },
       revalidate: 10,
     };
   }
