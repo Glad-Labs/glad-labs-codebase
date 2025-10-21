@@ -72,7 +72,11 @@ export async function getStaticProps({ params }) {
     return {
       props: {
         posts: postsData.data,
-        pagination: postsData.meta?.pagination || { page, pageSize: POSTS_PER_PAGE, pageCount: 1 },
+        pagination: postsData.meta?.pagination || {
+          page,
+          pageSize: POSTS_PER_PAGE,
+          pageCount: 1,
+        },
       },
       revalidate: 60,
     };
@@ -82,7 +86,11 @@ export async function getStaticProps({ params }) {
     return {
       props: {
         posts: [],
-        pagination: { page: parseInt(params.page, 10) || 1, pageSize: POSTS_PER_PAGE, pageCount: 1 },
+        pagination: {
+          page: parseInt(params.page, 10) || 1,
+          pageSize: POSTS_PER_PAGE,
+          pageCount: 1,
+        },
       },
       revalidate: 10, // Retry sooner if there's an error
     };
