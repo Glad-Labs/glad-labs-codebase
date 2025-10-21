@@ -93,8 +93,13 @@ const CommandPane = () => {
       }
 
       const data = await response.json();
+      // Handle different response formats - extract text property if it's an object
+      const messageText =
+        typeof data === 'string'
+          ? data
+          : data.response || data.text || JSON.stringify(data);
       const aiMessage = {
-        message: data.response,
+        message: messageText,
         direction: 'incoming',
         sender: 'AI',
       };
@@ -145,7 +150,16 @@ const CommandPane = () => {
             }
           >
             {messages.map((message, i) => (
-              <Message key={i} model={message} />
+              <Message
+                key={i}
+                model={{
+                  message: String(message.message),
+                  direction: message.direction,
+                  sender: message.sender,
+                }}
+              >
+                <Message.TextContent text={String(message.message)} />
+              </Message>
             ))}
           </MessageList>
           <MessageInput
