@@ -1,16 +1,16 @@
 /**
  * @file API Client for Strapi CMS Backend
- * 
+ *
  * This module provides utilities to communicate with the Strapi v5 backend API.
  * It handles:
  * - Request authentication via Bearer tokens
  * - Query string building and parameter encoding
  * - Timeout protection (10 seconds) to prevent indefinite hangs
  * - Error handling for failed requests and timeouts
- * 
+ *
  * CRITICAL: The 10-second timeout is essential for production deployments.
  * Without it, build processes on Vercel will hang if Strapi is unreachable.
- * 
+ *
  * @see docs/RECENT_FIXES/TIMEOUT_FIX_SUMMARY.md for timeout details
  * @see docs/03-DEPLOYMENT_AND_INFRASTRUCTURE.md for deployment info
  */
@@ -24,10 +24,10 @@ const STRAPI_API_TOKEN =
 
 /**
  * Constructs the full Strapi API URL from a path
- * 
+ *
  * @param {string} path - The API endpoint path (e.g., '/posts', '/categories')
  * @returns {string} Complete URL for the Strapi endpoint
- * 
+ *
  * @example
  * getStrapiURL('/posts')
  * // Returns: 'https://strapi.railway.app/api/posts'
@@ -38,26 +38,26 @@ export function getStrapiURL(path = '') {
 
 /**
  * Fetches data from the Strapi API with timeout protection
- * 
+ *
  * CRITICAL: This function includes a 10-second timeout that is essential for
  * production deployments on Vercel. Without this timeout, if Strapi is unreachable
  * or slow during the build process, the entire build will hang and eventually timeout.
- * 
+ *
  * @param {string} path - The API endpoint path (e.g., '/posts', '/categories/1')
  * @param {object} urlParamsObject - Query parameters (e.g., { populate: 'author' })
  * @param {object} options - Additional fetch options (method, headers, body, etc.)
- * 
+ *
  * @returns {Promise<object>} The parsed JSON response from Strapi
- * 
+ *
  * @throws {Error} - Throws if:
  *   - Request times out after 10 seconds (AbortError)
  *   - API returns non-2xx status code
  *   - Response is not valid JSON
- * 
+ *
  * @example
  * // Simple GET request
  * const posts = await fetchAPI('/posts');
- * 
+ *
  * @example
  * // With query parameters
  * const featured = await fetchAPI('/posts', {
@@ -65,7 +65,7 @@ export function getStrapiURL(path = '') {
  *   populate: ['author', 'category'],
  *   pagination: { limit: 10 }
  * });
- * 
+ *
  * @example
  * // POST request
  * const newPost = await fetchAPI('/posts', {}, {
@@ -114,7 +114,9 @@ async function fetchAPI(path, urlParamsObject = {}, options = {}) {
 
     // Handle HTTP errors
     if (!response.ok) {
-      console.error(`[API Error] ${response.status} ${response.statusText} from ${path}`);
+      console.error(
+        `[API Error] ${response.status} ${response.statusText} from ${path}`
+      );
       throw new Error(`API Error: ${response.status} - ${response.statusText}`);
     }
 
@@ -124,7 +126,9 @@ async function fetchAPI(path, urlParamsObject = {}, options = {}) {
   } catch (error) {
     // Handle timeout specifically
     if (error.name === 'AbortError') {
-      const timeoutError = new Error(`API request timed out for ${path} after 10 seconds`);
+      const timeoutError = new Error(
+        `API request timed out for ${path} after 10 seconds`
+      );
       timeoutError.code = 'TIMEOUT';
       console.error(`[API Timeout] ${timeoutError.message}`);
       throw timeoutError;
@@ -136,20 +140,19 @@ async function fetchAPI(path, urlParamsObject = {}, options = {}) {
   }
 }
 
-
 /**
  * Fetches paginated posts from Strapi
- * 
+ *
  * Used by the archive/[page].js dynamic page to show posts with pagination.
  * Includes error handling to return empty results if API fails, preventing
  * build failures during deployments when Strapi might be unreachable.
- * 
+ *
  * @param {number} page - The page number (1-indexed)
  * @param {number} pageSize - Number of posts per page (default: 10)
  * @param {number} excludeId - Optional post ID to exclude from results
- * 
+ *
  * @returns {Promise<object>} - Object with 'data' array and 'meta' pagination info
- * 
+ *
  * @example
  * const result = await getPaginatedPosts(2, 10);
  * // Returns: { data: [...posts], meta: { pagination: {...} } }
@@ -178,7 +181,7 @@ export async function getPaginatedPosts(
     );
 
     const data = await fetchAPI(`/posts?${query}`);
-    
+
     // Normalize response to ensure it always has required shape
     return {
       ...data,
@@ -194,7 +197,7 @@ export async function getPaginatedPosts(
     };
   } catch (error) {
     console.error('[getPaginatedPosts] Error fetching posts:', error.message);
-    
+
     // CRITICAL: Return safe empty response on error
     // This prevents build failures during Strapi downtime.
     // Next.js will return a 404 page instead of crashing the build.
@@ -215,12 +218,12 @@ export async function getPaginatedPosts(
 
 /**
  * Fetches the featured post from Strapi
- * 
+ *
  * Returns a single post marked as featured. Used on the homepage.
  * Gracefully returns null if no featured post or if API fails.
- * 
+ *
  * @returns {Promise<object|null>} - The featured post object or null
- * 
+ *
  * @example
  * const featured = await getFeaturedPost();
  * if (!featured) console.log('No featured post set');
@@ -252,13 +255,13 @@ export async function getFeaturedPost() {
 
 /**
  * Fetches a single post by slug
- * 
+ *
  * Used by dynamic post detail pages to fetch individual post content.
  * Returns null if post not found or API fails.
- * 
+ *
  * @param {string} slug - The post slug (URL-friendly identifier)
  * @returns {Promise<object|null>} - The post object or null if not found
- * 
+ *
  * @example
  * const post = await getPostBySlug('my-first-post');
  */
@@ -271,26 +274,30 @@ export async function getPostBySlug(slug) {
     const item = data?.data?.[0];
     return item || null;
   } catch (error) {
-    console.error('[getPostBySlug] Error fetching post with slug:', slug, error.message);
+    console.error(
+      '[getPostBySlug] Error fetching post with slug:',
+      slug,
+      error.message
+    );
     return null;
   }
 }
 
 /**
  * Fetches the About page content from Strapi
- * 
+ *
  * Tries multiple possible paths/collections:
  * 1. Single-type '/about' endpoint
- * 2. Single-type '/about-page' endpoint  
+ * 2. Single-type '/about-page' endpoint
  * 3. Single-type '/about-us' endpoint
  * 4. Collection '/pages' filtered by slug='about'
  * 5. Collection '/page' filtered by slug='about'
- * 
+ *
  * This flexibility handles different Strapi content configurations.
  * Returns null if About page not found.
- * 
+ *
  * @returns {Promise<object|null>} - The About page content or null
- * 
+ *
  * @example
  * const about = await getAboutPage();
  * if (!about) console.log('About page not configured');
@@ -299,7 +306,7 @@ export async function getAboutPage() {
   // Try single-type endpoints first
   const query = qs.stringify({ populate: '*' });
   const candidates = ['/about', '/about-page', '/about-us'];
-  
+
   for (const path of candidates) {
     try {
       const data = await fetchAPI(`${path}?${query}`);
@@ -319,7 +326,7 @@ export async function getAboutPage() {
     { filters: { slug: { $eq: 'about' } }, populate: '*' },
     { encode: false }
   );
-  
+
   for (const base of collectionCandidates) {
     try {
       const data = await fetchAPI(`${base}?${slugFilter}`);
@@ -331,20 +338,22 @@ export async function getAboutPage() {
       continue;
     }
   }
-  
+
   // No About page found in any location
-  console.warn('[getAboutPage] About page not found in any configured location');
+  console.warn(
+    '[getAboutPage] About page not found in any configured location'
+  );
   return null;
 }
 
 /**
  * Fetches all categories from Strapi
- * 
+ *
  * Used for category listing/filtering. Returns empty array if API fails
  * to prevent build failures.
- * 
+ *
  * @returns {Promise<Array>} - Array of category objects (empty if error)
- * 
+ *
  * @example
  * const categories = await getCategories();
  * categories.forEach(cat => console.log(cat.name));
@@ -363,12 +372,12 @@ export async function getCategories() {
 
 /**
  * Fetches all tags from Strapi
- * 
+ *
  * Used for tag listing/filtering. Returns empty array if API fails
  * to prevent build failures.
- * 
+ *
  * @returns {Promise<Array>} - Array of tag objects (empty if error)
- * 
+ *
  * @example
  * const tags = await getTags();
  * tags.forEach(tag => console.log(tag.name));
