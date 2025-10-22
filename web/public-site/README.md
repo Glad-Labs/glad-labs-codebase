@@ -197,14 +197,6 @@ npm run test        # Run Jest tests
 
 ## **🚀 Deployment**
 
-### **Quick Deployment to Vercel**
-
-1. Push changes to GitHub
-2. Vercel automatically builds and deploys
-3. No additional setup needed (if environment variables are configured)
-
-**For detailed deployment instructions, see [VERCEL_DEPLOYMENT.md](./VERCEL_DEPLOYMENT.md)**
-
 ### **Production Considerations**
 
 - **Static Hosting**: Deploy to Vercel, Netlify, or similar
@@ -212,15 +204,6 @@ npm run test        # Run Jest tests
 - **Database**: Point to production Strapi instance
 - **CDN**: Global content delivery for optimal performance
 - **Analytics**: Google Analytics or similar tracking
-
-### **Environment Variables Required**
-
-| Variable                     | Required | Example                                                   |
-| ---------------------------- | -------- | --------------------------------------------------------- |
-| `NEXT_PUBLIC_STRAPI_API_URL` | Yes      | `https://glad-labs-strapi-main-production.up.railway.app` |
-| `STRAPI_API_TOKEN`           | Yes      | `[generated from Strapi Admin]`                           |
-| `NEXT_PUBLIC_SITE_URL`       | No       | `https://gladlabs.io`                                     |
-| `NEXT_PUBLIC_GA_ID`          | No       | `G-XXXXXXXXXX`                                            |
 
 ### **Performance Optimizations**
 
@@ -232,15 +215,6 @@ npm run test        # Run Jest tests
 ---
 
 ## **🔧 Troubleshooting**
-
-### **Build Errors**
-
-If you see build errors related to Strapi API calls:
-
-1. Verify `NEXT_PUBLIC_STRAPI_API_URL` and `STRAPI_API_TOKEN` are correct
-2. Ensure Strapi instance is running and accessible
-3. Check that the API endpoint exists in Strapi
-4. See [VERCEL_DEPLOYMENT.md](./VERCEL_DEPLOYMENT.md#troubleshooting) for more solutions
 
 ### **Common Issues**
 
@@ -261,5 +235,5 @@ NEXT_PUBLIC_DEBUG=true
 
 **Component Documentation maintained by:** GLAD Labs Development Team  
 **Contact:** Matthew M. Gladding (Glad Labs, LLC)  
-**Last Review:** October 20, 2025  
+**Last Review:** October 13, 2025  
 **Architecture Status:** ✅ Production Ready

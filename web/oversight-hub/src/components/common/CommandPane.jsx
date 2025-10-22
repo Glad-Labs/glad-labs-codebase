@@ -28,6 +28,14 @@ const CommandPane = () => {
   ]);
   const [isTyping, setIsTyping] = useState(false);
 
+  const startResize = useCallback((e) => {
+    isResizing.current = true;
+    document.addEventListener('mousemove', handleResize);
+    document.addEventListener('mouseup', stopResize);
+    document.body.style.cursor = 'col-resize';
+    document.body.style.userSelect = 'none';
+  }, []);
+
   const handleResize = useCallback((e) => {
     if (!isResizing.current) return;
 
@@ -51,17 +59,6 @@ const CommandPane = () => {
     document.body.style.cursor = '';
     document.body.style.userSelect = '';
   }, [handleResize]);
-
-  const startResize = useCallback(
-    (e) => {
-      isResizing.current = true;
-      document.addEventListener('mousemove', handleResize);
-      document.addEventListener('mouseup', stopResize);
-      document.body.style.cursor = 'col-resize';
-      document.body.style.userSelect = 'none';
-    },
-    [handleResize, stopResize]
-  );
 
   const handleSend = async (message) => {
     if (!selectedTask) {
@@ -93,13 +90,8 @@ const CommandPane = () => {
       }
 
       const data = await response.json();
-      // Handle different response formats - extract text property if it's an object
-      const messageText =
-        typeof data === 'string'
-          ? data
-          : data.response || data.text || JSON.stringify(data);
       const aiMessage = {
-        message: messageText,
+        message: data.response,
         direction: 'incoming',
         sender: 'AI',
       };
@@ -150,16 +142,7 @@ const CommandPane = () => {
             }
           >
             {messages.map((message, i) => (
-              <Message
-                key={i}
-                model={{
-                  message: String(message.message),
-                  direction: message.direction,
-                  sender: message.sender,
-                }}
-              >
-                <Message.TextContent text={String(message.message)} />
-              </Message>
+              <Message key={i} model={message} />
             ))}
           </MessageList>
           <MessageInput

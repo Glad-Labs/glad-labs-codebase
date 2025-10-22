@@ -34,65 +34,33 @@ export default function ArchivePage({ posts, pagination }) {
 }
 
 export async function getStaticPaths() {
-  try {
-    const postsData = await getPaginatedPosts(1, 1); // Fetch one post to get pagination info
-    const pageCount = postsData.meta?.pagination?.pageCount || 1;
-    const paths = Array.from({ length: Math.min(pageCount, 10) }, (_, i) => ({
-      params: { page: (i + 1).toString() },
-    }));
+  const postsData = await getPaginatedPosts(1, 1); // Fetch one post to get pagination info
+  const pageCount = postsData.meta.pagination.pageCount;
+  const paths = Array.from({ length: pageCount }, (_, i) => ({
+    params: { page: (i + 1).toString() },
+  }));
 
-    return {
-      paths,
-      fallback: 'blocking',
-    };
-  } catch (error) {
-    console.error('Error fetching pagination data:', error);
-    // Fallback: generate paths 1-5 if API is unavailable
-    return {
-      paths: Array.from({ length: 5 }, (_, i) => ({
-        params: { page: (i + 1).toString() },
-      })),
-      fallback: 'blocking',
-    };
-  }
+  return {
+    paths,
+    fallback: 'blocking',
+  };
 }
 
 export async function getStaticProps({ params }) {
-  try {
-    const page = parseInt(params.page, 10) || 1;
-    const postsData = await getPaginatedPosts(page, POSTS_PER_PAGE);
+  const page = parseInt(params.page, 10) || 1;
+  const postsData = await getPaginatedPosts(page, POSTS_PER_PAGE);
 
-    if (!postsData || !postsData.data || !postsData.data.length) {
-      return {
-        notFound: true,
-        revalidate: 60,
-      };
-    }
-
+  if (!postsData.data.length) {
     return {
-      props: {
-        posts: postsData.data,
-        pagination: postsData.meta?.pagination || {
-          page,
-          pageSize: POSTS_PER_PAGE,
-          pageCount: 1,
-        },
-      },
-      revalidate: 60,
-    };
-  } catch (error) {
-    console.error(`Error fetching posts for page ${params.page}:`, error);
-    // Return fallback page on error instead of failing the build
-    return {
-      props: {
-        posts: [],
-        pagination: {
-          page: parseInt(params.page, 10) || 1,
-          pageSize: POSTS_PER_PAGE,
-          pageCount: 1,
-        },
-      },
-      revalidate: 10, // Retry sooner if there's an error
+      notFound: true,
     };
   }
+
+  return {
+    props: {
+      posts: postsData.data,
+      pagination: postsData.meta.pagination,
+    },
+    revalidate: 60,
+  };
 }

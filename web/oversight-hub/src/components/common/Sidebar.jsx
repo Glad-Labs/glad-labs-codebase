@@ -18,6 +18,13 @@ const Sidebar = () => {
       document.documentElement.style.setProperty('--sidebar-width', '250px');
     }
   }, []);
+  const startResize = useCallback((e) => {
+    isResizing.current = true;
+    document.addEventListener('mousemove', handleResize);
+    document.addEventListener('mouseup', stopResize);
+    document.body.style.cursor = 'col-resize';
+    document.body.style.userSelect = 'none';
+  }, []);
 
   const handleResize = useCallback((e) => {
     if (!isResizing.current) return;
@@ -38,17 +45,6 @@ const Sidebar = () => {
     document.body.style.cursor = '';
     document.body.style.userSelect = '';
   }, [handleResize]);
-
-  const startResize = useCallback(
-    (e) => {
-      isResizing.current = true;
-      document.addEventListener('mousemove', handleResize);
-      document.addEventListener('mouseup', stopResize);
-      document.body.style.cursor = 'col-resize';
-      document.body.style.userSelect = 'none';
-    },
-    [handleResize, stopResize]
-  );
 
   return (
     <nav
@@ -72,35 +68,8 @@ const Sidebar = () => {
               to="/"
               className={({ isActive }) => (isActive ? 'active' : '')}
             >
-              <span className="sidebar-icon">🏠</span>
+              <span className="sidebar-icon">📊</span>
               <span className="sidebar-label">Dashboard</span>
-            </NavLink>
-          </li>
-          <li>
-            <NavLink
-              to="/tasks"
-              className={({ isActive }) => (isActive ? 'active' : '')}
-            >
-              <span className="sidebar-icon">✅</span>
-              <span className="sidebar-label">Tasks</span>
-            </NavLink>
-          </li>
-          <li>
-            <NavLink
-              to="/models"
-              className={({ isActive }) => (isActive ? 'active' : '')}
-            >
-              <span className="sidebar-icon">🤖</span>
-              <span className="sidebar-label">Models</span>
-            </NavLink>
-          </li>
-          <li>
-            <NavLink
-              to="/social"
-              className={({ isActive }) => (isActive ? 'active' : '')}
-            >
-              <span className="sidebar-icon">📱</span>
-              <span className="sidebar-label">Social Media</span>
             </NavLink>
           </li>
           <li>
@@ -119,15 +88,6 @@ const Sidebar = () => {
             >
               <span className="sidebar-icon">📈</span>
               <span className="sidebar-label">Analytics</span>
-            </NavLink>
-          </li>
-          <li>
-            <NavLink
-              to="/cost-metrics"
-              className={({ isActive }) => (isActive ? 'active' : '')}
-            >
-              <span className="sidebar-icon">💰</span>
-              <span className="sidebar-label">Financials</span>
             </NavLink>
           </li>
           <li>

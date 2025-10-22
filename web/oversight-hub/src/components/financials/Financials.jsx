@@ -13,14 +13,13 @@ const Financials = () => {
       0
     );
 
-    // Calculate cost per article based on entry count
-    // Note: This assumes each entry represents a unique article
-    // Future enhancement: track article IDs to count unique articles accurately
-    const articleCount = entries.length;
+    // TODO: This logic assumes every entry is a unique article.
+    // This should be updated to count unique articles if the data allows.
+    const articleCount = entries.length; // Placeholder for actual unique article count
     const costPerArticle =
       articleCount > 0 ? (totalSpend / articleCount).toFixed(2) : '0.00';
 
-    // Calculate weekly burn rate (last 7 days)
+    // Calculate weekly burn rate
     const oneWeekAgo = new Date();
     oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
     const weeklySpend = entries

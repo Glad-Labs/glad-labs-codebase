@@ -28,54 +28,32 @@ export default function TagPage({ tag, posts }) {
 }
 
 export async function getStaticPaths() {
-  try {
-    const tags = await getTags();
-    const paths = tags.map((tag) => ({
-      params: { slug: tag.slug },
-    }));
+  const tags = await getTags();
+  const paths = tags.map((tag) => ({
+    params: { slug: tag.slug },
+  }));
 
-    return {
-      paths,
-      fallback: 'blocking',
-    };
-  } catch (error) {
-    console.error('Error fetching tags:', error);
-    // Return empty paths if API fails - fallback will handle requests
-    return {
-      paths: [],
-      fallback: 'blocking',
-    };
-  }
+  return {
+    paths,
+    fallback: 'blocking',
+  };
 }
 
 export async function getStaticProps({ params }) {
-  try {
-    const tag = await getTagBySlug(params.slug);
-    const posts = await getPostsByTag(params.slug);
+  const tag = await getTagBySlug(params.slug);
+  const posts = await getPostsByTag(params.slug);
 
-    if (!tag) {
-      return {
-        notFound: true,
-        revalidate: 60,
-      };
-    }
-
+  if (!tag) {
     return {
-      props: {
-        tag,
-        posts: posts || [],
-      },
-      revalidate: 60,
-    };
-  } catch (error) {
-    console.error(`Error fetching tag ${params.slug}:`, error);
-    // Return empty tag page on error instead of failing build
-    return {
-      props: {
-        tag: { slug: params.slug, name: params.slug },
-        posts: [],
-      },
-      revalidate: 10,
+      notFound: true,
     };
   }
+
+  return {
+    props: {
+      tag,
+      posts,
+    },
+    revalidate: 60,
+  };
 }

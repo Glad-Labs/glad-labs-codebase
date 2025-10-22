@@ -5,9 +5,8 @@ describe('Header', () => {
   it('renders the site title and navigation links', () => {
     render(<Header />);
 
-    expect(screen.getByText('GLAD Labs')).toBeInTheDocument();
-    expect(screen.getByText('Home')).toBeInTheDocument();
-    expect(screen.getByText('About')).toBeInTheDocument();
+    expect(screen.getByText('Glad Labs Frontier')).toBeInTheDocument();
     expect(screen.getByText('Archive')).toBeInTheDocument();
+    expect(screen.getByText('About')).toBeInTheDocument();
   });
 });
