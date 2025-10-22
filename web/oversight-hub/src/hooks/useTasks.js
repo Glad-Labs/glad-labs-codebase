@@ -11,7 +11,9 @@ const useTasks = () => {
   useEffect(() => {
     // Check if db is initialized
     if (!db) {
-      setError('Firestore database not initialized. Please check your Firebase configuration.');
+      setError(
+        'Firestore database not initialized. Please check your Firebase configuration.'
+      );
       setLoading(false);
       return;
     }
@@ -36,7 +38,7 @@ const useTasks = () => {
           console.error('Firestore error:', err);
           setError(
             `Failed to fetch tasks: ${err.message || 'Unknown error'}. ` +
-            'Please check Firestore connection and permissions.'
+              'Please check Firestore connection and permissions.'
           );
           setLoading(false);
         }

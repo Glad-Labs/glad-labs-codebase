@@ -41,12 +41,12 @@ const firebaseConfig = {
 
 // Validate required config
 const requiredFields = ['apiKey', 'authDomain', 'projectId', 'appId'];
-const missingFields = requiredFields.filter(field => !firebaseConfig[field]);
+const missingFields = requiredFields.filter((field) => !firebaseConfig[field]);
 
 if (missingFields.length > 0) {
   console.error(
     `Firebase configuration incomplete. Missing fields: ${missingFields.join(', ')}. ` +
-    `Please check your .env file and ensure REACT_APP_* variables are set.`
+      `Please check your .env file and ensure REACT_APP_* variables are set.`
   );
 }
 
@@ -64,9 +64,12 @@ if (!getApps().length) {
 // Initialize Firestore with error handling
 try {
   db = getFirestore(app);
-  
+
   // Use emulator in development if available
-  if (process.env.NODE_ENV === 'development' && window.location.hostname === 'localhost') {
+  if (
+    process.env.NODE_ENV === 'development' &&
+    window.location.hostname === 'localhost'
+  ) {
     try {
       connectFirestoreEmulator(db, 'localhost', 8080);
     } catch (err) {
