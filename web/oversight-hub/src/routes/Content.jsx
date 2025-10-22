@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
+import BlogPostCreator from '../components/BlogPostCreator';
 import './Content.css';
 
 function Content() {
-  const [contentItems, setContentItems] = useState([
+  const [contentItems] = useState([
     {
       id: 1,
       title: 'Q4 Product Roadmap',
@@ -38,11 +39,14 @@ function Content() {
 
   return (
     <div className="content-container">
+      {/* AI Blog Post Creator Section */}
+      <BlogPostCreator />
+
       {/* Header */}
-      <div className="dashboard-header">
-        <h1 className="dashboard-title">Content Management</h1>
+      <div className="dashboard-header" style={{ marginTop: '40px' }}>
+        <h1 className="dashboard-title">Content Library</h1>
         <p className="dashboard-subtitle">
-          Create, manage, and publish content across all channels
+          Manage and organize all your published content
         </p>
       </div>
 
