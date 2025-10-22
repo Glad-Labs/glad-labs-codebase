@@ -7,6 +7,7 @@
 The Oversight Hub is a React-based admin dashboard providing oversight and control of the GLAD Labs platform.
 
 **Key Details:**
+
 - **Type:** React frontend application
 - **Port (Local):** 3001
 - **Location:** `web/oversight-hub/`
@@ -53,12 +54,13 @@ Before deploying Oversight Hub, ensure you have:
 
 Go to **Settings** → **Environment Variables**:
 
-| Variable | Value | Notes |
-|----------|-------|-------|
-| `REACT_APP_STRAPI_API_URL` | `https://your-strapi-domain.com` | Your production Strapi URL |
-| `REACT_APP_STRAPI_API_TOKEN` | Your token from Strapi | Admin/API token for authentication |
+| Variable                     | Value                            | Notes                              |
+| ---------------------------- | -------------------------------- | ---------------------------------- |
+| `REACT_APP_STRAPI_API_URL`   | `https://your-strapi-domain.com` | Your production Strapi URL         |
+| `REACT_APP_STRAPI_API_TOKEN` | Your token from Strapi           | Admin/API token for authentication |
 
 **Example:**
+
 ```
 REACT_APP_STRAPI_API_URL=https://strapi.railway.app
 REACT_APP_STRAPI_API_TOKEN=e1234567890abcdef...
@@ -88,6 +90,7 @@ After deployment:
 **Error:** `Build failed in Vercel`
 
 **Solution:**
+
 1. Check build logs in Vercel dashboard
 2. Verify environment variables are set
 3. Ensure `REACT_APP_STRAPI_API_URL` is correct
@@ -100,6 +103,7 @@ After deployment:
 **Error:** `Cannot GET /` or pages not found
 
 **Solution:**
+
 1. Vercel needs a rewrite rule for client-side routing
 2. Create `vercel.json` in `web/oversight-hub/`:
 
@@ -123,6 +127,7 @@ After deployment:
 **Error:** `Cannot connect to Strapi API` or `401 Unauthorized`
 
 **Solution:**
+
 1. Verify `REACT_APP_STRAPI_API_URL` is the **production** URL (not localhost)
 2. Check `REACT_APP_STRAPI_API_TOKEN` is correct and valid
 3. Test the API manually: `curl https://your-strapi-url/api/...`
@@ -136,6 +141,7 @@ After deployment:
 **Symptom:** Dashboard loads slowly or API requests timeout
 
 **Solution:**
+
 1. Check Strapi API response times
 2. Enable Vercel Analytics to identify bottlenecks
 3. Consider Strapi optimization if API is slow
@@ -198,6 +204,7 @@ To use a custom domain:
 ### Caching
 
 Vercel automatically caches:
+
 - Static files (CSS, JS, images)
 - API responses (configurable)
 
@@ -208,6 +215,7 @@ All content served through Vercel's global CDN for fast delivery worldwide.
 ### Optimization
 
 For faster builds:
+
 1. Enable `nextImageConfig` if images are slow
 2. Compress large assets before deployment
 3. Split large bundles with code splitting
@@ -230,12 +238,14 @@ Before production launch:
 ## 📝 Environment Variables Reference
 
 ### Development (.env.local)
+
 ```
 REACT_APP_STRAPI_API_URL=http://localhost:1337
 REACT_APP_STRAPI_API_TOKEN=your-dev-token
 ```
 
 ### Production (Vercel dashboard)
+
 ```
 REACT_APP_STRAPI_API_URL=https://strapi.production.com
 REACT_APP_STRAPI_API_TOKEN=your-production-token

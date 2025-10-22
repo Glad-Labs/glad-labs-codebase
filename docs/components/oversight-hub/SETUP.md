@@ -7,6 +7,7 @@
 The Oversight Hub is a React-based admin dashboard for monitoring and controlling the GLAD Labs platform.
 
 **Key Details:**
+
 - **Type:** React frontend
 - **Location:** `web/oversight-hub/`
 - **Local Port:** 3001
