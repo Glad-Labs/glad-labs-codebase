@@ -38,6 +38,7 @@
     "@heroicons/react": "^2.2.0",
     "@mui/icons-material": "^7.3.4",
     "@mui/material": "^7.3.4",
+    "confusing-browser-globals": "^1.0.11",
     "firebase": "^10.14.1",
     "is-path-inside": "^3.0.3",
     "react": "^18.3.1",
