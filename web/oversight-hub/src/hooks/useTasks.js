@@ -9,29 +9,44 @@ const useTasks = () => {
   const setTasks = useStore((state) => state.setTasks);
 
   useEffect(() => {
-    const q = query(
-      collection(db, 'content-tasks'),
-      orderBy('createdAt', 'desc')
-    );
-    const unsubscribe = onSnapshot(
-      q,
-      (querySnapshot) => {
-        const tasksData = querySnapshot.docs.map((doc) => ({
-          id: doc.id,
-          ...doc.data(),
-        }));
-        setTasks(tasksData);
-        setLoading(false);
-      },
-      (err) => {
-        setError(
-          'Failed to fetch tasks. Please check Firestore connection and permissions.'
-        );
-        setLoading(false);
-        console.error(err);
-      }
-    );
-    return () => unsubscribe();
+    // Check if db is initialized
+    if (!db) {
+      setError('Firestore database not initialized. Please check your Firebase configuration.');
+      setLoading(false);
+      return;
+    }
+
+    try {
+      const q = query(
+        collection(db, 'content-tasks'),
+        orderBy('createdAt', 'desc')
+      );
+      const unsubscribe = onSnapshot(
+        q,
+        (querySnapshot) => {
+          const tasksData = querySnapshot.docs.map((doc) => ({
+            id: doc.id,
+            ...doc.data(),
+          }));
+          setTasks(tasksData);
+          setError(null);
+          setLoading(false);
+        },
+        (err) => {
+          console.error('Firestore error:', err);
+          setError(
+            `Failed to fetch tasks: ${err.message || 'Unknown error'}. ` +
+            'Please check Firestore connection and permissions.'
+          );
+          setLoading(false);
+        }
+      );
+      return () => unsubscribe();
+    } catch (err) {
+      console.error('Error setting up Firestore listener:', err);
+      setError(`Error setting up task listener: ${err.message}`);
+      setLoading(false);
+    }
   }, [setTasks]);
 
   return { loading, error };

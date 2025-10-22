@@ -23,7 +23,7 @@
 
 // Import the functions you need from the SDKs you need
 import { initializeApp, getApps } from 'firebase/app';
-import { getFirestore } from 'firebase/firestore';
+import { getFirestore, connectFirestoreEmulator } from 'firebase/firestore';
 import { getAuth } from 'firebase/auth';
 
 // --- Firebase Configuration ---
@@ -39,15 +39,44 @@ const firebaseConfig = {
   measurementId: process.env.REACT_APP_MEASUREMENT_ID,
 };
 
+// Validate required config
+const requiredFields = ['apiKey', 'authDomain', 'projectId', 'appId'];
+const missingFields = requiredFields.filter(field => !firebaseConfig[field]);
+
+if (missingFields.length > 0) {
+  console.error(
+    `Firebase configuration incomplete. Missing fields: ${missingFields.join(', ')}. ` +
+    `Please check your .env file and ensure REACT_APP_* variables are set.`
+  );
+}
+
 // Initialize Firebase
 let app;
+let db;
+let auth;
+
 if (!getApps().length) {
   app = initializeApp(firebaseConfig);
 } else {
   app = getApps()[0];
 }
 
-const db = getFirestore(app);
-const auth = getAuth(app);
+// Initialize Firestore with error handling
+try {
+  db = getFirestore(app);
+  
+  // Use emulator in development if available
+  if (process.env.NODE_ENV === 'development' && window.location.hostname === 'localhost') {
+    try {
+      connectFirestoreEmulator(db, 'localhost', 8080);
+    } catch (err) {
+      // Emulator already connected or not available - this is fine
+    }
+  }
+} catch (err) {
+  console.error('Failed to initialize Firestore:', err);
+}
+
+auth = getAuth(app);
 
 export { db, auth };
