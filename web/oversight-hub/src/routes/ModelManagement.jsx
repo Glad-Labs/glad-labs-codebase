@@ -49,7 +49,9 @@ function ModelManagement() {
     <div className="model-management-container">
       <div className="dashboard-header">
         <h1 className="dashboard-title">Model Management</h1>
-        <p className="dashboard-subtitle">Deploy and manage AI models for various tasks</p>
+        <p className="dashboard-subtitle">
+          Deploy and manage AI models for various tasks
+        </p>
       </div>
 
       {/* Model Cards */}
@@ -61,7 +63,9 @@ function ModelManagement() {
                 <h3 className="model-name">{model.name}</h3>
                 <p className="model-provider">{model.provider}</p>
               </div>
-              <span className={`status-badge status-${model.status.toLowerCase()}`}>
+              <span
+                className={`status-badge status-${model.status.toLowerCase()}`}
+              >
                 {model.status}
               </span>
             </div>
@@ -85,12 +89,16 @@ function ModelManagement() {
 
               <div className="metric">
                 <span className="metric-label">Latency</span>
-                <span className="metric-value metric-latency">{model.latency}</span>
+                <span className="metric-value metric-latency">
+                  {model.latency}
+                </span>
               </div>
 
               <div className="metric">
                 <span className="metric-label">Requests</span>
-                <span className="metric-value">{model.usage.toLocaleString()}</span>
+                <span className="metric-value">
+                  {model.usage.toLocaleString()}
+                </span>
               </div>
             </div>
 
@@ -131,7 +139,9 @@ function ModelManagement() {
                   <td>{model.latency}</td>
                   <td>${(Math.random() * 50 + 10).toFixed(2)}</td>
                   <td>
-                    <span className={`status-badge status-${model.status.toLowerCase()}`}>
+                    <span
+                      className={`status-badge status-${model.status.toLowerCase()}`}
+                    >
                       {model.status}
                     </span>
                   </td>

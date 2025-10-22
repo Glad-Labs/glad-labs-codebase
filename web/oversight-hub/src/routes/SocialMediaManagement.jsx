@@ -42,17 +42,39 @@ function SocialMediaManagement() {
   ]);
 
   const [socialMetrics] = useState([
-    { platform: 'Twitter', followers: 45200, newFollowers: 1234, engagement: 8.2 },
-    { platform: 'LinkedIn', followers: 78900, newFollowers: 456, engagement: 4.5 },
-    { platform: 'Instagram', followers: 34500, newFollowers: 890, engagement: 12.1 },
-    { platform: 'TikTok', followers: 23400, newFollowers: 2345, engagement: 15.8 },
+    {
+      platform: 'Twitter',
+      followers: 45200,
+      newFollowers: 1234,
+      engagement: 8.2,
+    },
+    {
+      platform: 'LinkedIn',
+      followers: 78900,
+      newFollowers: 456,
+      engagement: 4.5,
+    },
+    {
+      platform: 'Instagram',
+      followers: 34500,
+      newFollowers: 890,
+      engagement: 12.1,
+    },
+    {
+      platform: 'TikTok',
+      followers: 23400,
+      newFollowers: 2345,
+      engagement: 15.8,
+    },
   ]);
 
   return (
     <div className="social-management-container">
       <div className="dashboard-header">
         <h1 className="dashboard-title">Social Media Management</h1>
-        <p className="dashboard-subtitle">Manage campaigns and monitor social presence</p>
+        <p className="dashboard-subtitle">
+          Manage campaigns and monitor social presence
+        </p>
       </div>
 
       {/* Platform Overview */}
@@ -72,12 +94,16 @@ function SocialMediaManagement() {
 
               <div className="metric-item">
                 <span className="metric-name">Followers</span>
-                <span className="metric-val">{platform.followers.toLocaleString()}</span>
+                <span className="metric-val">
+                  {platform.followers.toLocaleString()}
+                </span>
               </div>
 
               <div className="metric-item">
                 <span className="metric-name">New This Month</span>
-                <span className="metric-val positive">+{platform.newFollowers}</span>
+                <span className="metric-val positive">
+                  +{platform.newFollowers}
+                </span>
               </div>
 
               <div className="metric-item">
@@ -99,7 +125,9 @@ function SocialMediaManagement() {
             <div key={campaign.id} className="campaign-card">
               <div className="campaign-header">
                 <h3 className="campaign-name">{campaign.name}</h3>
-                <span className={`campaign-status status-${campaign.status.toLowerCase()}`}>
+                <span
+                  className={`campaign-status status-${campaign.status.toLowerCase()}`}
+                >
                   {campaign.status}
                 </span>
               </div>
@@ -119,11 +147,15 @@ function SocialMediaManagement() {
 
                   <div className="campaign-metric">
                     <span className="campaign-label">Engagement</span>
-                    <span className="campaign-value">{campaign.engagement.toLocaleString()}</span>
+                    <span className="campaign-value">
+                      {campaign.engagement.toLocaleString()}
+                    </span>
                   </div>
 
                   <div className="engagement-rate">
-                    <span className="rate-label">Rate: {campaign.engagementRate}%</span>
+                    <span className="rate-label">
+                      Rate: {campaign.engagementRate}%
+                    </span>
                     <div className="rate-bar">
                       <div
                         className="rate-fill"
@@ -150,30 +182,38 @@ function SocialMediaManagement() {
         <div className="chart-area">
           <div className="chart-legend">
             <span className="legend-item">
-              <span className="legend-dot" style={{ backgroundColor: 'var(--accent-primary)' }}></span>
+              <span
+                className="legend-dot"
+                style={{ backgroundColor: 'var(--accent-primary)' }}
+              ></span>
               Reach
             </span>
             <span className="legend-item">
-              <span className="legend-dot" style={{ backgroundColor: '#9c27b0' }}></span>
+              <span
+                className="legend-dot"
+                style={{ backgroundColor: '#9c27b0' }}
+              ></span>
               Engagement
             </span>
           </div>
           <div className="simple-bar-chart">
-            {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((day, idx) => (
-              <div key={idx} className="chart-bar-group">
-                <div className="bars-container">
-                  <div
-                    className="bar reach-bar"
-                    style={{ height: `${30 + Math.random() * 50}%` }}
-                  ></div>
-                  <div
-                    className="bar engagement-bar"
-                    style={{ height: `${20 + Math.random() * 40}%` }}
-                  ></div>
+            {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map(
+              (day, idx) => (
+                <div key={idx} className="chart-bar-group">
+                  <div className="bars-container">
+                    <div
+                      className="bar reach-bar"
+                      style={{ height: `${30 + Math.random() * 50}%` }}
+                    ></div>
+                    <div
+                      className="bar engagement-bar"
+                      style={{ height: `${20 + Math.random() * 40}%` }}
+                    ></div>
+                  </div>
+                  <span className="bar-label">{day}</span>
                 </div>
-                <span className="bar-label">{day}</span>
-              </div>
-            ))}
+              )
+            )}
           </div>
         </div>
       </div>
@@ -183,7 +223,10 @@ function SocialMediaManagement() {
         <h2 className="section-title">📅 Content Calendar</h2>
         <div className="calendar-grid">
           {Array.from({ length: 28 }).map((_, idx) => (
-            <div key={idx} className={`calendar-day ${idx % 3 === 0 ? 'has-content' : ''}`}>
+            <div
+              key={idx}
+              className={`calendar-day ${idx % 3 === 0 ? 'has-content' : ''}`}
+            >
               <div className="day-num">{idx + 1}</div>
               {idx % 3 === 0 && <span className="content-indicator">•</span>}
             </div>

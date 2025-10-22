@@ -6,8 +6,18 @@ function Analytics() {
 
   const metrics = [
     { label: 'Total Users', value: '12,458', change: '+8.2%', positive: true },
-    { label: 'Conversion Rate', value: '3.24%', change: '+0.45%', positive: true },
-    { label: 'Avg Session Duration', value: '5m 32s', change: '-2.1s', positive: false },
+    {
+      label: 'Conversion Rate',
+      value: '3.24%',
+      change: '+0.45%',
+      positive: true,
+    },
+    {
+      label: 'Avg Session Duration',
+      value: '5m 32s',
+      change: '-2.1s',
+      positive: false,
+    },
     { label: 'Bounce Rate', value: '24.8%', change: '-3.2%', positive: true },
   ];
 
@@ -42,7 +52,9 @@ function Analytics() {
       <div className="analytics-header">
         <div className="header-content">
           <h1 className="analytics-title">Analytics Dashboard</h1>
-          <p className="analytics-subtitle">Monitor performance metrics and user insights</p>
+          <p className="analytics-subtitle">
+            Monitor performance metrics and user insights
+          </p>
         </div>
 
         {/* Time Range Selector */}
@@ -65,7 +77,9 @@ function Analytics() {
           <div key={idx} className="metric-card">
             <h3 className="metric-label">{metric.label}</h3>
             <p className="metric-value">{metric.value}</p>
-            <p className={`metric-change ${metric.positive ? 'positive' : 'negative'}`}>
+            <p
+              className={`metric-change ${metric.positive ? 'positive' : 'negative'}`}
+            >
               {metric.positive ? '↑' : '↓'} {metric.change}
             </p>
           </div>
@@ -126,7 +140,9 @@ function Analytics() {
                 <tr key={idx}>
                   <td className="page-path">{page.path}</td>
                   <td className="page-views">
-                    <span className="badge badge-info">{page.views.toLocaleString()}</span>
+                    <span className="badge badge-info">
+                      {page.views.toLocaleString()}
+                    </span>
                   </td>
                   <td className="bounce-rate">{page.bounce}</td>
                   <td className="avg-time">{page.avgTime}</td>
@@ -153,7 +169,9 @@ function Analytics() {
                   style={{ width: `${source.percentage}%` }}
                 ></div>
               </div>
-              <p className="traffic-users">{source.users.toLocaleString()} users</p>
+              <p className="traffic-users">
+                {source.users.toLocaleString()} users
+              </p>
             </div>
           ))}
         </div>

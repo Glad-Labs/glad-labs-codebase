@@ -129,7 +129,8 @@ const CommandPane = () => {
     if (!delegateMode) {
       setDelegateMode(true);
       const delegateMessage = {
-        message: 'I\'m ready to help delegate tasks. What would you like me to handle?',
+        message:
+          "I'm ready to help delegate tasks. What would you like me to handle?",
         direction: 'incoming',
         sender: 'AI',
       };
@@ -145,7 +146,7 @@ const CommandPane = () => {
         className="resize-handle command-pane-resize-handle"
         onMouseDown={startResize}
       />
-      
+
       {/* Header with Model Selector and Context */}
       <div className="command-pane-header">
         <div className="command-pane-top">
@@ -194,7 +195,9 @@ const CommandPane = () => {
           <h3 className="context-title">Current Context</h3>
           <div className="context-item">
             <span className="context-label">Current Page:</span>
-            <span className="context-value">{window.location.pathname || '/'}</span>
+            <span className="context-value">
+              {window.location.pathname || '/'}
+            </span>
           </div>
           {selectedTask && (
             <>
@@ -204,7 +207,9 @@ const CommandPane = () => {
               </div>
               <div className="context-item">
                 <span className="context-label">Status:</span>
-                <span className={`status-badge status-${selectedTask.status?.toLowerCase()}`}>
+                <span
+                  className={`status-badge status-${selectedTask.status?.toLowerCase()}`}
+                >
                   {selectedTask.status}
                 </span>
               </div>
@@ -225,8 +230,14 @@ const CommandPane = () => {
 
       {/* Optional: Selected Task Display */}
       {selectedTask && (
-        <div className="p-4 border-b" style={{ borderColor: 'var(--border-primary)' }}>
-          <h2 className="text-lg font-semibold" style={{ color: 'var(--text-primary)' }}>
+        <div
+          className="p-4 border-b"
+          style={{ borderColor: 'var(--border-primary)' }}
+        >
+          <h2
+            className="text-lg font-semibold"
+            style={{ color: 'var(--text-primary)' }}
+          >
             {selectedTask.title}
           </h2>
           <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>

@@ -41,20 +41,16 @@ function Content() {
       {/* Header */}
       <div className="dashboard-header">
         <h1 className="dashboard-title">Content Management</h1>
-        <p className="dashboard-subtitle">Create, manage, and publish content across all channels</p>
+        <p className="dashboard-subtitle">
+          Create, manage, and publish content across all channels
+        </p>
       </div>
 
       {/* Action Buttons */}
       <div className="content-actions">
-        <button className="btn btn-primary">
-          ➕ Create New Content
-        </button>
-        <button className="btn btn-secondary">
-          📤 Upload Files
-        </button>
-        <button className="btn btn-secondary">
-          ⚙️ Content Settings
-        </button>
+        <button className="btn btn-primary">➕ Create New Content</button>
+        <button className="btn btn-secondary">📤 Upload Files</button>
+        <button className="btn btn-secondary">⚙️ Content Settings</button>
       </div>
 
       {/* Stats Cards */}
@@ -206,15 +202,20 @@ function Content() {
       <div className="content-categories">
         <h2 className="section-title">📚 Content Categories</h2>
         <div className="category-grid">
-          {['Blog Posts', 'Documentation', 'Case Studies', 'Whitepapers', 'Videos', 'Webinars'].map(
-            (category, idx) => (
-              <div key={idx} className="category-card">
-                <span className="category-emoji">📁</span>
-                <h3 className="category-name">{category}</h3>
-                <p className="category-count">12 items</p>
-              </div>
-            )
-          )}
+          {[
+            'Blog Posts',
+            'Documentation',
+            'Case Studies',
+            'Whitepapers',
+            'Videos',
+            'Webinars',
+          ].map((category, idx) => (
+            <div key={idx} className="category-card">
+              <span className="category-emoji">📁</span>
+              <h3 className="category-name">{category}</h3>
+              <p className="category-count">12 items</p>
+            </div>
+          ))}
         </div>
       </div>
     </div>

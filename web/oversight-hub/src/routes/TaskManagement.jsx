@@ -10,7 +10,9 @@ function TaskManagement() {
   const getFilteredTasks = () => {
     let filtered = tasks || [];
     if (filterStatus !== 'all') {
-      filtered = filtered.filter((t) => t.status?.toLowerCase() === filterStatus);
+      filtered = filtered.filter(
+        (t) => t.status?.toLowerCase() === filterStatus
+      );
     }
     return filtered.sort((a, b) => {
       if (sortBy === 'dueDate') {
@@ -123,7 +125,9 @@ function TaskManagement() {
                   >
                     {task.priority}
                   </span>
-                  <span className={`task-status status-${task.status?.toLowerCase()}`}>
+                  <span
+                    className={`task-status status-${task.status?.toLowerCase()}`}
+                  >
                     {task.status}
                   </span>
                 </div>
