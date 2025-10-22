@@ -31,6 +31,7 @@
     ]
   },
   "dependencies": {
+    "@babel/eslint-parser": "^7.28.4",
     "@chatscope/chat-ui-kit-react": "^2.1.1",
     "@chatscope/chat-ui-kit-styles": "^1.4.0",
     "@emotion/react": "^11.14.0",
