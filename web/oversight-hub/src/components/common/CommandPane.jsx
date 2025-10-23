@@ -1,4 +1,4 @@
-import React, { useState, useRef, useCallback, useMemo } from 'react';
+import React, { useState, useRef, useCallback } from 'react';
 import {
   MainContainer,
   ChatContainer,
@@ -23,7 +23,7 @@ const AI_MODELS = [
 ];
 
 const CommandPane = () => {
-  const { selectedTask, tasks, theme } = useStore();
+  const { selectedTask, tasks } = useStore();
   const isResizing = useRef(false);
   const [messages, setMessages] = useState([
     {
@@ -38,14 +38,6 @@ const CommandPane = () => {
   const [selectedModel, setSelectedModel] = useState('gpt-4');
   const [showContext, setShowContext] = useState(false);
   const [delegateMode, setDelegateMode] = useState(false);
-
-  const startResize = useCallback((e) => {
-    isResizing.current = true;
-    document.addEventListener('mousemove', handleResize);
-    document.addEventListener('mouseup', stopResize);
-    document.body.style.cursor = 'col-resize';
-    document.body.style.userSelect = 'none';
-  }, []);
 
   const handleResize = useCallback((e) => {
     if (!isResizing.current) return;
@@ -70,6 +62,14 @@ const CommandPane = () => {
     document.body.style.cursor = '';
     document.body.style.userSelect = '';
   }, [handleResize]);
+
+  const startResize = useCallback((e) => {
+    isResizing.current = true;
+    document.addEventListener('mousemove', handleResize);
+    document.addEventListener('mouseup', stopResize);
+    document.body.style.cursor = 'col-resize';
+    document.body.style.userSelect = 'none';
+  }, [handleResize, stopResize]);
 
   const handleSend = async (message) => {
     const newMessage = {

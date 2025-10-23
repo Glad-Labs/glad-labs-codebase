@@ -35,7 +35,6 @@ function BlogPostCreator() {
   const [error, setError] = useState(null);
   const [successMessage, setSuccessMessage] = useState(null);
   const [availableModels, setAvailableModels] = useState([]);
-  const [providerStatus, setProviderStatus] = useState({});
   const [loadingModels, setLoadingModels] = useState(true);
   // Load available models on mount
   useEffect(() => {
@@ -44,14 +43,10 @@ function BlogPostCreator() {
       try {
         const models = await modelService.getAvailableModels();
         setAvailableModels(models);
-
-        const status = await modelService.getProviderStatus();
-        setProviderStatus(status);
       } catch (err) {
         console.error('Failed to load models:', err);
         // Use default models on error
         setAvailableModels(modelService.getDefaultModels());
-        setProviderStatus(modelService.getDefaultStatus());
       } finally {
         setLoadingModels(false);
       }
