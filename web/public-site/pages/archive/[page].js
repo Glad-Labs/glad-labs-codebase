@@ -34,33 +34,51 @@ export default function ArchivePage({ posts, pagination }) {
 }
 
 export async function getStaticPaths() {
-  const postsData = await getPaginatedPosts(1, 1); // Fetch one post to get pagination info
-  const pageCount = postsData.meta.pagination.pageCount;
-  const paths = Array.from({ length: pageCount }, (_, i) => ({
-    params: { page: (i + 1).toString() },
-  }));
+  try {
+    const postsData = await getPaginatedPosts(1, 1); // Fetch one post to get pagination info
+    const pageCount = postsData.meta.pagination.pageCount;
+    const paths = Array.from({ length: pageCount }, (_, i) => ({
+      params: { page: (i + 1).toString() },
+    }));
 
-  return {
-    paths,
-    fallback: 'blocking',
-  };
+    return {
+      paths,
+      fallback: 'blocking',
+    };
+  } catch (error) {
+    console.warn('Could not fetch pagination data during build, using fallback:', error.message);
+    // Return empty paths and let fallback: 'blocking' handle runtime generation
+    return {
+      paths: [],
+      fallback: 'blocking',
+    };
+  }
 }
 
 export async function getStaticProps({ params }) {
-  const page = parseInt(params.page, 10) || 1;
-  const postsData = await getPaginatedPosts(page, POSTS_PER_PAGE);
+  try {
+    const page = parseInt(params.page, 10) || 1;
+    const postsData = await getPaginatedPosts(page, POSTS_PER_PAGE);
 
-  if (!postsData.data.length) {
+    if (!postsData.data.length) {
+      return {
+        notFound: true,
+      };
+    }
+
+    return {
+      props: {
+        posts: postsData.data,
+        pagination: postsData.meta.pagination,
+      },
+      revalidate: 60,
+    };
+  } catch (error) {
+    console.warn('Failed to generate archive page:', error.message);
+    // Return empty page with ISR to retry later
     return {
       notFound: true,
+      revalidate: 10, // Retry after 10 seconds
     };
   }
-
-  return {
-    props: {
-      posts: postsData.data,
-      pagination: postsData.meta.pagination,
-    },
-    revalidate: 60,
-  };
 }

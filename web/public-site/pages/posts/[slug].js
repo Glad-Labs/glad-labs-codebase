@@ -112,31 +112,47 @@ export default function Post({ post }) {
 }
 
 export async function getStaticPaths() {
-  // Use getAllPosts to fetch all posts for path generation
-  const posts = (await getAllPosts()) || [];
-  const paths = posts
-    .map((p) => p?.slug)
-    .filter(Boolean)
-    .map((slug) => ({ params: { slug } }));
+  try {
+    // Use getAllPosts to fetch all posts for path generation
+    const posts = (await getAllPosts()) || [];
+    const paths = posts
+      .map((p) => p?.slug)
+      .filter(Boolean)
+      .map((slug) => ({ params: { slug } }));
 
-  return {
-    paths,
-    fallback: 'blocking',
-  };
+    return {
+      paths,
+      fallback: 'blocking',
+    };
+  } catch (error) {
+    console.warn('Could not fetch posts for static paths during build:', error.message);
+    return {
+      paths: [],
+      fallback: 'blocking',
+    };
+  }
 }
 
 export async function getStaticProps({ params }) {
-  const post = await getPostBySlug(params.slug);
+  try {
+    const post = await getPostBySlug(params.slug);
 
-  // If no post is found for the given slug, return a 404 page
-  if (!post) {
+    // If no post is found for the given slug, return a 404 page
+    if (!post) {
+      return {
+        notFound: true,
+      };
+    }
+
+    return {
+      props: { post },
+      revalidate: 60, // Re-generate the page every 60 seconds if needed
+    };
+  } catch (error) {
+    console.warn(`Failed to generate post page for slug ${params.slug}:`, error.message);
     return {
       notFound: true,
+      revalidate: 10,
     };
   }
-
-  return {
-    props: { post },
-    revalidate: 60, // Re-generate the page every 60 seconds if needed
-  };
 }
