@@ -218,7 +218,7 @@ export async function checkAPIHealth() {
   }
 }
 
-export default {
+const cofounderAgentClient = {
   createBlogPost,
   pollTaskStatus,
   createBlogPostAndWait,
@@ -230,3 +230,5 @@ export default {
   formatErrorMessage,
   checkAPIHealth,
 };
+
+export default cofounderAgentClient;

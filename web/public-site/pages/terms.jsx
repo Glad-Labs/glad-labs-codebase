@@ -31,10 +31,11 @@ export default function TermsOfService() {
         <section className="mb-12">
           <h2 className="text-2xl font-bold mb-4">1. Agreement to Terms</h2>
           <p className="text-gray-700 mb-4">
-            These Terms of Service ("Terms") constitute a legal agreement
-            between you and GLAD Labs, Inc. ("Company," "we," "us," or "our")
-            governing your use of our website https://gladlabs.io and related
-            services (collectively, the "Services").
+            These Terms of Service (&quot;Terms&quot;) constitute a legal
+            agreement between you and GLAD Labs, Inc. (&quot;Company,&quot;
+            &quot;we,&quot; &quot;us,&quot; or &quot;our&quot;) governing your
+            use of our website https://gladlabs.io and related services
+            (collectively, the &quot;Services&quot;).
           </p>
           <p className="text-gray-700 mb-4">
             By accessing, browsing, or using the Services, you acknowledge that
@@ -133,13 +134,15 @@ export default function TermsOfService() {
           <h3 className="text-xl font-bold mb-3">4.2 Your Content</h3>
           <p className="text-gray-700 mb-4">
             You retain ownership of any content you create or upload to the
-            Services ("Your Content"). By uploading Your Content, you grant us a
-            worldwide, non-exclusive, royalty-free license to:
+            Services (&quot;Your Content&quot;). By uploading Your Content, you
+            grant us a worldwide, non-exclusive, royalty-free license to:
           </p>
           <ul className="list-disc list-inside text-gray-700 mb-4 space-y-2">
             <li>Use, reproduce, and display Your Content</li>
             <li>Create derivatives for improving our Services</li>
-            <li>Aggregate Your Content with other users' data for analytics</li>
+            <li>
+              Aggregate Your Content with other users&apos; data for analytics
+            </li>
           </ul>
           <p className="text-gray-700">
             You represent that you own or have sufficient rights to grant us
@@ -158,7 +161,8 @@ export default function TermsOfService() {
           </h3>
           <p className="text-gray-700 mb-4">
             <strong>
-              THE SERVICES ARE PROVIDED "AS-IS" WITHOUT WARRANTIES OF ANY KIND.
+              THE SERVICES ARE PROVIDED &quot;AS-IS&quot; WITHOUT WARRANTIES OF
+              ANY KIND.
             </strong>{' '}
             We disclaim all warranties, express, implied, or statutory,
             including:
@@ -188,8 +192,8 @@ export default function TermsOfService() {
               12 months prior
             </li>
             <li>
-              These limitations apply even if we've been advised of potential
-              damages
+              These limitations apply even if we&apos;ve been advised of
+              potential damages
             </li>
           </ul>
 
@@ -230,14 +234,14 @@ export default function TermsOfService() {
           </p>
           <ul className="list-disc list-inside text-gray-700 mb-4 space-y-2">
             <li>
-              Fees are exclusive of taxes (you're responsible for applicable
-              taxes)
+              Fees are exclusive of taxes (you&apos;re responsible for
+              applicable taxes)
             </li>
             <li>
               Billing occurs on the day of your subscription and recurring
               thereafter
             </li>
-            <li>Prices may change upon 30 days' written notice</li>
+            <li>Prices may change upon 30 days&apos; written notice</li>
             <li>No refunds are provided except as required by law</li>
           </ul>
 
