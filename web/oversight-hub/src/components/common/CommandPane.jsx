@@ -63,13 +63,16 @@ const CommandPane = () => {
     document.body.style.userSelect = '';
   }, [handleResize]);
 
-  const startResize = useCallback((e) => {
-    isResizing.current = true;
-    document.addEventListener('mousemove', handleResize);
-    document.addEventListener('mouseup', stopResize);
-    document.body.style.cursor = 'col-resize';
-    document.body.style.userSelect = 'none';
-  }, [handleResize, stopResize]);
+  const startResize = useCallback(
+    (e) => {
+      isResizing.current = true;
+      document.addEventListener('mousemove', handleResize);
+      document.addEventListener('mouseup', stopResize);
+      document.body.style.cursor = 'col-resize';
+      document.body.style.userSelect = 'none';
+    },
+    [handleResize, stopResize]
+  );
 
   const handleSend = async (message) => {
     const newMessage = {

@@ -46,7 +46,10 @@ export async function getStaticPaths() {
       fallback: 'blocking',
     };
   } catch (error) {
-    console.warn('Could not fetch pagination data during build, using fallback:', error.message);
+    console.warn(
+      'Could not fetch pagination data during build, using fallback:',
+      error.message
+    );
     // Return empty paths and let fallback: 'blocking' handle runtime generation
     return {
       paths: [],

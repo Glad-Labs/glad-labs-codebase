@@ -125,7 +125,10 @@ export async function getStaticPaths() {
       fallback: 'blocking',
     };
   } catch (error) {
-    console.warn('Could not fetch posts for static paths during build:', error.message);
+    console.warn(
+      'Could not fetch posts for static paths during build:',
+      error.message
+    );
     return {
       paths: [],
       fallback: 'blocking',
@@ -149,7 +152,10 @@ export async function getStaticProps({ params }) {
       revalidate: 60, // Re-generate the page every 60 seconds if needed
     };
   } catch (error) {
-    console.warn(`Failed to generate post page for slug ${params.slug}:`, error.message);
+    console.warn(
+      `Failed to generate post page for slug ${params.slug}:`,
+      error.message
+    );
     return {
       notFound: true,
       revalidate: 10,

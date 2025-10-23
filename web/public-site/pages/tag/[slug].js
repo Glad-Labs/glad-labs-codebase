@@ -66,7 +66,10 @@ export async function getStaticProps({ params }) {
       revalidate: 60,
     };
   } catch (error) {
-    console.warn(`Failed to generate tag page for slug ${params.slug}:`, error.message);
+    console.warn(
+      `Failed to generate tag page for slug ${params.slug}:`,
+      error.message
+    );
     return {
       notFound: true,
       revalidate: 10,
