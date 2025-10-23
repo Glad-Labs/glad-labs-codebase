@@ -1,8 +1,7 @@
 {
+  "$schema": "https://openapi.vercel.sh/vercel.json",
   "buildCommand": "npm run build",
   "outputDirectory": "build",
-  "framework": "react",
-  "env": {
-    "REACT_APP_FIREBASE_CONFIG": "@firebase_config"
-  }
+  "framework": "create-react-app",
+  "cleanUrls": true
 }
