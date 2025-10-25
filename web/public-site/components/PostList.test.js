@@ -6,17 +6,17 @@ describe('PostList', () => {
     const posts = [
       {
         id: 1,
-        Slug: 'test-post-1',
-        Title: 'Test Post 1',
+        slug: 'test-post-1',
+        title: 'Test Post 1',
         publishedAt: new Date().toISOString(),
-        Excerpt: 'This is a test post.',
+        excerpt: 'This is a test post.',
       },
       {
         id: 2,
-        Slug: 'test-post-2',
-        Title: 'Test Post 2',
+        slug: 'test-post-2',
+        title: 'Test Post 2',
         publishedAt: new Date().toISOString(),
-        Excerpt: 'This is another test post.',
+        excerpt: 'This is another test post.',
       },
     ];
 
