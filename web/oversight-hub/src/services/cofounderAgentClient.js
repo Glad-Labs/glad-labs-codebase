@@ -1,4 +1,4 @@
-﻿/**
+/**
  * Cofounder Agent API Client - JWT Auth
  */
 import useStore from '../store/useStore';
