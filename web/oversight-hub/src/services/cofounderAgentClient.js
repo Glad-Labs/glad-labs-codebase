@@ -1,58 +1,45 @@
-/**
- * Cofounder Agent API Client
- * Handles all communication with the cofounder_agent (FastAPI backend)
- * Manages authentication, polling, error handling, and request/response formatting
+﻿/**
+ * Cofounder Agent API Client - JWT Auth
  */
+import useStore from '../store/useStore';
 
-// API Configuration
-const API_BASE_URL =
-  process.env.REACT_APP_COFOUNDER_AGENT_URL || 'http://localhost:8000/api/v1';
-const API_KEY = process.env.REACT_APP_COFOUNDER_AGENT_KEY || 'dev-key';
-const POLL_INTERVAL = 3000; // Poll every 3 seconds
-const MAX_POLL_ATTEMPTS = 120; // Maximum 10 minutes of polling
+const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:8000';
 
-// Request configuration
-const defaultHeaders = {
-  'Content-Type': 'application/json',
-  Authorization: `Bearer ${API_KEY}`,
-};
+function getAuthHeaders() {
+  const accessToken = useStore.getState().accessToken;
+  const headers = { 'Content-Type': 'application/json' };
+  if (accessToken) {
+    headers['Authorization'] = `Bearer ${accessToken}`;
+  }
+  return headers;
+}
 
-/**
- * Make HTTP request to cofounder agent
- */
-async function makeRequest(endpoint, method = 'GET', data = null) {
+async function makeRequest(
+  endpoint,
+  method = 'GET',
+  data = null,
+  retry = false
+) {
   try {
     const url = `${API_BASE_URL}${endpoint}`;
-    const config = {
-      method,
-      headers: defaultHeaders,
-    };
-
-    if (data) {
-      config.body = JSON.stringify(data);
-    }
-
+    const config = { method, headers: getAuthHeaders() };
+    if (data) config.body = JSON.stringify(data);
     const response = await fetch(url, config);
 
-    // Handle non-JSON responses
-    const contentType = response.headers.get('content-type');
-    let result;
-    if (contentType && contentType.includes('application/json')) {
-      result = await response.json();
-    } else {
-      result = await response.text();
+    if (response.status === 401 && !retry) {
+      const refreshed = await refreshAccessToken();
+      if (refreshed) return makeRequest(endpoint, method, data, true);
+      useStore.setState({ isAuthenticated: false, accessToken: null });
+      window.location.href = '/login';
+      return null;
     }
 
-    // Handle HTTP errors
+    const result = await response.json().catch(() => response.text());
     if (!response.ok) {
-      const error = new Error(
-        result?.message || `API Error: ${response.status}`
-      );
+      const error = new Error(result?.message || `HTTP ${response.status}`);
       error.status = response.status;
-      error.data = result;
       throw error;
     }
-
     return result;
   } catch (error) {
     console.error(`API request failed: ${endpoint}`, error);
@@ -60,175 +47,129 @@ async function makeRequest(endpoint, method = 'GET', data = null) {
   }
 }
 
-/**
- * Create a new blog post (async)
- * Returns immediately with task_id, use pollTaskStatus to check progress
- */
-export async function createBlogPost(params) {
-  const payload = {
-    topic: params.topic,
-    style: params.style || 'technical',
-    tone: params.tone || 'professional',
-    target_length: params.targetLength || 1500,
-    tags: params.tags || [],
-    categories: params.categories || [],
-    featured_image_prompt: params.featuredImagePrompt || null,
-    publish_mode: params.publishMode || 'draft',
-    target_strapi_environment: params.targetEnvironment || 'production',
-  };
-
-  return makeRequest('/content/create-blog-post', 'POST', payload);
-}
-
-/**
- * Poll task status until completion
- * Returns task info with progress, result, or error
- */
-export async function pollTaskStatus(taskId, onProgress = null) {
-  let attempts = 0;
-
-  return new Promise((resolve, reject) => {
-    const poll = async () => {
-      try {
-        if (attempts >= MAX_POLL_ATTEMPTS) {
-          reject(new Error('Task polling timeout (10 minutes exceeded)'));
-          return;
-        }
-
-        const task = await makeRequest(`/content/tasks/${taskId}`);
-
-        // Call progress callback if provided
-        if (onProgress) {
-          onProgress(task);
-        }
-
-        // Check if task is complete
-        if (task.status === 'completed' || task.status === 'failed') {
-          resolve(task);
-          return;
-        }
-
-        // Continue polling
-        attempts++;
-        setTimeout(poll, POLL_INTERVAL);
-      } catch (error) {
-        reject(error);
-      }
-    };
-
-    poll();
+export async function login(email, password) {
+  const response = await makeRequest('/api/auth/login', 'POST', {
+    email,
+    password,
   });
+  if (response.success && response.access_token) {
+    useStore.setState({
+      accessToken: response.access_token,
+      refreshToken: response.refresh_token,
+      user: response.user,
+      isAuthenticated: true,
+    });
+  }
+  return response;
 }
 
-/**
- * Create blog post and wait for completion
- * Combines createBlogPost + pollTaskStatus into one call
- */
-export async function createBlogPostAndWait(params, onProgress = null) {
+export async function logout() {
   try {
-    // Start generation
-    const response = await createBlogPost(params);
-    const taskId = response.task_id;
-
-    // Poll until complete
-    const result = await pollTaskStatus(taskId, onProgress);
-
-    return result;
+    await makeRequest('/api/auth/logout', 'POST');
   } catch (error) {
-    console.error('Error creating blog post:', error);
-    throw error;
+    console.warn('Logout failed:', error);
+  } finally {
+    useStore.setState({
+      accessToken: null,
+      refreshToken: null,
+      user: null,
+      isAuthenticated: false,
+      tasks: [],
+    });
   }
 }
 
-/**
- * Get list of blog drafts
- */
-export async function listBlogDrafts(limit = 20, offset = 0) {
-  return makeRequest(`/content/drafts?limit=${limit}&offset=${offset}`);
-}
-
-/**
- * Publish a blog draft to Strapi
- */
-export async function publishBlogDraft(
-  draftId,
-  targetEnvironment = 'production'
-) {
-  const payload = {
-    target_strapi_environment: targetEnvironment,
-    scheduled_for: null,
-  };
-
-  return makeRequest(`/content/drafts/${draftId}/publish`, 'POST', payload);
-}
-
-/**
- * Delete a blog draft
- */
-export async function deleteBlogDraft(draftId) {
-  return makeRequest(`/content/drafts/${draftId}`, 'DELETE');
-}
-
-/**
- * Send a command to the cofounder agent
- */
-export async function sendCommand(command, context = null) {
-  const payload = {
-    command,
-    context,
-    priority: 'normal',
-  };
-
-  return makeRequest('/command', 'POST', payload);
-}
-
-/**
- * Get agent status
- */
-export async function getAgentStatus() {
-  return makeRequest('/status');
-}
-
-/**
- * Format API error message for display
- */
-export function formatErrorMessage(error) {
-  if (error.data?.details) {
-    return error.data.details;
-  }
-  if (error.data?.message) {
-    return error.data.message;
-  }
-  if (error.message) {
-    return error.message;
-  }
-  return 'An unexpected error occurred';
-}
-
-/**
- * Check if API is reachable
- */
-export async function checkAPIHealth() {
+export async function refreshAccessToken() {
   try {
-    const status = await getAgentStatus();
-    return status?.status === 'online';
+    const refreshToken = useStore.getState().refreshToken;
+    if (!refreshToken) return false;
+    const response = await fetch(`${API_BASE_URL}/api/auth/refresh`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ refresh_token: refreshToken }),
+    });
+    if (response.ok) {
+      const data = await response.json();
+      useStore.setState({ accessToken: data.access_token });
+      return true;
+    }
+    return false;
   } catch (error) {
-    console.warn('API health check failed:', error);
+    console.error('Token refresh error:', error);
     return false;
   }
 }
 
+export async function getTasks(limit = 50, offset = 0) {
+  return makeRequest(`/api/tasks?limit=${limit}&offset=${offset}`, 'GET');
+}
+
+export async function getTaskStatus(taskId) {
+  return makeRequest(`/api/tasks/${taskId}`, 'GET');
+}
+
+export async function pollTaskStatus(taskId, onProgress, maxWait = 3600000) {
+  const startTime = Date.now();
+  const pollInterval = 5000;
+  return new Promise((resolve, reject) => {
+    const interval = setInterval(async () => {
+      try {
+        const task = await getTaskStatus(taskId);
+        if (onProgress) onProgress(task);
+        if (task.status === 'completed' || task.status === 'failed') {
+          clearInterval(interval);
+          resolve(task);
+        }
+        if (Date.now() - startTime > maxWait) {
+          clearInterval(interval);
+          reject(new Error('Task polling timeout'));
+        }
+      } catch (error) {
+        clearInterval(interval);
+        reject(error);
+      }
+    }, pollInterval);
+  });
+}
+
+export async function createBlogPost(
+  topic,
+  primaryKeyword,
+  targetAudience,
+  category
+) {
+  return makeRequest('/api/tasks', 'POST', {
+    task_name: `Blog Post: ${topic}`,
+    agent_id: 'content-agent',
+    status: 'pending',
+    topic,
+    primary_keyword: primaryKeyword,
+    target_audience: targetAudience,
+    category,
+  });
+}
+
+export async function getMetrics() {
+  return makeRequest('/api/metrics', 'GET');
+}
+
+export async function publishBlogDraft(postId, environment = 'production') {
+  return makeRequest(`/api/tasks/${postId}/publish`, 'PATCH', {
+    environment,
+    status: 'published',
+  });
+}
+
 const cofounderAgentClient = {
-  createBlogPost,
+  login,
+  logout,
+  refreshAccessToken,
+  getTasks,
+  getTaskStatus,
   pollTaskStatus,
-  createBlogPostAndWait,
-  listBlogDrafts,
+  createBlogPost,
   publishBlogDraft,
-  deleteBlogDraft,
-  sendCommand,
-  getAgentStatus,
-  formatErrorMessage,
-  checkAPIHealth,
+  getMetrics,
 };
 
 export default cofounderAgentClient;

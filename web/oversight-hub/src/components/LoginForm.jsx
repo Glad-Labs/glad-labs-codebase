@@ -21,6 +21,7 @@
  */
 
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   Box,
   Button,
@@ -55,6 +56,7 @@ import {
   VpnKey as VpnKeyIcon,
   CheckCircle as CheckCircleIcon,
 } from '@mui/icons-material';
+import useStore from '../store/useStore';
 import './LoginForm.css';
 
 /**
@@ -143,8 +145,10 @@ const authAPI = {
 function LoginForm({
   onLoginSuccess = null,
   onLoginError = null,
-  redirectOnSuccess = false,
+  redirectOnSuccess = true,
 }) {
+  const navigate = useNavigate();
+
   // Login state
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -312,12 +316,20 @@ function LoginForm({
       storage.setItem('userId', response.user.id);
     }
 
+    // ===== UPDATE ZUSTAND STORE =====
+    useStore.setState({
+      accessToken: response.access_token,
+      refreshToken: response.refresh_token || null,
+      user: response.user || null,
+      isAuthenticated: true,
+    });
+
     // Callback or redirect
     if (onLoginSuccess) {
       onLoginSuccess(response);
     } else if (redirectOnSuccess) {
       setTimeout(() => {
-        window.location.href = '/dashboard';
+        navigate('/');
       }, 2000);
     }
 

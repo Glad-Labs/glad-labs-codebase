@@ -1,55 +1,89 @@
 import { useState, useEffect } from 'react';
-import { collection, onSnapshot, query, orderBy } from 'firebase/firestore';
-import { db } from '../firebaseConfig';
 import useStore from '../store/useStore';
 
+/**
+ * Fetch tasks from PostgreSQL backend API (replacing Firebase Firestore)
+ * Polls every 5 seconds for updates when authenticated
+ *
+ * @returns {Object} { loading, error } - Loading and error states
+ */
 const useTasks = () => {
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+
   const setTasks = useStore((state) => state.setTasks);
+  const accessToken = useStore((state) => state.accessToken);
+  const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:8000';
 
   useEffect(() => {
-    // Check if db is initialized
-    if (!db) {
-      setError(
-        'Firestore database not initialized. Please check your Firebase configuration.'
-      );
+    // Don't fetch if not authenticated
+    if (!accessToken) {
       setLoading(false);
+      setTasks([]);
       return;
     }
 
-    try {
-      const q = query(
-        collection(db, 'content-tasks'),
-        orderBy('createdAt', 'desc')
-      );
-      const unsubscribe = onSnapshot(
-        q,
-        (querySnapshot) => {
-          const tasksData = querySnapshot.docs.map((doc) => ({
-            id: doc.id,
-            ...doc.data(),
-          }));
-          setTasks(tasksData);
+    let isMounted = true;
+    let pollTimeout;
+
+    const fetchTasks = async () => {
+      try {
+        setLoading(true);
+        const response = await fetch(`${apiUrl}/api/tasks`, {
+          method: 'GET',
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+            'Content-Type': 'application/json',
+          },
+        });
+
+        if (!response.ok) {
+          if (response.status === 401) {
+            // Token expired or invalid
+            throw new Error('Authentication failed. Please login again.');
+          }
+          throw new Error(`HTTP ${response.status}: Failed to fetch tasks`);
+        }
+
+        const data = await response.json();
+        if (isMounted) {
+          setTasks(data.tasks || []);
           setError(null);
-          setLoading(false);
-        },
-        (err) => {
-          console.error('Firestore error:', err);
-          setError(
-            `Failed to fetch tasks: ${err.message || 'Unknown error'}. ` +
-              'Please check Firestore connection and permissions.'
-          );
+        }
+      } catch (err) {
+        console.error('Error fetching tasks:', err);
+        if (isMounted) {
+          setError(err.message);
+          setTasks([]);
+        }
+      } finally {
+        if (isMounted) {
           setLoading(false);
         }
-      );
-      return () => unsubscribe();
-    } catch (err) {
-      console.error('Error setting up Firestore listener:', err);
-      setError(`Error setting up task listener: ${err.message}`);
-      setLoading(false);
-    }
-  }, [setTasks]);
+      }
+    };
+
+    // Fetch immediately
+    fetchTasks();
+
+    // Poll every 5 seconds for updates
+    const pollTasks = () => {
+      pollTimeout = setTimeout(() => {
+        fetchTasks().then(() => {
+          pollTasks();
+        });
+      }, 5000);
+    };
+
+    pollTasks();
+
+    return () => {
+      isMounted = false;
+      if (pollTimeout) {
+        clearTimeout(pollTimeout);
+      }
+    };
+  }, [setTasks, accessToken, apiUrl]);
 
   return { loading, error };
 };
