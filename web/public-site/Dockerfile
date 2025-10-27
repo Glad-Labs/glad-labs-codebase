@@ -1,5 +1,5 @@
 # ==================================
-# GLAD LABS - Next.js Public Site Dockerfile
+# Glad Labs - Next.js Public Site Dockerfile
 # ==================================
 # Multi-stage build for optimized production image
 

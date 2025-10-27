@@ -2,7 +2,7 @@
   "name": "glad-labs-public-site",
   "version": "0.1.0",
   "private": true,
-  "description": "Next.js 14 public website for GLAD Labs - features SSG optimization, Strapi v5 integration, and markdown content rendering",
+  "description": "Next.js 14 public website for Glad Labs - features SSG optimization, Strapi v5 integration, and markdown content rendering",
   "license": "MIT",
   "author": "Matthew M. Gladding (Glad Labs, LLC)",
   "scripts": {

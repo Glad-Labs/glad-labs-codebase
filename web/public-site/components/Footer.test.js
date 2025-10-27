@@ -6,7 +6,7 @@ describe('Footer', () => {
     render(<Footer />);
 
     // Check for copyright text (allowing for different formatting)
-    expect(screen.getByText(/GLAD Labs, LLC/)).toBeInTheDocument();
+    expect(screen.getByText(/Glad Labs, LLC/)).toBeInTheDocument();
     expect(screen.getByText('Privacy Policy')).toBeInTheDocument();
   });
 });

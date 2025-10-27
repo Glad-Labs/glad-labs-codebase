@@ -26,7 +26,7 @@ import {
 } from '@mui/icons-material';
 
 /**
- * SystemHealthDashboard - Comprehensive overview of all GLAD Labs services
+ * SystemHealthDashboard - Comprehensive overview of all Glad Labs services
  *
  * Features:
  * - Real-time service health monitoring

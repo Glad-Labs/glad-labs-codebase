@@ -1,5 +1,5 @@
 # ==================================
-# GLAD LABS - Oversight Hub (React) Dockerfile
+# Glad Labs - Oversight Hub (React) Dockerfile
 # ==================================
 # Multi-stage build for optimized production image
 

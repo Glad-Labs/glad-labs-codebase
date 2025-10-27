@@ -4,7 +4,7 @@ import Link from 'next/link';
 /**
  * Terms of Service Page
  *
- * This page outlines the legal terms and conditions for using GLAD Labs services.
+ * This page outlines the legal terms and conditions for using Glad Labs services.
  * It covers user responsibilities, limitations of liability, and service policies.
  *
  * Last Updated: October 20, 2025
@@ -15,8 +15,8 @@ export default function TermsOfService() {
   return (
     <>
       <Head>
-        <title>Terms of Service | GLAD Labs</title>
-        <meta name="description" content="GLAD Labs Terms of Service" />
+        <title>Terms of Service | Glad Labs</title>
+        <meta name="description" content="Glad Labs Terms of Service" />
         <meta name="robots" content="index, follow" />
       </Head>
 
@@ -32,7 +32,7 @@ export default function TermsOfService() {
           <h2 className="text-2xl font-bold mb-4">1. Agreement to Terms</h2>
           <p className="text-gray-700 mb-4">
             These Terms of Service (&quot;Terms&quot;) constitute a legal
-            agreement between you and GLAD Labs, Inc. (&quot;Company,&quot;
+            agreement between you and Glad Labs, Inc. (&quot;Company,&quot;
             &quot;we,&quot; &quot;us,&quot; or &quot;our&quot;) governing your
             use of our website https://gladlabs.io and related services
             (collectively, the &quot;Services&quot;).
@@ -126,7 +126,7 @@ export default function TermsOfService() {
           <p className="text-gray-700 mb-4">
             All content, features, and functionality of the Services (including
             but not limited to software, code, design, text, images, and
-            graphics) are owned by GLAD Labs, our licensors, or other providers
+            graphics) are owned by Glad Labs, our licensors, or other providers
             of such material and are protected by copyright, trademark, and
             other intellectual property laws.
           </p>
@@ -211,7 +211,7 @@ export default function TermsOfService() {
         <section className="mb-12">
           <h2 className="text-2xl font-bold mb-4">6. Indemnification</h2>
           <p className="text-gray-700">
-            You agree to indemnify, defend, and hold harmless GLAD Labs, its
+            You agree to indemnify, defend, and hold harmless Glad Labs, its
             officers, directors, employees, and agents from any claims, damages,
             or costs arising from:
           </p>
@@ -367,7 +367,7 @@ export default function TermsOfService() {
               <strong>Email:</strong> legal@gladlabs.io
             </p>
             <p className="mb-2">
-              <strong>Mail:</strong> GLAD Labs, Inc., Legal Team
+              <strong>Mail:</strong> Glad Labs, Inc., Legal Team
             </p>
             <p className="mb-2">
               123 Innovation Drive, San Francisco, CA 94105

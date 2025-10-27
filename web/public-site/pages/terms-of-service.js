@@ -26,8 +26,8 @@ export default function TermsOfService({ terms }) {
   const title = terms?.title || 'Terms of Service';
   const content = terms?.content || '';
   const seo = terms?.seo || {};
-  const metaTitle = seo.metaTitle || `${title} | GLAD Labs`;
-  const metaDescription = seo.metaDescription || 'GLAD Labs Terms of Service';
+  const metaTitle = seo.metaTitle || `${title} | Glad Labs`;
+  const metaDescription = seo.metaDescription || 'Glad Labs Terms of Service';
 
   // Fallback content if no data from Strapi
   const fallbackContent = `

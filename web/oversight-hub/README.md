@@ -1,6 +1,6 @@
 # Oversight Hub
 
-This project is the main interface for overseeing the GLAD Labs AI-powered content creation pipeline.
+This project is the main interface for overseeing the Glad Labs AI-powered content creation pipeline.
 
 ## Overview
 

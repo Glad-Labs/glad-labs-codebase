@@ -1,4 +1,4 @@
-# 🌐 GLAD Labs Public Site
+# 🌐 Glad Labs Public Site
 
 ![Next.js](https://img.shields.io/badge/Framework-Next.js_15-black)
 ![React](https://img.shields.io/badge/React-18.3-blue)
@@ -9,7 +9,7 @@ High-performance public website built with Next.js 15, featuring static site gen
 
 ## Overview
 
-The GLAD Labs public site serves as the primary content distribution platform, consuming content from the Strapi v5 CMS and presenting it through a fast, SEO-optimized interface.
+The Glad Labs public site serves as the primary content distribution platform, consuming content from the Strapi v5 CMS and presenting it through a fast, SEO-optimized interface.
 
 **Status:** ✅ Production Ready  
 **Version:** 3.0  
@@ -233,7 +233,7 @@ NEXT_PUBLIC_DEBUG=true
 
 ---
 
-**Component Documentation maintained by:** GLAD Labs Development Team  
+**Component Documentation maintained by:** Glad Labs Development Team  
 **Contact:** Matthew M. Gladding (Glad Labs, LLC)  
 **Last Review:** October 13, 2025  
 **Architecture Status:** ✅ Production Ready

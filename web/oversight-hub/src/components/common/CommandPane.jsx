@@ -28,7 +28,7 @@ const CommandPane = () => {
   const [messages, setMessages] = useState([
     {
       message:
-        "Hello! I'm the GLAD Labs AI Co-Founder. How can I assist you today? I can help you delegate tasks, analyze data, or provide strategic insights.",
+        "Hello! I'm the Glad Labs AI Co-Founder. How can I assist you today? I can help you delegate tasks, analyze data, or provide strategic insights.",
       sentTime: 'just now',
       sender: 'AI',
       direction: 'incoming',

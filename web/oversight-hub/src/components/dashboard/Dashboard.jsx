@@ -9,7 +9,7 @@ import {
 } from 'firebase/firestore';
 
 /**
- * Dashboard Component - Main overview for GLAD Labs Oversight Hub
+ * Dashboard Component - Main overview for Glad Labs Oversight Hub
  *
  * Features:
  * - Real-time metrics from Firestore
@@ -138,7 +138,7 @@ const Dashboard = () => {
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-2xl font-bold text-gray-900">
-              GLAD Labs Control Center
+              Glad Labs Control Center
             </h1>
             <p className="mt-1 text-sm text-gray-600">
               Real-time oversight and control for autonomous AI operations

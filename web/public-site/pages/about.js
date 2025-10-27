@@ -3,19 +3,19 @@ import ReactMarkdown from 'react-markdown';
 import { getStrapiURL } from '../lib/api';
 
 export default function About({ about }) {
-  const title = about?.title || 'About GLAD Labs';
+  const title = about?.title || 'About Glad Labs';
   const content = about?.content || '';
   const seo = about?.seo || {};
   const metaTitle = seo.metaTitle || title;
   const metaDescription =
     seo.metaDescription ||
-    'About GLAD Labs - AI-powered business co-founder system';
+    'About Glad Labs - AI-powered business co-founder system';
 
   // Fallback content if no data from Strapi
   const fallbackContent = `
-## About GLAD Labs
+## About Glad Labs
 
-GLAD Labs is revolutionizing the way businesses operate with our AI-powered Co-Founder system.
+Glad Labs is revolutionizing the way businesses operate with our AI-powered Co-Founder system.
 
 ### Our Mission
 

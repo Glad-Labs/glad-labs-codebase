@@ -686,7 +686,7 @@ function LoginForm({
           align="center"
           sx={{ mt: 3, color: 'textSecondary' }}
         >
-          Protected by enterprise-grade security. © 2025 GLAD Labs.
+          Protected by enterprise-grade security. © 2025 Glad Labs.
         </Typography>
       </Box>
 

@@ -2,7 +2,7 @@
   "name": "glad-labs-oversight-hub",
   "version": "0.1.0",
   "private": true,
-  "description": "React 18 admin interface for monitoring and controlling GLAD Labs AI content agents with real-time Firebase integration",
+  "description": "React 18 admin interface for monitoring and controlling Glad Labs AI content agents with real-time Firebase integration",
   "license": "MIT",
   "author": "Matthew M. Gladding (Glad Labs, LLC)",
   "scripts": {

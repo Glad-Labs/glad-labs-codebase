@@ -26,8 +26,8 @@ export default function PrivacyPolicy({ policy }) {
   const title = policy?.title || 'Privacy Policy';
   const content = policy?.content || '';
   const seo = policy?.seo || {};
-  const metaTitle = seo.metaTitle || `${title} | GLAD Labs`;
-  const metaDescription = seo.metaDescription || 'GLAD Labs Privacy Policy';
+  const metaTitle = seo.metaTitle || `${title} | Glad Labs`;
+  const metaDescription = seo.metaDescription || 'Glad Labs Privacy Policy';
 
   // Fallback content if no data from Strapi
   const fallbackContent = `
@@ -80,7 +80,7 @@ You have the right to:
 If you have questions about this Privacy Policy, please contact us at:
 
 **Email:** privacy@gladlabs.com  
-**Address:** GLAD Labs, LLC
+**Address:** Glad Labs, LLC
 
 ### Changes to This Policy
 

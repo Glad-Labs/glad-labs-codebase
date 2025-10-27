@@ -48,10 +48,10 @@ export default function Home({ featuredPost, posts, pagination }) {
     // Remove the <Layout> wrapper from here
     <>
       <Head>
-        <title>GLAD Labs Frontier | Autonomous Content Generation</title>
+        <title>Glad Labs Frontier | Autonomous Content Generation</title>
         <meta
           name="description"
-          content="GLAD Labs Frontier is an autonomous content generation experiment..."
+          content="Glad Labs Frontier is an autonomous content generation experiment..."
         />
       </Head>
 

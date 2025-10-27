@@ -44,11 +44,11 @@ export default function Post({ post }) {
     seo,
   } = post;
   const imageUrl = coverImage?.url ? getStrapiURL(coverImage.url) : null;
-  const metaTitle = (seo && seo.metaTitle) || `${title} | GLAD Labs Blog`;
+  const metaTitle = (seo && seo.metaTitle) || `${title} | Glad Labs Blog`;
   const metaDescription =
     (seo && seo.metaDescription) ||
     excerpt ||
-    'Read this article on GLAD Labs.';
+    'Read this article on Glad Labs.';
 
   return (
     <>
