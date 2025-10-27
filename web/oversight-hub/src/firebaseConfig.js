@@ -1,85 +1,71 @@
 /**
- * @file firebaseConfig.js
- * @description This file initializes and configures the Firebase app instance.
- * It exports the Firestore database (`db`) and Authentication (`auth`) services
- * for use throughout the application.
+ * @file apiConfig.js (formerly firebaseConfig.js)
+ * @description This file configures the API client for communicating with the PostgreSQL backend.
+ * Migrated from Firebase Firestore (October 26, 2025) to REST API + PostgreSQL.
  *
- * @requires firebase/app
- * @requires firebase/firestore
- * @requires firebase/auth
+ * It exports the API base URL and configuration for use throughout the application.
  *
- * @suggestion SECURITY_RISK: This file contains hardcoded API keys and project
- * identifiers. This is a major security vulnerability. Anyone with access to this
- * code can access your Firebase project.
+ * @requires axios or fetch API
  *
- * @recommendation BEST_PRACTICE: Move this configuration to environment variables.
- * 1. Create a `.env` file in the `web/oversight-hub` root directory.
- * 2. Add your Firebase config to the `.env` file, prefixing each key with `REACT_APP_`.
- *    For example: `REACT_APP_API_KEY="your-api-key"`
- * 3. Add `.env` to your `.gitignore` file to prevent it from being committed.
- * 4. Access these variables in this file using `process.env.REACT_APP_API_KEY`.
- * 5. I will create an example file (`.env.example`) to demonstrate the structure.
+ * MIGRATION NOTE: Firebase/Firestore code archived in archive/google-cloud-services/
+ * for future Google Cloud services integration (Google Drive, Docs, Sheets, Gmail)
  */
 
-// Import the functions you need from the SDKs you need
-import { initializeApp, getApps } from 'firebase/app';
-import { getFirestore, connectFirestoreEmulator } from 'firebase/firestore';
-import { getAuth } from 'firebase/auth';
-
-// --- Firebase Configuration ---
-// @security: DANGER - Do not commit this object with real credentials to a public repository.
-// These values should be loaded from environment variables.
-const firebaseConfig = {
-  apiKey: process.env.REACT_APP_API_KEY,
-  authDomain: process.env.REACT_APP_AUTH_DOMAIN,
-  projectId: process.env.REACT_APP_PROJECT_ID,
-  storageBucket: process.env.REACT_APP_STORAGE_BUCKET,
-  messagingSenderId: process.env.REACT_APP_MESSAGING_SENDER_ID,
-  appId: process.env.REACT_APP_APP_ID,
-  measurementId: process.env.REACT_APP_MEASUREMENT_ID,
+// --- API Configuration ---
+const apiConfig = {
+  baseURL: process.env.REACT_APP_API_BASE_URL || 'http://localhost:8000/api',
+  timeout: 30000, // 30 seconds
+  headers: {
+    'Content-Type': 'application/json',
+  },
 };
 
-// Validate required config
-const requiredFields = ['apiKey', 'authDomain', 'projectId', 'appId'];
-const missingFields = requiredFields.filter((field) => !firebaseConfig[field]);
-
-if (missingFields.length > 0) {
-  console.error(
-    `Firebase configuration incomplete. Missing fields: ${missingFields.join(', ')}. ` +
-      `Please check your .env file and ensure REACT_APP_* variables are set.`
+// Validate API endpoint
+if (!apiConfig.baseURL) {
+  console.warn(
+    'API configuration incomplete. REACT_APP_API_BASE_URL not set. ' +
+      'Using default: http://localhost:8000/api'
   );
 }
 
-// Initialize Firebase
-let app;
-let db;
-let auth;
+// --- Authentication Configuration ---
+const authConfig = {
+  tokenKey: 'auth_token',
+  refreshTokenKey: 'refresh_token',
+  headerName: 'Authorization',
+  tokenPrefix: 'Bearer ',
+};
 
-if (!getApps().length) {
-  app = initializeApp(firebaseConfig);
-} else {
-  app = getApps()[0];
-}
-
-// Initialize Firestore with error handling
-try {
-  db = getFirestore(app);
-
-  // Use emulator in development if available
-  if (
-    process.env.NODE_ENV === 'development' &&
-    window.location.hostname === 'localhost'
-  ) {
-    try {
-      connectFirestoreEmulator(db, 'localhost', 8080);
-    } catch (err) {
-      // Emulator already connected or not available - this is fine
-    }
+// Get stored token
+const getToken = () => {
+  try {
+    return localStorage.getItem(authConfig.tokenKey);
+  } catch (err) {
+    console.error('Failed to retrieve auth token:', err);
+    return null;
   }
-} catch (err) {
-  console.error('Failed to initialize Firestore:', err);
-}
+};
 
-auth = getAuth(app);
+// Set token
+const setToken = (token, refreshToken) => {
+  try {
+    localStorage.setItem(authConfig.tokenKey, token);
+    if (refreshToken) {
+      localStorage.setItem(authConfig.refreshTokenKey, refreshToken);
+    }
+  } catch (err) {
+    console.error('Failed to store auth token:', err);
+  }
+};
 
-export { db, auth };
+// Clear token
+const clearToken = () => {
+  try {
+    localStorage.removeItem(authConfig.tokenKey);
+    localStorage.removeItem(authConfig.refreshTokenKey);
+  } catch (err) {
+    console.error('Failed to clear auth token:', err);
+  }
+};
+
+export { apiConfig, authConfig, getToken, setToken, clearToken };

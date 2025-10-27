@@ -22,12 +22,20 @@ import {
 /**
  * Cost Metrics Dashboard Component
  *
+ * UPDATED October 26, 2025 (Phase 5)
+ * STATUS: Already using REST API (no Firestore dependencies found)
+ * NOTE: The "firestore_hits" field in ai_cache is a legacy metric name
+ *       from when Google Cloud was being used. Will be renamed in future
+ *       backend updates to "db_cache_hits" for clarity.
+ *
  * Displays real-time cost analytics including:
  * - Monthly budget usage and remaining balance ($100/month)
  * - AI cache performance and savings
  * - Model router efficiency
  * - Intervention alerts
  * - Total cost optimization impact
+ *
+ * Fetches from: GET /api/metrics/costs with 30-second polling
  */
 
 interface CostMetrics {

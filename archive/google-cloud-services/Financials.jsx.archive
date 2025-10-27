@@ -1,17 +1,20 @@
 import React, { useState, useEffect } from 'react';
-import { apiConfig, getToken } from '../firebaseConfig';
+import { db } from '../firebaseConfig';
+import { collection, onSnapshot, query, orderBy } from 'firebase/firestore';
 import { formatTimestamp } from '../utils/helpers';
 import './Financials.css';
 
 /**
- * Updated October 26, 2025 (Phase 5)
- * MIGRATED: From Firestore real-time subscriptions to PostgreSQL REST API with polling
- *
- * Changes:
- * - Replaced onSnapshot with fetch polling (every 10 seconds)
- * - Fetch from /api/financials endpoint (returns sorted by date desc)
- * - Client-side calculations remain the same
- * - Added proper cleanup for polling intervals
+ * ARCHIVED: October 26, 2025 (Phase 5)
+ * REASON: Migrated to PostgreSQL + REST API
+ * NEW FILE: Financials.jsx (updated version)
+ * 
+ * This was the original Firestore implementation with:
+ * - Real-time financials via onSnapshot
+ * - orderBy('date', 'desc') for sorting
+ * - Calculations on client-side from Firestore data
+ * 
+ * See archive/google-cloud-services/ for archived files
  */
 
 const Financials = () => {
@@ -20,35 +23,26 @@ const Financials = () => {
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    const fetchFinancials = async () => {
-      try {
-        const token = getToken();
-        const response = await fetch(
-          `${apiConfig.baseURL}/financials?sort=date&order=desc`,
-          {
-            headers: { Authorization: `Bearer ${token}` },
-          }
+    const q = query(collection(db, 'financials'), orderBy('date', 'desc'));
+    const unsubscribe = onSnapshot(
+      q,
+      (querySnapshot) => {
+        const entriesData = querySnapshot.docs.map((doc) => ({
+          id: doc.id,
+          ...doc.data(),
+        }));
+        setEntries(entriesData);
+        setLoading(false);
+      },
+      (err) => {
+        setError(
+          'Failed to fetch financial data. Please check Firestore connection and permissions.'
         );
-
-        if (!response.ok) {
-          throw new Error(
-            `Failed to fetch financial data (${response.status})`
-          );
-        }
-
-        const data = await response.json();
-        setEntries(Array.isArray(data) ? data : []);
         setLoading(false);
-      } catch (err) {
-        setError(`Failed to fetch financial data: ${err.message}`);
-        setLoading(false);
-        console.error('Financials fetch error:', err);
+        console.error(err);
       }
-    };
-
-    fetchFinancials();
-    const interval = setInterval(fetchFinancials, 10000); // Poll every 10 seconds
-    return () => clearInterval(interval);
+    );
+    return () => unsubscribe();
   }, []);
 
   // --- Calculations ---
@@ -63,11 +57,7 @@ const Financials = () => {
   const oneWeekAgo = new Date();
   oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
   const weeklySpend = entries
-    .filter((entry) => {
-      if (!entry.date) return false;
-      const entryDate = new Date(entry.date);
-      return entryDate > oneWeekAgo;
-    })
+    .filter((entry) => entry.timestamp && entry.timestamp.toDate() > oneWeekAgo)
     .reduce((acc, entry) => acc + (entry.amount || 0), 0);
 
   if (loading) return <p>Loading financial data...</p>;

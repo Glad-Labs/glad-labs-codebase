@@ -1,16 +1,15 @@
 import React, { useState } from 'react';
-import { apiConfig, getToken } from '../firebaseConfig';
+import { db } from '../firebaseConfig';
+import { collection, addDoc } from 'firebase/firestore';
 import './Modal.css';
 
 /**
- * Updated October 26, 2025 (Phase 5)
- * MIGRATED: From Firestore to PostgreSQL REST API
- *
- * Changes:
- * - Replaced Firestore `addDoc` with REST API POST to /api/tasks
- * - Updated error handling for API responses
- * - Added Authorization header with JWT token
- * - Improved form validation and error messages
+ * ARCHIVED: October 26, 2025 (Phase 5)
+ * REASON: Migrated to PostgreSQL + REST API
+ * NEW FILE: NewTaskModal.jsx (updated version)
+ * 
+ * This was the original Firestore implementation
+ * See archive/google-cloud-services/ for archived files
  */
 
 const NewTaskModal = ({ onClose, setError }) => {
@@ -29,46 +28,18 @@ const NewTaskModal = ({ onClose, setError }) => {
     setIsSubmitting(true);
     setError(null);
     try {
-      const token = getToken();
-      if (!token) {
-        setError('Authentication required. Please log in.');
-        setIsSubmitting(false);
-        return;
-      }
-
-      const response = await fetch(`${apiConfig.baseURL}/tasks`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          title: topic,
-          topic,
-          primary_keyword: primaryKeyword,
-          target_audience: targetAudience,
-          category,
-          description: `Create content about ${topic} for ${targetAudience}`,
-          type: 'content_generation',
-          status: 'pending',
-        }),
+      await addDoc(collection(db, 'content-tasks'), {
+        topic,
+        primary_keyword: primaryKeyword,
+        target_audience: targetAudience,
+        category,
+        status: 'Ready',
+        createdAt: new Date(),
       });
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(
-          errorData.detail || `Failed to create task (${response.status})`
-        );
-      }
-
-      const data = await response.json();
-      console.log('Task created successfully:', data);
       onClose();
     } catch (err) {
-      setError(
-        `Failed to create task: ${err.message || 'Network error or server unavailable'}`
-      );
-      console.error('Task creation error:', err);
+      setError('Failed to create task. Please check Firestore permissions.');
+      console.error(err);
     } finally {
       setIsSubmitting(false);
     }

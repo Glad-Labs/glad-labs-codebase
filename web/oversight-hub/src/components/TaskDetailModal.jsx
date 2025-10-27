@@ -1,62 +1,110 @@
 import React, { useState, useEffect } from 'react';
-import { db } from '../firebaseConfig';
-import {
-  doc,
-  updateDoc,
-  collection,
-  onSnapshot,
-  query,
-  orderBy,
-} from 'firebase/firestore';
+import { apiConfig, getToken } from '../firebaseConfig';
 import { formatTimestamp, renderStatus } from '../utils/helpers';
 import './Modal.css';
+
+/**
+ * Updated October 26, 2025 (Phase 5)
+ * MIGRATED: From Firestore real-time subscriptions to PostgreSQL REST API with polling
+ *
+ * Changes:
+ * - Replaced onSnapshot with fetch polling (every 5 seconds)
+ * - Replaced updateDoc with REST API PUT
+ * - Fetch runs from /api/tasks/{id}/runs endpoint
+ * - Fetch logs from /api/tasks/{id}/runs/{runId}/logs endpoint
+ * - Added proper cleanup for polling intervals
+ */
 
 const TaskDetailModal = ({ task, onClose }) => {
   const [runs, setRuns] = useState([]);
   const [logs, setLogs] = useState({});
 
+  // Fetch runs from API (with polling)
   useEffect(() => {
-    if (!task) return;
-    const runsQuery = query(
-      collection(db, `content-tasks/${task.id}/runs`),
-      orderBy('startTime', 'desc')
-    );
-    const unsubscribeRuns = onSnapshot(runsQuery, (querySnapshot) => {
-      const runsData = querySnapshot.docs.map((doc) => ({
-        id: doc.id,
-        ...doc.data(),
-      }));
-      setRuns(runsData);
-    });
-    return () => unsubscribeRuns();
-  }, [task]);
+    if (!task?.id) return;
 
+    const fetchRuns = async () => {
+      try {
+        const token = getToken();
+        const response = await fetch(
+          `${apiConfig.baseURL}/tasks/${task.id}/runs`,
+          {
+            headers: { Authorization: `Bearer ${token}` },
+          }
+        );
+        if (response.ok) {
+          const data = await response.json();
+          setRuns(
+            Array.isArray(data)
+              ? data.sort(
+                  (a, b) => new Date(b.startTime) - new Date(a.startTime)
+                )
+              : []
+          );
+        }
+      } catch (err) {
+        console.error('Failed to fetch runs:', err);
+      }
+    };
+
+    fetchRuns();
+    const interval = setInterval(fetchRuns, 5000); // Poll every 5 seconds
+    return () => clearInterval(interval);
+  }, [task?.id]);
+
+  // Fetch logs for latest run (with polling)
   useEffect(() => {
-    if (runs.length > 0) {
-      const latestRunId = runs[0].id;
-      const logsQuery = query(
-        collection(db, `content-tasks/${task.id}/runs/${latestRunId}/logs`),
-        orderBy('timestamp', 'asc')
-      );
-      const unsubscribeLogs = onSnapshot(logsQuery, (querySnapshot) => {
-        const logsData = querySnapshot.docs.map((doc) => ({
-          id: doc.id,
-          ...doc.data(),
-        }));
-        setLogs((prevLogs) => ({ ...prevLogs, [latestRunId]: logsData }));
-      });
-      return () => unsubscribeLogs();
-    }
-  }, [runs, task.id]);
+    if (runs.length === 0 || !task?.id) return;
+
+    const latestRunId = runs[0].id;
+    const fetchLogs = async () => {
+      try {
+        const token = getToken();
+        const response = await fetch(
+          `${apiConfig.baseURL}/tasks/${task.id}/runs/${latestRunId}/logs`,
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+        if (response.ok) {
+          const data = await response.json();
+          setLogs((prev) => ({
+            ...prev,
+            [latestRunId]: Array.isArray(data) ? data : [],
+          }));
+        }
+      } catch (err) {
+        console.error('Failed to fetch logs:', err);
+      }
+    };
+
+    fetchLogs();
+    const interval = setInterval(fetchLogs, 5000); // Poll every 5 seconds
+    return () => clearInterval(interval);
+  }, [runs, task?.id]);
 
   const handleUpdateStatus = async (newStatus) => {
+    if (!task?.id) return;
     try {
-      const taskRef = doc(db, 'content-tasks', task.id);
-      await updateDoc(taskRef, { status: newStatus });
+      const token = getToken();
+      const response = await fetch(`${apiConfig.baseURL}/tasks/${task.id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ status: newStatus }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(
+          errorData.detail || `Failed to update task (${response.status})`
+        );
+      }
+
       onClose();
-    } catch (error) {
-      console.error('Failed to update task status:', error);
-      alert('Failed to update task status. Check the console for details.');
+    } catch (err) {
+      console.error('Task update error:', err);
+      alert(`Failed to update task: ${err.message}`);
     }
   };
 

@@ -51,4 +51,4 @@ The application will be available at [http://localhost:3001](http://localhost:30
 - **Settings Page:** A dedicated page to configure the application, including theme settings (light/dark mode), auto-refresh options, and API key management.
 - **Resizable Panes:** The UI features resizable panes for a flexible and customizable layout.
 - **Command Pane:** Interact with the AI Co-Founder agent through a chat interface to give commands and receive feedback.
-- **Real-time Updates:** The application uses Firebase Firestore to provide real-time updates on the status of tasks and other data.
+- **Real-time Updates:** The application uses REST API with PostgreSQL backend for real-time task status updates and data synchronization (previously Firebase Firestore - migrated October 2025).
