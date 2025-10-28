@@ -1,0 +1,163 @@
+/** @type {import('next').NextConfig} */
+
+const nextConfig = {
+  // Image Optimization Configuration
+  images: {
+    // Supported image formats with automatic optimization
+    formats: ['image/avif', 'image/webp'],
+
+    // Domain configuration for Strapi CMS images
+    domains: [
+      'localhost',
+      'localhost:1337',
+      'cms.railway.app', // Production Strapi
+      'staging-cms.railway.app', // Staging Strapi
+      'strapi-v5-backend.railway.app',
+      'res.cloudinary.com', // If using Cloudinary
+      'cdn.example.com', // Your CDN
+    ],
+
+    // Image size optimization
+    deviceSizes: [640, 750, 828, 1080, 1200, 1920, 2048, 3840],
+    imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],
+
+    // Disable Static Imports since using dynamic images from Strapi
+    disableStaticImages: false,
+  },
+
+  // Security Headers for Content-Type validation
+  headers: async () => {
+    return [
+      {
+        source: '/:path*',
+        headers: [
+          // Prevent content-type sniffing
+          {
+            key: 'X-Content-Type-Options',
+            value: 'nosniff',
+          },
+          // Prevent clickjacking
+          {
+            key: 'X-Frame-Options',
+            value: 'SAMEORIGIN',
+          },
+          // Enable XSS filter in browsers
+          {
+            key: 'X-XSS-Protection',
+            value: '1; mode=block',
+          },
+          // Control referrer information
+          {
+            key: 'Referrer-Policy',
+            value: 'strict-origin-when-cross-origin',
+          },
+          // Feature Policy / Permissions-Policy
+          {
+            key: 'Permissions-Policy',
+            value: 'camera=(), microphone=(), geolocation=()',
+          },
+        ],
+      },
+      // Cache images for 1 year
+      {
+        source: '/images/:path*',
+        headers: [
+          {
+            key: 'Cache-Control',
+            value: 'public, max-age=31536000, immutable',
+          },
+        ],
+      },
+      // Cache assets for 30 days
+      {
+        source: '/_next/static/:path*',
+        headers: [
+          {
+            key: 'Cache-Control',
+            value: 'public, max-age=2592000, immutable',
+          },
+        ],
+      },
+      // Don't cache HTML (always fresh)
+      {
+        source: '/:path((?!_next/static).*)',
+        headers: [
+          {
+            key: 'Cache-Control',
+            value: 'public, max-age=0, must-revalidate',
+          },
+        ],
+      },
+    ];
+  },
+
+  // Redirects for URL structure changes
+  redirects: async () => {
+    return [
+      // Redirect old blog URLs to new structure if needed
+      // {
+      //   source: '/blog/:slug',
+      //   destination: '/posts/:slug',
+      //   permanent: true,
+      // },
+    ];
+  },
+
+  // Rewrites for API proxy (optional)
+  rewrites: async () => {
+    return {
+      beforeFiles: [
+        // Example: proxy API calls
+        // {
+        //   source: '/api/strapi/:path*',
+        //   destination: `${process.env.NEXT_PUBLIC_STRAPI_API_URL}/:path*`,
+        // },
+      ],
+    };
+  },
+
+  // Webpack configuration for additional optimizations
+  webpack: (config, { isServer }) => {
+    config.optimization.minimize = true;
+    return config;
+  },
+
+  // Environment variables exposed to browser
+  env: {
+    NEXT_PUBLIC_STRAPI_API_URL: process.env.NEXT_PUBLIC_STRAPI_API_URL,
+    NEXT_PUBLIC_STRAPI_API_TOKEN: process.env.NEXT_PUBLIC_STRAPI_API_TOKEN,
+  },
+
+  // ESLint configuration
+  eslint: {
+    dirs: ['pages', 'components', 'lib', 'styles'],
+  },
+
+  // TypeScript configuration
+  typescript: {
+    tsconfigPath: './tsconfig.json',
+  },
+
+  // Compression configuration
+  compress: true,
+
+  // Generate etags for cache validation
+  generateEtags: true,
+
+  // Production source maps (set to false to reduce bundle size in production)
+  productionBrowserSourceMaps: false,
+
+  // Internationalization (if needed later)
+  // i18n: {
+  //   locales: ['en', 'es', 'fr'],
+  //   defaultLocale: 'en',
+  // },
+
+  // Trailing slashes (set to false for clean URLs)
+  trailingSlash: false,
+
+  // React strict mode for development
+  reactStrictMode: true,
+};
+
+module.exports = nextConfig;

@@ -3,7 +3,13 @@ import Link from 'next/link';
 import Image from 'next/image';
 // import Layout from "../components/Layout"; // Remove this line
 import PostCard from '../components/PostCard';
+import SEOHead from '../components/SEOHead';
 import { getFeaturedPost, getPaginatedPosts, getStrapiURL } from '../lib/api';
+import {
+  generateOrganizationSchema,
+  generateWebsiteSchema,
+  combineSchemas,
+} from '../lib/structured-data';
 
 const FeaturedPost = ({ post }) => {
   if (!post || !post.slug) return null;
@@ -44,16 +50,51 @@ const FeaturedPost = ({ post }) => {
 };
 
 export default function Home({ featuredPost, posts, pagination }) {
+  const baseURL = 'https://www.glad-labs.com';
+
+  // Generate structured data schemas for homepage
+  const organizationSchema = generateOrganizationSchema(baseURL, {
+    name: 'Glad Labs',
+    logo: `${baseURL}/logo.png`,
+    description:
+      'Autonomous AI Co-Founder System - Content Generation, Business Intelligence, and Multi-Agent Orchestration',
+    email: 'hello@glad-labs.com',
+    sameAs: [
+      'https://twitter.com/GladLabsAI',
+      'https://linkedin.com/company/glad-labs',
+      'https://github.com/glad-labs',
+    ],
+  });
+
+  const websiteSchema = generateWebsiteSchema(baseURL);
+
+  // Combine organization and website schemas
+  const combinedSchema = combineSchemas([organizationSchema, websiteSchema]);
+
   return (
     // Remove the <Layout> wrapper from here
     <>
-      <Head>
-        <title>Glad Labs Frontier | Autonomous Content Generation</title>
-        <meta
-          name="description"
-          content="Glad Labs Frontier is an autonomous content generation experiment..."
-        />
-      </Head>
+      <SEOHead
+        title="Glad Labs | AI-Powered Content Generation & Business Intelligence"
+        description="Explore insights on AI, business automation, and digital transformation with Glad Labs - your autonomous AI co-founder for content creation and market analysis."
+        canonical={baseURL}
+        ogTags={{
+          'og:title': 'Glad Labs - AI Co-Founder System',
+          'og:description':
+            'Autonomous content generation, business intelligence, and market insights powered by AI',
+          'og:image': `${baseURL}/og-image.png`,
+          'og:url': baseURL,
+          'og:type': 'website',
+        }}
+        twitterTags={{
+          'twitter:card': 'summary_large_image',
+          'twitter:title': 'Glad Labs - AI Co-Founder',
+          'twitter:description':
+            'Autonomous AI agents for content creation and business intelligence',
+          'twitter:image': `${baseURL}/og-image.png`,
+        }}
+        schema={combinedSchema}
+      />
 
       {featuredPost && <FeaturedPost post={featuredPost} />}
 

@@ -1,8 +1,31 @@
 import { getPostBySlug, getAllPosts, getStrapiURL } from '../../lib/api';
 import Head from 'next/head';
-import Image from 'next/image';
 import Link from 'next/link';
+import { useEffect } from 'react';
 import ReactMarkdown from 'react-markdown';
+import OptimizedImage from '../../components/OptimizedImage';
+import RelatedPosts from '../../components/RelatedPosts';
+import SEOHead from '../../components/SEOHead';
+import { getReadingTimeDetails, formatDate } from '../../lib/content-utils';
+import { getRelatedPosts } from '../../lib/related-posts';
+import {
+  generateBlogPostingSchema,
+  generateBreadcrumbSchema,
+  combineSchemas,
+} from '../../lib/structured-data';
+import {
+  buildPostSEO,
+  buildSEOTitle,
+  generateCanonicalURL,
+  generateImageAltText,
+} from '../../lib/seo';
+import {
+  trackArticleView,
+  setupReadingDepthTracking,
+  setupTimeOnPageTracking,
+  trackRelatedPostClick,
+  isGA4Loaded,
+} from '../../lib/analytics';
 
 const PostMeta = ({ category, tags }) => (
   <div className="flex items-center space-x-4 text-gray-400">
@@ -27,7 +50,7 @@ const PostMeta = ({ category, tags }) => (
   </div>
 );
 
-export default function Post({ post }) {
+export default function Post({ post, relatedPosts = [] }) {
   if (!post) return <div>Loading...</div>;
 
   // Align with Strapi schema (lowercase fields)
@@ -42,7 +65,39 @@ export default function Post({ post }) {
     tags,
     slug,
     seo,
+    id,
   } = post;
+
+  // Analytics: Track article view and setup engagement tracking
+  // eslint-disable-next-line react-hooks/rules-of-hooks
+  useEffect(() => {
+    // Check if GA4 is loaded before proceeding
+    if (!isGA4Loaded()) {
+      return;
+    }
+
+    // Track article view
+    const readingTime = getReadingTimeDetails(content || '');
+    trackArticleView(
+      id || slug,
+      title,
+      category?.name || '',
+      readingTime.minutes
+    );
+
+    // Setup reading depth tracking
+    const cleanupReadingDepth = setupReadingDepthTracking(id || slug);
+
+    // Setup time on page tracking
+    const cleanupTimeOnPage = setupTimeOnPageTracking('post');
+
+    // Cleanup on unmount
+    return () => {
+      cleanupReadingDepth?.();
+      cleanupTimeOnPage?.();
+    };
+  }, [id, slug, title, category?.name, content]);
+
   const imageUrl = coverImage?.url ? getStrapiURL(coverImage.url) : null;
   const metaTitle = (seo && seo.metaTitle) || `${title} | Glad Labs Blog`;
   const metaDescription =
@@ -50,39 +105,93 @@ export default function Post({ post }) {
     excerpt ||
     'Read this article on Glad Labs.';
 
+  // Calculate reading time and word count
+  const readingTimeDetails = getReadingTimeDetails(content || '');
+  const publishDate = date || publishedAt;
+
+  // Handler for related post clicks (analytics)
+  const handleRelatedPostClick = (relatedPost) => {
+    if (!isGA4Loaded()) return;
+    trackRelatedPostClick(
+      relatedPost.id || relatedPost.slug,
+      relatedPost.title,
+      id || slug
+    );
+  };
+
+  // Build SEO data using utilities
+  const baseURL = 'https://www.glad-labs.com';
+  const canonicalURL = generateCanonicalURL(`/posts/${slug}`, baseURL);
+
+  // Generate structured data schemas
+  const blogPostSchema = generateBlogPostingSchema(
+    {
+      ...post,
+      url: canonicalURL,
+      publishedAt: publishDate,
+    },
+    baseURL
+  );
+
+  // Generate breadcrumb schema
+  const breadcrumbSchema = generateBreadcrumbSchema(
+    [
+      { name: 'Home', url: baseURL },
+      { name: 'Blog', url: `${baseURL}/posts` },
+      {
+        name: category?.name || 'Posts',
+        url: category?.slug
+          ? `${baseURL}/category/${category.slug}`
+          : `${baseURL}/posts`,
+      },
+      { name: title, url: canonicalURL },
+    ],
+    baseURL
+  );
+
+  // Combine schemas
+  const combinedSchema = combineSchemas([blogPostSchema, breadcrumbSchema]);
+
   return (
     <>
-      <Head>
-        <title>{metaTitle}</title>
-        <meta name="description" content={metaDescription} />
-        {/* Open Graph */}
-        <meta property="og:title" content={metaTitle} />
-        <meta property="og:description" content={metaDescription} />
-        {imageUrl && <meta property="og:image" content={imageUrl} />}
-        <meta
-          property="og:url"
-          content={`https://www.glad-labs.com/posts/${slug}`}
-        />
-        <meta property="og:type" content="article" />
-        {/* Twitter Card */}
-        <meta name="twitter:card" content="summary_large_image" />
-        <meta name="twitter:title" content={metaTitle} />
-        <meta name="twitter:description" content={metaDescription} />
-        {imageUrl && <meta name="twitter:image" content={imageUrl} />}
-      </Head>
+      <SEOHead
+        title={metaTitle}
+        description={metaDescription}
+        canonical={canonicalURL}
+        ogTags={{
+          'og:title': metaTitle,
+          'og:description': metaDescription,
+          'og:image': imageUrl || `${baseURL}/og-image.png`,
+          'og:image:width': '1200',
+          'og:image:height': '630',
+          'og:url': canonicalURL,
+          'og:type': 'article',
+        }}
+        twitterTags={{
+          'twitter:card': 'summary_large_image',
+          'twitter:title': metaTitle,
+          'twitter:description': metaDescription,
+          'twitter:image': imageUrl || `${baseURL}/og-image.png`,
+        }}
+        schema={combinedSchema}
+      />
       <div className="container mx-auto px-4 md:px-6 py-12">
         <article className="max-w-4xl mx-auto">
           <div className="mb-8 text-center">
             <h1 className="text-4xl md:text-5xl font-bold text-cyan-300 mb-4 leading-tight">
               {title}
             </h1>
-            <p className="text-lg text-gray-400 mb-4">
-              {publishedAt || date
-                ? `Published on ${new Date(
-                    date || publishedAt
-                  ).toLocaleDateString()}`
-                : ''}
-            </p>
+
+            {/* Reading Time & Meta Info */}
+            <div className="flex flex-wrap justify-center gap-4 text-sm text-gray-400 mb-4">
+              {publishDate && (
+                <time dateTime={publishDate}>{formatDate(publishDate)}</time>
+              )}
+              <span>•</span>
+              <span>{readingTimeDetails.displayText}</span>
+            </div>
+
+            {/* Category & Tags */}
             <PostMeta category={category} tags={tags} />
             <p className="text-sm text-gray-500 mt-2">
               Note: For categories and tags to appear, ensure you have set up
@@ -91,13 +200,14 @@ export default function Post({ post }) {
           </div>
 
           {imageUrl && (
-            <div className="relative h-96 mb-8">
-              <Image
+            <div className="relative h-96 mb-8 rounded-lg overflow-hidden">
+              <OptimizedImage
                 src={imageUrl}
-                alt={coverImage?.alternativeText || title}
+                alt={generateImageAltText(title, 'Featured image for article')}
                 fill
-                style={{ objectFit: 'cover' }}
-                className="rounded-lg"
+                className="rounded-lg object-cover"
+                priority
+                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 90vw, 800px"
               />
             </div>
           )}
@@ -105,6 +215,14 @@ export default function Post({ post }) {
           <div className="prose prose-invert lg:prose-xl mx-auto">
             <ReactMarkdown>{content}</ReactMarkdown>
           </div>
+
+          {/* Related Posts Section */}
+          {relatedPosts && relatedPosts.length > 0 && (
+            <RelatedPosts
+              posts={relatedPosts}
+              onPostClick={handleRelatedPostClick}
+            />
+          )}
         </article>
       </div>
     </>
@@ -147,8 +265,17 @@ export async function getStaticProps({ params }) {
       };
     }
 
+    // Fetch related posts
+    let relatedPosts = [];
+    try {
+      relatedPosts = await getRelatedPosts(post, 3);
+    } catch (error) {
+      console.warn('Could not fetch related posts:', error.message);
+      // Continue without related posts
+    }
+
     return {
-      props: { post },
+      props: { post, relatedPosts },
       revalidate: 60, // Re-generate the page every 60 seconds if needed
     };
   } catch (error) {
