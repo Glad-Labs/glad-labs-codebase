@@ -20,7 +20,8 @@ const Financials = () => {
         uniqueArticleIds.add(entry.article_id);
       }
     });
-    const articleCount = uniqueArticleIds.size > 0 ? uniqueArticleIds.size : entries.length;
+    const articleCount =
+      uniqueArticleIds.size > 0 ? uniqueArticleIds.size : entries.length;
     const costPerArticle =
       articleCount > 0 ? (totalSpend / articleCount).toFixed(2) : '0.00';
 

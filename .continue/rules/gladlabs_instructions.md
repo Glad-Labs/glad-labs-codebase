@@ -211,7 +211,7 @@ Set up Railway environment variables
 Configure Vercel environment variables
 Verify all services can communicate 2. Backend Deployment (Railway)
 
-cd cms/strapi-v5-backend
+cd cms/strapi-main
 
 # Deploy via Railway CLI or web dashboard
 
@@ -260,7 +260,7 @@ npm run test -- [filename]
 Test Locations
 web/oversight-hub/**tests**/
 web/public-site/**tests**/
-cms/strapi-v5-backend/tests/ (if applicable)
+cms/strapi-main/tests/ (if applicable)
 src/cofounder_agent/tests/
 📝 Documentation Standards
 Markdown Guidelines
@@ -354,7 +354,7 @@ nvm use 22
 Strapi Build Failures
 Problem: Module not found, dependency errors Solution: Clear cache and reinstall
 
-cd cms/strapi-v5-backend
+cd cms/strapi-main
 rm -rf node_modules yarn.lock package-lock.json
 npm install
 npm run develop

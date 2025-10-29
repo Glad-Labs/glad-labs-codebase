@@ -12,7 +12,7 @@ const nextConfig = {
       'localhost:1337',
       'cms.railway.app', // Production Strapi
       'staging-cms.railway.app', // Staging Strapi
-      'strapi-v5-backend.railway.app',
+      'strapi-main.railway.app',
       'res.cloudinary.com', // If using Cloudinary
       'cdn.example.com', // Your CDN
     ],
