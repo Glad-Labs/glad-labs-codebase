@@ -1,9 +1,20 @@
 /**
  * Cofounder Agent API Client - JWT Auth
+ * 
+ * Environment Variables (required):
+ * - REACT_APP_API_URL: Backend API base URL (e.g., https://api.example.com or http://localhost:8000)
  */
 import useStore from '../store/useStore';
 
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:8000';
+
+// Log API configuration for debugging (remove in production if verbose)
+if (!process.env.REACT_APP_API_URL) {
+  console.warn(
+    '⚠️ REACT_APP_API_URL not configured. Using localhost fallback. ' +
+    'In production, set REACT_APP_API_URL environment variable.'
+  );
+}
 
 function getAuthHeaders() {
   const accessToken = useStore.getState().accessToken;
