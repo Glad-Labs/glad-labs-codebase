@@ -13,9 +13,14 @@ const Financials = () => {
       0
     );
 
-    // TODO: This logic assumes every entry is a unique article.
-    // This should be updated to count unique articles if the data allows.
-    const articleCount = entries.length; // Placeholder for actual unique article count
+    // Count unique articles by deduplicate article_id to handle duplicate entries
+    const uniqueArticleIds = new Set();
+    entries.forEach((entry) => {
+      if (entry.article_id) {
+        uniqueArticleIds.add(entry.article_id);
+      }
+    });
+    const articleCount = uniqueArticleIds.size > 0 ? uniqueArticleIds.size : entries.length;
     const costPerArticle =
       articleCount > 0 ? (totalSpend / articleCount).toFixed(2) : '0.00';
 
