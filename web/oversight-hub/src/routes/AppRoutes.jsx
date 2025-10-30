@@ -10,12 +10,14 @@ import {
   SocialMediaManagement,
   CostMetricsDashboard,
 } from './index';
-import LoginForm from '../components/LoginForm';
+import Login from '../pages/Login';
+import AuthCallback from '../pages/AuthCallback';
 
 function AppRoutes() {
   return (
     <Routes>
-      <Route path="/login" element={<LoginForm />} />
+      <Route path="/login" element={<Login />} />
+      <Route path="/auth/callback" element={<AuthCallback />} />
       <Route path="/" element={<Dashboard />} />
       <Route path="/tasks" element={<TaskManagement />} />
       <Route path="/models" element={<ModelManagement />} />
