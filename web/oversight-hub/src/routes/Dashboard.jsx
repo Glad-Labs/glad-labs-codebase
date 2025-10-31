@@ -8,8 +8,7 @@
  * - Authentication guard: Redirects unauthenticated users to /login
  */
 
-import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState } from 'react';
 import {
   Box,
   Button,
@@ -17,7 +16,6 @@ import {
   Paper,
   Typography,
   Grid,
-  CircularProgress,
   Alert,
 } from '@mui/material';
 import { Add as AddIcon } from '@mui/icons-material';
@@ -35,8 +33,6 @@ import MetricsDisplay from '../components/MetricsDisplay';
  * - Manages TaskCreationModal open/close state
  */
 function Dashboard() {
-  const navigate = useNavigate();
-  const isAuthenticated = useStore((state) => state.isAuthenticated);
   const user = useStore((state) => state.user);
   const tasks = useStore((state) => state.tasks);
   const setSelectedTask = useStore((state) => state.setSelectedTask);
@@ -47,28 +43,14 @@ function Dashboard() {
   // Fetch tasks from API
   useTasks();
 
-  // Authentication guard: redirect to login if not authenticated
-  useEffect(() => {
-    if (!isAuthenticated) {
-      navigate('/login');
-    }
-  }, [isAuthenticated, navigate]);
+  // NOTE: Authentication guard is handled by ProtectedRoute component
+  // No need to check and redirect here - ProtectedRoute already ensures user is authenticated
 
   // Handle task created
   const handleTaskCreated = () => {
     setModalOpen(false);
     // Refresh metrics by closing modal - MetricsDisplay will auto-refresh
   };
-
-  // If not authenticated, show loading (will redirect)
-  if (!isAuthenticated) {
-    return (
-      <Container maxWidth="md" sx={{ py: 4, textAlign: 'center' }}>
-        <CircularProgress />
-        <Typography sx={{ mt: 2 }}>Redirecting to login...</Typography>
-      </Container>
-    );
-  }
 
   return (
     <Container maxWidth="lg" sx={{ py: 4 }}>
