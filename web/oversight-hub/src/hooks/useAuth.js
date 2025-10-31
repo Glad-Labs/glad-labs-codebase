@@ -1,60 +1,19 @@
 /**
  * useAuth Hook
- * Custom hook for managing authentication state and actions
+ * Custom hook for accessing global authentication state from context
  */
 
-import { useState, useEffect, useCallback } from 'react';
-import { verifySession, logout as authLogout } from '../services/authService';
+import { useContext } from 'react';
+import { AuthContext } from '../context/AuthContext';
 
 export const useAuth = () => {
-  const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const context = useContext(AuthContext);
 
-  // Initialize auth state on mount
-  useEffect(() => {
-    const initializeAuth = async () => {
-      try {
-        // Try to verify existing session
-        const userData = await verifySession();
-        if (userData) {
-          setUser(userData);
-        }
-      } catch (err) {
-        console.error('Auth initialization error:', err);
-        setError(err.message);
-      } finally {
-        setLoading(false);
-      }
-    };
+  if (!context) {
+    throw new Error('useAuth must be used within an AuthProvider');
+  }
 
-    initializeAuth();
-  }, []);
-
-  // Logout handler
-  const logout = useCallback(async () => {
-    try {
-      await authLogout();
-      setUser(null);
-    } catch (err) {
-      console.error('Logout error:', err);
-      setError(err.message);
-    }
-  }, []);
-
-  // Set user after login
-  const setAuthUser = useCallback((userData) => {
-    setUser(userData);
-  }, []);
-
-  return {
-    user,
-    loading,
-    error,
-    isAuthenticated: !!user,
-    logout,
-    setAuthUser,
-  };
+  return context;
 };
 
 export default useAuth;

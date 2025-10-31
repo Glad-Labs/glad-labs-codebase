@@ -1,5 +1,6 @@
 import React, { useEffect } from 'react';
 import { BrowserRouter as Router, useLocation } from 'react-router-dom';
+import { AuthProvider } from './context/AuthContext';
 import Sidebar from './components/common/Sidebar';
 import AppRoutes from './routes/AppRoutes';
 import CommandPane from './components/common/CommandPane';
@@ -65,9 +66,11 @@ const AppContent = () => {
 
 const App = () => {
   return (
-    <Router>
-      <AppContent />
-    </Router>
+    <AuthProvider>
+      <Router>
+        <AppContent />
+      </Router>
+    </AuthProvider>
   );
 };
 

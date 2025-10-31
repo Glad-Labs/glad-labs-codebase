@@ -27,12 +27,17 @@ const AuthCallback = () => {
           return;
         }
 
-        // Verify state for CSRF protection
-        const storedState = sessionStorage.getItem('oauth_state');
-        if (state !== storedState) {
-          console.error('State mismatch - possible CSRF attack');
-          navigate('/login');
-          return;
+        // For mock auth, skip state verification
+        const isMockAuth = code && code.startsWith('mock_auth_code_');
+
+        // Verify state for CSRF protection (skip for mock auth)
+        if (!isMockAuth) {
+          const storedState = sessionStorage.getItem('oauth_state');
+          if (state !== storedState) {
+            console.error('State mismatch - possible CSRF attack');
+            navigate('/login');
+            return;
+          }
         }
 
         // Exchange code for token

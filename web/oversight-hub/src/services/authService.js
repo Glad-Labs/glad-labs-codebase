@@ -28,6 +28,33 @@ export const generateGitHubAuthURL = (clientId) => {
  */
 export const exchangeCodeForToken = async (code) => {
   try {
+    // Check if this is a mock code (for development)
+    if (code && code.startsWith('mock_auth_code_')) {
+      // Handle mock auth
+      await new Promise((resolve) => setTimeout(resolve, 500)); // Simulate network delay
+
+      const mockUser = {
+        id: 'mock_user_12345',
+        login: 'dev-user',
+        email: 'dev@example.com',
+        name: 'Development User',
+        avatar_url: 'https://avatars.githubusercontent.com/u/1?v=4',
+      };
+
+      const mockToken =
+        'mock_jwt_token_' + Math.random().toString(36).substring(2, 15);
+
+      // Store token and user data
+      localStorage.setItem('auth_token', mockToken);
+      localStorage.setItem('user', JSON.stringify(mockUser));
+
+      return {
+        token: mockToken,
+        user: mockUser,
+      };
+    }
+
+    // Real GitHub OAuth
     const response = await fetch(`${API_BASE_URL}/api/auth/github-callback`, {
       method: 'POST',
       headers: {
@@ -63,8 +90,20 @@ export const exchangeCodeForToken = async (code) => {
 export const verifySession = async () => {
   try {
     const token = localStorage.getItem('auth_token');
+    const user = localStorage.getItem('user');
+
     if (!token) return null;
 
+    // For mock tokens (development/testing), trust the stored user
+    if (token.startsWith('mock_jwt_token_')) {
+      try {
+        return user ? JSON.parse(user) : null;
+      } catch (e) {
+        return null;
+      }
+    }
+
+    // For real tokens, verify with backend
     const response = await fetch(`${API_BASE_URL}/api/auth/verify`, {
       method: 'GET',
       headers: {
