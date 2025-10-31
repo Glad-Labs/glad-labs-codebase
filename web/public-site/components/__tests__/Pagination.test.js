@@ -16,15 +16,21 @@ describe('Pagination', () => {
     const pagination = { page: 1, pageCount: 5 };
     render(<Pagination pagination={pagination} basePath="/archive" />);
 
-    // Should have Next button on first page
-    expect(screen.getByText('Next')).toBeInTheDocument();
+    // Should have Next button on first page (use getByRole to avoid ambiguous text queries)
+    expect(
+      screen.getByRole('link', { name: /go to next page/i })
+    ).toBeInTheDocument();
   });
 
   it('renders Previous and Next buttons on middle page', () => {
     const pagination = { page: 2, pageCount: 5 };
     render(<Pagination pagination={pagination} basePath="/archive" />);
 
-    expect(screen.getByText('Previous')).toBeInTheDocument();
-    expect(screen.getByText('Next')).toBeInTheDocument();
+    expect(
+      screen.getByRole('link', { name: /go to previous page/i })
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole('link', { name: /go to next page/i })
+    ).toBeInTheDocument();
   });
 });
