@@ -1,16 +1,20 @@
 import React, { useEffect } from 'react';
-import { BrowserRouter as Router } from 'react-router-dom';
+import { BrowserRouter as Router, useLocation } from 'react-router-dom';
 import Sidebar from './components/common/Sidebar';
 import AppRoutes from './routes/AppRoutes';
 import CommandPane from './components/common/CommandPane';
-import ProtectedRoute from './components/ProtectedRoute';
 import useStore from './store/useStore';
 import useAuth from './hooks/useAuth';
 import './OversightHub.css';
 
 const AppContent = () => {
   const theme = useStore((state) => state.theme);
-  const { loading } = useAuth();
+  const { loading, isAuthenticated } = useAuth();
+  const location = useLocation();
+
+  // Check if user is on a public route (login, auth/callback)
+  const isPublicRoute =
+    location.pathname === '/login' || location.pathname.startsWith('/auth/');
 
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme);
@@ -34,20 +38,28 @@ const AppContent = () => {
     );
   }
 
+  // Public routes (login, auth callback) don't need sidebar/command pane
+  if (isPublicRoute) {
+    return <AppRoutes />;
+  }
+
+  // Protected routes require authentication and show sidebar
+  if (!isAuthenticated) {
+    return <AppRoutes />;
+  }
+
   return (
-    <ProtectedRoute>
-      <div className="oversight-hub-layout">
-        <Sidebar />
-        <div className="main-content">
-          <div className="content-area">
-            <AppRoutes />
-          </div>
-          <div className="command-pane-container">
-            <CommandPane />
-          </div>
+    <div className="oversight-hub-layout">
+      <Sidebar />
+      <div className="main-content">
+        <div className="content-area">
+          <AppRoutes />
+        </div>
+        <div className="command-pane-container">
+          <CommandPane />
         </div>
       </div>
-    </ProtectedRoute>
+    </div>
   );
 };
 

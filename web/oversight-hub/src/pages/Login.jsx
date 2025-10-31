@@ -3,7 +3,7 @@
  * GitHub OAuth login page with branded styling
  */
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { generateGitHubAuthURL } from '../services/authService';
 import useAuth from '../hooks/useAuth';
@@ -13,6 +13,17 @@ const Login = () => {
   const navigate = useNavigate();
   const { isAuthenticated } = useAuth();
   const clientId = process.env.REACT_APP_GITHUB_CLIENT_ID;
+  const [debugInfo, setDebugInfo] = useState('');
+
+  useEffect(() => {
+    // Debug info
+    const info = {
+      clientId: clientId ? 'Set' : 'NOT SET',
+      authURL: process.env.REACT_APP_API_URL || 'NOT SET',
+      timestamp: new Date().toLocaleTimeString(),
+    };
+    setDebugInfo(JSON.stringify(info, null, 2));
+  }, [clientId]);
 
   // If already authenticated, redirect to dashboard
   useEffect(() => {
@@ -71,6 +82,11 @@ const Login = () => {
               <br />
               We only use this to verify your identity.
             </p>
+          </div>
+
+          {/* Debug Info - Remove in production */}
+          <div style={{ marginTop: '20px', fontSize: '12px', opacity: 0.5 }}>
+            <pre>{debugInfo}</pre>
           </div>
         </div>
       </div>
