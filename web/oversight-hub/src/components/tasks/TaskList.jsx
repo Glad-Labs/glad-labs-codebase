@@ -1,42 +1,123 @@
 import React from 'react';
+import './TaskList.css';
 
 const formatTimestamp = (timestamp) => {
   if (!timestamp) return 'N/A';
-  return new Date(timestamp.seconds * 1000).toLocaleString();
+  if (typeof timestamp === 'string') return timestamp.split('T')[0];
+  if (timestamp.seconds)
+    return new Date(timestamp.seconds * 1000).toLocaleString();
+  return 'N/A';
 };
 
-const renderStatus = (status) => (
-  <span
-    className={`status-badge status-${status?.toLowerCase().replace(' ', '-')}`}
-  >
-    {status || 'Unknown'}
-  </span>
-);
+const getStatusIcon = (status) => {
+  switch (status?.toLowerCase()) {
+    case 'completed':
+      return '✓';
+    case 'pending':
+      return '⧗';
+    case 'running':
+      return '⟳';
+    case 'failed':
+      return '✗';
+    default:
+      return '○';
+  }
+};
 
-const TaskList = ({ tasks, onTaskClick }) => (
-  <div className="task-list">
-    <h2>Content Task Queue</h2>
-    <table>
-      <thead>
-        <tr>
-          <th>Topic</th>
-          <th>Status</th>
-          <th>Created At</th>
-          <th>Primary Keyword</th>
-        </tr>
-      </thead>
-      <tbody>
+const getStatusColor = (status) => {
+  switch (status?.toLowerCase()) {
+    case 'completed':
+      return 'status-completed';
+    case 'pending':
+      return 'status-pending';
+    case 'running':
+      return 'status-running';
+    case 'failed':
+      return 'status-failed';
+    default:
+      return 'status-default';
+  }
+};
+
+const TaskList = ({ tasks, onTaskClick }) => {
+  if (!tasks || tasks.length === 0) {
+    return (
+      <div className="task-list-empty">
+        <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>∅</div>
+        <div>No tasks yet. Create one to begin.</div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="task-list-container">
+      <div className="task-list-grid">
         {tasks.map((task) => (
-          <tr key={task.id} onClick={() => onTaskClick(task)}>
-            <td>{task.topic}</td>
-            <td>{renderStatus(task.status)}</td>
-            <td>{formatTimestamp(task.createdAt)}</td>
-            <td>{task.primary_keyword}</td>
-          </tr>
+          <div
+            key={task.id || task.task_id}
+            className="task-card"
+            onClick={() => onTaskClick(task)}
+          >
+            {/* Status Badge */}
+            <div className={`status-badge ${getStatusColor(task.status)}`}>
+              <span className="status-icon">{getStatusIcon(task.status)}</span>
+              <span className="status-text">{task.status?.toUpperCase()}</span>
+            </div>
+
+            {/* Task Title */}
+            <h3 className="task-title">
+              {task.task_name || task.topic || 'Untitled Task'}
+            </h3>
+
+            {/* Task Info Grid */}
+            <div className="task-info">
+              {task.topic && (
+                <div className="info-item">
+                  <span className="label">Topic</span>
+                  <span className="value">
+                    {task.topic.substring(0, 50)}...
+                  </span>
+                </div>
+              )}
+
+              {task.primary_keyword && (
+                <div className="info-item">
+                  <span className="label">Keyword</span>
+                  <span className="value">{task.primary_keyword}</span>
+                </div>
+              )}
+
+              {task.category && (
+                <div className="info-item">
+                  <span className="label">Category</span>
+                  <span className="value">{task.category}</span>
+                </div>
+              )}
+
+              {task.created_at && (
+                <div className="info-item">
+                  <span className="label">Created</span>
+                  <span className="value">
+                    {formatTimestamp(task.created_at)}
+                  </span>
+                </div>
+              )}
+            </div>
+
+            {/* Progress Bar */}
+            {task.status === 'running' && (
+              <div className="progress-bar">
+                <div className="progress-fill" />
+              </div>
+            )}
+
+            {/* Click Hint */}
+            <div className="task-hint">Click for details →</div>
+          </div>
         ))}
-      </tbody>
-    </table>
-  </div>
-);
+      </div>
+    </div>
+  );
+};
 
 export default TaskList;

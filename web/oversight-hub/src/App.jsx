@@ -1,9 +1,7 @@
 import React, { useEffect } from 'react';
 import { BrowserRouter as Router, useLocation } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
-import Sidebar from './components/common/Sidebar';
 import AppRoutes from './routes/AppRoutes';
-import CommandPane from './components/common/CommandPane';
 import useStore from './store/useStore';
 import useAuth from './hooks/useAuth';
 import './OversightHub.css';
@@ -44,24 +42,13 @@ const AppContent = () => {
     return <AppRoutes />;
   }
 
-  // Protected routes require authentication and show sidebar
+  // Protected routes require authentication and show new dashboard layout
   if (!isAuthenticated) {
     return <AppRoutes />;
   }
 
-  return (
-    <div className="oversight-hub-layout">
-      <Sidebar />
-      <div className="main-content">
-        <div className="content-area">
-          <AppRoutes />
-        </div>
-        <div className="command-pane-container">
-          <CommandPane />
-        </div>
-      </div>
-    </div>
-  );
+  // Render new dashboard layout (OversightHub with built-in layout)
+  return <AppRoutes />;
 };
 
 const App = () => {

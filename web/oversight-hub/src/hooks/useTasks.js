@@ -66,13 +66,17 @@ const useTasks = () => {
     // Fetch immediately
     fetchTasks();
 
-    // Poll every 5 seconds for updates
+    // Poll every 30 seconds for updates (reduced from 5s to prevent excessive reloads)
     const pollTasks = () => {
       pollTimeout = setTimeout(() => {
-        fetchTasks().then(() => {
-          pollTasks();
-        });
-      }, 5000);
+        if (isMounted) {
+          fetchTasks().then(() => {
+            if (isMounted) {
+              pollTasks();
+            }
+          });
+        }
+      }, 30000); // 30 seconds instead of 5 seconds
     };
 
     pollTasks();

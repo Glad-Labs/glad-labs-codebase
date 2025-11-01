@@ -1,8 +1,8 @@
 {
-  "name": "glad-labs-oversight-hub",
+  "name": "dexters-lab",
   "version": "0.1.0",
   "private": true,
-  "description": "React 18 admin interface for monitoring and controlling Glad Labs AI content agents with real-time Firebase integration",
+  "description": "Dexter's Lab - React 18 admin interface for monitoring and controlling AI content agents with real-time integration",
   "license": "MIT",
   "author": "Matthew M. Gladding (Glad Labs, LLC)",
   "scripts": {

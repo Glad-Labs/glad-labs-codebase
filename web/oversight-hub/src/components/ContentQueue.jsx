@@ -1,26 +1,10 @@
-import React, { useState, useEffect } from 'react';
-import { db } from '../firebaseConfig';
-import { collection, onSnapshot, query, orderBy } from 'firebase/firestore';
+import React from 'react';
+import useTasks from '../hooks/useTasks';
+import useStore from '../store/useStore';
 
 const ContentQueue = () => {
-  const [tasks, setTasks] = useState([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    const q = query(
-      collection(db, 'content-tasks'),
-      orderBy('createdAt', 'desc')
-    );
-    const unsubscribe = onSnapshot(q, (querySnapshot) => {
-      const tasksData = querySnapshot.docs.map((doc) => ({
-        id: doc.id,
-        ...doc.data(),
-      }));
-      setTasks(tasksData);
-      setLoading(false);
-    });
-    return () => unsubscribe();
-  }, []);
+  const { loading } = useTasks();
+  const tasks = useStore((state) => state.tasks);
 
   if (loading) return <p>Loading content queue...</p>;
 

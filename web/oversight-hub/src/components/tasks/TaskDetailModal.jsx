@@ -1,11 +1,5 @@
 import React from 'react';
 import useStore from '../../store/useStore';
-import useRuns from '../../hooks/useRuns';
-
-const formatTimestamp = (timestamp) => {
-  if (!timestamp) return 'N/A';
-  return new Date(timestamp.seconds * 1000).toLocaleString();
-};
 
 const renderStatus = (status) => (
   <span
@@ -21,11 +15,8 @@ const ErrorMessage = ({ message }) => (
   </div>
 );
 
-import RunHistory from './RunHistory';
-
 const TaskDetailModal = ({ onClose }) => {
   const { selectedTask } = useStore();
-  const { runs, loading } = useRuns(selectedTask?.id);
 
   if (!selectedTask) return null;
 
@@ -63,7 +54,6 @@ const TaskDetailModal = ({ onClose }) => {
           )}
           {selectedTask.error && <ErrorMessage message={selectedTask.error} />}
         </div>
-        <RunHistory runs={runs} />
       </div>
     </div>
   );

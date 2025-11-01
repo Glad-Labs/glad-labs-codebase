@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import { createTask } from '../../services/taskService';
 
 const CreateTaskModal = ({ isOpen, onClose, onTaskCreated }) => {
   const [topic, setTopic] = useState('');
@@ -26,7 +25,16 @@ const CreateTaskModal = ({ isOpen, onClose, onTaskCreated }) => {
         target_audience: targetAudience,
         category,
       };
-      await createTask(newTask);
+
+      // Call backend API instead of Firebase
+      const response = await fetch('http://localhost:8000/api/tasks', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newTask),
+      });
+
+      if (!response.ok) throw new Error('Failed to create task');
+
       onTaskCreated();
       // Reset form for next use
       setTopic('');
