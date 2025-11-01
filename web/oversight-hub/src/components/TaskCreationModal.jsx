@@ -29,7 +29,7 @@ import {
   Paper,
 } from '@mui/material';
 import { CheckCircle as CheckCircleIcon } from '@mui/icons-material';
-import useStore from '../store/useStore';
+import useAuth from '../hooks/useAuth';
 import {
   createBlogPost,
   pollTaskStatus,
@@ -63,8 +63,8 @@ export default function TaskCreationModal({ open, onClose, onTaskCreated }) {
   const [taskProgress, setTaskProgress] = useState(null);
   const [progressPercentage, setProgressPercentage] = useState(0);
 
-  // Get Zustand state
-  const isAuthenticated = useStore((state) => state.isAuthenticated);
+  // Get authentication state from AuthContext
+  const { isAuthenticated } = useAuth();
 
   /**
    * Validate form inputs

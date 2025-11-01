@@ -3,8 +3,12 @@
  *
  * Environment Variables (required):
  * - REACT_APP_API_URL: Backend API base URL (e.g., https://api.example.com or http://localhost:8000)
+ *
+ * NOTE: This service does NOT directly update Zustand store.
+ * Auth state updates are handled by AuthContext only.
+ * Use getAuthToken() to read current token from localStorage.
  */
-import useStore from '../store/useStore';
+import { getAuthToken } from './authService';
 
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:8000';
 
@@ -17,7 +21,7 @@ if (!process.env.REACT_APP_API_URL) {
 }
 
 function getAuthHeaders() {
-  const accessToken = useStore.getState().accessToken;
+  const accessToken = getAuthToken();
   const headers = { 'Content-Type': 'application/json' };
   if (accessToken) {
     headers['Authorization'] = `Bearer ${accessToken}`;
@@ -29,7 +33,8 @@ async function makeRequest(
   endpoint,
   method = 'GET',
   data = null,
-  retry = false
+  retry = false,
+  onUnauthorized = null
 ) {
   try {
     const url = `${API_BASE_URL}${endpoint}`;
@@ -38,11 +43,11 @@ async function makeRequest(
     const response = await fetch(url, config);
 
     if (response.status === 401 && !retry) {
-      const refreshed = await refreshAccessToken();
-      if (refreshed) return makeRequest(endpoint, method, data, true);
-      useStore.setState({ isAuthenticated: false, accessToken: null });
-      window.location.href = '/login';
-      return null;
+      // Call the onUnauthorized callback if provided
+      if (onUnauthorized) {
+        onUnauthorized();
+      }
+      throw new Error('Unauthorized - token expired or invalid');
     }
 
     const result = await response.json().catch(() => response.text());
@@ -58,57 +63,30 @@ async function makeRequest(
   }
 }
 
-export async function login(email, password) {
-  const response = await makeRequest('/api/auth/login', 'POST', {
-    email,
-    password,
-  });
-  if (response.success && response.access_token) {
-    useStore.setState({
-      accessToken: response.access_token,
-      refreshToken: response.refresh_token,
-      user: response.user,
-      isAuthenticated: true,
-    });
-  }
-  return response;
-}
+/**
+ * NOTE: login() function removed - use AuthCallback + exchangeCodeForToken from authService instead
+ * This service should NOT handle authentication state updates.
+ * Authentication is managed exclusively by AuthContext.
+ */
 
 export async function logout() {
   try {
+    // Attempt to notify backend of logout
     await makeRequest('/api/auth/logout', 'POST');
   } catch (error) {
     console.warn('Logout failed:', error);
-  } finally {
-    useStore.setState({
-      accessToken: null,
-      refreshToken: null,
-      user: null,
-      isAuthenticated: false,
-      tasks: [],
-    });
+    // Continue with local logout even if API call fails
   }
+  // Note: Actual state clearing happens in AuthContext.logout()
 }
 
 export async function refreshAccessToken() {
-  try {
-    const refreshToken = useStore.getState().refreshToken;
-    if (!refreshToken) return false;
-    const response = await fetch(`${API_BASE_URL}/api/auth/refresh`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ refresh_token: refreshToken }),
-    });
-    if (response.ok) {
-      const data = await response.json();
-      useStore.setState({ accessToken: data.access_token });
-      return true;
-    }
-    return false;
-  } catch (error) {
-    console.error('Token refresh error:', error);
-    return false;
-  }
+  // Token refresh logic would go here
+  // For now, if token is invalid, let 401 handler in component deal with it
+  console.warn(
+    '⚠️ Token refresh not implemented - auth flow should prevent 401s'
+  );
+  return false;
 }
 
 export async function getTasks(limit = 50, offset = 0) {
@@ -172,7 +150,6 @@ export async function publishBlogDraft(postId, environment = 'production') {
 }
 
 const cofounderAgentClient = {
-  login,
   logout,
   refreshAccessToken,
   getTasks,

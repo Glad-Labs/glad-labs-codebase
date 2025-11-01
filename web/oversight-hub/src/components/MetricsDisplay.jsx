@@ -35,6 +35,7 @@ import {
   TrendingUp as TrendingUpIcon,
   AttachMoney as AttachMoneyIcon,
 } from '@mui/icons-material';
+import useAuth from '../hooks/useAuth';
 import useStore from '../store/useStore';
 import { getMetrics } from '../services/cofounderAgentClient';
 
@@ -100,10 +101,10 @@ export default function MetricsDisplay({ refreshInterval = 30000 }) {
   const [lastRefresh, setLastRefresh] = useState(null);
   const [autoRefreshEnabled, setAutoRefreshEnabled] = useState(true);
 
-  // Get state and methods from Zustand
+  // Get state and methods
+  const { isAuthenticated } = useAuth(); // Use AuthContext instead of Zustand
   const metrics = useStore((state) => state.metrics);
   const setMetrics = useStore((state) => state.setMetrics);
-  const isAuthenticated = useStore((state) => state.isAuthenticated);
 
   /**
    * Fetch metrics from backend

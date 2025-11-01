@@ -56,7 +56,7 @@ import {
   VpnKey as VpnKeyIcon,
   CheckCircle as CheckCircleIcon,
 } from '@mui/icons-material';
-import useStore from '../store/useStore';
+import useAuth from '../hooks/useAuth';
 import './LoginForm.css';
 
 /**
@@ -148,6 +148,7 @@ function LoginForm({
   redirectOnSuccess = true,
 }) {
   const navigate = useNavigate();
+  const { setAuthUser } = useAuth();
 
   // Login state
   const [email, setEmail] = useState('');
@@ -316,13 +317,9 @@ function LoginForm({
       storage.setItem('userId', response.user.id);
     }
 
-    // ===== UPDATE ZUSTAND STORE =====
-    useStore.setState({
-      accessToken: response.access_token,
-      refreshToken: response.refresh_token || null,
-      user: response.user || null,
-      isAuthenticated: true,
-    });
+    // ===== UPDATE AUTHENTICATION STATE VIA AUTHCONTEXT =====
+    // This syncs both AuthContext and Zustand store
+    setAuthUser(response.user);
 
     // Callback or redirect
     if (onLoginSuccess) {
