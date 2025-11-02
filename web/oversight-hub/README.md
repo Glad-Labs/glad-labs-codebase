@@ -154,15 +154,15 @@ const useStore = create((set) => ({
   // UI State
   theme: 'light',
   setTheme: (theme) => set({ theme }),
-  
+
   // Tasks
   tasks: [],
   setTasks: (tasks) => set({ tasks }),
-  
+
   // Models
   activeModels: [],
   setActiveModels: (models) => set({ activeModels: models }),
-  
+
   // Agents
   agentStatus: {},
   setAgentStatus: (status) => set({ agentStatus: status }),
@@ -221,6 +221,7 @@ export const createTask = async (taskData) => {
 ### System Health Panel
 
 Shows real-time metrics:
+
 - Service uptime (Strapi, Backend, Agents)
 - Database connection status
 - Memory and CPU usage
@@ -230,6 +231,7 @@ Shows real-time metrics:
 ### Tasks Panel
 
 Displays all tasks with:
+
 - Task ID, name, and type
 - Status (pending, in-progress, completed, failed)
 - Progress percentage
@@ -240,6 +242,7 @@ Displays all tasks with:
 ### Agents Panel
 
 Shows all agents with:
+
 - Agent name and type
 - Current status (idle, working, error)
 - Tasks completed/failed count
@@ -250,6 +253,7 @@ Shows all agents with:
 ### Models Panel
 
 Displays:
+
 - Available models by provider
 - Connection status (online/offline)
 - Current provider in use
@@ -292,7 +296,7 @@ import useStore from '../store/useStore';
 
 export default function MyComponent() {
   const { state, dispatch } = useStore();
-  
+
   return (
     <Card>
       <Box p={2}>
@@ -312,7 +316,7 @@ import useStore from '../store/useStore';
 
 function MyComponent() {
   const { tasks, setTasks } = useStore();
-  
+
   // Component code
 }
 ```
