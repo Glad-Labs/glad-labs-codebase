@@ -3,6 +3,7 @@ import useTasks from './hooks/useTasks';
 import useStore from './store/useStore';
 import TaskList from './components/tasks/TaskList';
 import TaskDetailModal from './components/tasks/TaskDetailModal';
+import BlogPostCreator from './components/BlogPostCreator';
 import './OversightHub.css';
 
 const OversightHub = () => {
@@ -526,8 +527,7 @@ const OversightHub = () => {
 
           {currentPage === 'content' && (
             <div style={{ padding: '2rem' }}>
-              <h2>📝 Content Generation</h2>
-              <p>Content generation interface would go here.</p>
+              <BlogPostCreator />
             </div>
           )}
 

@@ -94,7 +94,16 @@ export async function getTasks(limit = 50, offset = 0) {
 }
 
 export async function getTaskStatus(taskId) {
-  return makeRequest(`/api/tasks/${taskId}`, 'GET');
+  // Try new endpoint first, fall back to old endpoint
+  try {
+    return await makeRequest(`/api/content/blog-posts/tasks/${taskId}`, 'GET');
+  } catch (error) {
+    if (error.status === 404) {
+      // Fall back to old endpoint
+      return await makeRequest(`/api/tasks/${taskId}`, 'GET');
+    }
+    throw error;
+  }
 }
 
 export async function pollTaskStatus(taskId, onProgress, maxWait = 3600000) {
@@ -121,20 +130,31 @@ export async function pollTaskStatus(taskId, onProgress, maxWait = 3600000) {
   });
 }
 
-export async function createBlogPost(
-  topic,
-  primaryKeyword,
-  targetAudience,
-  category
-) {
-  return makeRequest('/api/tasks', 'POST', {
-    task_name: `Blog Post: ${topic}`,
-    agent_id: 'content-agent',
-    status: 'pending',
-    topic,
-    primary_keyword: primaryKeyword,
-    target_audience: targetAudience,
-    category,
+export async function createBlogPost(options) {
+  // Support both old and new API formats for backwards compatibility
+  if (typeof options === 'string') {
+    // Old format: createBlogPost(topic, primaryKeyword, targetAudience, category)
+    return makeRequest('/api/tasks', 'POST', {
+      task_name: `Blog Post: ${options}`,
+      agent_id: 'content-agent',
+      status: 'pending',
+      topic: options,
+    });
+  }
+
+  // New format: createBlogPost({ topic, style, tone, ... })
+  return makeRequest('/api/content/blog-posts', 'POST', {
+    topic: options.topic,
+    style: options.style || 'technical',
+    tone: options.tone || 'professional',
+    target_length: options.targetLength || options.target_length || 1500,
+    tags: options.tags || [],
+    categories: options.categories || [],
+    generate_featured_image: options.generate_featured_image !== false,
+    enhanced: options.enhanced || false,
+    publish_mode: options.publishMode || options.publish_mode || 'draft',
+    target_environment:
+      options.targetEnvironment || options.target_environment || 'production',
   });
 }
 

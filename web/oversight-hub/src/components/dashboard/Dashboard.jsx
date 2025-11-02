@@ -7,6 +7,7 @@ import {
   orderBy,
   limit,
 } from 'firebase/firestore';
+import BlogMetricsDashboard from '../BlogMetricsDashboard';
 
 /**
  * Dashboard Component - Main overview for Glad Labs Oversight Hub
@@ -407,6 +408,9 @@ const Dashboard = () => {
           )}
         </div>
       </div>
+
+      {/* Blog Metrics Dashboard */}
+      <BlogMetricsDashboard />
     </div>
   );
 };

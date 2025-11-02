@@ -7,6 +7,20 @@ import useStore from '../store/useStore';
  *
  * @returns {Object} { loading, error } - Loading and error states
  */
+
+// Helper: Fetch with timeout
+const fetchWithTimeout = (url, options = {}, timeoutMs = 5000) => {
+  return Promise.race([
+    fetch(url, options),
+    new Promise((_, reject) =>
+      setTimeout(
+        () => reject(new Error(`Request timeout after ${timeoutMs}ms`)),
+        timeoutMs
+      )
+    ),
+  ]);
+};
+
 const useTasks = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -16,8 +30,10 @@ const useTasks = () => {
   const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:8000';
 
   useEffect(() => {
-    // Don't fetch if not authenticated
-    if (!accessToken) {
+    // In development, allow tasks to load even without auth token
+    // In production, require authentication
+    const isDevelopment = process.env.NODE_ENV === 'development';
+    if (!accessToken && !isDevelopment) {
       setLoading(false);
       setTasks([]);
       return;
@@ -29,26 +45,42 @@ const useTasks = () => {
     const fetchTasks = async () => {
       try {
         setLoading(true);
-        const response = await fetch(`${apiUrl}/api/tasks`, {
-          method: 'GET',
-          headers: {
-            Authorization: `Bearer ${accessToken}`,
-            'Content-Type': 'application/json',
+        const headers = {
+          'Content-Type': 'application/json',
+        };
+
+        // Add auth header if token exists
+        if (accessToken) {
+          headers.Authorization = `Bearer ${accessToken}`;
+        }
+
+        const response = await fetchWithTimeout(
+          `${apiUrl}/api/tasks`,
+          {
+            method: 'GET',
+            headers,
           },
-        });
+          5000
+        ); // 5 second timeout
 
         if (!response.ok) {
           if (response.status === 401) {
-            // Token expired or invalid
-            throw new Error('Authentication failed. Please login again.');
+            // Token expired or invalid - in dev mode, just show empty list
+            if (isDevelopment) {
+              setTasks([]);
+              setError(null);
+            } else {
+              throw new Error('Authentication failed. Please login again.');
+            }
+          } else {
+            throw new Error(`HTTP ${response.status}: Failed to fetch tasks`);
           }
-          throw new Error(`HTTP ${response.status}: Failed to fetch tasks`);
-        }
-
-        const data = await response.json();
-        if (isMounted) {
-          setTasks(data.tasks || []);
-          setError(null);
+        } else {
+          const data = await response.json();
+          if (isMounted) {
+            setTasks(data.tasks || []);
+            setError(null);
+          }
         }
       } catch (err) {
         console.error('Error fetching tasks:', err);
