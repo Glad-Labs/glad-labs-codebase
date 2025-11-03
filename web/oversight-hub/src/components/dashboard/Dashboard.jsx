@@ -1,19 +1,15 @@
 import React, { useState, useEffect } from 'react';
-import { db } from '../../lib/firebase';
-import {
-  collection,
-  onSnapshot,
-  query,
-  orderBy,
-  limit,
-} from 'firebase/firestore';
+import axios from 'axios';
+import { getAuthToken } from '../../services/authService';
 import BlogMetricsDashboard from '../BlogMetricsDashboard';
+
+const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:8000';
 
 /**
  * Dashboard Component - Main overview for Glad Labs Oversight Hub
  *
  * Features:
- * - Real-time metrics from Firestore
+ * - Real-time metrics from backend API
  * - System health monitoring
  * - Recent activity overview
  * - Performance indicators
@@ -32,64 +28,88 @@ const Dashboard = () => {
   const [systemHealth, setSystemHealth] = useState('unknown');
 
   useEffect(() => {
-    // Subscribe to tasks collection for real-time updates
-    const tasksQuery = query(
-      collection(db, 'tasks'),
-      orderBy('createdAt', 'desc'),
-      limit(10)
-    );
+    let isMounted = true;
 
-    const unsubscribeTasks = onSnapshot(
-      tasksQuery,
-      (querySnapshot) => {
-        const tasks = querySnapshot.docs.map((doc) => ({
-          id: doc.id,
-          ...doc.data(),
-        }));
-
-        // Calculate statistics
-        const totalTasks = tasks.length;
-        const completedTasks = tasks.filter(
-          (task) => task.status === 'completed'
-        ).length;
-        const pendingTasks = tasks.filter((task) =>
-          ['queued', 'in_progress', 'pending_review'].includes(task.status)
-        ).length;
-
-        setStats((prev) => ({
-          ...prev,
-          totalTasks,
-          completedTasks,
-          pendingTasks,
-          recentActivity: tasks.slice(0, 5), // Latest 5 tasks
-        }));
-
-        setLoading(false);
-      },
-      (err) => {
-        console.error('Failed to fetch tasks:', err);
-        setError('Failed to load dashboard data');
-        setLoading(false);
-      }
-    );
-
-    // Check system health by attempting to read from multiple collections
-    const checkSystemHealth = async () => {
+    const fetchDashboardData = async () => {
       try {
-        // Test Firestore connectivity
-        await db.collection('tasks').limit(1).get();
-        setSystemHealth('healthy');
-      } catch (error) {
-        console.error('System health check failed:', error);
-        setSystemHealth('degraded');
+        setLoading(true);
+
+        // Fetch tasks from backend API
+        const token = getAuthToken();
+        const headers = {};
+        if (token) {
+          headers['Authorization'] = `Bearer ${token}`;
+        }
+        const tasksResponse = await axios.get(`${API_URL}/api/tasks`, {
+          timeout: 120000,
+          headers,
+        });
+
+        if (isMounted) {
+          const tasks = Array.isArray(tasksResponse.data)
+            ? tasksResponse.data
+            : tasksResponse.data.results || [];
+
+          // Calculate statistics
+          const totalTasks = tasks.length;
+          const completedTasks = tasks.filter(
+            (task) => task.status === 'completed'
+          ).length;
+          const pendingTasks = tasks.filter((task) =>
+            ['queued', 'in_progress', 'pending_review'].includes(task.status)
+          ).length;
+
+          setStats({
+            totalTasks,
+            completedTasks,
+            pendingTasks,
+            activeAgents: 0, // Would come from agents endpoint if available
+            recentActivity: tasks.slice(0, 5),
+          });
+
+          setError(null);
+        }
+      } catch (err) {
+        if (isMounted) {
+          console.error('Failed to fetch dashboard data:', err);
+          setError(
+            'Failed to load dashboard data. Please ensure the backend is running.'
+          );
+        }
+      } finally {
+        if (isMounted) {
+          setLoading(false);
+        }
       }
     };
 
+    // Check system health by testing API connectivity
+    const checkSystemHealth = async () => {
+      try {
+        const response = await axios.get(`${API_URL}/api/health`, {
+          timeout: 5000,
+        });
+
+        if (isMounted && response.status === 200) {
+          setSystemHealth('healthy');
+        }
+      } catch (error) {
+        if (isMounted) {
+          console.error('System health check failed:', error);
+          setSystemHealth('degraded');
+        }
+      }
+    };
+
+    fetchDashboardData();
     checkSystemHealth();
 
-    // Cleanup subscriptions
+    // Set up periodic health checks (every 30 seconds)
+    const healthCheckInterval = setInterval(checkSystemHealth, 30000);
+
     return () => {
-      unsubscribeTasks();
+      isMounted = false;
+      clearInterval(healthCheckInterval);
     };
   }, []);
 

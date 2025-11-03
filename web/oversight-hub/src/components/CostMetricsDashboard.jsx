@@ -42,7 +42,7 @@ const CostMetricsDashboard = () => {
       setLoading(true);
       setError(null);
 
-      const response = await fetch('http://localhost:8000/metrics/costs');
+      const response = await fetch('http://localhost:8000/api/metrics/costs');
 
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);

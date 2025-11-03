@@ -1,7 +1,7 @@
 import React, { useMemo } from 'react';
 import { useFinancials } from '../../features/financials/useFinancials';
 import { formatTimestamp } from '../../lib/date';
-import './Financials.css';
+import '../Financials.css';
 
 const Financials = () => {
   const { entries, loading, error } = useFinancials();

@@ -1,5 +1,5 @@
 import React from 'react';
-import useTasks from '../hooks/useTasks';
+import { useTasks } from '../features/tasks/useTasks';
 import useStore from '../store/useStore';
 
 const ContentQueue = () => {

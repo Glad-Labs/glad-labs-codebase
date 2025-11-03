@@ -158,6 +158,6 @@ export async function getStaticProps() {
       posts,
       pagination: postsData ? postsData.meta.pagination : null,
     },
-    revalidate: 1,
+    revalidate: 3600, // Revalidate every 1 hour (3600 seconds) instead of every 1 second
   };
 }

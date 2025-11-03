@@ -71,10 +71,11 @@ export default function Custom500() {
               >
                 🔄 Try Again
               </button>
-              <Link href="/">
-                <a className="inline-block px-8 py-3 bg-gray-700 hover:bg-gray-600 text-white font-semibold rounded-lg transition-colors duration-200">
-                  ← Go Home
-                </a>
+              <Link
+                href="/"
+                className="inline-block px-8 py-3 bg-gray-700 hover:bg-gray-600 text-white font-semibold rounded-lg transition-colors duration-200"
+              >
+                ← Go Home
               </Link>
             </div>
 
@@ -95,16 +96,18 @@ export default function Custom500() {
             <div>
               <p className="text-gray-400 mb-4">Useful links:</p>
               <div className="flex flex-wrap justify-center gap-4">
-                <Link href="/">
-                  <a className="text-cyan-400 hover:text-cyan-300 underline">
-                    Homepage
-                  </a>
+                <Link
+                  href="/"
+                  className="text-cyan-400 hover:text-cyan-300 underline"
+                >
+                  Homepage
                 </Link>
                 <span className="text-gray-600">•</span>
-                <Link href="/archive/1">
-                  <a className="text-cyan-400 hover:text-cyan-300 underline">
-                    Blog Archive
-                  </a>
+                <Link
+                  href="/archive/1"
+                  className="text-cyan-400 hover:text-cyan-300 underline"
+                >
+                  Blog Archive
                 </Link>
                 <span className="text-gray-600">•</span>
                 <a

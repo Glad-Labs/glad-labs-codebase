@@ -28,7 +28,7 @@ const CommandPane = () => {
   const [messages, setMessages] = useState([
     {
       message:
-        "Hello! I'm the Glad Labs AI Co-Founder. How can I assist you today? I can help you delegate tasks, analyze data, or provide strategic insights.",
+        "Hello! I'm Poindexter, the Glad Labs AI Assistant. How can I assist you today? I can help you delegate tasks, analyze data, or provide strategic insights.",
       sentTime: 'just now',
       sender: 'AI',
       direction: 'incoming',
@@ -153,7 +153,7 @@ const CommandPane = () => {
       {/* Header with Model Selector and Context */}
       <div className="command-pane-header">
         <div className="command-pane-top">
-          <h2 className="command-pane-title">AI Co-Founder</h2>
+          <h2 className="command-pane-title">Poindexter</h2>
           <button
             className="context-toggle-btn"
             onClick={() => setShowContext(!showContext)}
@@ -186,7 +186,7 @@ const CommandPane = () => {
         <button
           className={`delegate-btn ${delegateMode ? 'active' : ''}`}
           onClick={handleDelegateTask}
-          title="Delegate tasks to AI Co-Founder"
+          title="Delegate tasks to Poindexter"
         >
           📋 Delegate Task
         </button>

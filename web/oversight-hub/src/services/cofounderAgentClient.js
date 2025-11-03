@@ -34,29 +34,48 @@ async function makeRequest(
   method = 'GET',
   data = null,
   retry = false,
-  onUnauthorized = null
+  onUnauthorized = null,
+  timeout = 30000 // 30 seconds - allows for long-running operations like Ollama generation
 ) {
   try {
     const url = `${API_BASE_URL}${endpoint}`;
     const config = { method, headers: getAuthHeaders() };
     if (data) config.body = JSON.stringify(data);
-    const response = await fetch(url, config);
 
-    if (response.status === 401 && !retry) {
-      // Call the onUnauthorized callback if provided
-      if (onUnauthorized) {
-        onUnauthorized();
+    // Use AbortController to implement timeout
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), timeout);
+    config.signal = controller.signal;
+
+    try {
+      const response = await fetch(url, config);
+      clearTimeout(timeoutId);
+
+      if (response.status === 401 && !retry) {
+        // Call the onUnauthorized callback if provided
+        if (onUnauthorized) {
+          onUnauthorized();
+        }
+        throw new Error('Unauthorized - token expired or invalid');
       }
-      throw new Error('Unauthorized - token expired or invalid');
-    }
 
-    const result = await response.json().catch(() => response.text());
-    if (!response.ok) {
-      const error = new Error(result?.message || `HTTP ${response.status}`);
-      error.status = response.status;
-      throw error;
+      const result = await response.json().catch(() => response.text());
+      if (!response.ok) {
+        const error = new Error(result?.message || `HTTP ${response.status}`);
+        error.status = response.status;
+        throw error;
+      }
+      return result;
+    } catch (fetchError) {
+      clearTimeout(timeoutId);
+      // Check if it's an abort error (timeout)
+      if (fetchError.name === 'AbortError') {
+        throw new Error(
+          `Request timeout after ${timeout}ms - operation took too long`
+        );
+      }
+      throw fetchError;
     }
-    return result;
   } catch (error) {
     console.error(`API request failed: ${endpoint}`, error);
     throw error;
@@ -90,7 +109,14 @@ export async function refreshAccessToken() {
 }
 
 export async function getTasks(limit = 50, offset = 0) {
-  return makeRequest(`/api/tasks?limit=${limit}&offset=${offset}`, 'GET');
+  return makeRequest(
+    `/api/tasks?limit=${limit}&offset=${offset}`,
+    'GET',
+    null,
+    false,
+    null,
+    120000
+  ); // 120 second timeout
 }
 
 export async function getTaskStatus(taskId) {
@@ -134,28 +160,44 @@ export async function createBlogPost(options) {
   // Support both old and new API formats for backwards compatibility
   if (typeof options === 'string') {
     // Old format: createBlogPost(topic, primaryKeyword, targetAudience, category)
-    return makeRequest('/api/tasks', 'POST', {
-      task_name: `Blog Post: ${options}`,
-      agent_id: 'content-agent',
-      status: 'pending',
-      topic: options,
-    });
+    // Use 60 second timeout for content generation
+    return makeRequest(
+      '/api/tasks',
+      'POST',
+      {
+        task_name: `Blog Post: ${options}`,
+        agent_id: 'content-agent',
+        status: 'pending',
+        topic: options,
+      },
+      false,
+      null,
+      60000 // 60 seconds for content generation
+    );
   }
 
   // New format: createBlogPost({ topic, style, tone, ... })
-  return makeRequest('/api/content/blog-posts', 'POST', {
-    topic: options.topic,
-    style: options.style || 'technical',
-    tone: options.tone || 'professional',
-    target_length: options.targetLength || options.target_length || 1500,
-    tags: options.tags || [],
-    categories: options.categories || [],
-    generate_featured_image: options.generate_featured_image !== false,
-    enhanced: options.enhanced || false,
-    publish_mode: options.publishMode || options.publish_mode || 'draft',
-    target_environment:
-      options.targetEnvironment || options.target_environment || 'production',
-  });
+  // Use 60 second timeout for content generation with Ollama
+  return makeRequest(
+    '/api/content/blog-posts',
+    'POST',
+    {
+      topic: options.topic,
+      style: options.style || 'technical',
+      tone: options.tone || 'professional',
+      target_length: options.targetLength || options.target_length || 1500,
+      tags: options.tags || [],
+      categories: options.categories || [],
+      generate_featured_image: options.generate_featured_image !== false,
+      enhanced: options.enhanced || false,
+      publish_mode: options.publishMode || options.publish_mode || 'draft',
+      target_environment:
+        options.targetEnvironment || options.target_environment || 'production',
+    },
+    false,
+    null,
+    60000 // 60 seconds for content generation
+  );
 }
 
 export async function getMetrics() {

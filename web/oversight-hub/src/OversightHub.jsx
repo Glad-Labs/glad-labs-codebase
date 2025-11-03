@@ -1,9 +1,16 @@
 import React, { useState, useEffect, useRef } from 'react';
-import useTasks from './hooks/useTasks';
+import { useTasks } from './features/tasks/useTasks';
 import useStore from './store/useStore';
 import TaskList from './components/tasks/TaskList';
 import TaskDetailModal from './components/tasks/TaskDetailModal';
+import TaskManagement from './components/tasks/TaskManagement';
 import BlogPostCreator from './components/BlogPostCreator';
+import ContentQueue from './components/content-queue/ContentQueue';
+import SystemHealthDashboard from './components/dashboard/SystemHealthDashboard';
+import CostMetricsDashboard from './components/CostMetricsDashboard';
+import SocialMediaManagement from './components/social/SocialMediaManagement';
+import Marketing from './components/marketing/Marketing';
+import Financials from './components/financials/Financials';
 import './OversightHub.css';
 
 const OversightHub = () => {
@@ -12,7 +19,7 @@ const OversightHub = () => {
   const { setSelectedTask, clearSelectedTask, selectedTask } = useStore();
   const chatEndRef = useRef(null);
   const [chatMessages, setChatMessages] = useState([
-    { id: 1, sender: 'system', text: 'Co-Founder AI ready. How can I help?' },
+    { id: 1, sender: 'system', text: 'Poindexter ready. How can I help?' },
   ]);
   const [chatInput, setChatInput] = useState('');
   const [navMenuOpen, setNavMenuOpen] = useState(false);
@@ -279,6 +286,13 @@ const OversightHub = () => {
   };
 
   if (loading) {
+    // DEBUG: Show what's happening
+    const token =
+      typeof window !== 'undefined' ? localStorage.getItem('auth_token') : null;
+    const tokenStatus = token
+      ? `✓ Token found (${token.substring(0, 20)}...)`
+      : '✗ No token in localStorage';
+
     return (
       <div className="oversight-hub">
         <header>
@@ -288,12 +302,42 @@ const OversightHub = () => {
           style={{
             flex: 1,
             display: 'flex',
+            flexDirection: 'column',
             alignItems: 'center',
             justifyContent: 'center',
+            gap: '2rem',
           }}
         >
           <div style={{ color: 'var(--accent-primary)', fontSize: '1.2rem' }}>
             Loading system status...
+          </div>
+          <div
+            style={{
+              fontSize: '0.9rem',
+              color: '#666',
+              textAlign: 'center',
+              maxWidth: '400px',
+            }}
+          >
+            <div>Debug Info:</div>
+            <div
+              style={{
+                fontSize: '0.8rem',
+                marginTop: '0.5rem',
+                fontFamily: 'monospace',
+                color: '#999',
+              }}
+            >
+              {tokenStatus}
+            </div>
+            <div
+              style={{ fontSize: '0.75rem', marginTop: '1rem', color: '#aaa' }}
+            >
+              If this takes &gt; 10 seconds, check:
+              <div>1. Backend running? http://localhost:8000/docs</div>
+              <div>2. Network tab for /api/tasks request</div>
+              <div>3. Press F12 → Console for errors</div>
+            </div>
           </div>
         </div>
       </div>
@@ -306,8 +350,39 @@ const OversightHub = () => {
         <header>
           <h1>🧪 Dexter's Lab</h1>
         </header>
-        <div className="error-message" style={{ margin: '2rem' }}>
-          {error}
+        <div
+          className="error-message"
+          style={{ margin: '2rem', whiteSpace: 'pre-wrap' }}
+        >
+          <div
+            style={{
+              color: '#ff006e',
+              fontWeight: 'bold',
+              marginBottom: '1rem',
+            }}
+          >
+            ❌ {error}
+          </div>
+          <div style={{ fontSize: '0.9rem', color: '#aaa', marginTop: '1rem' }}>
+            <div>Troubleshooting:</div>
+            <div style={{ marginLeft: '1rem', fontSize: '0.85rem' }}>
+              <div>
+                1. Is backend running? Check:{' '}
+                <a
+                  href="http://localhost:8000/docs"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  http://localhost:8000/docs
+                </a>
+              </div>
+              <div>
+                2. Is the token valid? Open DevTools (F12) → Application →
+                localStorage → check 'auth_token'
+              </div>
+              <div>3. Try: Hard refresh (Ctrl+Shift+R) and login again</div>
+            </div>
+          </div>
         </div>
       </div>
     );
@@ -476,74 +551,25 @@ const OversightHub = () => {
             </>
           )}
 
-          {currentPage === 'tasks' && (
-            <div style={{ padding: '2rem' }}>
-              <h2>✅ Task Management</h2>
-              <p>Task management interface would go here.</p>
-            </div>
-          )}
+          {currentPage === 'tasks' && <TaskManagement />}
 
           {currentPage === 'models' && (
             <div style={{ padding: '2rem' }}>
               <h2>🤖 Model Configuration</h2>
-              <p>Model configuration interface would go here.</p>
-              {ollamaStatus && (
-                <div
-                  style={{
-                    backgroundColor: 'var(--bg-tertiary)',
-                    padding: '1rem',
-                    borderRadius: '0.5rem',
-                    marginTop: '1rem',
-                    fontFamily: 'monospace',
-                    fontSize: '0.9rem',
-                  }}
-                >
-                  <div>
-                    <strong>Ollama Status:</strong> {ollamaStatus.status}
-                  </div>
-                  <div>
-                    <strong>Connected:</strong>{' '}
-                    {ollamaStatus.connected ? '✅ Yes' : '❌ No'}
-                  </div>
-                  <div>
-                    <strong>Message:</strong> {ollamaStatus.message}
-                  </div>
-                  {ollamaStatus.models && (
-                    <div>
-                      <strong>Models:</strong> {ollamaStatus.models.join(', ')}
-                    </div>
-                  )}
-                </div>
-              )}
+              <SystemHealthDashboard
+                ollamaStatus={ollamaStatus}
+                ollamaConnected={ollamaConnected}
+              />
             </div>
           )}
 
-          {currentPage === 'social' && (
-            <div style={{ padding: '2rem' }}>
-              <h2>📱 Social Media</h2>
-              <p>Social media management interface would go here.</p>
-            </div>
-          )}
+          {currentPage === 'social' && <SocialMediaManagement />}
 
-          {currentPage === 'content' && (
-            <div style={{ padding: '2rem' }}>
-              <BlogPostCreator />
-            </div>
-          )}
+          {currentPage === 'content' && <BlogPostCreator />}
 
-          {currentPage === 'costs' && (
-            <div style={{ padding: '2rem' }}>
-              <h2>💰 Cost Tracking</h2>
-              <p>Cost tracking and analytics would go here.</p>
-            </div>
-          )}
+          {currentPage === 'costs' && <CostMetricsDashboard />}
 
-          {currentPage === 'analytics' && (
-            <div style={{ padding: '2rem' }}>
-              <h2>📈 Analytics</h2>
-              <p>Analytics dashboard would go here.</p>
-            </div>
-          )}
+          {currentPage === 'analytics' && <Marketing />}
 
           {currentPage === 'settings' && (
             <div style={{ padding: '2rem' }}>
@@ -695,7 +721,7 @@ const OversightHub = () => {
         {/* Chat Panel at Bottom */}
         <div className="chat-panel">
           <div className="chat-header">
-            <span>💬 Co-Founder Assistant</span>
+            <span>💬 Poindexter Assistant</span>
             <select
               className="model-selector"
               value={selectedModel}
@@ -749,7 +775,7 @@ const OversightHub = () => {
             <input
               type="text"
               className="chat-input"
-              placeholder="Ask the co-founder AI..."
+              placeholder="Ask Poindexter..."
               value={chatInput}
               onChange={(e) => setChatInput(e.target.value)}
               onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}

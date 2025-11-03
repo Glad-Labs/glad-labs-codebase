@@ -45,7 +45,6 @@ import {
   Send as SendIcon,
   Schedule as ScheduleIcon,
   Delete as DeleteIcon,
-  Edit as EditIcon,
   TrendingUp as TrendingUpIcon,
   CheckCircle as CheckCircleIcon,
   Cancel as CancelIcon,
@@ -135,7 +134,9 @@ const SocialMediaManagement = () => {
   // Fetch platforms status
   const fetchPlatforms = async () => {
     try {
-      const response = await fetch('http://localhost:8000/social/platforms');
+      const response = await fetch(
+        'http://localhost:8000/api/social/platforms'
+      );
       if (response.ok) {
         const data = await response.json();
         setPlatforms((prev) => {
@@ -157,7 +158,7 @@ const SocialMediaManagement = () => {
   const fetchPosts = async () => {
     try {
       setLoading(true);
-      const response = await fetch('http://localhost:8000/social/posts');
+      const response = await fetch('http://localhost:8000/api/social/posts');
       if (response.ok) {
         const data = await response.json();
         setPosts(data.posts || []);
@@ -174,7 +175,7 @@ const SocialMediaManagement = () => {
   const fetchTrending = async () => {
     try {
       const response = await fetch(
-        'http://localhost:8000/social/trending?platform=twitter'
+        'http://localhost:8000/api/social/trending?platform=twitter'
       );
       if (response.ok) {
         const data = await response.json();
@@ -188,7 +189,7 @@ const SocialMediaManagement = () => {
   // Connect platform
   const connectPlatform = async (platform) => {
     try {
-      const response = await fetch('http://localhost:8000/social/connect', {
+      const response = await fetch('http://localhost:8000/api/social/connect', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ platform }),
@@ -223,17 +224,20 @@ const SocialMediaManagement = () => {
         return;
       }
 
-      const response = await fetch('http://localhost:8000/social/generate', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          topic: aiTopic,
-          platform: selectedPlatforms[0], // Use first platform for generation
-          tone: newPost.tone,
-          include_hashtags: newPost.include_hashtags,
-          include_emojis: newPost.include_emojis,
-        }),
-      });
+      const response = await fetch(
+        'http://localhost:8000/api/social/generate',
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            topic: aiTopic,
+            platform: selectedPlatforms[0], // Use first platform for generation
+            tone: newPost.tone,
+            include_hashtags: newPost.include_hashtags,
+            include_emojis: newPost.include_emojis,
+          }),
+        }
+      );
 
       if (response.ok) {
         const data = await response.json();
@@ -249,13 +253,15 @@ const SocialMediaManagement = () => {
     }
   };
 
-  // Create post
-  const createPost = async (immediate = true) => {
+  // Create social post
+  const createPost = async (e) => {
+    if (e && e.preventDefault) {
+      e.preventDefault();
+    }
     if (!newPost.content.trim()) {
-      setError('Please enter post content');
+      setError('Please enter content for the post');
       return;
     }
-
     if (newPost.platforms.length === 0) {
       setError('Please select at least one platform');
       return;
@@ -263,20 +269,20 @@ const SocialMediaManagement = () => {
 
     setLoading(true);
     try {
-      const endpoint = immediate ? '/social/posts' : '/social/schedule';
-      const response = await fetch(`http://localhost:8000${endpoint}`, {
+      const response = await fetch('http://localhost:8000/api/social/posts', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           content: newPost.content,
           platforms: newPost.platforms,
-          scheduled_time: immediate ? null : newPost.scheduled_time,
+          scheduled_time: newPost.scheduled_time || null,
           tone: newPost.tone,
+          include_hashtags: newPost.include_hashtags,
+          include_emojis: newPost.include_emojis,
         }),
       });
 
       if (response.ok) {
-        setSuccessMessage(immediate ? 'Post published!' : 'Post scheduled!');
         setNewPost({
           content: '',
           platforms: [],
@@ -285,9 +291,8 @@ const SocialMediaManagement = () => {
           include_hashtags: true,
           include_emojis: true,
         });
-        setAiTopic('');
+        setSuccessMessage('Post created successfully');
         fetchPosts();
-        setScheduleDialogOpen(false);
       } else {
         setError('Failed to create post');
       }
@@ -311,17 +316,19 @@ const SocialMediaManagement = () => {
 
     setLoading(true);
     try {
-      const response = await fetch('http://localhost:8000/social/cross-post', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          content: newPost.content,
-          platforms: selectedPlatforms,
-        }),
-      });
+      const response = await fetch(
+        'http://localhost:8000/api/social/cross-post',
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            content: newPost.content,
+            platforms: selectedPlatforms,
+          }),
+        }
+      );
 
       if (response.ok) {
-        const data = await response.json();
         setSuccessMessage(
           `Cross-posted to ${selectedPlatforms.length} platforms!`
         );
@@ -340,7 +347,7 @@ const SocialMediaManagement = () => {
   const deletePost = async (postId) => {
     try {
       const response = await fetch(
-        `http://localhost:8000/social/posts/${postId}`,
+        `http://localhost:8000/api/social/posts/${postId}`,
         {
           method: 'DELETE',
         }
@@ -349,6 +356,8 @@ const SocialMediaManagement = () => {
       if (response.ok) {
         setSuccessMessage('Post deleted');
         fetchPosts();
+      } else {
+        setError('Failed to delete post');
       }
     } catch (err) {
       setError('Failed to delete post');
@@ -359,12 +368,14 @@ const SocialMediaManagement = () => {
   const viewAnalytics = async (postId) => {
     try {
       const response = await fetch(
-        `http://localhost:8000/social/analytics?post_id=${postId}`
+        `http://localhost:8000/api/social/posts/${postId}/analytics`
       );
       if (response.ok) {
-        const data = await response.json();
-        setSelectedPost(data);
+        const analyticsData = await response.json();
+        setSelectedPost({ id: postId, ...analyticsData });
         setAnalyticsDialogOpen(true);
+      } else {
+        setError('Failed to fetch analytics');
       }
     } catch (err) {
       setError('Failed to fetch analytics');
@@ -373,17 +384,58 @@ const SocialMediaManagement = () => {
 
   // Auto-refresh
   useEffect(() => {
-    fetchPlatforms();
-    fetchPosts();
-    fetchTrending();
+    // Define functions inside useEffect to avoid dependency issues
+    const refreshData = async () => {
+      try {
+        // Fetch platforms
+        const platformsRes = await fetch(
+          'http://localhost:8000/api/social/platforms'
+        );
+        if (platformsRes.ok) {
+          const data = await platformsRes.json();
+          setPlatforms((prev) => {
+            const updated = { ...prev };
+            Object.keys(data).forEach((platform) => {
+              if (updated[platform]) {
+                updated[platform].connected = data[platform].connected;
+              }
+            });
+            return updated;
+          });
+        }
+
+        // Fetch posts
+        setLoading(true);
+        const postsRes = await fetch('http://localhost:8000/api/social/posts');
+        if (postsRes.ok) {
+          const data = await postsRes.json();
+          setPosts(data.posts || []);
+          setAnalytics(data.analytics || analytics);
+        }
+        setLoading(false);
+
+        // Fetch trending
+        const trendingRes = await fetch(
+          'http://localhost:8000/api/social/trending?platform=twitter'
+        );
+        if (trendingRes.ok) {
+          const data = await trendingRes.json();
+          setTrendingTopics(data.topics || []);
+        }
+      } catch (err) {
+        console.error('Error refreshing data:', err);
+        setLoading(false);
+      }
+    };
+
+    refreshData();
 
     const interval = setInterval(() => {
-      fetchPlatforms();
-      fetchPosts();
+      refreshData();
     }, 30000); // Refresh every 30 seconds
 
     return () => clearInterval(interval);
-  }, []);
+  }, [analytics]);
 
   // Render platform connection cards
   const renderPlatformCards = () => (

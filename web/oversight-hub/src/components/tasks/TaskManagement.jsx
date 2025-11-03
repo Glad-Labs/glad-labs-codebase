@@ -77,7 +77,7 @@ const TaskManagement = () => {
    */
   const fetchTasks = async () => {
     try {
-      const response = await fetch('http://localhost:8000/tasks', {
+      const response = await fetch('http://localhost:8000/api/tasks', {
         signal: AbortSignal.timeout(5000),
       });
 
@@ -97,7 +97,7 @@ const TaskManagement = () => {
    */
   const handleCreateTask = async () => {
     try {
-      const response = await fetch('http://localhost:8000/tasks', {
+      const response = await fetch('http://localhost:8000/api/tasks', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(newTask),
@@ -124,11 +124,14 @@ const TaskManagement = () => {
    */
   const handleUpdateTask = async (taskId, updates) => {
     try {
-      const response = await fetch(`http://localhost:8000/tasks/${taskId}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(updates),
-      });
+      const response = await fetch(
+        `http://localhost:8000/api/tasks/${taskId}`,
+        {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(updates),
+        }
+      );
 
       if (response.ok) {
         fetchTasks();
@@ -145,9 +148,12 @@ const TaskManagement = () => {
     if (!window.confirm('Are you sure you want to delete this task?')) return;
 
     try {
-      const response = await fetch(`http://localhost:8000/tasks/${taskId}`, {
-        method: 'DELETE',
-      });
+      const response = await fetch(
+        `http://localhost:8000/api/tasks/${taskId}`,
+        {
+          method: 'DELETE',
+        }
+      );
 
       if (response.ok) {
         fetchTasks();
@@ -164,7 +170,7 @@ const TaskManagement = () => {
     if (selectedTasks.length === 0) return;
 
     try {
-      const response = await fetch('http://localhost:8000/tasks/bulk', {
+      const response = await fetch('http://localhost:8000/api/tasks/bulk', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

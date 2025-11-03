@@ -65,15 +65,17 @@ export default function Custom404() {
 
             {/* Action Buttons */}
             <div className="flex flex-col sm:flex-row gap-4 justify-center mb-16">
-              <Link href="/">
-                <a className="inline-block px-8 py-3 bg-cyan-500 hover:bg-cyan-600 text-white font-semibold rounded-lg transition-colors duration-200">
-                  ← Back to Home
-                </a>
+              <Link
+                href="/"
+                className="inline-block px-8 py-3 bg-cyan-500 hover:bg-cyan-600 text-white font-semibold rounded-lg transition-colors duration-200"
+              >
+                ← Back to Home
               </Link>
-              <Link href="/archive/1">
-                <a className="inline-block px-8 py-3 bg-gray-700 hover:bg-gray-600 text-white font-semibold rounded-lg transition-colors duration-200">
-                  Browse All Posts
-                </a>
+              <Link
+                href="/archive/1"
+                className="inline-block px-8 py-3 bg-gray-700 hover:bg-gray-600 text-white font-semibold rounded-lg transition-colors duration-200"
+              >
+                Browse All Posts
               </Link>
             </div>
 
@@ -85,20 +87,22 @@ export default function Custom404() {
                 </h2>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                   {suggestedPosts.map((post) => (
-                    <Link key={post.id} href={`/posts/${post.slug}`}>
-                      <a className="group block bg-gray-800 rounded-lg overflow-hidden hover:bg-gray-700 transition-colors duration-200 h-full">
-                        <div className="p-6 h-full flex flex-col">
-                          <h3 className="font-bold text-cyan-300 group-hover:text-cyan-200 transition-colors mb-2 line-clamp-2">
-                            {post.title}
-                          </h3>
-                          <p className="text-gray-400 text-sm line-clamp-3 mb-4 flex-1">
-                            {post.excerpt}
-                          </p>
-                          <span className="text-cyan-400 text-sm font-medium">
-                            Read Article →
-                          </span>
-                        </div>
-                      </a>
+                    <Link
+                      key={post.id}
+                      href={`/posts/${post.slug}`}
+                      className="group block bg-gray-800 rounded-lg overflow-hidden hover:bg-gray-700 transition-colors duration-200 h-full"
+                    >
+                      <div className="p-6 h-full flex flex-col">
+                        <h3 className="font-bold text-cyan-300 group-hover:text-cyan-200 transition-colors mb-2 line-clamp-2">
+                          {post.title}
+                        </h3>
+                        <p className="text-gray-400 text-sm line-clamp-3 mb-4 flex-1">
+                          {post.excerpt}
+                        </p>
+                        <span className="text-cyan-400 text-sm font-medium">
+                          Read Article →
+                        </span>
+                      </div>
                     </Link>
                   ))}
                 </div>

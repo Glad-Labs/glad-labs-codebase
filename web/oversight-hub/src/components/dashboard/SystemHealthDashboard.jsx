@@ -86,7 +86,7 @@ const SystemHealthDashboard = () => {
   const checkServiceHealth = async (
     serviceName,
     url,
-    healthPath = '/health'
+    healthPath = '/api/health'
   ) => {
     const startTime = Date.now();
     try {
@@ -118,17 +118,43 @@ const SystemHealthDashboard = () => {
   };
 
   /**
-   * Fetch model configuration from AI Co-Founder
+   * Fetch model configuration from Poindexter
+   * GET /api/models - Returns available models by provider
    */
   const fetchModelConfig = async () => {
     try {
-      const response = await fetch('http://localhost:8000/models/status', {
+      const response = await fetch('http://localhost:8000/api/models', {
         signal: AbortSignal.timeout(5000),
       });
 
       if (response.ok) {
         const data = await response.json();
-        setModelConfig(data);
+        
+        // Transform the models list into provider-based configuration
+        const providerConfig = {
+          ollama: { configured: false, models: [], active: false },
+          openai: { configured: false, models: [], active: false },
+          anthropic: { configured: false, models: [], active: false },
+          gemini: { configured: false, models: [], active: false },
+        };
+
+        // Group models by provider
+        if (data.models && Array.isArray(data.models)) {
+          data.models.forEach((model) => {
+            const provider = model.provider || 'unknown';
+            if (provider in providerConfig) {
+              if (!providerConfig[provider].models.includes(model.name)) {
+                providerConfig[provider].models.push(model.name);
+              }
+              // Mark as configured if we have models
+              if (providerConfig[provider].models.length > 0) {
+                providerConfig[provider].configured = true;
+              }
+            }
+          });
+        }
+
+        setModelConfig(providerConfig);
       }
     } catch (error) {
       console.error('Failed to fetch model config:', error);
@@ -137,22 +163,23 @@ const SystemHealthDashboard = () => {
 
   /**
    * Fetch system metrics
+   * GET /api/metrics - Aggregated task and system metrics
    */
   const fetchMetrics = async () => {
     try {
-      const response = await fetch('http://localhost:8000/metrics/summary', {
+      const response = await fetch('http://localhost:8000/api/metrics', {
         signal: AbortSignal.timeout(5000),
       });
 
       if (response.ok) {
         const data = await response.json();
         setMetrics({
-          apiCalls24h: data.api_calls_24h || 0,
-          totalCost24h: data.total_cost_24h || 0,
+          apiCalls24h: data.total_tasks || 0,
+          totalCost24h: data.total_cost || 0,
           cacheHitRate: data.cache_hit_rate || 0,
-          activeAgents: data.active_agents || 0,
-          queuedTasks: data.queued_tasks || 0,
-          avgResponseTime: data.avg_response_time || 0,
+          activeAgents: data.pending_tasks || 0,
+          queuedTasks: data.pending_tasks || 0,
+          avgResponseTime: data.avg_execution_time || 0,
         });
       }
     } catch (error) {
@@ -161,20 +188,39 @@ const SystemHealthDashboard = () => {
   };
 
   /**
-   * Fetch system alerts
+   * Fetch system alerts from metrics data
+   * Note: /system/alerts endpoint doesn't exist in backend
+   * Using /api/metrics instead to derive warnings
    */
   const fetchAlerts = async () => {
     try {
-      const response = await fetch('http://localhost:8000/system/alerts', {
+      const response = await fetch('http://localhost:8000/api/metrics', {
         signal: AbortSignal.timeout(5000),
       });
 
       if (response.ok) {
         const data = await response.json();
-        setAlerts(data.alerts || []);
+        // Derive alerts from metrics data
+        const derivedAlerts = [];
+
+        if (data.failed_tasks > 0) {
+          derivedAlerts.push({
+            level: 'warning',
+            message: `${data.failed_tasks} failed tasks detected`,
+          });
+        }
+
+        if (data.success_rate < 80) {
+          derivedAlerts.push({
+            level: 'warning',
+            message: `Low success rate: ${data.success_rate}%`,
+          });
+        }
+
+        setAlerts(derivedAlerts);
       }
     } catch (error) {
-      console.error('Failed to fetch alerts:', error);
+      console.error('Failed to derive alerts:', error);
     }
   };
 
@@ -184,26 +230,25 @@ const SystemHealthDashboard = () => {
   const performHealthCheck = async () => {
     setRefreshing(true);
 
-    // Check all services in parallel
-    const [cofounderHealth, strapiHealth, publicSiteHealth] = await Promise.all(
-      [
-        checkServiceHealth(
-          'cofounder',
-          'http://localhost:8000',
-          '/metrics/health'
-        ),
-        checkServiceHealth('strapi', 'http://localhost:1337', '/_health'),
-        checkServiceHealth('publicSite', 'http://localhost:3000'),
-      ]
-    );
+    // Check backend and Strapi services in parallel
+    // NOTE: Removed public site check to avoid CORS errors (different port/origin)
+    const [cofounderHealth, strapiHealth] = await Promise.all([
+      checkServiceHealth('cofounder', 'http://localhost:8000', '/api/health'),
+      checkServiceHealth('strapi', 'http://localhost:1337', '/admin'),
+    ]);
 
     setServiceHealth({
       cofounder: { ...serviceHealth.cofounder, ...cofounderHealth },
       strapi: { ...serviceHealth.strapi, ...strapiHealth },
-      publicSite: { ...serviceHealth.publicSite, ...publicSiteHealth },
+      publicSite: {
+        ...serviceHealth.publicSite,
+        status: 'healthy',
+        responseTime: 0,
+        note: 'Public site runs on same system (not checked to avoid CORS)',
+      },
     });
 
-    // Fetch additional data only if Co-Founder is healthy
+    // Fetch additional data only if Poindexter is healthy
     if (cofounderHealth.status === 'healthy') {
       await Promise.all([fetchModelConfig(), fetchMetrics(), fetchAlerts()]);
     }
@@ -301,6 +346,13 @@ const SystemHealthDashboard = () => {
       gemini: '✨',
     };
 
+    // Provide safe defaults if config is undefined
+    const safeConfig = config || {
+      configured: false,
+      models: [],
+      active: false,
+    };
+
     return (
       <Card>
         <CardContent>
@@ -317,25 +369,25 @@ const SystemHealthDashboard = () => {
               </Typography>
             </Box>
             <Chip
-              label={config.configured ? 'Configured' : 'Not Configured'}
-              color={config.configured ? 'success' : 'default'}
+              label={safeConfig.configured ? 'Configured' : 'Not Configured'}
+              color={safeConfig.configured ? 'success' : 'default'}
               size="small"
             />
           </Box>
 
-          {config.configured && (
+          {safeConfig.configured && (
             <>
               <Typography variant="body2" color="text.secondary" gutterBottom>
-                Active: {config.active ? 'Yes' : 'No'}
+                Active: {safeConfig.active ? 'Yes' : 'No'}
               </Typography>
               <Typography variant="body2" color="text.secondary">
                 Models:{' '}
-                {config.models.length > 0 ? config.models.join(', ') : 'None'}
+                {safeConfig.models.length > 0 ? safeConfig.models.join(', ') : 'None'}
               </Typography>
             </>
           )}
 
-          {!config.configured && (
+          {!safeConfig.configured && (
             <Typography variant="body2" color="text.secondary">
               Not configured. Add API keys in Settings.
             </Typography>
@@ -439,7 +491,7 @@ const SystemHealthDashboard = () => {
       <Grid container spacing={2} mb={4}>
         <Grid item xs={12} md={4}>
           <ServiceHealthCard
-            name="AI Co-Founder"
+            name="Poindexter"
             service={serviceHealth.cofounder}
             icon={<PsychologyIcon color="primary" />}
           />

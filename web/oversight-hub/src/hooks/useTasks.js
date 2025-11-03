@@ -8,17 +8,43 @@ import useStore from '../store/useStore';
  * @returns {Object} { loading, error } - Loading and error states
  */
 
-// Helper: Fetch with timeout
-const fetchWithTimeout = (url, options = {}, timeoutMs = 5000) => {
-  return Promise.race([
-    fetch(url, options),
-    new Promise((_, reject) =>
-      setTimeout(
-        () => reject(new Error(`Request timeout after ${timeoutMs}ms`)),
-        timeoutMs
-      )
-    ),
-  ]);
+// Helper: Fetch with timeout and retry logic
+const fetchWithTimeout = async (
+  url,
+  options = {},
+  timeoutMs = 15000,
+  retries = 2
+) => {
+  let lastError;
+
+  for (let attempt = 0; attempt <= retries; attempt++) {
+    try {
+      return await Promise.race([
+        fetch(url, options),
+        new Promise((_, reject) =>
+          setTimeout(
+            () => reject(new Error(`Request timeout after ${timeoutMs}ms`)),
+            timeoutMs
+          )
+        ),
+      ]);
+    } catch (err) {
+      lastError = err;
+
+      // If it's a timeout and we have retries left, wait before retrying
+      if (err.message.includes('timeout') && attempt < retries) {
+        const waitTime = 1000 * (attempt + 1); // Exponential backoff: 1s, 2s
+        console.warn(
+          `Request timeout, retrying in ${waitTime}ms... (Attempt ${attempt + 1}/${retries})`
+        );
+        await new Promise((r) => setTimeout(r, waitTime));
+      } else {
+        throw err;
+      }
+    }
+  }
+
+  throw lastError;
 };
 
 const useTasks = () => {
@@ -60,8 +86,8 @@ const useTasks = () => {
             method: 'GET',
             headers,
           },
-          5000
-        ); // 5 second timeout
+          15000
+        ); // 15 second timeout - allows for backend processing
 
         if (!response.ok) {
           if (response.status === 401) {

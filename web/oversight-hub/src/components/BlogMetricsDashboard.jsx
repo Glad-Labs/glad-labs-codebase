@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import { getAuthToken } from '../services/authService';
 import TaskPreviewModal from './TaskPreviewModal';
 import './BlogMetricsDashboard.css';
 
@@ -24,8 +25,14 @@ const BlogMetricsDashboard = () => {
     const loadTasks = async () => {
       try {
         setLoading(true);
+        const token = getAuthToken();
+        const headers = {};
+        if (token) {
+          headers['Authorization'] = `Bearer ${token}`;
+        }
         const response = await axios.get('http://localhost:8000/api/tasks', {
-          timeout: 5000,
+          timeout: 120000,
+          headers,
         });
 
         const allTasks = Array.isArray(response.data)

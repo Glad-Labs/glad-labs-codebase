@@ -94,21 +94,37 @@ const ModelManagement = () => {
 
   /**
    * Fetch model configuration from backend
+   * GET /api/v1/models/available - List all available models
    */
   const fetchModels = async () => {
     try {
-      const response = await fetch('http://localhost:8000/models/status', {
-        signal: AbortSignal.timeout(5000),
-      });
+      const response = await fetch(
+        'http://localhost:8000/api/v1/models/available',
+        {
+          signal: AbortSignal.timeout(5000),
+        }
+      );
 
       if (response.ok) {
         const data = await response.json();
-        setProviders((prev) => ({
-          ollama: { ...prev.ollama, ...data.ollama },
-          openai: { ...prev.openai, ...data.openai },
-          anthropic: { ...prev.anthropic, ...data.anthropic },
-          gemini: { ...prev.gemini, ...data.gemini },
-        }));
+        // Transform response to provider format
+        const providerData = {
+          ollama: { models: [], configured: false, active: false },
+          openai: { models: [], configured: false, active: false },
+          anthropic: { models: [], configured: false, active: false },
+          gemini: { models: [], configured: false, active: false },
+        };
+
+        // Organize models by provider
+        if (data.models && Array.isArray(data.models)) {
+          data.models.forEach((model) => {
+            if (providerData[model.provider]) {
+              providerData[model.provider].models.push(model.name);
+            }
+          });
+        }
+
+        setProviders(providerData);
       }
     } catch (error) {
       console.error('Failed to fetch models:', error);
@@ -119,16 +135,23 @@ const ModelManagement = () => {
 
   /**
    * Fetch usage statistics
+   * Uses /api/metrics endpoint to derive usage data
    */
   const fetchUsageStats = async () => {
     try {
-      const response = await fetch('http://localhost:8000/models/usage', {
+      const response = await fetch('http://localhost:8000/api/metrics', {
         signal: AbortSignal.timeout(5000),
       });
 
       if (response.ok) {
         const data = await response.json();
-        setUsageStats(data.usage || {});
+        // Transform metrics to usage stats format
+        setUsageStats({
+          totalRequests: data.total_tasks || 0,
+          successRate: data.success_rate || 0,
+          averageLatency: data.avg_execution_time || 0,
+          costThisMonth: data.total_cost || 0,
+        });
       }
     } catch (error) {
       console.error('Failed to fetch usage stats:', error);
@@ -136,28 +159,30 @@ const ModelManagement = () => {
   };
 
   /**
-   * Toggle model provider
+   * Toggle model provider (update local state)
+   * Note: actual provider toggle would need backend endpoint
    */
   const handleToggleProvider = async (provider) => {
     try {
-      const response = await fetch(
-        `http://localhost:8000/models/${provider}/toggle`,
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-        }
-      );
+      // For now, just toggle local state
+      setProviders((prev) => ({
+        ...prev,
+        [provider]: {
+          ...prev[provider],
+          active: !prev[provider].active,
+        },
+      }));
 
-      if (response.ok) {
-        fetchModels();
-      }
+      // Optionally call API to persist the setting
+      // await fetch(`/api/settings/models/${provider}`, { method: 'PUT', ... })
     } catch (error) {
       console.error('Failed to toggle provider:', error);
     }
   };
 
   /**
-   * Test model connectivity
+   * Test model connectivity via chat endpoint
+   * POST /api/chat - Send test message to model
    */
   const handleTestModel = async (provider, modelName) => {
     const testId = `${provider}-${modelName}`;
@@ -165,13 +190,14 @@ const ModelManagement = () => {
     setTestResult(null);
 
     try {
-      const response = await fetch('http://localhost:8000/models/test', {
+      const response = await fetch('http://localhost:8000/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          provider,
+          message: testPrompt,
           model: modelName,
-          prompt: testPrompt,
+          provider: provider,
+          conversation_id: `test-${Date.now()}`,
         }),
         signal: AbortSignal.timeout(30000), // 30 second timeout for generation
       });
@@ -180,10 +206,10 @@ const ModelManagement = () => {
         const data = await response.json();
         setTestResult({
           success: true,
-          response: data.response,
-          responseTime: data.response_time,
-          tokenCount: data.token_count,
-          cost: data.cost,
+          response: data.response || 'Model responded successfully',
+          responseTime: data.response_time || 0,
+          tokenCount: data.token_count || 0,
+          cost: data.cost || 0,
         });
       } else {
         setTestResult({
@@ -202,22 +228,25 @@ const ModelManagement = () => {
   };
 
   /**
-   * Set default model
+   * Set default model (update local state)
+   * Could optionally use /api/settings endpoint to persist
    */
   const handleSetDefault = async (provider, modelName) => {
     try {
-      const response = await fetch('http://localhost:8000/models/default', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          provider,
-          model: modelName,
-        }),
-      });
+      // Update local state
+      setProviders((prev) => ({
+        ...prev,
+        [provider]: {
+          ...prev[provider],
+          defaultModel: modelName,
+        },
+      }));
 
-      if (response.ok) {
-        fetchModels();
-      }
+      // Optionally persist via settings endpoint
+      // await fetch(`/api/settings/default-model`, {
+      //   method: 'PUT',
+      //   body: JSON.stringify({ provider, model: modelName })
+      // })
     } catch (error) {
       console.error('Failed to set default model:', error);
     }

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
-import { db } from '../../lib/firebase';
-import { collection, onSnapshot, query, orderBy } from 'firebase/firestore';
+import axios from 'axios';
+
+const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:8000';
 
 export const useFinancials = () => {
   const [entries, setEntries] = useState([]);
@@ -8,29 +9,56 @@ export const useFinancials = () => {
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    setLoading(true);
-    const q = query(collection(db, 'financials'), orderBy('date', 'desc'));
+    let isMounted = true;
+    let retryCount = 0;
+    const maxRetries = 3;
 
-    const unsubscribe = onSnapshot(
-      q,
-      (querySnapshot) => {
-        const entriesData = querySnapshot.docs.map((doc) => ({
-          id: doc.id,
-          ...doc.data(),
-        }));
-        setEntries(entriesData);
-        setLoading(false);
-      },
-      (err) => {
-        setError(
-          'Failed to fetch financial data. Please check Firestore connection and permissions.'
-        );
-        setLoading(false);
-        console.error(err);
+    const fetchFinancials = async () => {
+      try {
+        setLoading(true);
+        const response = await axios.get(`${API_URL}/api/financials`, {
+          timeout: 15000,
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        });
+
+        if (isMounted) {
+          const entriesData = Array.isArray(response.data)
+            ? response.data
+            : response.data.results || response.data.data || [];
+
+          setEntries(entriesData);
+          setError(null);
+        }
+      } catch (err) {
+        if (isMounted) {
+          if (retryCount < maxRetries && err.code !== 'ECONNABORTED') {
+            retryCount++;
+            console.warn(
+              `Failed to fetch financials (attempt ${retryCount}/${maxRetries}):`,
+              err.message
+            );
+            setTimeout(fetchFinancials, 2000 * retryCount);
+          } else {
+            setError(
+              `Failed to fetch financial data: ${err.message}. Please ensure the backend is running.`
+            );
+            console.error('Error fetching financials:', err);
+          }
+        }
+      } finally {
+        if (isMounted) {
+          setLoading(false);
+        }
       }
-    );
+    };
 
-    return () => unsubscribe();
+    fetchFinancials();
+
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
   return { entries, loading, error };
