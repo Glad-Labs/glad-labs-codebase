@@ -16,7 +16,7 @@ class ModelService {
    */
   async getAvailableModels() {
     try {
-      const response = await fetch('/api/v1/models/available', {
+      const response = await fetch('http://localhost:8000/api/models', {
         headers: {
           Accept: 'application/json',
         },
@@ -83,7 +83,7 @@ class ModelService {
    */
   async getProviderStatus() {
     try {
-      const response = await fetch('/api/v1/models/status', {
+      const response = await fetch('http://localhost:8000/api/models/status', {
         headers: {
           Accept: 'application/json',
         },

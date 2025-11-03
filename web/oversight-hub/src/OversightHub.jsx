@@ -391,7 +391,14 @@ const OversightHub = () => {
   return (
     <div className="oversight-hub">
       <header>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '1rem',
+            flex: 1,
+          }}
+        >
           <h1>🧪 Dexter's Lab</h1>
           <button
             className="nav-menu-btn"
@@ -422,10 +429,6 @@ const OversightHub = () => {
               🔴 Ollama Offline
             </div>
           )}
-        </div>
-        <div className="header-actions">
-          <button className="new-task-btn">+ New Task</button>
-          <button className="intervene-btn">Intervene</button>
         </div>
       </header>
 

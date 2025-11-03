@@ -84,11 +84,13 @@ header {
   padding: 1.5rem 2rem;
   border-bottom: 2px solid var(--accent-primary);
   display: flex;
-  justify-content: space-between;
+  justify-content: flex-start;
   align-items: center;
   box-shadow: var(--shadow-medium);
   backdrop-filter: blur(10px);
   z-index: 100;
+  position: relative;
+  overflow: visible;
 }
 
 header h1 {
@@ -135,17 +137,21 @@ header h1 {
 
 /* --- Navigation Menu Dropdown --- */
 .nav-menu-dropdown {
-  position: absolute;
+  position: fixed;
   top: 73px;
   left: 0;
+  right: auto;
   background: var(--bg-secondary);
   border: 1px solid var(--accent-primary);
   border-top: none;
-  border-radius: 0 0 4px 4px;
+  border-radius: 0 4px 4px 0;
   box-shadow: var(--shadow-medium);
-  z-index: 99;
+  z-index: 150;
   min-width: 250px;
+  max-width: 90vw;
   animation: slideDown 0.2s ease;
+  max-height: calc(100vh - 73px);
+  overflow-y: auto;
 }
 
 @keyframes slideDown {

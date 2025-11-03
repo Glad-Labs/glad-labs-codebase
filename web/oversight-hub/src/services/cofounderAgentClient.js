@@ -121,12 +121,27 @@ export async function getTasks(limit = 50, offset = 0) {
 
 export async function getTaskStatus(taskId) {
   // Try new endpoint first, fall back to old endpoint
+  // Use 180 second timeout for task status (allows for long-running operations)
   try {
-    return await makeRequest(`/api/content/blog-posts/tasks/${taskId}`, 'GET');
+    return await makeRequest(
+      `/api/content/blog-posts/tasks/${taskId}`,
+      'GET',
+      null,
+      false,
+      null,
+      180000
+    );
   } catch (error) {
     if (error.status === 404) {
-      // Fall back to old endpoint
-      return await makeRequest(`/api/tasks/${taskId}`, 'GET');
+      // Fall back to old endpoint with 180 second timeout
+      return await makeRequest(
+        `/api/tasks/${taskId}`,
+        'GET',
+        null,
+        false,
+        null,
+        180000
+      );
     }
     throw error;
   }

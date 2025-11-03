@@ -382,7 +382,7 @@ const SocialMediaManagement = () => {
     }
   };
 
-  // Auto-refresh
+  // Auto-refresh - but don't include analytics in dependency array to avoid infinite loops
   useEffect(() => {
     // Define functions inside useEffect to avoid dependency issues
     const refreshData = async () => {
@@ -410,7 +410,7 @@ const SocialMediaManagement = () => {
         if (postsRes.ok) {
           const data = await postsRes.json();
           setPosts(data.posts || []);
-          setAnalytics(data.analytics || analytics);
+          setAnalytics(data.analytics || {});
         }
         setLoading(false);
 
@@ -428,14 +428,16 @@ const SocialMediaManagement = () => {
       }
     };
 
+    // Fetch immediately on component mount
     refreshData();
 
+    // Then set up interval for periodic refresh (2 minutes instead of 30 seconds)
     const interval = setInterval(() => {
       refreshData();
-    }, 30000); // Refresh every 30 seconds
+    }, 120000); // Refresh every 2 minutes instead of 30 seconds
 
     return () => clearInterval(interval);
-  }, [analytics]);
+  }, []); // Empty dependency array - only run on mount/unmount
 
   // Render platform connection cards
   const renderPlatformCards = () => (

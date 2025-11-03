@@ -5,16 +5,11 @@ import {
   Typography,
   Button,
   Chip,
-  TextField,
   Select,
   MenuItem,
   FormControl,
   InputLabel,
   IconButton,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
   Table,
   TableBody,
   TableCell,
@@ -40,6 +35,9 @@ import {
   CheckCircle as CheckCircleIcon,
   Assignment as AssignmentIcon,
 } from '@mui/icons-material';
+import CreateTaskModal from './CreateTaskModal';
+import TaskQueueView from './TaskQueueView';
+import ResultPreviewPanel from './ResultPreviewPanel';
 
 /**
  * TaskManagement - Comprehensive task queue and management interface
@@ -60,23 +58,17 @@ const TaskManagement = () => {
   const [filterPriority, setFilterPriority] = useState('all');
   const [filterAgent, setFilterAgent] = useState('all');
   const [currentTab, setCurrentTab] = useState(0); // 0: Active, 1: Completed, 2: Failed
-  const [createDialogOpen, setCreateDialogOpen] = useState(false);
-  const [editingTask, setEditingTask] = useState(null);
-
-  // New task form state
-  const [newTask, setNewTask] = useState({
-    title: '',
-    description: '',
-    agent: 'content',
-    priority: 'medium',
-    parameters: {},
-  });
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [selectedTask, setSelectedTask] = useState(null);
+  const [isPublishing, setIsPublishing] = useState(false);
+  const [error, setError] = useState(null);
 
   /**
    * Fetch tasks from backend
    */
   const fetchTasks = async () => {
     try {
+      setError(null);
       const response = await fetch('http://localhost:8000/api/tasks', {
         signal: AbortSignal.timeout(5000),
       });
@@ -84,60 +76,17 @@ const TaskManagement = () => {
       if (response.ok) {
         const data = await response.json();
         setTasks(data.tasks || []);
+      } else {
+        setError(`Failed to fetch tasks: ${response.statusText}`);
+        console.error('Failed to fetch tasks:', response.statusText);
       }
     } catch (error) {
+      const errorMessage =
+        error instanceof Error ? error.message : 'Unknown error';
+      setError(`Unable to load tasks: ${errorMessage}`);
       console.error('Failed to fetch tasks:', error);
     } finally {
       setLoading(false);
-    }
-  };
-
-  /**
-   * Create new task
-   */
-  const handleCreateTask = async () => {
-    try {
-      const response = await fetch('http://localhost:8000/api/tasks', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(newTask),
-      });
-
-      if (response.ok) {
-        setCreateDialogOpen(false);
-        setNewTask({
-          title: '',
-          description: '',
-          agent: 'content',
-          priority: 'medium',
-          parameters: {},
-        });
-        fetchTasks();
-      }
-    } catch (error) {
-      console.error('Failed to create task:', error);
-    }
-  };
-
-  /**
-   * Update existing task
-   */
-  const handleUpdateTask = async (taskId, updates) => {
-    try {
-      const response = await fetch(
-        `http://localhost:8000/api/tasks/${taskId}`,
-        {
-          method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(updates),
-        }
-      );
-
-      if (response.ok) {
-        fetchTasks();
-      }
-    } catch (error) {
-      console.error('Failed to update task:', error);
     }
   };
 
@@ -148,6 +97,7 @@ const TaskManagement = () => {
     if (!window.confirm('Are you sure you want to delete this task?')) return;
 
     try {
+      setError(null);
       const response = await fetch(
         `http://localhost:8000/api/tasks/${taskId}`,
         {
@@ -157,8 +107,14 @@ const TaskManagement = () => {
 
       if (response.ok) {
         fetchTasks();
+      } else {
+        setError(`Failed to delete task: ${response.statusText}`);
+        console.error('Failed to delete task:', response.statusText);
       }
     } catch (error) {
+      const errorMessage =
+        error instanceof Error ? error.message : 'Unknown error';
+      setError(`Error deleting task: ${errorMessage}`);
       console.error('Failed to delete task:', error);
     }
   };
@@ -170,6 +126,7 @@ const TaskManagement = () => {
     if (selectedTasks.length === 0) return;
 
     try {
+      setError(null);
       const response = await fetch('http://localhost:8000/api/tasks/bulk', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -182,8 +139,14 @@ const TaskManagement = () => {
       if (response.ok) {
         setSelectedTasks([]);
         fetchTasks();
+      } else {
+        setError(`Bulk action failed: ${response.statusText}`);
+        console.error('Bulk action failed:', response.statusText);
       }
     } catch (error) {
+      const errorMessage =
+        error instanceof Error ? error.message : 'Unknown error';
+      setError(`Error performing bulk action: ${errorMessage}`);
       console.error('Failed to perform bulk action:', error);
     }
   };
@@ -283,43 +246,106 @@ const TaskManagement = () => {
         display="flex"
         justifyContent="space-between"
         alignItems="center"
-        mb={3}
+        mb={4}
+        sx={{
+          borderBottom: '2px solid rgba(0, 212, 255, 0.1)',
+          pb: 2,
+        }}
       >
         <Box>
-          <Typography variant="h4" gutterBottom>
-            Task Management
+          <Typography
+            variant="h4"
+            gutterBottom
+            sx={{
+              color: '#00d4ff',
+              fontWeight: 700,
+              letterSpacing: '0.5px',
+            }}
+          >
+            📋 Task Management
           </Typography>
           <Typography variant="body2" color="text.secondary">
             {tasks.length} total tasks • {selectedTasks.length} selected
           </Typography>
         </Box>
-        <Box display="flex" gap={1}>
+        <Box display="flex" gap={1.5}>
           <Button
             variant="outlined"
             startIcon={<RefreshIcon />}
             onClick={fetchTasks}
+            sx={{
+              textTransform: 'none',
+              borderColor: '#00d4ff',
+              color: '#00d4ff',
+              '&:hover': {
+                backgroundColor: 'rgba(0, 212, 255, 0.1)',
+                borderColor: '#00d4ff',
+              },
+            }}
           >
             Refresh
           </Button>
           <Button
             variant="contained"
             startIcon={<AddIcon />}
-            onClick={() => setCreateDialogOpen(true)}
+            onClick={() => setShowCreateModal(true)}
+            sx={{
+              textTransform: 'none',
+              backgroundColor: '#00d4ff',
+              color: '#000',
+              fontWeight: 600,
+              '&:hover': {
+                backgroundColor: '#00f0ff',
+              },
+            }}
           >
-            Create Task
+            + Create Task
           </Button>
         </Box>
       </Box>
 
+      {/* Error Alert */}
+      {error && (
+        <Alert
+          severity="error"
+          onClose={() => setError(null)}
+          sx={{
+            mb: 3,
+            backgroundColor: 'rgba(255, 107, 107, 0.1)',
+            border: '1px solid rgba(255, 107, 107, 0.3)',
+            borderRadius: 1.5,
+            color: '#ff6b6b',
+            '& .MuiAlert-icon': {
+              color: '#ff6b6b',
+            },
+          }}
+        >
+          <Typography sx={{ fontWeight: 600 }}>{error}</Typography>
+        </Alert>
+      )}
+
       {/* Bulk Actions */}
       {selectedTasks.length > 0 && (
-        <Alert severity="info" sx={{ mb: 2 }}>
+        <Alert
+          severity="info"
+          sx={{
+            mb: 3,
+            backgroundColor: 'rgba(0, 212, 255, 0.1)',
+            border: '1px solid rgba(0, 212, 255, 0.3)',
+            borderRadius: 1.5,
+            color: '#00d4ff',
+            '& .MuiAlert-icon': {
+              color: '#00d4ff',
+            },
+          }}
+        >
           <Box
             display="flex"
             alignItems="center"
             justifyContent="space-between"
+            gap={2}
           >
-            <Typography>
+            <Typography sx={{ fontWeight: 600 }}>
               {selectedTasks.length} task{selectedTasks.length > 1 ? 's' : ''}{' '}
               selected
             </Typography>
@@ -328,6 +354,15 @@ const TaskManagement = () => {
                 size="small"
                 startIcon={<PlayIcon />}
                 onClick={() => handleBulkAction('resume')}
+                sx={{
+                  textTransform: 'none',
+                  color: '#00d4ff',
+                  borderColor: '#00d4ff',
+                  '&:hover': {
+                    backgroundColor: 'rgba(0, 212, 255, 0.1)',
+                  },
+                }}
+                variant="outlined"
               >
                 Resume
               </Button>
@@ -335,6 +370,15 @@ const TaskManagement = () => {
                 size="small"
                 startIcon={<PauseIcon />}
                 onClick={() => handleBulkAction('pause')}
+                sx={{
+                  textTransform: 'none',
+                  color: '#ffaa00',
+                  borderColor: '#ffaa00',
+                  '&:hover': {
+                    backgroundColor: 'rgba(255, 170, 0, 0.1)',
+                  },
+                }}
+                variant="outlined"
               >
                 Pause
               </Button>
@@ -342,6 +386,15 @@ const TaskManagement = () => {
                 size="small"
                 startIcon={<StopIcon />}
                 onClick={() => handleBulkAction('cancel')}
+                sx={{
+                  textTransform: 'none',
+                  color: '#ff6b6b',
+                  borderColor: '#ff6b6b',
+                  '&:hover': {
+                    backgroundColor: 'rgba(255, 107, 107, 0.1)',
+                  },
+                }}
+                variant="outlined"
               >
                 Cancel
               </Button>
@@ -349,6 +402,15 @@ const TaskManagement = () => {
                 size="small"
                 startIcon={<DeleteIcon />}
                 onClick={() => handleBulkAction('delete')}
+                sx={{
+                  textTransform: 'none',
+                  color: '#ff6b6b',
+                  borderColor: '#ff6b6b',
+                  '&:hover': {
+                    backgroundColor: 'rgba(255, 107, 107, 0.1)',
+                  },
+                }}
+                variant="outlined"
                 color="error"
               >
                 Delete
@@ -359,8 +421,25 @@ const TaskManagement = () => {
       )}
 
       {/* Tabs */}
-      <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 2 }}>
-        <Tabs value={currentTab} onChange={(e, v) => setCurrentTab(v)}>
+      <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 3 }}>
+        <Tabs
+          value={currentTab}
+          onChange={(e, v) => setCurrentTab(v)}
+          sx={{
+            '& .MuiTab-root': {
+              textTransform: 'none',
+              fontWeight: 600,
+              fontSize: '0.95rem',
+              color: 'rgba(255, 255, 255, 0.6)',
+              '&.Mui-selected': {
+                color: '#00d4ff',
+              },
+            },
+            '& .MuiTabs-indicator': {
+              backgroundColor: '#00d4ff',
+            },
+          }}
+        >
           <Tab
             label="Active Tasks"
             icon={<AssignmentIcon />}
@@ -376,14 +455,36 @@ const TaskManagement = () => {
       </Box>
 
       {/* Filters */}
-      <Grid container spacing={2} mb={2}>
+      <Grid container spacing={2} mb={3}>
         <Grid item xs={12} sm={4} md={3}>
           <FormControl fullWidth size="small">
-            <InputLabel>Status</InputLabel>
+            <InputLabel
+              sx={{
+                color: 'rgba(255, 255, 255, 0.6) !important',
+                '&.Mui-focused': {
+                  color: '#00d4ff !important',
+                },
+              }}
+            >
+              Status
+            </InputLabel>
             <Select
               value={filterStatus}
               label="Status"
               onChange={(e) => setFilterStatus(e.target.value)}
+              sx={{
+                backgroundColor: 'rgba(255, 255, 255, 0.05)',
+                borderRadius: 1,
+                '& .MuiOutlinedInput-notchedOutline': {
+                  borderColor: 'rgba(0, 212, 255, 0.2)',
+                },
+                '&:hover .MuiOutlinedInput-notchedOutline': {
+                  borderColor: 'rgba(0, 212, 255, 0.4)',
+                },
+                '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                  borderColor: '#00d4ff',
+                },
+              }}
             >
               <MenuItem value="all">All</MenuItem>
               <MenuItem value="queued">Queued</MenuItem>
@@ -397,11 +498,33 @@ const TaskManagement = () => {
         </Grid>
         <Grid item xs={12} sm={4} md={3}>
           <FormControl fullWidth size="small">
-            <InputLabel>Priority</InputLabel>
+            <InputLabel
+              sx={{
+                color: 'rgba(255, 255, 255, 0.6) !important',
+                '&.Mui-focused': {
+                  color: '#00d4ff !important',
+                },
+              }}
+            >
+              Priority
+            </InputLabel>
             <Select
               value={filterPriority}
               label="Priority"
               onChange={(e) => setFilterPriority(e.target.value)}
+              sx={{
+                backgroundColor: 'rgba(255, 255, 255, 0.05)',
+                borderRadius: 1,
+                '& .MuiOutlinedInput-notchedOutline': {
+                  borderColor: 'rgba(0, 212, 255, 0.2)',
+                },
+                '&:hover .MuiOutlinedInput-notchedOutline': {
+                  borderColor: 'rgba(0, 212, 255, 0.4)',
+                },
+                '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                  borderColor: '#00d4ff',
+                },
+              }}
             >
               <MenuItem value="all">All</MenuItem>
               <MenuItem value="low">Low</MenuItem>
@@ -413,11 +536,33 @@ const TaskManagement = () => {
         </Grid>
         <Grid item xs={12} sm={4} md={3}>
           <FormControl fullWidth size="small">
-            <InputLabel>Agent</InputLabel>
+            <InputLabel
+              sx={{
+                color: 'rgba(255, 255, 255, 0.6) !important',
+                '&.Mui-focused': {
+                  color: '#00d4ff !important',
+                },
+              }}
+            >
+              Agent
+            </InputLabel>
             <Select
               value={filterAgent}
               label="Agent"
               onChange={(e) => setFilterAgent(e.target.value)}
+              sx={{
+                backgroundColor: 'rgba(255, 255, 255, 0.05)',
+                borderRadius: 1,
+                '& .MuiOutlinedInput-notchedOutline': {
+                  borderColor: 'rgba(0, 212, 255, 0.2)',
+                },
+                '&:hover .MuiOutlinedInput-notchedOutline': {
+                  borderColor: 'rgba(0, 212, 255, 0.4)',
+                },
+                '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                  borderColor: '#00d4ff',
+                },
+              }}
             >
               <MenuItem value="all">All</MenuItem>
               <MenuItem value="content">Content Agent</MenuItem>
@@ -521,11 +666,7 @@ const TaskManagement = () => {
                     <Tooltip title="Edit">
                       <IconButton
                         size="small"
-                        onClick={() => {
-                          setEditingTask(task);
-                          setNewTask(task);
-                          setCreateDialogOpen(true);
-                        }}
+                        onClick={() => setSelectedTask(task)}
                       >
                         <EditIcon fontSize="small" />
                       </IconButton>
@@ -547,97 +688,85 @@ const TaskManagement = () => {
         </Table>
       </TableContainer>
 
-      {/* Create/Edit Task Dialog */}
-      <Dialog
-        open={createDialogOpen}
-        onClose={() => {
-          setCreateDialogOpen(false);
-          setEditingTask(null);
-          setNewTask({
-            title: '',
-            description: '',
-            agent: 'content',
-            priority: 'medium',
-            parameters: {},
-          });
+      {/* Create Task Modal */}
+      <CreateTaskModal
+        isOpen={showCreateModal}
+        onClose={() => setShowCreateModal(false)}
+        onTaskCreated={() => {
+          setShowCreateModal(false);
+          fetchTasks();
         }}
-        maxWidth="sm"
-        fullWidth
-      >
-        <DialogTitle>
-          {editingTask ? 'Edit Task' : 'Create New Task'}
-        </DialogTitle>
-        <DialogContent>
-          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 2 }}>
-            <TextField
-              label="Title"
-              value={newTask.title}
-              onChange={(e) =>
-                setNewTask({ ...newTask, title: e.target.value })
-              }
-              fullWidth
-              required
-            />
-            <TextField
-              label="Description"
-              value={newTask.description}
-              onChange={(e) =>
-                setNewTask({ ...newTask, description: e.target.value })
-              }
-              fullWidth
-              multiline
-              rows={3}
-            />
-            <FormControl fullWidth>
-              <InputLabel>Agent</InputLabel>
-              <Select
-                value={newTask.agent}
-                label="Agent"
-                onChange={(e) =>
-                  setNewTask({ ...newTask, agent: e.target.value })
-                }
-              >
-                <MenuItem value="content">Content Agent</MenuItem>
-                <MenuItem value="financial">Financial Agent</MenuItem>
-                <MenuItem value="compliance">Compliance Agent</MenuItem>
-                <MenuItem value="market_insight">Market Insight Agent</MenuItem>
-              </Select>
-            </FormControl>
-            <FormControl fullWidth>
-              <InputLabel>Priority</InputLabel>
-              <Select
-                value={newTask.priority}
-                label="Priority"
-                onChange={(e) =>
-                  setNewTask({ ...newTask, priority: e.target.value })
-                }
-              >
-                <MenuItem value="low">Low</MenuItem>
-                <MenuItem value="medium">Medium</MenuItem>
-                <MenuItem value="high">High</MenuItem>
-                <MenuItem value="urgent">Urgent</MenuItem>
-              </Select>
-            </FormControl>
+      />
+
+      {/* Result Preview Panel */}
+      {selectedTask && (
+        <Box
+          sx={{
+            mt: 4,
+            animation: 'slideIn 0.3s ease-out',
+            '@keyframes slideIn': {
+              from: { opacity: 0, transform: 'translateY(20px)' },
+              to: { opacity: 1, transform: 'translateY(0)' },
+            },
+          }}
+        >
+          <Box sx={{ mb: 2 }}>
+            <Typography variant="h6" sx={{ color: '#00d4ff', fontWeight: 600 }}>
+              ✓ Task Result Preview
+            </Typography>
+            <Typography variant="caption" sx={{ color: '#888' }}>
+              Review and approve task result before publishing
+            </Typography>
           </Box>
-        </DialogContent>
-        <DialogActions>
-          <Button
-            onClick={() => {
-              setCreateDialogOpen(false);
-              setEditingTask(null);
+          <Box
+            sx={{
+              backgroundColor: 'rgba(26, 26, 26, 0.8)',
+              border: '1px solid rgba(0, 212, 255, 0.2)',
+              borderRadius: 1.5,
+              overflow: 'hidden',
+              backdropFilter: 'blur(10px)',
+              boxShadow: '0 8px 32px rgba(0, 0, 0, 0.4)',
             }}
           >
-            Cancel
-          </Button>
-          <Button
-            onClick={handleCreateTask}
-            variant="contained"
-            disabled={!newTask.title}
-          >
-            {editingTask ? 'Update' : 'Create'}
-          </Button>
-        </DialogActions>
-      </Dialog>
+            <ResultPreviewPanel
+              task={selectedTask}
+              onApprove={async (updatedTask) => {
+                setIsPublishing(true);
+                setError(null);
+                try {
+                  const response = await fetch(
+                    `http://localhost:8000/api/tasks/${selectedTask.id}/publish`,
+                    {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify(updatedTask),
+                    }
+                  );
+                  if (response.ok) {
+                    setSelectedTask(null);
+                    fetchTasks();
+                  } else {
+                    const errorData = await response.json().catch(() => ({}));
+                    setError(
+                      `Failed to publish: ${errorData.message || response.statusText}`
+                    );
+                    console.error('Failed to publish:', response.statusText);
+                  }
+                } catch (error) {
+                  const errorMessage =
+                    error instanceof Error ? error.message : 'Unknown error';
+                  setError(`Error publishing task: ${errorMessage}`);
+                  console.error('Failed to publish:', error);
+                } finally {
+                  setIsPublishing(false);
+                }
+              }}
+              onReject={() => setSelectedTask(null)}
+              isLoading={isPublishing}
+            />
+          </Box>
+        </Box>
+      )}
     </Box>
   );
 };
