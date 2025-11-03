@@ -129,7 +129,7 @@ const SystemHealthDashboard = () => {
 
       if (response.ok) {
         const data = await response.json();
-        
+
         // Transform the models list into provider-based configuration
         const providerConfig = {
           ollama: { configured: false, models: [], active: false },
@@ -382,7 +382,9 @@ const SystemHealthDashboard = () => {
               </Typography>
               <Typography variant="body2" color="text.secondary">
                 Models:{' '}
-                {safeConfig.models.length > 0 ? safeConfig.models.join(', ') : 'None'}
+                {safeConfig.models.length > 0
+                  ? safeConfig.models.join(', ')
+                  : 'None'}
               </Typography>
             </>
           )}
