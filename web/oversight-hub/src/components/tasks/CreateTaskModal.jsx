@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { getAuthToken } from '../../services/authService';
 
 const CreateTaskModal = ({ isOpen, onClose, onTaskCreated }) => {
   const [taskType, setTaskType] = useState('');
@@ -200,9 +201,15 @@ const CreateTaskModal = ({ isOpen, onClose, onTaskCreated }) => {
         parameters: formData,
       };
 
+      const token = getAuthToken();
+      const headers = { 'Content-Type': 'application/json' };
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+
       const response = await fetch('http://localhost:8000/api/tasks', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers,
         body: JSON.stringify(taskPayload),
       });
 

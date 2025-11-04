@@ -171,19 +171,32 @@ export async function pollTaskStatus(taskId, onProgress, maxWait = 3600000) {
   });
 }
 
-export async function createBlogPost(options) {
+export async function createBlogPost(
+  topicOrOptions,
+  primaryKeyword,
+  targetAudience,
+  category
+) {
   // Support both old and new API formats for backwards compatibility
-  if (typeof options === 'string') {
-    // Old format: createBlogPost(topic, primaryKeyword, targetAudience, category)
-    // Use 60 second timeout for content generation
+
+  // Old format: createBlogPost(topic, primaryKeyword, targetAudience, category)
+  if (typeof topicOrOptions === 'string') {
+    console.log('Creating blog post with old format:', {
+      topicOrOptions,
+      primaryKeyword,
+      targetAudience,
+      category,
+    });
     return makeRequest(
       '/api/tasks',
       'POST',
       {
-        task_name: `Blog Post: ${options}`,
-        agent_id: 'content-agent',
-        status: 'pending',
-        topic: options,
+        task_name: `Blog Post: ${topicOrOptions}`,
+        topic: topicOrOptions,
+        primary_keyword: primaryKeyword || '',
+        target_audience: targetAudience || '',
+        category: category || 'general',
+        metadata: {},
       },
       false,
       null,
@@ -193,21 +206,17 @@ export async function createBlogPost(options) {
 
   // New format: createBlogPost({ topic, style, tone, ... })
   // Use 60 second timeout for content generation with Ollama
+  const options = topicOrOptions;
   return makeRequest(
-    '/api/content/blog-posts',
+    '/api/tasks',
     'POST',
     {
+      task_name: `Blog Post: ${options.topic}`,
       topic: options.topic,
-      style: options.style || 'technical',
-      tone: options.tone || 'professional',
-      target_length: options.targetLength || options.target_length || 1500,
-      tags: options.tags || [],
-      categories: options.categories || [],
-      generate_featured_image: options.generate_featured_image !== false,
-      enhanced: options.enhanced || false,
-      publish_mode: options.publishMode || options.publish_mode || 'draft',
-      target_environment:
-        options.targetEnvironment || options.target_environment || 'production',
+      primary_keyword: options.primaryKeyword || options.primary_keyword || '',
+      target_audience: options.targetAudience || options.target_audience || '',
+      category: options.category || 'general',
+      metadata: options.metadata || {},
     },
     false,
     null,

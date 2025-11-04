@@ -24,6 +24,7 @@ import {
   CircularProgress,
   Tooltip,
 } from '@mui/material';
+import { getAuthToken } from '../../services/authService';
 import {
   Add as AddIcon,
   PlayArrow as PlayIcon,
@@ -64,12 +65,19 @@ const TaskManagement = () => {
   const [error, setError] = useState(null);
 
   /**
-   * Fetch tasks from backend
+   * Fetch tasks from backend with authorization
    */
   const fetchTasks = async () => {
     try {
       setError(null);
+      const token = getAuthToken();
+      const headers = { 'Content-Type': 'application/json' };
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+
       const response = await fetch('http://localhost:8000/api/tasks', {
+        headers,
         signal: AbortSignal.timeout(5000),
       });
 
@@ -91,17 +99,25 @@ const TaskManagement = () => {
   };
 
   /**
-   * Delete task
+   * Delete task (uses PATCH with cancelled status instead of DELETE)
    */
   const handleDeleteTask = async (taskId) => {
     if (!window.confirm('Are you sure you want to delete this task?')) return;
 
     try {
       setError(null);
+      const token = getAuthToken();
+      const headers = { 'Content-Type': 'application/json' };
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+
       const response = await fetch(
         `http://localhost:8000/api/tasks/${taskId}`,
         {
-          method: 'DELETE',
+          method: 'PATCH',
+          headers,
+          body: JSON.stringify({ status: 'cancelled' }),
         }
       );
 
@@ -120,16 +136,22 @@ const TaskManagement = () => {
   };
 
   /**
-   * Bulk action handler
+   * Bulk action handler with authorization
    */
   const handleBulkAction = async (action) => {
     if (selectedTasks.length === 0) return;
 
     try {
       setError(null);
+      const token = getAuthToken();
+      const headers = { 'Content-Type': 'application/json' };
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+
       const response = await fetch('http://localhost:8000/api/tasks/bulk', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers,
         body: JSON.stringify({
           task_ids: selectedTasks,
           action: action,
