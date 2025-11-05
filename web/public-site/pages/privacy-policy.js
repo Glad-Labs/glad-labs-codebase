@@ -38,7 +38,7 @@ export default function PrivacyPolicy({ policy }) {
 
 ### Introduction
 
-GLAD Labs, LLC ("we," "us," or "our") is committed to protecting your privacy. This Privacy Policy explains how we collect, use, disclose, and safeguard your information when you visit our website or use our services.
+Glad Labs, LLC ("we," "us," or "our") is committed to protecting your privacy. This Privacy Policy explains how we collect, use, disclose, and safeguard your information when you visit our website or use our services.
 
 ### Information We Collect
 

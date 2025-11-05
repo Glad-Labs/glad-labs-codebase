@@ -1,6 +1,6 @@
 # 📊 Oversight Hub (React)
 
-> Admin dashboard for monitoring and managing the GLAD Labs platform
+> Admin dashboard for monitoring and managing the Glad Labs platform
 
 ## 📍 Location
 
