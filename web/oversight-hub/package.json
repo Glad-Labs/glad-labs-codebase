@@ -1,8 +1,8 @@
 {
-  "name": "dexters-lab",
-  "version": "0.1.0",
+  "name": "oversight-hub",
+  "version": "3.0.0",
   "private": true,
-  "description": "Dexter's Lab - React 18 admin interface for monitoring and controlling AI content agents with real-time integration",
+  "description": "Oversight Hub - React 18 admin interface for monitoring and controlling AI content agents with real-time integration",
   "license": "MIT",
   "author": "Matthew M. Gladding (Glad Labs, LLC)",
   "scripts": {
