@@ -181,6 +181,14 @@ const CreateTaskModal = ({ isOpen, onClose, onTaskCreated }) => {
         return false;
       }
     }
+
+    // Validate that we have at least a topic for the backend
+    const hasTopic = formData.topic || formData.description || formData.title;
+    if (!hasTopic) {
+      setError('Please provide a topic or description');
+      return false;
+    }
+
     return true;
   };
 
@@ -193,13 +201,23 @@ const CreateTaskModal = ({ isOpen, onClose, onTaskCreated }) => {
     setError(null);
 
     try {
+      // Build task payload matching backend TaskCreateRequest schema
       const taskPayload = {
-        type: taskType,
-        title: formData.title || formData.subject || formData.topic,
-        description:
-          formData.description || formData.goal || formData.goals || '',
-        parameters: formData,
+        task_name: formData.title || formData.subject || `Task: ${taskType}`,
+        topic: formData.topic || formData.description || '',
+        primary_keyword: formData.keywords || formData.primary_keyword || '',
+        target_audience: formData.target_audience || formData.audience || '',
+        category: formData.category || taskType || 'general',
+        metadata: {
+          task_type: taskType,
+          style: formData.style,
+          word_count: formData.word_count,
+          ...formData, // Include all original form data in metadata
+        },
       };
+
+      // Log the payload for debugging
+      console.log('📤 Sending task payload:', taskPayload);
 
       const token = getAuthToken();
       const headers = { 'Content-Type': 'application/json' };
@@ -214,8 +232,26 @@ const CreateTaskModal = ({ isOpen, onClose, onTaskCreated }) => {
       });
 
       if (!response.ok) {
-        throw new Error(`Failed to create task: ${response.statusText}`);
+        let errorMessage = `Failed to create task: ${response.statusText}`;
+        try {
+          const errorData = await response.json();
+          console.error('❌ Backend error response:', errorData);
+          if (errorData.detail) {
+            errorMessage = Array.isArray(errorData.detail)
+              ? errorData.detail
+                  .map((d) => `${d.loc?.join('.')}: ${d.msg}`)
+                  .join('; ')
+              : errorData.detail;
+          }
+        } catch (parseError) {
+          // Couldn't parse JSON error response, use status text
+        }
+        throw new Error(errorMessage);
       }
+
+      // Success response
+      const result = await response.json();
+      console.log('✅ Task created successfully:', result);
 
       // Notify parent and reset
       onTaskCreated();

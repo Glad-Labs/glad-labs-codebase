@@ -181,23 +181,30 @@ export async function createBlogPost(
 
   // Old format: createBlogPost(topic, primaryKeyword, targetAudience, category)
   if (typeof topicOrOptions === 'string') {
-    console.log('Creating blog post with old format:', {
-      topicOrOptions,
-      primaryKeyword,
-      targetAudience,
-      category,
+    // Validate required fields
+    if (!topicOrOptions?.trim()) {
+      throw new Error('Topic is required and cannot be empty');
+    }
+
+    const payload = {
+      task_name: `Blog Post: ${topicOrOptions.trim()}`,
+      topic: topicOrOptions.trim(),
+      primary_keyword: (primaryKeyword || '').trim(),
+      target_audience: (targetAudience || '').trim(),
+      category: (category || 'general').trim(),
+      metadata: {},
+    };
+
+    console.log('📤 Sending task payload:', JSON.stringify(payload, null, 2));
+    console.log('✅ Validation - Required Fields:', {
+      topic_valid: Boolean(payload.topic),
+      task_name_valid: Boolean(payload.task_name),
     });
+
     return makeRequest(
       '/api/tasks',
       'POST',
-      {
-        task_name: `Blog Post: ${topicOrOptions}`,
-        topic: topicOrOptions,
-        primary_keyword: primaryKeyword || '',
-        target_audience: targetAudience || '',
-        category: category || 'general',
-        metadata: {},
-      },
+      payload,
       false,
       null,
       60000 // 60 seconds for content generation
@@ -207,17 +214,39 @@ export async function createBlogPost(
   // New format: createBlogPost({ topic, style, tone, ... })
   // Use 60 second timeout for content generation with Ollama
   const options = topicOrOptions;
+
+  // Validate required fields
+  if (!options.topic?.trim()) {
+    throw new Error('Topic is required and cannot be empty');
+  }
+
+  const payload = {
+    task_name: `Blog Post: ${options.topic.trim()}`,
+    topic: options.topic.trim(),
+    primary_keyword: (
+      options.primaryKeyword ||
+      options.primary_keyword ||
+      ''
+    ).trim(),
+    target_audience: (
+      options.targetAudience ||
+      options.target_audience ||
+      ''
+    ).trim(),
+    category: (options.category || 'general').trim(),
+    metadata: options.metadata || {},
+  };
+
+  console.log('📤 Sending task payload:', JSON.stringify(payload, null, 2));
+  console.log('✅ Validation - Required Fields:', {
+    topic_valid: Boolean(payload.topic),
+    task_name_valid: Boolean(payload.task_name),
+  });
+
   return makeRequest(
     '/api/tasks',
     'POST',
-    {
-      task_name: `Blog Post: ${options.topic}`,
-      topic: options.topic,
-      primary_keyword: options.primaryKeyword || options.primary_keyword || '',
-      target_audience: options.targetAudience || options.target_audience || '',
-      category: options.category || 'general',
-      metadata: options.metadata || {},
-    },
+    payload,
     false,
     null,
     60000 // 60 seconds for content generation
