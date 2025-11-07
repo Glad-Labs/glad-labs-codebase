@@ -65,7 +65,49 @@ const TaskManagement = () => {
   const [error, setError] = useState(null);
 
   /**
+   * Fetch task status from /api/tasks endpoint
+   * Uses the CORRECT backend endpoint
+   */
+  const fetchContentTaskStatus = async (taskId) => {
+    try {
+      const token = getAuthToken();
+      const headers = { 'Content-Type': 'application/json' };
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+
+      // ✅ CORRECT ENDPOINT: /api/tasks/{taskId}
+      const response = await fetch(
+        `http://localhost:8000/api/tasks/${taskId}`,
+        {
+          headers,
+          signal: AbortSignal.timeout(5000),
+        }
+      );
+
+      if (response.ok) {
+        const data = await response.json();
+        console.log('✅ Content task status:', data);
+        return {
+          status: data.status || 'completed',
+          result: data.result || {},
+          error_message: data.error_message,
+        };
+      } else {
+        console.warn(
+          `Failed to fetch content task status: ${response.statusText}`
+        );
+        return null;
+      }
+    } catch (error) {
+      console.error('Failed to fetch content task status:', error);
+      return null;
+    }
+  };
+
+  /**
    * Fetch tasks from backend with authorization
+   * Also checks /api/content/status for blog_post tasks
    */
   const fetchTasks = async () => {
     try {
@@ -82,8 +124,38 @@ const TaskManagement = () => {
       });
 
       if (response.ok) {
-        const data = await response.json();
-        setTasks(data.tasks || []);
+        let data = await response.json();
+        let tasks = data.tasks || [];
+
+        // For blog_post tasks, also fetch content-specific status
+        tasks = await Promise.all(
+          tasks.map(async (task) => {
+            // If task type indicates content generation, fetch from content endpoint
+            if (
+              task.task_type === 'blog_post' ||
+              task.category === 'content_generation' ||
+              task.metadata?.task_type === 'blog_post'
+            ) {
+              const contentStatus = await fetchContentTaskStatus(task.id);
+              if (contentStatus) {
+                console.log('📄 Updated blog post task status:', {
+                  id: task.id,
+                  status: contentStatus.status,
+                  hasResult: !!contentStatus.result,
+                });
+                return {
+                  ...task,
+                  status: contentStatus.status,
+                  result: contentStatus.result,
+                  error_message: contentStatus.error_message,
+                };
+              }
+            }
+            return task;
+          })
+        );
+
+        setTasks(tasks);
       } else {
         setError(`Failed to fetch tasks: ${response.statusText}`);
         console.error('Failed to fetch tasks:', response.statusText);
@@ -174,40 +246,33 @@ const TaskManagement = () => {
   };
 
   /**
-   * Filter tasks based on criteria
+   * Get all tasks - unified view without filtering
    */
   const getFilteredTasks = () => {
-    let filtered = tasks;
+    if (!tasks) return [];
 
-    // Filter by tab (status groups)
-    if (currentTab === 0) {
-      filtered = filtered.filter((t) =>
+    // Return all tasks sorted by creation date (newest first)
+    // Unified view - no filtering by status/priority/agent
+    return tasks.sort((a, b) => {
+      return new Date(b.created_at || 0) - new Date(a.created_at || 0);
+    });
+  };
+
+  /**
+   * Calculate summary statistics
+   */
+  const getTaskStats = () => {
+    if (!tasks) return { total: 0, completed: 0, inProgress: 0, failed: 0 };
+
+    return {
+      total: tasks.length,
+      completed: tasks.filter((t) => t.status === 'completed').length,
+      inProgress: tasks.filter((t) =>
         ['queued', 'in_progress', 'pending_review'].includes(t.status)
-      );
-    } else if (currentTab === 1) {
-      filtered = filtered.filter((t) => t.status === 'completed');
-    } else if (currentTab === 2) {
-      filtered = filtered.filter((t) =>
-        ['failed', 'cancelled'].includes(t.status)
-      );
-    }
-
-    // Filter by specific status
-    if (filterStatus !== 'all') {
-      filtered = filtered.filter((t) => t.status === filterStatus);
-    }
-
-    // Filter by priority
-    if (filterPriority !== 'all') {
-      filtered = filtered.filter((t) => t.priority === filterPriority);
-    }
-
-    // Filter by agent
-    if (filterAgent !== 'all') {
-      filtered = filtered.filter((t) => t.agent === filterAgent);
-    }
-
-    return filtered;
+      ).length,
+      failed: tasks.filter((t) => ['failed', 'cancelled'].includes(t.status))
+        .length,
+    };
   };
 
   /**
@@ -442,6 +507,86 @@ const TaskManagement = () => {
         </Alert>
       )}
 
+      {/* Summary Stats */}
+      <Grid container spacing={2} sx={{ mb: 3 }}>
+        <Grid item xs={12} sm={6} md={3}>
+          <Box
+            sx={{
+              backgroundColor: 'rgba(0, 212, 255, 0.1)',
+              border: '1px solid rgba(0, 212, 255, 0.3)',
+              borderRadius: 1.5,
+              p: 2,
+              textAlign: 'center',
+              backdropFilter: 'blur(10px)',
+            }}
+          >
+            <Typography variant="h6" sx={{ color: '#00d4ff', fontWeight: 700 }}>
+              {getTaskStats().total}
+            </Typography>
+            <Typography variant="caption" sx={{ color: '#888' }}>
+              Total Tasks
+            </Typography>
+          </Box>
+        </Grid>
+        <Grid item xs={12} sm={6} md={3}>
+          <Box
+            sx={{
+              backgroundColor: 'rgba(76, 175, 80, 0.1)',
+              border: '1px solid rgba(76, 175, 80, 0.3)',
+              borderRadius: 1.5,
+              p: 2,
+              textAlign: 'center',
+              backdropFilter: 'blur(10px)',
+            }}
+          >
+            <Typography variant="h6" sx={{ color: '#4CAF50', fontWeight: 700 }}>
+              {getTaskStats().completed}
+            </Typography>
+            <Typography variant="caption" sx={{ color: '#888' }}>
+              Completed
+            </Typography>
+          </Box>
+        </Grid>
+        <Grid item xs={12} sm={6} md={3}>
+          <Box
+            sx={{
+              backgroundColor: 'rgba(33, 150, 243, 0.1)',
+              border: '1px solid rgba(33, 150, 243, 0.3)',
+              borderRadius: 1.5,
+              p: 2,
+              textAlign: 'center',
+              backdropFilter: 'blur(10px)',
+            }}
+          >
+            <Typography variant="h6" sx={{ color: '#2196F3', fontWeight: 700 }}>
+              {getTaskStats().inProgress}
+            </Typography>
+            <Typography variant="caption" sx={{ color: '#888' }}>
+              In Progress
+            </Typography>
+          </Box>
+        </Grid>
+        <Grid item xs={12} sm={6} md={3}>
+          <Box
+            sx={{
+              backgroundColor: 'rgba(244, 67, 54, 0.1)',
+              border: '1px solid rgba(244, 67, 54, 0.3)',
+              borderRadius: 1.5,
+              p: 2,
+              textAlign: 'center',
+              backdropFilter: 'blur(10px)',
+            }}
+          >
+            <Typography variant="h6" sx={{ color: '#F44336', fontWeight: 700 }}>
+              {getTaskStats().failed}
+            </Typography>
+            <Typography variant="caption" sx={{ color: '#888' }}>
+              Failed
+            </Typography>
+          </Box>
+        </Grid>
+      </Grid>
+
       {/* Tabs */}
       <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 3 }}>
         <Tabs
@@ -476,125 +621,28 @@ const TaskManagement = () => {
         </Tabs>
       </Box>
 
-      {/* Filters */}
-      <Grid container spacing={2} mb={3}>
-        <Grid item xs={12} sm={4} md={3}>
-          <FormControl fullWidth size="small">
-            <InputLabel
-              sx={{
-                color: 'rgba(255, 255, 255, 0.6) !important',
-                '&.Mui-focused': {
-                  color: '#00d4ff !important',
-                },
-              }}
-            >
-              Status
-            </InputLabel>
-            <Select
-              value={filterStatus}
-              label="Status"
-              onChange={(e) => setFilterStatus(e.target.value)}
-              sx={{
-                backgroundColor: 'rgba(255, 255, 255, 0.05)',
-                borderRadius: 1,
-                '& .MuiOutlinedInput-notchedOutline': {
-                  borderColor: 'rgba(0, 212, 255, 0.2)',
-                },
-                '&:hover .MuiOutlinedInput-notchedOutline': {
-                  borderColor: 'rgba(0, 212, 255, 0.4)',
-                },
-                '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                  borderColor: '#00d4ff',
-                },
-              }}
-            >
-              <MenuItem value="all">All</MenuItem>
-              <MenuItem value="queued">Queued</MenuItem>
-              <MenuItem value="in_progress">In Progress</MenuItem>
-              <MenuItem value="pending_review">Pending Review</MenuItem>
-              <MenuItem value="completed">Completed</MenuItem>
-              <MenuItem value="failed">Failed</MenuItem>
-              <MenuItem value="cancelled">Cancelled</MenuItem>
-            </Select>
-          </FormControl>
-        </Grid>
-        <Grid item xs={12} sm={4} md={3}>
-          <FormControl fullWidth size="small">
-            <InputLabel
-              sx={{
-                color: 'rgba(255, 255, 255, 0.6) !important',
-                '&.Mui-focused': {
-                  color: '#00d4ff !important',
-                },
-              }}
-            >
-              Priority
-            </InputLabel>
-            <Select
-              value={filterPriority}
-              label="Priority"
-              onChange={(e) => setFilterPriority(e.target.value)}
-              sx={{
-                backgroundColor: 'rgba(255, 255, 255, 0.05)',
-                borderRadius: 1,
-                '& .MuiOutlinedInput-notchedOutline': {
-                  borderColor: 'rgba(0, 212, 255, 0.2)',
-                },
-                '&:hover .MuiOutlinedInput-notchedOutline': {
-                  borderColor: 'rgba(0, 212, 255, 0.4)',
-                },
-                '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                  borderColor: '#00d4ff',
-                },
-              }}
-            >
-              <MenuItem value="all">All</MenuItem>
-              <MenuItem value="low">Low</MenuItem>
-              <MenuItem value="medium">Medium</MenuItem>
-              <MenuItem value="high">High</MenuItem>
-              <MenuItem value="urgent">Urgent</MenuItem>
-            </Select>
-          </FormControl>
-        </Grid>
-        <Grid item xs={12} sm={4} md={3}>
-          <FormControl fullWidth size="small">
-            <InputLabel
-              sx={{
-                color: 'rgba(255, 255, 255, 0.6) !important',
-                '&.Mui-focused': {
-                  color: '#00d4ff !important',
-                },
-              }}
-            >
-              Agent
-            </InputLabel>
-            <Select
-              value={filterAgent}
-              label="Agent"
-              onChange={(e) => setFilterAgent(e.target.value)}
-              sx={{
-                backgroundColor: 'rgba(255, 255, 255, 0.05)',
-                borderRadius: 1,
-                '& .MuiOutlinedInput-notchedOutline': {
-                  borderColor: 'rgba(0, 212, 255, 0.2)',
-                },
-                '&:hover .MuiOutlinedInput-notchedOutline': {
-                  borderColor: 'rgba(0, 212, 255, 0.4)',
-                },
-                '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                  borderColor: '#00d4ff',
-                },
-              }}
-            >
-              <MenuItem value="all">All</MenuItem>
-              <MenuItem value="content">Content Agent</MenuItem>
-              <MenuItem value="financial">Financial Agent</MenuItem>
-              <MenuItem value="compliance">Compliance Agent</MenuItem>
-              <MenuItem value="market_insight">Market Insight Agent</MenuItem>
-            </Select>
-          </FormControl>
-        </Grid>
-      </Grid>
+      {/* Refresh Controls */}
+      <Box sx={{ display: 'flex', gap: 2, alignItems: 'center', mb: 3 }}>
+        <Button
+          variant="contained"
+          startIcon={<RefreshIcon />}
+          onClick={() => fetchTasks()}
+          sx={{
+            textTransform: 'none',
+            backgroundColor: '#00d4ff',
+            color: '#000',
+            fontWeight: 600,
+            '&:hover': {
+              backgroundColor: '#00b8d4',
+            },
+          }}
+        >
+          Refresh Now
+        </Button>
+        <Typography variant="caption" sx={{ color: '#888' }}>
+          Showing all tasks. Auto-refreshing every 10 seconds.
+        </Typography>
+      </Box>
 
       {/* Task Table */}
       <TableContainer component={Paper}>

@@ -120,11 +120,11 @@ export async function getTasks(limit = 50, offset = 0) {
 }
 
 export async function getTaskStatus(taskId) {
-  // Try new endpoint first, fall back to old endpoint
+  // Use the correct backend endpoint: /api/tasks/{taskId}
   // Use 180 second timeout for task status (allows for long-running operations)
   try {
     return await makeRequest(
-      `/api/content/blog-posts/tasks/${taskId}`,
+      `/api/tasks/${taskId}`,
       'GET',
       null,
       false,
@@ -132,16 +132,10 @@ export async function getTaskStatus(taskId) {
       180000
     );
   } catch (error) {
+    // If 404, the task ID doesn't exist
     if (error.status === 404) {
-      // Fall back to old endpoint with 180 second timeout
-      return await makeRequest(
-        `/api/tasks/${taskId}`,
-        'GET',
-        null,
-        false,
-        null,
-        180000
-      );
+      console.warn(`Task ${taskId} not found`);
+      return null;
     }
     throw error;
   }

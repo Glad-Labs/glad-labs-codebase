@@ -201,35 +201,76 @@ const CreateTaskModal = ({ isOpen, onClose, onTaskCreated }) => {
     setError(null);
 
     try {
-      // Build task payload matching backend TaskCreateRequest schema
-      const taskPayload = {
-        task_name: formData.title || formData.subject || `Task: ${taskType}`,
-        topic: formData.topic || formData.description || '',
-        primary_keyword: formData.keywords || formData.primary_keyword || '',
-        target_audience: formData.target_audience || formData.audience || '',
-        category: formData.category || taskType || 'general',
-        metadata: {
-          task_type: taskType,
-          style: formData.style,
-          word_count: formData.word_count,
-          ...formData, // Include all original form data in metadata
-        },
-      };
-
-      // Log the payload for debugging
-      console.log('📤 Sending task payload:', taskPayload);
-
       const token = getAuthToken();
       const headers = { 'Content-Type': 'application/json' };
       if (token) {
         headers['Authorization'] = `Bearer ${token}`;
       }
 
-      const response = await fetch('http://localhost:8000/api/tasks', {
-        method: 'POST',
-        headers,
-        body: JSON.stringify(taskPayload),
-      });
+      let response;
+
+      // ✅ ROUTE TO CORRECT ENDPOINT BASED ON TASK TYPE
+      if (taskType === 'blog_post') {
+        // Use content generation endpoint for blog posts (triggers self-critique loop)
+        const contentPayload = {
+          topic: formData.topic || '',
+          style: formData.style || 'professional',
+          tone: formData.tone || 'professional',
+          target_length: formData.word_count || 1500,
+          tags: formData.keywords
+            ? formData.keywords
+                .split(',')
+                .map((k) => k.trim())
+                .filter((k) => k)
+            : [],
+        };
+
+        console.log(
+          '📤 Sending to content generation endpoint:',
+          contentPayload
+        );
+
+        // ✅ CORRECT ENDPOINT FOR BLOG POSTS - Runs self-critique pipeline
+        // Uses the actual backend endpoint: POST /api/content/blog-posts
+        response = await fetch('http://localhost:8000/api/content/blog-posts', {
+          method: 'POST',
+          headers,
+          body: JSON.stringify({
+            topic: contentPayload.topic || '',
+            style: contentPayload.style || 'technical',
+            tone: contentPayload.tone || 'professional',
+            target_length: contentPayload.target_length || 1500,
+            tags: contentPayload.tags || [],
+            generate_featured_image: true,
+            publish_mode: 'draft',
+            enhanced: false,
+            target_environment: 'production',
+          }),
+        });
+      } else {
+        // Use generic task endpoint for other types
+        const taskPayload = {
+          task_name: formData.title || formData.subject || `Task: ${taskType}`,
+          topic: formData.topic || formData.description || '',
+          primary_keyword: formData.keywords || formData.primary_keyword || '',
+          target_audience: formData.target_audience || formData.audience || '',
+          category: formData.category || taskType || 'general',
+          metadata: {
+            task_type: taskType,
+            style: formData.style,
+            word_count: formData.word_count,
+            ...formData, // Include all original form data in metadata
+          },
+        };
+
+        console.log('📤 Sending generic task payload:', taskPayload);
+
+        response = await fetch('http://localhost:8000/api/tasks', {
+          method: 'POST',
+          headers,
+          body: JSON.stringify(taskPayload),
+        });
+      }
 
       if (!response.ok) {
         let errorMessage = `Failed to create task: ${response.statusText}`;

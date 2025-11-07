@@ -4,13 +4,7 @@ import useStore from './store/useStore';
 import TaskList from './components/tasks/TaskList';
 import TaskDetailModal from './components/tasks/TaskDetailModal';
 import TaskManagement from './components/tasks/TaskManagement';
-import BlogPostCreator from './components/BlogPostCreator';
-import ContentQueue from './components/content-queue/ContentQueue';
-import SystemHealthDashboard from './components/dashboard/SystemHealthDashboard';
 import CostMetricsDashboard from './components/CostMetricsDashboard';
-import SocialMediaManagement from './components/social/SocialMediaManagement';
-import Marketing from './components/marketing/Marketing';
-import Financials from './components/financials/Financials';
 import './OversightHub.css';
 
 const OversightHub = () => {
@@ -559,20 +553,11 @@ const OversightHub = () => {
           {currentPage === 'models' && (
             <div style={{ padding: '2rem' }}>
               <h2>🤖 Model Configuration</h2>
-              <SystemHealthDashboard
-                ollamaStatus={ollamaStatus}
-                ollamaConnected={ollamaConnected}
-              />
+              <p>Model management coming soon.</p>
             </div>
           )}
 
-          {currentPage === 'social' && <SocialMediaManagement />}
-
-          {currentPage === 'content' && <BlogPostCreator />}
-
           {currentPage === 'costs' && <CostMetricsDashboard />}
-
-          {currentPage === 'analytics' && <Marketing />}
 
           {currentPage === 'settings' && (
             <div style={{ padding: '2rem' }}>

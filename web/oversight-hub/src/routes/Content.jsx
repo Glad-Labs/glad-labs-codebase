@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import BlogPostCreator from '../components/BlogPostCreator';
 import './Content.css';
 
 function Content() {
@@ -39,9 +38,6 @@ function Content() {
 
   return (
     <div className="content-container">
-      {/* AI Blog Post Creator Section */}
-      <BlogPostCreator />
-
       {/* Header */}
       <div className="dashboard-header" style={{ marginTop: '40px' }}>
         <h1 className="dashboard-title">Content Library</h1>
