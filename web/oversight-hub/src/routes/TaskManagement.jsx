@@ -11,15 +11,17 @@ function TaskManagement() {
     let filtered = tasks || [];
     if (filterStatus !== 'all') {
       filtered = filtered.filter(
-        (t) => t.status?.toLowerCase() === filterStatus
+        (t) => (t.status || '').toLowerCase() === filterStatus.toLowerCase()
       );
     }
     return filtered.sort((a, b) => {
       if (sortBy === 'dueDate') {
-        return new Date(a.dueDate) - new Date(b.dueDate);
+        return new Date(a.dueDate || 0) - new Date(b.dueDate || 0);
       } else if (sortBy === 'priority') {
         const priorityOrder = { High: 0, Medium: 1, Low: 2 };
-        return priorityOrder[a.priority] - priorityOrder[b.priority];
+        return (
+          (priorityOrder[a.priority] || 3) - (priorityOrder[b.priority] || 3)
+        );
       }
       return 0;
     });
@@ -47,7 +49,8 @@ function TaskManagement() {
           <span className="stat-icon">✅</span>
           <div className="stat-info">
             <span className="stat-number">
-              {tasks?.filter((t) => t.status === 'Completed').length || 0}
+              {tasks?.filter((t) => t.status?.toLowerCase() === 'completed')
+                .length || 0}
             </span>
             <span className="stat-text">Completed</span>
           </div>
@@ -56,18 +59,20 @@ function TaskManagement() {
           <span className="stat-icon">⏳</span>
           <div className="stat-info">
             <span className="stat-number">
-              {tasks?.filter((t) => t.status === 'In Progress').length || 0}
+              {tasks?.filter((t) => t.status?.toLowerCase() === 'running')
+                .length || 0}
             </span>
-            <span className="stat-text">In Progress</span>
+            <span className="stat-text">Running</span>
           </div>
         </div>
         <div className="stat">
           <span className="stat-icon">⚠️</span>
           <div className="stat-info">
             <span className="stat-number">
-              {tasks?.filter((t) => t.priority === 'High').length || 0}
+              {tasks?.filter((t) => t.status?.toLowerCase() === 'pending')
+                .length || 0}
             </span>
-            <span className="stat-text">High Priority</span>
+            <span className="stat-text">Pending</span>
           </div>
         </div>
       </div>
@@ -84,8 +89,9 @@ function TaskManagement() {
           >
             <option value="all">All Tasks</option>
             <option value="pending">Pending</option>
-            <option value="in progress">In Progress</option>
+            <option value="running">Running</option>
             <option value="completed">Completed</option>
+            <option value="failed">Failed</option>
           </select>
         </div>
 

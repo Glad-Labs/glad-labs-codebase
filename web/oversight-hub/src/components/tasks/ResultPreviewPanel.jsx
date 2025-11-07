@@ -16,8 +16,13 @@ const ResultPreviewPanel = ({
   // Initialize editable content when task changes
   React.useEffect(() => {
     if (task && task.result) {
-      setEditedContent(task.result.content || task.result || '');
-      setEditedTitle(task.title || '');
+      // Handle both nested (result.content) and flat (result string) structures
+      const content =
+        typeof task.result === 'string'
+          ? task.result
+          : task.result.content || task.result.generated_content || '';
+      setEditedContent(content);
+      setEditedTitle(task.title || task.result.task_name || task.topic || '');
       setEditedSEO(
         task.result.seo || { title: '', description: '', keywords: '' }
       );

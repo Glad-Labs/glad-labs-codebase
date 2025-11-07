@@ -36,6 +36,7 @@ function BlogPostCreator() {
   const [successMessage, setSuccessMessage] = useState(null);
   const [availableModels, setAvailableModels] = useState([]);
   const [loadingModels, setLoadingModels] = useState(true);
+  const [showAdvanced, setShowAdvanced] = useState(false);
   // Load available models on mount
   useEffect(() => {
     const loadModels = async () => {
@@ -181,7 +182,7 @@ function BlogPostCreator() {
         {/* Form Section */}
         {!generatedPost && (
           <form onSubmit={handleGenerateBlogPost} className="blog-creator-form">
-            {/* Topic Input */}
+            {/* Topic Input - Main Field */}
             <div className="form-group">
               <label htmlFor="topic">Blog Post Topic *</label>
               <input
@@ -197,172 +198,195 @@ function BlogPostCreator() {
               <small>Enter the main topic or title for your blog post</small>
             </div>
 
-            {/* Content Style */}
-            <div className="form-row">
-              <div className="form-group">
-                <label htmlFor="style">Content Style</label>
-                <select
-                  id="style"
-                  name="style"
-                  value={formData.style}
-                  onChange={handleInputChange}
-                  className="form-select"
-                  disabled={isGenerating}
-                >
-                  <option value="technical">Technical</option>
-                  <option value="narrative">Narrative</option>
-                  <option value="listicle">Listicle</option>
-                  <option value="educational">Educational</option>
-                  <option value="thought-leadership">Thought Leadership</option>
-                </select>
-              </div>
-
-              <div className="form-group">
-                <label htmlFor="tone">Tone</label>
-                <select
-                  id="tone"
-                  name="tone"
-                  value={formData.tone}
-                  onChange={handleInputChange}
-                  className="form-select"
-                  disabled={isGenerating}
-                >
-                  <option value="professional">Professional</option>
-                  <option value="casual">Casual</option>
-                  <option value="academic">Academic</option>
-                  <option value="inspirational">Inspirational</option>
-                </select>
-              </div>
-
-              {/* Model Selection */}
-              <div className="form-group">
-                <label htmlFor="selectedModel">
-                  AI Model{' '}
-                  {loadingModels && <span className="loading-spinner">⏳</span>}
-                </label>
-                <select
-                  id="selectedModel"
-                  name="selectedModel"
-                  value={formData.selectedModel}
-                  onChange={handleModelChange}
-                  className="form-select model-select"
-                  disabled={isGenerating || loadingModels}
-                >
-                  <option value="auto">🤖 Auto (Best Available)</option>
-                  <optgroup label="Local Models (Free)">
-                    {availableModels
-                      .filter((m) => m.provider === 'ollama')
-                      .map((m) => (
-                        <option key={m.name} value={m.name}>
-                          {m.icon} {m.displayName} ({m.estimatedVramGb}GB)
-                        </option>
-                      ))}
-                  </optgroup>
-                  <optgroup label="Cloud Models">
-                    {availableModels
-                      .filter((m) => m.provider !== 'ollama')
-                      .map((m) => (
-                        <option key={m.name} value={m.name}>
-                          {m.icon} {m.displayName}{' '}
-                          {m.isFree ? '(Free)' : '(Paid)'}
-                        </option>
-                      ))}
-                  </optgroup>
-                </select>
-                {availableModels.length > 0 && (
-                  <small className="model-info">
-                    {formData.selectedModel === 'auto'
-                      ? '✓ Will use best available model'
-                      : availableModels.find(
-                          (m) => m.name === formData.selectedModel
-                        )?.description}
-                  </small>
-                )}
-              </div>
-
-              <div className="form-group">
-                <label htmlFor="targetLength">Target Length</label>
-                <input
-                  id="targetLength"
-                  type="number"
-                  name="targetLength"
-                  value={formData.targetLength}
-                  onChange={handleInputChange}
-                  min="200"
-                  max="5000"
-                  step="100"
-                  className="form-input"
-                  disabled={isGenerating}
-                />
-                <small>Words (200-5000)</small>
-              </div>
+            {/* Advanced Options Toggle */}
+            <div className="advanced-toggle">
+              <button
+                type="button"
+                className="toggle-button"
+                onClick={() => setShowAdvanced(!showAdvanced)}
+                disabled={isGenerating}
+              >
+                {showAdvanced ? '▼' : '▶'} Advanced Options
+              </button>
             </div>
 
-            {/* Tags & Categories */}
-            <div className="form-row">
-              <div className="form-group">
-                <label htmlFor="tags">Tags</label>
-                <input
-                  id="tags"
-                  type="text"
-                  name="tags"
-                  value={formData.tags}
-                  onChange={handleInputChange}
-                  placeholder="e.g., AI, cost-optimization, production"
-                  className="form-input"
-                  disabled={isGenerating}
-                />
-                <small>Comma-separated tags</small>
-              </div>
+            {/* Advanced Options - Collapsible */}
+            {showAdvanced && (
+              <div className="advanced-options">
+                {/* Content Style */}
+                <div className="form-row">
+                  <div className="form-group">
+                    <label htmlFor="style">Content Style</label>
+                    <select
+                      id="style"
+                      name="style"
+                      value={formData.style}
+                      onChange={handleInputChange}
+                      className="form-select"
+                      disabled={isGenerating}
+                    >
+                      <option value="technical">Technical</option>
+                      <option value="narrative">Narrative</option>
+                      <option value="listicle">Listicle</option>
+                      <option value="educational">Educational</option>
+                      <option value="thought-leadership">
+                        Thought Leadership
+                      </option>
+                    </select>
+                  </div>
 
-              <div className="form-group">
-                <label htmlFor="categories">Categories</label>
-                <input
-                  id="categories"
-                  type="text"
-                  name="categories"
-                  value={formData.categories}
-                  onChange={handleInputChange}
-                  placeholder="e.g., Technical Guides, Tutorials"
-                  className="form-input"
-                  disabled={isGenerating}
-                />
-                <small>Comma-separated categories</small>
-              </div>
-            </div>
+                  <div className="form-group">
+                    <label htmlFor="tone">Tone</label>
+                    <select
+                      id="tone"
+                      name="tone"
+                      value={formData.tone}
+                      onChange={handleInputChange}
+                      className="form-select"
+                      disabled={isGenerating}
+                    >
+                      <option value="professional">Professional</option>
+                      <option value="casual">Casual</option>
+                      <option value="academic">Academic</option>
+                      <option value="inspirational">Inspirational</option>
+                    </select>
+                  </div>
 
-            {/* Publish Options */}
-            <div className="form-row">
-              <div className="form-group">
-                <label htmlFor="publishMode">Publishing Mode</label>
-                <select
-                  id="publishMode"
-                  name="publishMode"
-                  value={formData.publishMode}
-                  onChange={handleInputChange}
-                  className="form-select"
-                  disabled={isGenerating}
-                >
-                  <option value="draft">Save as Draft</option>
-                  <option value="publish">Publish Immediately</option>
-                </select>
-              </div>
+                  {/* Model Selection */}
+                  <div className="form-group">
+                    <label htmlFor="selectedModel">
+                      AI Model{' '}
+                      {loadingModels && (
+                        <span className="loading-spinner">⏳</span>
+                      )}
+                    </label>
+                    <select
+                      id="selectedModel"
+                      name="selectedModel"
+                      value={formData.selectedModel}
+                      onChange={handleModelChange}
+                      className="form-select model-select"
+                      disabled={isGenerating || loadingModels}
+                    >
+                      <option value="auto">🤖 Auto (Best Available)</option>
+                      <optgroup label="Local Models (Free)">
+                        {availableModels
+                          .filter((m) => m.provider === 'ollama')
+                          .map((m) => (
+                            <option key={m.name} value={m.name}>
+                              {m.icon} {m.displayName} ({m.estimatedVramGb}GB)
+                            </option>
+                          ))}
+                      </optgroup>
+                      <optgroup label="Cloud Models">
+                        {availableModels
+                          .filter((m) => m.provider !== 'ollama')
+                          .map((m) => (
+                            <option key={m.name} value={m.name}>
+                              {m.icon} {m.displayName}{' '}
+                              {m.isFree ? '(Free)' : '(Paid)'}
+                            </option>
+                          ))}
+                      </optgroup>
+                    </select>
+                    {availableModels.length > 0 && (
+                      <small className="model-info">
+                        {formData.selectedModel === 'auto'
+                          ? '✓ Will use best available model'
+                          : availableModels.find(
+                              (m) => m.name === formData.selectedModel
+                            )?.description}
+                      </small>
+                    )}
+                  </div>
 
-              <div className="form-group">
-                <label htmlFor="targetEnvironment">Target Environment</label>
-                <select
-                  id="targetEnvironment"
-                  name="targetEnvironment"
-                  value={formData.targetEnvironment}
-                  onChange={handleInputChange}
-                  className="form-select"
-                  disabled={isGenerating}
-                >
-                  <option value="production">Production</option>
-                  <option value="staging">Staging</option>
-                </select>
+                  <div className="form-group">
+                    <label htmlFor="targetLength">Target Length</label>
+                    <input
+                      id="targetLength"
+                      type="number"
+                      name="targetLength"
+                      value={formData.targetLength}
+                      onChange={handleInputChange}
+                      min="200"
+                      max="5000"
+                      step="100"
+                      className="form-input"
+                      disabled={isGenerating}
+                    />
+                    <small>Words (200-5000)</small>
+                  </div>
+                </div>
+
+                {/* Tags & Categories */}
+                <div className="form-row">
+                  <div className="form-group">
+                    <label htmlFor="tags">Tags</label>
+                    <input
+                      id="tags"
+                      type="text"
+                      name="tags"
+                      value={formData.tags}
+                      onChange={handleInputChange}
+                      placeholder="e.g., AI, cost-optimization, production"
+                      className="form-input"
+                      disabled={isGenerating}
+                    />
+                    <small>Comma-separated tags</small>
+                  </div>
+
+                  <div className="form-group">
+                    <label htmlFor="categories">Categories</label>
+                    <input
+                      id="categories"
+                      type="text"
+                      name="categories"
+                      value={formData.categories}
+                      onChange={handleInputChange}
+                      placeholder="e.g., Technical Guides, Tutorials"
+                      className="form-input"
+                      disabled={isGenerating}
+                    />
+                    <small>Comma-separated categories</small>
+                  </div>
+                </div>
+
+                {/* Publish Options */}
+                <div className="form-row">
+                  <div className="form-group">
+                    <label htmlFor="publishMode">Publishing Mode</label>
+                    <select
+                      id="publishMode"
+                      name="publishMode"
+                      value={formData.publishMode}
+                      onChange={handleInputChange}
+                      className="form-select"
+                      disabled={isGenerating}
+                    >
+                      <option value="draft">Save as Draft</option>
+                      <option value="publish">Publish Immediately</option>
+                    </select>
+                  </div>
+
+                  <div className="form-group">
+                    <label htmlFor="targetEnvironment">
+                      Target Environment
+                    </label>
+                    <select
+                      id="targetEnvironment"
+                      name="targetEnvironment"
+                      value={formData.targetEnvironment}
+                      onChange={handleInputChange}
+                      className="form-select"
+                      disabled={isGenerating}
+                    >
+                      <option value="production">Production</option>
+                      <option value="staging">Staging</option>
+                    </select>
+                  </div>
+                </div>
               </div>
-            </div>
+            )}
 
             {/* Messages */}
             {error && <div className="alert alert-error">{error}</div>}
