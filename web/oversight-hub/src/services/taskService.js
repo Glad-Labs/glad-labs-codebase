@@ -1,74 +1,130 @@
-import { db } from '../firebaseConfig';
-import {
-  collection,
-  getDocs,
-  addDoc,
-  updateDoc,
-  doc,
-  serverTimestamp,
-  query,
-  orderBy,
-} from 'firebase/firestore';
+/**
+ * Task Service - Uses FastAPI backend (PostgreSQL)
+ *
+ * This service communicates with the Co-Founder Agent backend API
+ * which stores tasks in PostgreSQL database.
+ */
 
-const tasksCollectionRef = collection(db, 'tasks');
+const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:8000';
+const API_TIMEOUT = 30000; // 30 seconds
 
 /**
- * Fetches all tasks from the Firestore 'tasks' collection, ordered by creation date.
- * @returns {Promise<Array>} A promise that resolves to an array of task objects.
+ * Fetch all tasks from the backend API
+ * Uses database-level pagination for performance
  */
-export const getTasks = async () => {
+export const getTasks = async (offset = 0, limit = 20, filters = {}) => {
   try {
-    const q = query(tasksCollectionRef, orderBy('createdAt', 'desc'));
-    const querySnapshot = await getDocs(q);
-    const tasks = querySnapshot.docs.map((doc) => ({
-      id: doc.id,
-      ...doc.data(),
-      // Convert Firestore Timestamps to JS Date objects for easier use in components
-      createdAt: doc.data().createdAt?.toDate(),
-      updatedAt: doc.data().updatedAt?.toDate(),
-    }));
-    return tasks;
+    const params = new URLSearchParams({
+      offset: offset.toString(),
+      limit: limit.toString(),
+      ...(filters.status && { status: filters.status }),
+      ...(filters.category && { category: filters.category }),
+    });
+
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), API_TIMEOUT);
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/tasks?${params}`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${localStorage.getItem('auth_token') || ''}`,
+        },
+        signal: controller.signal,
+      });
+
+      clearTimeout(timeout);
+
+      if (!response.ok) {
+        throw new Error(`Failed to fetch tasks: ${response.statusText}`);
+      }
+
+      const data = await response.json();
+      return data.tasks || [];
+    } catch (error) {
+      clearTimeout(timeout);
+      throw error;
+    }
   } catch (error) {
-    console.error('Error fetching tasks: ', error);
-    throw new Error('Could not fetch tasks from Firestore.');
+    console.error('Error fetching tasks:', error);
+    throw new Error(`Could not fetch tasks from backend: ${error.message}`);
   }
 };
 
 /**
- * Creates a new task document in the Firestore 'tasks' collection.
- * @param {object} taskData - The data for the new task.
- * @returns {Promise<string>} A promise that resolves to the new task's document ID.
+ * Creates a new task via the backend API
  */
 export const createTask = async (taskData) => {
   try {
-    const docRef = await addDoc(tasksCollectionRef, {
-      ...taskData,
-      status: 'New', // Initial status for all new tasks
-      createdAt: serverTimestamp(),
-      updatedAt: serverTimestamp(),
-    });
-    return docRef.id;
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), API_TIMEOUT);
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/tasks`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${localStorage.getItem('auth_token') || ''}`,
+        },
+        body: JSON.stringify(taskData),
+        signal: controller.signal,
+      });
+
+      clearTimeout(timeout);
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(
+          errorData.detail?.message ||
+            `Failed to create task: ${response.statusText}`
+        );
+      }
+
+      const data = await response.json();
+      return data.id; // Return task ID
+    } catch (error) {
+      clearTimeout(timeout);
+      throw error;
+    }
   } catch (error) {
-    console.error('Error creating task: ', error);
-    throw new Error('Could not create a new task in Firestore.');
+    console.error('Error creating task:', error);
+    throw new Error(`Could not create task: ${error.message}`);
   }
 };
 
 /**
- * Updates an existing task document in Firestore.
- * @param {string} taskId - The ID of the task to update.
- * @param {object} updates - An object containing the fields to update.
- * @returns {Promise<void>}
+ * Update task status via the backend API
  */
 export const updateTask = async (taskId, updates) => {
   try {
-    const taskDocRef = doc(db, 'tasks', taskId);
-    await updateDoc(taskDocRef, {
-      ...updates,
-      updatedAt: serverTimestamp(),
-    });
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), API_TIMEOUT);
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/tasks/${taskId}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${localStorage.getItem('auth_token') || ''}`,
+        },
+        body: JSON.stringify(updates),
+        signal: controller.signal,
+      });
+
+      clearTimeout(timeout);
+
+      if (!response.ok) {
+        throw new Error(`Failed to update task: ${response.statusText}`);
+      }
+
+      return await response.json();
+    } catch (error) {
+      clearTimeout(timeout);
+      throw error;
+    }
   } catch (error) {
-    console.error('Error updating task: ', error);
-    throw new Error(`Could not update task ${taskId} in Firestore.`);
+    console.error('Error updating task:', error);
+    throw new Error(`Could not update task: ${error.message}`);
   }
 };
