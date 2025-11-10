@@ -1,6 +1,6 @@
 # 🎛️ Oversight Hub
 
-React admin dashboard for monitoring and controlling the GLAD Labs AI Co-Founder system.
+React admin dashboard for monitoring and controlling the Glad Labs AI Co-Founder system.
 
 **Status:** ✅ Production Ready  
 **Technology:** React 18 + Material-UI + Zustand  
@@ -394,11 +394,11 @@ vercel --prod
 - **Material-UI Docs:** https://mui.com/material-ui/
 - **Zustand Docs:** https://github.com/pmndrs/zustand
 - **React Docs:** https://react.dev
-- **GLAD Labs Architecture:** [docs/02-ARCHITECTURE_AND_DESIGN.md](../../docs/02-ARCHITECTURE_AND_DESIGN.md)
+- **Glad Labs Architecture:** [docs/02-ARCHITECTURE_AND_DESIGN.md](../../docs/02-ARCHITECTURE_AND_DESIGN.md)
 - **API Documentation:** [docs/reference/API_CONTRACT_CONTENT_CREATION.md](../../docs/reference/API_CONTRACT_CONTENT_CREATION.md)
 
 ---
 
-**Maintained by:** GLAD Labs Development Team  
+**Maintained by:** Glad Labs Development Team  
 **Last Updated:** October 26, 2025  
 **Status:** ✅ Production Ready | PostgreSQL Backend | Real-time Updates
