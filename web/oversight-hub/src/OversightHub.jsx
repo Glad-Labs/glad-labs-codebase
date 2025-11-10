@@ -5,6 +5,10 @@ import TaskList from './components/tasks/TaskList';
 import TaskDetailModal from './components/tasks/TaskDetailModal';
 import TaskManagement from './components/tasks/TaskManagement';
 import CostMetricsDashboard from './components/CostMetricsDashboard';
+import SocialContentPage from './components/pages/SocialContentPage';
+import ContentManagementPage from './components/pages/ContentManagementPage';
+import AnalyticsPage from './components/pages/AnalyticsPage';
+import ModelsPage from './components/pages/ModelsPage';
 import './OversightHub.css';
 
 const OversightHub = () => {
@@ -550,14 +554,15 @@ const OversightHub = () => {
 
           {currentPage === 'tasks' && <TaskManagement />}
 
-          {currentPage === 'models' && (
-            <div style={{ padding: '2rem' }}>
-              <h2>🤖 Model Configuration</h2>
-              <p>Model management coming soon.</p>
-            </div>
-          )}
+          {currentPage === 'models' && <ModelsPage />}
+
+          {currentPage === 'social' && <SocialContentPage />}
+
+          {currentPage === 'content' && <ContentManagementPage />}
 
           {currentPage === 'costs' && <CostMetricsDashboard />}
+
+          {currentPage === 'analytics' && <AnalyticsPage />}
 
           {currentPage === 'settings' && (
             <div style={{ padding: '2rem' }}>
