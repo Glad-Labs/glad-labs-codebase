@@ -21,11 +21,14 @@ const OversightHub = () => {
   ]);
   const [chatInput, setChatInput] = useState('');
   const [navMenuOpen, setNavMenuOpen] = useState(false);
-  const [selectedModel, setSelectedModel] = useState('ollama'); // Model selection
+  const [chatMode, setChatMode] = useState('conversation'); // 'conversation' or 'agent'
+  const [selectedModel, setSelectedModel] = useState('ollama-llama2'); // Default model - lightweight
+  const [selectedAgent, setSelectedAgent] = useState('orchestrator'); // Agent selection
   const [currentPage, setCurrentPage] = useState('dashboard');
-  const [ollamaStatus, setOllamaStatus] = useState(null);
+  const [chatHeight, setChatHeight] = useState(
+    parseInt(localStorage.getItem('chatHeight') || '300', 10)
+  ); // Resizable chat height
   const [ollamaConnected, setOllamaConnected] = useState(false);
-  const [showOllamaWarning, setShowOllamaWarning] = useState(false);
   const [availableOllamaModels, setAvailableOllamaModels] = useState([]); // Ollama models list
   const [selectedOllamaModel, setSelectedOllamaModel] = useState(null); // Currently selected Ollama model
 
@@ -40,11 +43,42 @@ const OversightHub = () => {
     { label: 'Settings', icon: '⚙️', path: 'settings' },
   ];
 
+  // eslint-disable-next-line no-unused-vars
   const models = [
     { id: 'ollama', name: 'Ollama (Local)', icon: '🏠' },
     { id: 'openai', name: 'OpenAI GPT-4', icon: '🔴' },
     { id: 'claude', name: 'Claude', icon: '⭐' },
     { id: 'gemini', name: 'Gemini', icon: '✨' },
+  ];
+
+  // Available agents for delegation
+  // eslint-disable-next-line no-unused-vars
+  const agents = [
+    {
+      id: 'content',
+      name: '📝 Content Agent',
+      description: 'Generate and manage content',
+    },
+    {
+      id: 'financial',
+      name: '📊 Financial Agent',
+      description: 'Business metrics & analysis',
+    },
+    {
+      id: 'market',
+      name: '🔍 Market Insight Agent',
+      description: 'Market analysis & trends',
+    },
+    {
+      id: 'compliance',
+      name: '✓ Compliance Agent',
+      description: 'Legal & regulatory checks',
+    },
+    {
+      id: 'orchestrator',
+      name: '🧠 Co-Founder Orchestrator',
+      description: 'Multi-agent orchestration',
+    },
   ];
 
   // Auto-scroll chat to bottom when new messages arrive
@@ -54,95 +88,73 @@ const OversightHub = () => {
     }
   }, [chatMessages]);
 
-  // Check Ollama connection on component mount
+  // Handle chat panel resize - persist height to localStorage
+  const chatPanelRef = useRef(null);
   useEffect(() => {
-    const checkOllama = async () => {
+    const observer = new ResizeObserver((entries) => {
+      for (let entry of entries) {
+        const newHeight = entry.contentRect.height;
+        if (newHeight > 150) {
+          setChatHeight(newHeight);
+          localStorage.setItem('chatHeight', Math.round(newHeight).toString());
+        }
+      }
+    });
+
+    if (chatPanelRef.current) {
+      observer.observe(chatPanelRef.current);
+    }
+
+    return () => {
+      observer.disconnect();
+    };
+  }, []);
+
+  // Initialize by fetching available Ollama models (fast, non-blocking)
+  useEffect(() => {
+    const initializeModels = async () => {
       try {
-        console.log('[Ollama] Checking connection...');
+        // Fetch available models from backend (fast endpoint, 2s timeout)
         const response = await fetch(
-          'http://localhost:8000/api/ollama/health',
+          'http://localhost:8000/api/ollama/models',
           {
-            method: 'GET',
-            headers: { 'Content-Type': 'application/json' },
+            signal: AbortSignal.timeout(3000), // 3s total timeout
           }
         );
 
         if (response.ok) {
           const data = await response.json();
-          console.log('[Ollama] Health check response:', data);
-          setOllamaStatus(data);
+          const models = data.models || ['llama2', 'neural-chat', 'mistral'];
 
-          // Store available models
-          if (data.models && data.models.length > 0) {
-            setAvailableOllamaModels(data.models);
-            // Load selected model from localStorage or use first available
-            const savedModel = localStorage.getItem('selectedOllamaModel');
-            const modelToUse =
-              savedModel && data.models.includes(savedModel)
-                ? savedModel
-                : data.models[0];
-            setSelectedOllamaModel(modelToUse);
-            console.log(`[Ollama] Set default model to: ${modelToUse}`);
-          }
+          setAvailableOllamaModels(models);
+          setOllamaConnected(data.connected ?? true);
 
-          if (data.connected) {
-            setOllamaConnected(true);
-            console.log(
-              `[Ollama] ✅ Connected! Found ${data.models?.length || 0} models`
-            );
-
-            // Warm up Ollama if connected (inline to avoid dependency issues)
-            setTimeout(async () => {
-              const modelToWarmup = data.models?.[0];
-              try {
-                console.log(
-                  `[Ollama] Starting warm-up for model: ${modelToWarmup}`
-                );
-                const warmupResponse = await fetch(
-                  'http://localhost:8000/api/ollama/warmup',
-                  {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ model: modelToWarmup }),
-                  }
-                );
-
-                if (warmupResponse.ok) {
-                  const warmupData = await warmupResponse.json();
-                  console.log('[Ollama] Warm-up complete:', warmupData.message);
-                  setChatMessages((prev) => [
-                    ...prev,
-                    {
-                      id: prev.length + 1,
-                      sender: 'system',
-                      text: `🔥 ${warmupData.message}`,
-                    },
-                  ]);
-                }
-              } catch (err) {
-                console.warn(`[Ollama] Warm-up skipped:`, err.message);
-              }
-            }, 1000);
-          } else {
-            setOllamaConnected(false);
-            setShowOllamaWarning(true);
-            console.warn('[Ollama] ⚠️ Not connected:', data.message);
-          }
-        } else {
-          console.warn(
-            `[Ollama] Health check failed with status ${response.status}`
+          console.log(
+            `[Ollama] Found ${models.length} models: ${models.join(', ')}`
           );
+        } else {
+          // Fallback to defaults if endpoint fails
+          console.log('[Ollama] Backend endpoint failed, using defaults');
+          setAvailableOllamaModels(['llama2', 'neural-chat', 'mistral']);
           setOllamaConnected(false);
-          setShowOllamaWarning(true);
         }
-      } catch (err) {
-        console.error('[Ollama] Connection check error:', err.message);
+      } catch (error) {
+        // Timeout or other error - use defaults without blocking
+        console.log(
+          `[Ollama] Initialization error (expected if Ollama offline): ${error.message}`
+        );
+        setAvailableOllamaModels(['llama2', 'neural-chat', 'mistral']);
         setOllamaConnected(false);
-        setShowOllamaWarning(true);
       }
+
+      // Use saved model or default to llama2
+      const savedModel =
+        localStorage.getItem('selectedOllamaModel') || 'llama2';
+      setSelectedOllamaModel(savedModel);
+      console.log(`[Ollama] Using model: ${savedModel}`);
     };
 
-    checkOllama();
+    initializeModels();
   }, []);
 
   const handleTaskClick = (task) => {
@@ -154,50 +166,21 @@ const OversightHub = () => {
     setNavMenuOpen(false); // Close menu after navigation
   };
 
-  const handleOllamaModelChange = async (newModel) => {
-    try {
-      console.log(`[Ollama] Attempting to select model: ${newModel}`);
+  const handleOllamaModelChange = (newModel) => {
+    // No validation needed - just set the model locally
+    // Backend will use it when chat request is made
+    console.log(`[Ollama] Changed model to: ${newModel}`);
+    setSelectedOllamaModel(newModel);
+    localStorage.setItem('selectedOllamaModel', newModel);
 
-      // Validate model with backend
-      const response = await fetch(
-        'http://localhost:8000/api/ollama/select-model',
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ model: newModel }),
-        }
-      );
-
-      if (response.ok) {
-        const data = await response.json();
-        if (data.success) {
-          setSelectedOllamaModel(newModel);
-          localStorage.setItem('selectedOllamaModel', newModel);
-          console.log(`[Ollama] ✅ Model changed to: ${newModel}`);
-
-          setChatMessages((prev) => [
-            ...prev,
-            {
-              id: prev.length + 1,
-              sender: 'system',
-              text: `✅ ${data.message}`,
-            },
-          ]);
-        } else {
-          console.warn(`[Ollama] ⚠️ ${data.message}`);
-          setChatMessages((prev) => [
-            ...prev,
-            {
-              id: prev.length + 1,
-              sender: 'system',
-              text: `⚠️ ${data.message}`,
-            },
-          ]);
-        }
-      }
-    } catch (err) {
-      console.error('[Ollama] Model selection error:', err.message);
-    }
+    setChatMessages((prev) => [
+      ...prev,
+      {
+        id: prev.length + 1,
+        sender: 'system',
+        text: `✅ Model changed to: ${newModel}`,
+      },
+    ]);
   };
 
   const handleSendMessage = async () => {
@@ -216,16 +199,21 @@ const OversightHub = () => {
     // Send to backend with model selection
     try {
       console.log(
-        `[Chat] Sending message to backend with model: ${selectedModel}`
+        `[Chat] Sending message with selectedModel: ${selectedModel}, chatMode: ${chatMode}, selectedAgent: ${selectedAgent}`
       );
+
+      // Debug: log the exact payload
+      const payload = {
+        message: userMessage,
+        model: selectedModel,
+        conversationId: 'default',
+      };
+      console.log('[Chat] Payload being sent:', JSON.stringify(payload));
+
       const response = await fetch('http://localhost:8000/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          message: userMessage,
-          model: selectedModel,
-          conversationId: 'default',
-        }),
+        body: JSON.stringify(payload),
       });
 
       if (response.ok) {
@@ -466,31 +454,6 @@ const OversightHub = () => {
         </div>
       )}
 
-      {/* Ollama warning notification */}
-      {showOllamaWarning && ollamaStatus && !ollamaConnected && (
-        <div
-          style={{
-            backgroundColor: 'rgba(255, 100, 100, 0.2)',
-            border: '1px solid #ff6464',
-            borderRadius: '0.5rem',
-            padding: '1rem',
-            margin: '1rem',
-            color: '#ffaa00',
-            fontSize: '0.9rem',
-          }}
-        >
-          <div style={{ fontWeight: 'bold', marginBottom: '0.5rem' }}>
-            ⚠️ Ollama Connection Issue
-          </div>
-          <div>{ollamaStatus.message}</div>
-          <div
-            style={{ marginTop: '0.5rem', fontSize: '0.85rem', opacity: 0.8 }}
-          >
-            💡 To start Ollama: Open Terminal and run <code>ollama serve</code>
-          </div>
-        </div>
-      )}
-
       <div className="oversight-hub-layout">
         {/* Main Content Panel */}
         <div className="main-panel">
@@ -711,21 +674,91 @@ const OversightHub = () => {
           )}
         </div>
 
-        {/* Chat Panel at Bottom */}
-        <div className="chat-panel">
+        {/* Chat Panel at Bottom - RESIZABLE VERTICALLY */}
+        <div
+          ref={chatPanelRef}
+          className="chat-panel"
+          style={{
+            height: `${chatHeight}px`,
+            transition: 'height 0.1s ease-out',
+          }}
+        >
           <div className="chat-header">
             <span>💬 Poindexter Assistant</span>
+
+            {/* Chat Mode Toggle */}
+            <div className="chat-mode-toggle">
+              <button
+                className={`mode-btn ${chatMode === 'conversation' ? 'active' : 'inactive'}`}
+                onClick={() => setChatMode('conversation')}
+                title="Regular conversation mode"
+              >
+                💬 Conversation
+              </button>
+              <button
+                className={`mode-btn ${chatMode === 'agent' ? 'active' : 'inactive'}`}
+                onClick={() => setChatMode('agent')}
+                title="Agent mode - execute multi-step commands"
+              >
+                🤖 Agent
+              </button>
+            </div>
+
+            {/* Model Selector - shows individual models if Ollama available */}
             <select
-              className="model-selector"
+              className="model-selector-chat"
               value={selectedModel}
               onChange={(e) => setSelectedModel(e.target.value)}
+              title="Select AI model"
             >
-              {models.map((model) => (
-                <option key={model.id} value={model.id}>
-                  {model.icon} {model.name}
-                </option>
-              ))}
+              {ollamaConnected && availableOllamaModels.length > 0 ? (
+                // Show individual Ollama models
+                <>
+                  <optgroup label="🏠 Ollama (Local)">
+                    {availableOllamaModels.map((model) => (
+                      <option key={`ollama-${model}`} value={`ollama-${model}`}>
+                        {model}
+                      </option>
+                    ))}
+                  </optgroup>
+                  <optgroup label="☁️ Cloud Models">
+                    <option value="openai">🔴 OpenAI GPT-4</option>
+                    <option value="claude">⭐ Claude 3</option>
+                    <option value="gemini">✨ Gemini</option>
+                  </optgroup>
+                </>
+              ) : (
+                // Show generic model options if Ollama not available
+                <>
+                  <option value="openai">🔴 OpenAI GPT-4</option>
+                  <option value="claude">⭐ Claude 3</option>
+                  <option value="gemini">✨ Gemini</option>
+                  <option value="ollama" disabled>
+                    🏠 Ollama (Unavailable)
+                  </option>
+                </>
+              )}
             </select>
+
+            {/* Agent Selector - only show in Agent mode */}
+            {chatMode === 'agent' && (
+              <select
+                className="agent-selector-chat"
+                value={selectedAgent}
+                onChange={(e) => setSelectedAgent(e.target.value)}
+                title="Select which agent handles this task"
+              >
+                {agents.map((agent) => (
+                  <option
+                    key={agent.id}
+                    value={agent.id}
+                    title={agent.description}
+                  >
+                    {agent.name}
+                  </option>
+                ))}
+              </select>
+            )}
           </div>
           <div className="chat-content">
             {chatMessages.map((msg) => (

@@ -13,19 +13,12 @@ const CreateTaskModal = ({ isOpen, onClose, onTaskCreated }) => {
       label: '📝 Blog Post',
       description: 'Create a comprehensive blog article',
       fields: [
-        { name: 'title', label: 'Article Title', type: 'text', required: true },
         { name: 'topic', label: 'Topic', type: 'text', required: true },
-        {
-          name: 'keywords',
-          label: 'SEO Keywords (comma-separated)',
-          type: 'text',
-          required: false,
-        },
         {
           name: 'word_count',
           label: 'Word Count',
           type: 'number',
-          required: false,
+          required: true,
           defaultValue: 1500,
         },
         {
@@ -33,7 +26,13 @@ const CreateTaskModal = ({ isOpen, onClose, onTaskCreated }) => {
           label: 'Writing Style',
           type: 'select',
           required: true,
-          options: ['technical', 'narrative', 'listicle', 'educational', 'thought-leadership'],
+          options: [
+            'technical',
+            'narrative',
+            'listicle',
+            'educational',
+            'thought-leadership',
+          ],
         },
       ],
     },
@@ -294,8 +293,10 @@ const CreateTaskModal = ({ isOpen, onClose, onTaskCreated }) => {
       const result = await response.json();
       console.log('✅ Task created successfully:', result);
 
-      // Notify parent and reset
-      onTaskCreated();
+      // Notify parent with the new task data and reset
+      if (onTaskCreated) {
+        onTaskCreated(result);
+      }
       setTaskType('');
       setFormData({});
     } catch (err) {

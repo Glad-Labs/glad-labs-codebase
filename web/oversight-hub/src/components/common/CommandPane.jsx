@@ -27,6 +27,15 @@ const AI_MODELS = [
   { id: 'local', name: 'Local Model' },
 ];
 
+// Available Agents for delegation
+const AVAILABLE_AGENTS = [
+  { id: 'content', name: '📝 Content Agent', description: 'Generate and manage content' },
+  { id: 'financial', name: '📊 Financial Agent', description: 'Business metrics & analysis' },
+  { id: 'market', name: '🔍 Market Insight Agent', description: 'Market analysis & trends' },
+  { id: 'compliance', name: '✓ Compliance Agent', description: 'Legal & regulatory checks' },
+  { id: 'orchestrator', name: '🧠 Co-Founder Orchestrator', description: 'Multi-agent orchestration' },
+];
+
 // Command type configurations
 const COMMAND_CONFIGS = {
   content_generation: {
@@ -70,6 +79,7 @@ const CommandPane = () => {
   const isResizing = useRef(false);
   const [isTyping, setIsTyping] = useState(false);
   const [selectedModel, setSelectedModel] = useState('gpt-4');
+  const [selectedAgent, setSelectedAgent] = useState('orchestrator');
   const [showContext, setShowContext] = useState(false);
   const [delegateMode, setDelegateMode] = useState(false);
 
@@ -104,12 +114,13 @@ const CommandPane = () => {
         parameters: {
           userInput: input,
           model: selectedModel,
+          agent: selectedAgent,
           context: selectedTask ? selectedTask.title : 'No active task',
         },
         config,
       };
     },
-    [selectedModel, selectedTask]
+    [selectedModel, selectedAgent, selectedTask]
   );
 
   /**
@@ -204,6 +215,7 @@ const CommandPane = () => {
             parameters: params || commandMessage.parameters,
             task: selectedTask || null,
             model: selectedModel,
+            agent: selectedAgent,
             context: {
               currentPage: window.location.pathname,
               selectedTaskId: selectedTask?.id || null,
@@ -288,6 +300,7 @@ const CommandPane = () => {
       selectedTask,
       tasks,
       selectedModel,
+      selectedAgent,
       messages,
     ]
   );
@@ -472,6 +485,25 @@ const CommandPane = () => {
           >
             {showContext ? '✕' : '⊕'} Context
           </button>
+        </div>
+
+        {/* Agent Selector */}
+        <div className="agent-selector">
+          <label htmlFor="ai-agent" className="agent-label">
+            Agent:
+          </label>
+          <select
+            id="ai-agent"
+            className="agent-dropdown"
+            value={selectedAgent}
+            onChange={(e) => setSelectedAgent(e.target.value)}
+          >
+            {AVAILABLE_AGENTS.map((agent) => (
+              <option key={agent.id} value={agent.id} title={agent.description}>
+                {agent.name}
+              </option>
+            ))}
+          </select>
         </div>
 
         {/* Model Selector */}

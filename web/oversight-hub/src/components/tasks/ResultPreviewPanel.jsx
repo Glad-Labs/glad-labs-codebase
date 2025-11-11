@@ -16,16 +16,56 @@ const ResultPreviewPanel = ({
   // Initialize editable content when task changes
   React.useEffect(() => {
     if (task && task.result) {
-      // Handle both nested (result.content) and flat (result string) structures
-      const content =
-        typeof task.result === 'string'
-          ? task.result
-          : task.result.content || task.result.generated_content || '';
+      // Extract content from various possible structures
+      let content = '';
+      let title = '';
+      let seo = {};
+
+      // Handle different response structures from backend
+      if (typeof task.result === 'string') {
+        // Simple string response
+        content = task.result;
+        title =
+          task.title ||
+          task.result?.task_name ||
+          task.topic ||
+          'Generated Content';
+      } else if (typeof task.result === 'object') {
+        // Complex object response
+        content =
+          task.result.content ||
+          task.result.generated_content ||
+          task.result.article ||
+          task.result.body ||
+          task.result.text ||
+          JSON.stringify(task.result, null, 2); // Fallback to JSON
+
+        title =
+          task.result.title ||
+          task.result.article_title ||
+          task.result.seo?.title ||
+          task.title ||
+          task.result.task_name ||
+          task.topic ||
+          'Generated Content';
+
+        seo = task.result.seo || {
+          title: task.result.seo_title || task.result.article_title || '',
+          description:
+            task.result.seo_description || task.result.meta_description || '',
+          keywords: task.result.keywords || task.result.tags || '',
+        };
+      }
+
       setEditedContent(content);
-      setEditedTitle(task.title || task.result.task_name || task.topic || '');
-      setEditedSEO(
-        task.result.seo || { title: '', description: '', keywords: '' }
-      );
+      setEditedTitle(title);
+      setEditedSEO(seo || { title: '', description: '', keywords: '' });
+
+      console.log('✅ ResultPreviewPanel loaded content:', {
+        hasContent: !!content,
+        contentLength: content?.length || 0,
+        title,
+      });
     }
   }, [task]);
 

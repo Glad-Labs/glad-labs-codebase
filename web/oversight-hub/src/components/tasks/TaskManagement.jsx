@@ -355,23 +355,7 @@ const TaskManagement = () => {
             {tasks.length} total tasks • {selectedTasks.length} selected
           </Typography>
         </Box>
-        <Box display="flex" gap={1.5}>
-          <Button
-            variant="outlined"
-            startIcon={<RefreshIcon />}
-            onClick={fetchTasks}
-            sx={{
-              textTransform: 'none',
-              borderColor: '#00d4ff',
-              color: '#00d4ff',
-              '&:hover': {
-                backgroundColor: 'rgba(0, 212, 255, 0.1)',
-                borderColor: '#00d4ff',
-              },
-            }}
-          >
-            Refresh
-          </Button>
+        <Box display="flex" gap={1.5} alignItems="center">
           <Button
             variant="contained"
             startIcon={<AddIcon />}
@@ -387,6 +371,23 @@ const TaskManagement = () => {
             }}
           >
             + Create Task
+          </Button>
+          <Button
+            variant="outlined"
+            startIcon={<RefreshIcon />}
+            onClick={fetchTasks}
+            size="small"
+            sx={{
+              textTransform: 'none',
+              borderColor: '#00d4ff',
+              color: '#00d4ff',
+              '&:hover': {
+                backgroundColor: 'rgba(0, 212, 255, 0.1)',
+                borderColor: '#00d4ff',
+              },
+            }}
+          >
+            Refresh
           </Button>
         </Box>
       </Box>
@@ -733,10 +734,31 @@ const TaskManagement = () => {
                     </Typography>
                   </TableCell>
                   <TableCell align="right">
-                    <Tooltip title="Edit">
+                    <Tooltip title="View Details">
                       <IconButton
                         size="small"
-                        onClick={() => setSelectedTask(task)}
+                        onClick={async () => {
+                          // If task is blog_post, ensure we have latest content status
+                          let taskToSelect = task;
+                          if (
+                            task.task_type === 'blog_post' ||
+                            task.category === 'content_generation' ||
+                            task.metadata?.task_type === 'blog_post'
+                          ) {
+                            const contentStatus = await fetchContentTaskStatus(
+                              task.id
+                            );
+                            if (contentStatus) {
+                              taskToSelect = {
+                                ...task,
+                                status: contentStatus.status,
+                                result: contentStatus.result,
+                                error_message: contentStatus.error_message,
+                              };
+                            }
+                          }
+                          setSelectedTask(taskToSelect);
+                        }}
                       >
                         <EditIcon fontSize="small" />
                       </IconButton>
@@ -762,9 +784,32 @@ const TaskManagement = () => {
       <CreateTaskModal
         isOpen={showCreateModal}
         onClose={() => setShowCreateModal(false)}
-        onTaskCreated={() => {
+        onTaskCreated={(newTaskData) => {
           setShowCreateModal(false);
-          fetchTasks();
+
+          // If we got task data back, add it to the top of the list immediately
+          if (newTaskData) {
+            // Create a task object from the response
+            const newTask = {
+              id:
+                newTaskData.task_id ||
+                newTaskData.id ||
+                'new-task-' + Date.now(),
+              title: newTaskData.topic || 'New Task',
+              description: newTaskData.description || '',
+              status: 'in_progress',
+              priority: 'normal',
+              agent: 'Content Generator',
+              created_at: new Date().toISOString(),
+              ...newTaskData, // Include all returned data
+            };
+
+            // Add to beginning of tasks list
+            setTasks([newTask, ...tasks]);
+          } else {
+            // Fall back to fetching all tasks
+            fetchTasks();
+          }
         }}
       />
 
