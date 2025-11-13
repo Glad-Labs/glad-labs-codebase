@@ -1,22 +1,39 @@
 import React, { useState, useEffect } from 'react';
 import useStore from '../store/useStore';
 import { getTasks } from '../services/cofounderAgentClient';
+import CreateTaskModal from '../components/tasks/CreateTaskModal';
 import './TaskManagement.css';
 
 function TaskManagement() {
-  const { setTasks, tasks: storeTasks } = useStore();
+  const { setTasks } = useStore();
   const [tasks, setLocalTasks] = useState([]);
-  const [filterStatus, setFilterStatus] = useState('all');
   const [sortBy, setSortBy] = useState('created_at');
+  const [sortDirection, setSortDirection] = useState('desc');
   const [loading, setLoading] = useState(false);
+  const [showCreateModal, setShowCreateModal] = useState(false);
 
   // Fetch tasks from API
   useEffect(() => {
-    fetchTasks();
-    // Auto-refresh every 10 seconds
-    const interval = setInterval(fetchTasks, 10000);
+    const fetchTasksWrapper = async () => {
+      try {
+        setLoading(true);
+        const response = await getTasks({ limit: 100 });
+        if (response && response.tasks) {
+          setLocalTasks(response.tasks);
+          setTasks(response.tasks);
+        }
+      } catch (error) {
+        console.error('Error fetching tasks:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchTasksWrapper();
+    // Auto-refresh every 30 seconds
+    const interval = setInterval(fetchTasksWrapper, 30000);
     return () => clearInterval(interval);
-  }, []);
+  }, [setTasks]);
 
   const fetchTasks = async () => {
     try {
@@ -37,9 +54,29 @@ function TaskManagement() {
     // Return ALL tasks regardless of status
     let allTasks = tasks || [];
     return allTasks.sort((a, b) => {
-      // Sort by newest first
-      return new Date(b.created_at || 0) - new Date(a.created_at || 0);
+      let aVal = a[sortBy] || 0;
+      let bVal = b[sortBy] || 0;
+
+      if (sortBy === 'created_at') {
+        aVal = new Date(aVal).getTime();
+        bVal = new Date(bVal).getTime();
+      }
+
+      if (sortDirection === 'asc') {
+        return aVal > bVal ? 1 : -1;
+      } else {
+        return aVal < bVal ? 1 : -1;
+      }
     });
+  };
+
+  const handleSort = (column) => {
+    if (sortBy === column) {
+      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortBy(column);
+      setSortDirection('asc');
+    }
   };
 
   const filteredTasks = getFilteredTasks();
@@ -48,7 +85,6 @@ function TaskManagement() {
     <div className="task-management-container">
       <div className="dashboard-header">
         <h1 className="dashboard-title">Task Management</h1>
-        <p className="dashboard-subtitle">Organize and track all your tasks</p>
       </div>
 
       {/* Summary Stats */}
@@ -82,12 +118,12 @@ function TaskManagement() {
 
       {/* Unified Table - All Tasks */}
       <div className="table-controls">
-        <button className="btn-refresh" onClick={fetchTasks} disabled={loading}>
-          {loading ? '🔄 Refreshing...' : '🔄 Refresh Now'}
+        <button
+          className="btn-create-task"
+          onClick={() => setShowCreateModal(true)}
+        >
+          + Create Task
         </button>
-        <span className="refresh-info">
-          {loading ? 'Loading tasks...' : 'Auto-refreshing every 10 seconds'}
-        </span>
       </div>
 
       {/* Unified Tasks Table */}
@@ -101,11 +137,44 @@ function TaskManagement() {
           <table className="tasks-table">
             <thead>
               <tr>
-                <th>Task Name</th>
-                <th>Topic</th>
-                <th>Status</th>
-                <th>Category</th>
-                <th>Created</th>
+                <th
+                  onClick={() => handleSort('task_name')}
+                  className={`sortable ${sortBy === 'task_name' ? 'active-sort' : ''}`}
+                >
+                  Task Name{' '}
+                  {sortBy === 'task_name' &&
+                    (sortDirection === 'asc' ? '↑' : '↓')}
+                </th>
+                <th
+                  onClick={() => handleSort('topic')}
+                  className={`sortable ${sortBy === 'topic' ? 'active-sort' : ''}`}
+                >
+                  Topic{' '}
+                  {sortBy === 'topic' && (sortDirection === 'asc' ? '↑' : '↓')}
+                </th>
+                <th
+                  onClick={() => handleSort('status')}
+                  className={`sortable ${sortBy === 'status' ? 'active-sort' : ''}`}
+                >
+                  Status{' '}
+                  {sortBy === 'status' && (sortDirection === 'asc' ? '↑' : '↓')}
+                </th>
+                <th
+                  onClick={() => handleSort('category')}
+                  className={`sortable ${sortBy === 'category' ? 'active-sort' : ''}`}
+                >
+                  Category{' '}
+                  {sortBy === 'category' &&
+                    (sortDirection === 'asc' ? '↑' : '↓')}
+                </th>
+                <th
+                  onClick={() => handleSort('created_at')}
+                  className={`sortable ${sortBy === 'created_at' ? 'active-sort' : ''}`}
+                >
+                  Created{' '}
+                  {sortBy === 'created_at' &&
+                    (sortDirection === 'asc' ? '↑' : '↓')}
+                </th>
                 <th>Quality Score</th>
                 <th>Actions</th>
               </tr>
@@ -154,6 +223,17 @@ function TaskManagement() {
           </table>
         )}
       </div>
+
+      {/* Create Task Modal */}
+      {showCreateModal && (
+        <CreateTaskModal
+          isOpen={showCreateModal}
+          onClose={() => {
+            setShowCreateModal(false);
+            fetchTasks();
+          }}
+        />
+      )}
     </div>
   );
 }

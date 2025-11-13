@@ -48,7 +48,10 @@ export const useTasks = () => {
         if (isMounted) {
           const tasksData = Array.isArray(response.data)
             ? response.data
-            : response.data.results || response.data.data || [];
+            : response.data.tasks ||
+              response.data.results ||
+              response.data.data ||
+              [];
 
           setTasks(tasksData);
           setStoreTasks(tasksData);

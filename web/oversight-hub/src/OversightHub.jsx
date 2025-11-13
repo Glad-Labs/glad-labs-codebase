@@ -683,6 +683,10 @@ const OversightHub = () => {
             transition: 'height 0.1s ease-out',
           }}
         >
+          {/* Drag Handle for Resizing */}
+          <div className="chat-resize-handle" title="Drag to resize chat panel">
+            <div className="drag-indicator">⋮⋮</div>
+          </div>
           <div className="chat-header">
             <span>💬 Poindexter Assistant</span>
 

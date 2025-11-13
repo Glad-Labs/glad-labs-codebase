@@ -15,57 +15,74 @@ const ResultPreviewPanel = ({
 
   // Initialize editable content when task changes
   React.useEffect(() => {
-    if (task && task.result) {
-      // Extract content from various possible structures
+    if (task && task.content) {
+      // ✅ FIXED: Handle both content_tasks and legacy task structures
       let content = '';
       let title = '';
       let seo = {};
 
-      // Handle different response structures from backend
-      if (typeof task.result === 'string') {
-        // Simple string response
-        content = task.result;
+      // Handle content_tasks structure (primary)
+      if (task.content) {
+        // Direct content field from content_tasks table
+        content = task.content;
         title =
-          task.title ||
-          task.result?.task_name ||
-          task.topic ||
-          'Generated Content';
-      } else if (typeof task.result === 'object') {
-        // Complex object response
-        content =
-          task.result.content ||
-          task.result.generated_content ||
-          task.result.article ||
-          task.result.body ||
-          task.result.text ||
-          JSON.stringify(task.result, null, 2); // Fallback to JSON
+          task.title || task.topic || task.task_name || 'Generated Content';
 
-        title =
-          task.result.title ||
-          task.result.article_title ||
-          task.result.seo?.title ||
-          task.title ||
-          task.result.task_name ||
-          task.topic ||
-          'Generated Content';
-
-        seo = task.result.seo || {
-          title: task.result.seo_title || task.result.article_title || '',
-          description:
-            task.result.seo_description || task.result.meta_description || '',
-          keywords: task.result.keywords || task.result.tags || '',
+        seo = {
+          title: task.title || task.topic || '',
+          description: task.excerpt || '',
+          keywords:
+            task.tags && Array.isArray(task.tags)
+              ? task.tags.join(', ')
+              : typeof task.tags === 'string'
+                ? task.tags
+                : '',
         };
+
+        console.log(
+          '✅ ResultPreviewPanel loaded content from content_tasks:',
+          {
+            hasContent: !!content,
+            contentLength: content?.length || 0,
+            title,
+            hasExcerpt: !!task.excerpt,
+          }
+        );
+      }
+      // Fallback: Handle result object (legacy)
+      else if (task.result) {
+        if (typeof task.result === 'string') {
+          content = task.result;
+          title = task.title || task.task_name || 'Generated Content';
+        } else if (typeof task.result === 'object') {
+          content =
+            task.result.content ||
+            task.result.generated_content ||
+            task.result.article ||
+            task.result.body ||
+            task.result.text ||
+            JSON.stringify(task.result, null, 2);
+
+          title =
+            task.result.title ||
+            task.result.article_title ||
+            task.result.seo?.title ||
+            task.title ||
+            task.task_name ||
+            'Generated Content';
+
+          seo = task.result.seo || {
+            title: task.result.seo_title || task.result.article_title || '',
+            description:
+              task.result.seo_description || task.result.meta_description || '',
+            keywords: task.result.keywords || task.result.tags || '',
+          };
+        }
       }
 
       setEditedContent(content);
       setEditedTitle(title);
       setEditedSEO(seo || { title: '', description: '', keywords: '' });
-
-      console.log('✅ ResultPreviewPanel loaded content:', {
-        hasContent: !!content,
-        contentLength: content?.length || 0,
-        title,
-      });
     }
   }, [task]);
 

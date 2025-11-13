@@ -5,10 +5,6 @@ import {
   Typography,
   Button,
   Chip,
-  Select,
-  MenuItem,
-  FormControl,
-  InputLabel,
   IconButton,
   Table,
   TableBody,
@@ -18,8 +14,6 @@ import {
   TableRow,
   Paper,
   Checkbox,
-  Tabs,
-  Tab,
   Alert,
   CircularProgress,
   Tooltip,
@@ -33,11 +27,8 @@ import {
   Delete as DeleteIcon,
   Edit as EditIcon,
   Refresh as RefreshIcon,
-  CheckCircle as CheckCircleIcon,
-  Assignment as AssignmentIcon,
 } from '@mui/icons-material';
 import CreateTaskModal from './CreateTaskModal';
-import TaskQueueView from './TaskQueueView';
 import ResultPreviewPanel from './ResultPreviewPanel';
 
 /**
@@ -55,18 +46,18 @@ const TaskManagement = () => {
   const [loading, setLoading] = useState(true);
   const [tasks, setTasks] = useState([]);
   const [selectedTasks, setSelectedTasks] = useState([]);
-  const [filterStatus, setFilterStatus] = useState('all');
-  const [filterPriority, setFilterPriority] = useState('all');
-  const [filterAgent, setFilterAgent] = useState('all');
-  const [currentTab, setCurrentTab] = useState(0); // 0: Active, 1: Completed, 2: Failed
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [selectedTask, setSelectedTask] = useState(null);
   const [isPublishing, setIsPublishing] = useState(false);
   const [error, setError] = useState(null);
+  const [sortBy, setSortBy] = useState('created_at');
+  const [sortDirection, setSortDirection] = useState('desc');
 
   /**
-   * Fetch task status from /api/tasks endpoint
-   * Uses the CORRECT backend endpoint
+   * Fetch full content task from /api/content/tasks endpoint
+   * Gets complete task data with content, excerpt, images
+   * ✅ REFACTORED: Changed from /api/content/blog-posts/tasks/{id} to /api/content/tasks/{id}
+   * Now supports all task types: blog_post, social_media, email, newsletter
    */
   const fetchContentTaskStatus = async (taskId) => {
     try {
@@ -76,9 +67,11 @@ const TaskManagement = () => {
         headers['Authorization'] = `Bearer ${token}`;
       }
 
-      // ✅ CORRECT ENDPOINT: /api/tasks/{taskId}
+      // ✅ UPDATED ENDPOINT: /api/content/tasks/{taskId}
+      // Returns: { task_id, status, progress, result, error, created_at, task_type }
+      // Content is nested in result.content, result.article_title, etc.
       const response = await fetch(
-        `http://localhost:8000/api/tasks/${taskId}`,
+        `http://localhost:8000/api/content/tasks/${taskId}`,
         {
           headers,
           signal: AbortSignal.timeout(5000),
@@ -87,27 +80,54 @@ const TaskManagement = () => {
 
       if (response.ok) {
         const data = await response.json();
-        console.log('✅ Content task status:', data);
+        const result = data.result || {};
+
+        console.log('✅ Content task status fetched:', {
+          taskId: data.task_id || taskId,
+          status: data.status,
+          hasResult: !!result,
+          hasContent: !!result.content,
+          contentLength: result.content?.length || 0,
+        });
+
         return {
           status: data.status || 'completed',
-          result: data.result || {},
-          error_message: data.error_message,
+          task_id: data.task_id || taskId,
+          // Extract from result object (nested structure from backend)
+          title: result.title || result.article_title || result.topic || '',
+          content:
+            result.content || result.generated_content || result.article || '',
+          excerpt: result.excerpt || result.summary || '',
+          featured_image_url: result.featured_image_url || null,
+          featured_image_data: result.featured_image_data || null,
+          // Config fields
+          style: result.style || '',
+          tone: result.tone || '',
+          target_length: result.target_length || 0,
+          // Metadata
+          tags: result.tags || [],
+          task_metadata: result.task_metadata || data.progress || {},
+          strapi_id: result.strapi_id || result.strapi_post_id || null,
+          strapi_url: result.strapi_url || result.published_url || null,
+          // Error handling
+          error_message: data.error || result.error || '',
+          // Additional data
+          progress: data.progress || {},
         };
       } else {
-        console.warn(
-          `Failed to fetch content task status: ${response.statusText}`
-        );
+        console.warn(`Failed to fetch content task: ${response.statusText}`);
         return null;
       }
     } catch (error) {
-      console.error('Failed to fetch content task status:', error);
+      console.error('Failed to fetch content task:', error);
       return null;
     }
   };
 
   /**
    * Fetch tasks from backend with authorization
-   * Also checks /api/content/status for blog_post tasks
+   * Fetches from /api/content/tasks which shows all content generation tasks
+   * Supports filtering by task_type (blog_post, social_media, email, newsletter)
    */
   const fetchTasks = async () => {
     try {
@@ -118,47 +138,37 @@ const TaskManagement = () => {
         headers['Authorization'] = `Bearer ${token}`;
       }
 
-      const response = await fetch('http://localhost:8000/api/tasks', {
-        headers,
-        signal: AbortSignal.timeout(5000),
-      });
+      // ✅ REFACTORED: Use /api/content/tasks endpoint (type-agnostic, replaces /api/content/blog-posts/drafts)
+      // Can add query parameters: ?task_type=blog_post&status=draft&limit=100
+      const response = await fetch(
+        'http://localhost:8000/api/content/tasks?limit=100',
+        {
+          headers,
+          signal: AbortSignal.timeout(5000),
+        }
+      );
 
       if (response.ok) {
         let data = await response.json();
-        let tasks = data.tasks || [];
+        // The response has 'drafts' array with draft_id, title, created_at, status, word_count, summary
+        let tasks = data.drafts || [];
 
-        // For blog_post tasks, also fetch content-specific status
-        tasks = await Promise.all(
-          tasks.map(async (task) => {
-            // If task type indicates content generation, fetch from content endpoint
-            if (
-              task.task_type === 'blog_post' ||
-              task.category === 'content_generation' ||
-              task.metadata?.task_type === 'blog_post'
-            ) {
-              const contentStatus = await fetchContentTaskStatus(task.id);
-              if (contentStatus) {
-                console.log('📄 Updated blog post task status:', {
-                  id: task.id,
-                  status: contentStatus.status,
-                  hasResult: !!contentStatus.result,
-                });
-                return {
-                  ...task,
-                  status: contentStatus.status,
-                  result: contentStatus.result,
-                  error_message: contentStatus.error_message,
-                };
-              }
-            }
-            return task;
-          })
-        );
+        // Transform drafts to match expected task structure
+        const transformedTasks = tasks.map((draft) => ({
+          id: draft.draft_id,
+          task_name: draft.title,
+          topic: draft.title,
+          status: draft.status || 'draft',
+          created_at: draft.created_at,
+          word_count: draft.word_count,
+          summary: draft.summary,
+          category: 'blog_post',
+        }));
 
-        setTasks(tasks);
+        setTasks(transformedTasks);
       } else {
-        setError(`Failed to fetch tasks: ${response.statusText}`);
-        console.error('Failed to fetch tasks:', response.statusText);
+        setError(`Failed to fetch content tasks: ${response.statusText}`);
+        console.error('Failed to fetch content tasks:', response.statusText);
       }
     } catch (error) {
       const errorMessage =
@@ -171,7 +181,8 @@ const TaskManagement = () => {
   };
 
   /**
-   * Delete task (uses PATCH with cancelled status instead of DELETE)
+   * Delete task (uses content endpoint to delete tasks of any type)
+   * Supports: blog_post, social_media, email, newsletter
    */
   const handleDeleteTask = async (taskId) => {
     if (!window.confirm('Are you sure you want to delete this task?')) return;
@@ -184,12 +195,12 @@ const TaskManagement = () => {
         headers['Authorization'] = `Bearer ${token}`;
       }
 
+      // ✅ REFACTORED: Use /api/content/tasks/{id} endpoint (replaces /api/content/blog-posts/drafts/{id})
       const response = await fetch(
-        `http://localhost:8000/api/tasks/${taskId}`,
+        `http://localhost:8000/api/content/tasks/${taskId}`,
         {
-          method: 'PATCH',
+          method: 'DELETE',
           headers,
-          body: JSON.stringify({ status: 'cancelled' }),
         }
       );
 
@@ -303,12 +314,57 @@ const TaskManagement = () => {
     return colors[priority] || 'default';
   };
 
+  /**
+   * Handle table header click for sorting
+   */
+  const handleSort = (field) => {
+    if (sortBy === field) {
+      // Toggle direction if clicking same field
+      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
+    } else {
+      // New field - sort ascending by default
+      setSortBy(field);
+      setSortDirection('asc');
+    }
+  };
+
+  /**
+   * Sort tasks based on current sortBy and sortDirection
+   */
+  const getSortedTasks = (tasksToSort) => {
+    const sorted = [...tasksToSort].sort((a, b) => {
+      let aVal = a[sortBy];
+      let bVal = b[sortBy];
+
+      // Handle dates
+      if (sortBy === 'created_at' || sortBy === 'updated_at') {
+        aVal = new Date(aVal || 0).getTime();
+        bVal = new Date(bVal || 0).getTime();
+      }
+
+      // Handle strings
+      if (typeof aVal === 'string') {
+        aVal = aVal.toLowerCase();
+        bVal = bVal.toLowerCase();
+      }
+
+      if (sortDirection === 'asc') {
+        return aVal > bVal ? 1 : -1;
+      } else {
+        return aVal < bVal ? 1 : -1;
+      }
+    });
+
+    return sorted;
+  };
+
   useEffect(() => {
     fetchTasks();
 
     // Auto-refresh every 10 seconds
     const interval = setInterval(fetchTasks, 10000);
     return () => clearInterval(interval);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const filteredTasks = getFilteredTasks();
@@ -351,44 +407,6 @@ const TaskManagement = () => {
           >
             📋 Task Management
           </Typography>
-          <Typography variant="body2" color="text.secondary">
-            {tasks.length} total tasks • {selectedTasks.length} selected
-          </Typography>
-        </Box>
-        <Box display="flex" gap={1.5} alignItems="center">
-          <Button
-            variant="contained"
-            startIcon={<AddIcon />}
-            onClick={() => setShowCreateModal(true)}
-            sx={{
-              textTransform: 'none',
-              backgroundColor: '#00d4ff',
-              color: '#000',
-              fontWeight: 600,
-              '&:hover': {
-                backgroundColor: '#00f0ff',
-              },
-            }}
-          >
-            + Create Task
-          </Button>
-          <Button
-            variant="outlined"
-            startIcon={<RefreshIcon />}
-            onClick={fetchTasks}
-            size="small"
-            sx={{
-              textTransform: 'none',
-              borderColor: '#00d4ff',
-              color: '#00d4ff',
-              '&:hover': {
-                backgroundColor: 'rgba(0, 212, 255, 0.1)',
-                borderColor: '#00d4ff',
-              },
-            }}
-          >
-            Refresh
-          </Button>
         </Box>
       </Box>
 
@@ -508,23 +526,29 @@ const TaskManagement = () => {
         </Alert>
       )}
 
-      {/* Summary Stats */}
-      <Grid container spacing={2} sx={{ mb: 3 }}>
+      {/* Summary Stats - Compact */}
+      <Grid container spacing={1} sx={{ mb: 1.5 }}>
         <Grid item xs={12} sm={6} md={3}>
           <Box
             sx={{
               backgroundColor: 'rgba(0, 212, 255, 0.1)',
               border: '1px solid rgba(0, 212, 255, 0.3)',
-              borderRadius: 1.5,
-              p: 2,
+              borderRadius: 1,
+              p: 1,
               textAlign: 'center',
               backdropFilter: 'blur(10px)',
             }}
           >
-            <Typography variant="h6" sx={{ color: '#00d4ff', fontWeight: 700 }}>
+            <Typography
+              variant="body2"
+              sx={{ color: '#00d4ff', fontWeight: 700 }}
+            >
               {getTaskStats().total}
             </Typography>
-            <Typography variant="caption" sx={{ color: '#888' }}>
+            <Typography
+              variant="caption"
+              sx={{ color: '#888', fontSize: '0.7rem' }}
+            >
               Total Tasks
             </Typography>
           </Box>
@@ -534,16 +558,22 @@ const TaskManagement = () => {
             sx={{
               backgroundColor: 'rgba(76, 175, 80, 0.1)',
               border: '1px solid rgba(76, 175, 80, 0.3)',
-              borderRadius: 1.5,
-              p: 2,
+              borderRadius: 1,
+              p: 1,
               textAlign: 'center',
               backdropFilter: 'blur(10px)',
             }}
           >
-            <Typography variant="h6" sx={{ color: '#4CAF50', fontWeight: 700 }}>
+            <Typography
+              variant="body2"
+              sx={{ color: '#4CAF50', fontWeight: 700 }}
+            >
               {getTaskStats().completed}
             </Typography>
-            <Typography variant="caption" sx={{ color: '#888' }}>
+            <Typography
+              variant="caption"
+              sx={{ color: '#888', fontSize: '0.7rem' }}
+            >
               Completed
             </Typography>
           </Box>
@@ -553,16 +583,22 @@ const TaskManagement = () => {
             sx={{
               backgroundColor: 'rgba(33, 150, 243, 0.1)',
               border: '1px solid rgba(33, 150, 243, 0.3)',
-              borderRadius: 1.5,
-              p: 2,
+              borderRadius: 1,
+              p: 1,
               textAlign: 'center',
               backdropFilter: 'blur(10px)',
             }}
           >
-            <Typography variant="h6" sx={{ color: '#2196F3', fontWeight: 700 }}>
+            <Typography
+              variant="body2"
+              sx={{ color: '#2196F3', fontWeight: 700 }}
+            >
               {getTaskStats().inProgress}
             </Typography>
-            <Typography variant="caption" sx={{ color: '#888' }}>
+            <Typography
+              variant="caption"
+              sx={{ color: '#888', fontSize: '0.7rem' }}
+            >
               In Progress
             </Typography>
           </Box>
@@ -572,77 +608,65 @@ const TaskManagement = () => {
             sx={{
               backgroundColor: 'rgba(244, 67, 54, 0.1)',
               border: '1px solid rgba(244, 67, 54, 0.3)',
-              borderRadius: 1.5,
-              p: 2,
+              borderRadius: 1,
+              p: 1,
               textAlign: 'center',
               backdropFilter: 'blur(10px)',
             }}
           >
-            <Typography variant="h6" sx={{ color: '#F44336', fontWeight: 700 }}>
+            <Typography
+              variant="body2"
+              sx={{ color: '#F44336', fontWeight: 700 }}
+            >
               {getTaskStats().failed}
             </Typography>
-            <Typography variant="caption" sx={{ color: '#888' }}>
+            <Typography
+              variant="caption"
+              sx={{ color: '#888', fontSize: '0.7rem' }}
+            >
               Failed
             </Typography>
           </Box>
         </Grid>
       </Grid>
 
-      {/* Tabs */}
-      <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 3 }}>
-        <Tabs
-          value={currentTab}
-          onChange={(e, v) => setCurrentTab(v)}
-          sx={{
-            '& .MuiTab-root': {
-              textTransform: 'none',
-              fontWeight: 600,
-              fontSize: '0.95rem',
-              color: 'rgba(255, 255, 255, 0.6)',
-              '&.Mui-selected': {
-                color: '#00d4ff',
-              },
-            },
-            '& .MuiTabs-indicator': {
-              backgroundColor: '#00d4ff',
-            },
-          }}
-        >
-          <Tab
-            label="Active Tasks"
-            icon={<AssignmentIcon />}
-            iconPosition="start"
-          />
-          <Tab
-            label="Completed"
-            icon={<CheckCircleIcon />}
-            iconPosition="start"
-          />
-          <Tab label="Failed" icon={<StopIcon />} iconPosition="start" />
-        </Tabs>
-      </Box>
-
-      {/* Refresh Controls */}
-      <Box sx={{ display: 'flex', gap: 2, alignItems: 'center', mb: 3 }}>
+      {/* Create Task and Refresh Buttons - Positioned above table */}
+      <Box
+        sx={{ mb: 3, display: 'flex', gap: 2, justifyContent: 'flex-start' }}
+      >
         <Button
           variant="contained"
-          startIcon={<RefreshIcon />}
-          onClick={() => fetchTasks()}
+          startIcon={<AddIcon />}
+          onClick={() => setShowCreateModal(true)}
           sx={{
             textTransform: 'none',
             backgroundColor: '#00d4ff',
             color: '#000',
             fontWeight: 600,
             '&:hover': {
-              backgroundColor: '#00b8d4',
+              backgroundColor: '#00f0ff',
             },
           }}
         >
-          Refresh Now
+          Create Task
         </Button>
-        <Typography variant="caption" sx={{ color: '#888' }}>
-          Showing all tasks. Auto-refreshing every 10 seconds.
-        </Typography>
+        <Button
+          variant="outlined"
+          startIcon={<RefreshIcon />}
+          onClick={fetchTasks}
+          sx={{
+            textTransform: 'none',
+            color: '#00d4ff',
+            borderColor: '#00d4ff',
+            fontWeight: 600,
+            '&:hover': {
+              borderColor: '#00f0ff',
+              color: '#00f0ff',
+            },
+          }}
+        >
+          Refresh
+        </Button>
       </Box>
 
       {/* Task Table */}
@@ -653,32 +677,91 @@ const TaskManagement = () => {
               <TableCell padding="checkbox">
                 <Checkbox
                   checked={
-                    selectedTasks.length === filteredTasks.length &&
-                    filteredTasks.length > 0
+                    selectedTasks.length ===
+                      getSortedTasks(filteredTasks).length &&
+                    getSortedTasks(filteredTasks).length > 0
                   }
                   indeterminate={
                     selectedTasks.length > 0 &&
-                    selectedTasks.length < filteredTasks.length
+                    selectedTasks.length < getSortedTasks(filteredTasks).length
                   }
                   onChange={(e) => {
                     if (e.target.checked) {
-                      setSelectedTasks(filteredTasks.map((t) => t.id));
+                      setSelectedTasks(
+                        getSortedTasks(filteredTasks).map((t) => t.id)
+                      );
                     } else {
                       setSelectedTasks([]);
                     }
                   }}
                 />
               </TableCell>
-              <TableCell>Task</TableCell>
-              <TableCell>Agent</TableCell>
-              <TableCell>Status</TableCell>
-              <TableCell>Priority</TableCell>
-              <TableCell>Created</TableCell>
+              <TableCell
+                onClick={() => handleSort('title')}
+                sx={{
+                  cursor: 'pointer',
+                  fontWeight: sortBy === 'title' ? 700 : 600,
+                  color: sortBy === 'title' ? '#00d4ff' : 'inherit',
+                  userSelect: 'none',
+                }}
+              >
+                Task{' '}
+                {sortBy === 'title' && (sortDirection === 'asc' ? '↑' : '↓')}
+              </TableCell>
+              <TableCell
+                onClick={() => handleSort('agent')}
+                sx={{
+                  cursor: 'pointer',
+                  fontWeight: sortBy === 'agent' ? 700 : 600,
+                  color: sortBy === 'agent' ? '#00d4ff' : 'inherit',
+                  userSelect: 'none',
+                }}
+              >
+                Agent{' '}
+                {sortBy === 'agent' && (sortDirection === 'asc' ? '↑' : '↓')}
+              </TableCell>
+              <TableCell
+                onClick={() => handleSort('status')}
+                sx={{
+                  cursor: 'pointer',
+                  fontWeight: sortBy === 'status' ? 700 : 600,
+                  color: sortBy === 'status' ? '#00d4ff' : 'inherit',
+                  userSelect: 'none',
+                }}
+              >
+                Status{' '}
+                {sortBy === 'status' && (sortDirection === 'asc' ? '↑' : '↓')}
+              </TableCell>
+              <TableCell
+                onClick={() => handleSort('priority')}
+                sx={{
+                  cursor: 'pointer',
+                  fontWeight: sortBy === 'priority' ? 700 : 600,
+                  color: sortBy === 'priority' ? '#00d4ff' : 'inherit',
+                  userSelect: 'none',
+                }}
+              >
+                Priority{' '}
+                {sortBy === 'priority' && (sortDirection === 'asc' ? '↑' : '↓')}
+              </TableCell>
+              <TableCell
+                onClick={() => handleSort('created_at')}
+                sx={{
+                  cursor: 'pointer',
+                  fontWeight: sortBy === 'created_at' ? 700 : 600,
+                  color: sortBy === 'created_at' ? '#00d4ff' : 'inherit',
+                  userSelect: 'none',
+                }}
+              >
+                Created{' '}
+                {sortBy === 'created_at' &&
+                  (sortDirection === 'asc' ? '↑' : '↓')}
+              </TableCell>
               <TableCell align="right">Actions</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
-            {filteredTasks.length === 0 ? (
+            {getSortedTasks(filteredTasks).length === 0 ? (
               <TableRow>
                 <TableCell colSpan={7} align="center">
                   <Typography color="text.secondary" py={4}>
@@ -687,7 +770,7 @@ const TaskManagement = () => {
                 </TableCell>
               </TableRow>
             ) : (
-              filteredTasks.map((task) => (
+              getSortedTasks(filteredTasks).map((task) => (
                 <TableRow key={task.id} hover>
                   <TableCell padding="checkbox">
                     <Checkbox
@@ -738,26 +821,53 @@ const TaskManagement = () => {
                       <IconButton
                         size="small"
                         onClick={async () => {
-                          // If task is blog_post, ensure we have latest content status
-                          let taskToSelect = task;
-                          if (
-                            task.task_type === 'blog_post' ||
-                            task.category === 'content_generation' ||
-                            task.metadata?.task_type === 'blog_post'
-                          ) {
-                            const contentStatus = await fetchContentTaskStatus(
-                              task.id
-                            );
-                            if (contentStatus) {
-                              taskToSelect = {
-                                ...task,
-                                status: contentStatus.status,
-                                result: contentStatus.result,
-                                error_message: contentStatus.error_message,
-                              };
-                            }
+                          // ✅ FIXED: Fetch full content task from content_tasks table
+                          // All tasks are blog posts from content generation pipeline
+                          const contentStatus = await fetchContentTaskStatus(
+                            task.id
+                          );
+
+                          if (contentStatus) {
+                            // ✅ Build full task object with all content fields
+                            const taskToSelect = {
+                              ...task,
+                              id: contentStatus.task_id || task.id,
+                              task_id: contentStatus.task_id || task.id,
+                              title: contentStatus.title || task.task_name,
+                              topic: contentStatus.title || task.topic,
+                              status: contentStatus.status,
+                              content: contentStatus.content, // ✅ Now populated from content_tasks
+                              excerpt: contentStatus.excerpt,
+                              featured_image_url:
+                                contentStatus.featured_image_url,
+                              featured_image_data:
+                                contentStatus.featured_image_data,
+                              style: contentStatus.style,
+                              tone: contentStatus.tone,
+                              target_length: contentStatus.target_length,
+                              tags: contentStatus.tags,
+                              task_metadata: contentStatus.task_metadata,
+                              strapi_id: contentStatus.strapi_id,
+                              strapi_url: contentStatus.strapi_url,
+                              error_message: contentStatus.error_message,
+                              // Legacy fields for compatibility
+                              result: {
+                                content: contentStatus.content,
+                                excerpt: contentStatus.excerpt,
+                                seo: {
+                                  title: contentStatus.title,
+                                  description: contentStatus.excerpt,
+                                  keywords: (contentStatus.tags || []).join(
+                                    ', '
+                                  ),
+                                },
+                              },
+                            };
+                            setSelectedTask(taskToSelect);
+                          } else {
+                            // Fallback: use basic task data if fetch fails
+                            setSelectedTask(task);
                           }
-                          setSelectedTask(taskToSelect);
                         }}
                       >
                         <EditIcon fontSize="small" />
@@ -849,8 +959,11 @@ const TaskManagement = () => {
                 setIsPublishing(true);
                 setError(null);
                 try {
+                  // ✅ REFACTORED: Use /api/content/tasks/{id}/approve endpoint
+                  // Replaces /api/content/blog-posts/drafts/{id}/publish
+                  // Supports all task types with type-specific routing
                   const response = await fetch(
-                    `http://localhost:8000/api/tasks/${selectedTask.id}/publish`,
+                    `http://localhost:8000/api/content/tasks/${selectedTask.id}/approve`,
                     {
                       method: 'POST',
                       headers: { 'Content-Type': 'application/json' },
