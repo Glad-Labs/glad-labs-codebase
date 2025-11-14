@@ -1,16 +1,34 @@
-import qs from 'qs';
-
-const STRAPI_API_URL = process.env.NEXT_PUBLIC_STRAPI_API_URL;
-const STRAPI_API_TOKEN =
-  process.env.NEXT_PUBLIC_STRAPI_API_TOKEN || process.env.STRAPI_API_TOKEN;
-
 /**
- * Get full Strapi URL from path
- * @param {string} path Path of the URL
- * @returns {string} Full Strapi URL
+ * FastAPI CMS Client - Optimized for Performance
+ *
+ * This module has been updated to use FastAPI instead of Strapi.
+ * All exports remain the same for backward compatibility.
  */
+
+// Re-export all FastAPI functions
+export {
+  getPaginatedPosts,
+  getFeaturedPost,
+  getPostBySlug,
+  getCategories,
+  getTags,
+  getPostsByCategory,
+  getPostsByTag,
+  getAllPosts,
+  getRelatedPosts,
+  searchPosts,
+  getCMSStatus,
+  validateFastAPI,
+  getImageURL,
+  formatPost,
+} from './api-fastapi';
+
+// For legacy code that calls getStrapiURL, redirect to getImageURL
 export function getStrapiURL(path = '') {
-  return `${STRAPI_API_URL || 'http://localhost:1337'}${path}`;
+  const FASTAPI_URL =
+    process.env.NEXT_PUBLIC_FASTAPI_URL || 'http://localhost:8000';
+  if (!path) return FASTAPI_URL;
+  return `${FASTAPI_URL}${path}`;
 }
 
 /**

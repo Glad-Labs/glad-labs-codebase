@@ -72,15 +72,15 @@ const BlogPostCreator = ({ onBlogPostCreated, onError }) => {
 
       console.log('📝 Creating blog post with payload:', payload);
 
-      const response = await fetch(
-        'http://localhost:8000/api/content/blog-posts',
-        {
-          method: 'POST',
-          headers,
-          body: JSON.stringify(payload),
-          signal: AbortSignal.timeout(10000),
-        }
-      );
+      const response = await fetch('http://localhost:8000/api/content/tasks', {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({
+          task_type: 'blog_post',
+          ...payload,
+        }),
+        signal: AbortSignal.timeout(10000),
+      });
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));

@@ -9,6 +9,7 @@ import SocialContentPage from './components/pages/SocialContentPage';
 import ContentManagementPage from './components/pages/ContentManagementPage';
 import AnalyticsPage from './components/pages/AnalyticsPage';
 import ModelsPage from './components/pages/ModelsPage';
+import ApprovalQueue from './components/ApprovalQueue';
 import './OversightHub.css';
 
 const OversightHub = () => {
@@ -35,6 +36,7 @@ const OversightHub = () => {
   const navigationItems = [
     { label: 'Dashboard', icon: '📊', path: 'dashboard' },
     { label: 'Tasks', icon: '✅', path: 'tasks' },
+    { label: 'Approvals', icon: '📋', path: 'approvals' },
     { label: 'Models', icon: '🤖', path: 'models' },
     { label: 'Social', icon: '📱', path: 'social' },
     { label: 'Content', icon: '📝', path: 'content' },
@@ -516,6 +518,8 @@ const OversightHub = () => {
           )}
 
           {currentPage === 'tasks' && <TaskManagement />}
+
+          {currentPage === 'approvals' && <ApprovalQueue />}
 
           {currentPage === 'models' && <ModelsPage />}
 

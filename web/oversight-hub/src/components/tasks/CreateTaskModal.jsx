@@ -230,11 +230,12 @@ const CreateTaskModal = ({ isOpen, onClose, onTaskCreated }) => {
         );
 
         // ✅ CORRECT ENDPOINT FOR BLOG POSTS - Runs self-critique pipeline
-        // Uses the actual backend endpoint: POST /api/content/blog-posts
-        response = await fetch('http://localhost:8000/api/content/blog-posts', {
+        // Uses the actual backend endpoint: POST /api/content/tasks
+        response = await fetch('http://localhost:8000/api/content/tasks', {
           method: 'POST',
           headers,
           body: JSON.stringify({
+            task_type: 'blog_post',
             topic: contentPayload.topic || '',
             style: contentPayload.style || 'technical',
             tone: contentPayload.tone || 'professional',

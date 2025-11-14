@@ -1,0 +1,338 @@
+/**
+ * ApprovalQueue.css - Styling for Phase 5 Approval Interface
+ * 
+ * Matches existing Oversight Hub design patterns:
+ * - Consistent spacing and typography
+ * - Material-UI component integration
+ * - Task card styling from TaskList.css
+ * - Color scheme aligned with dashboard
+ */
+
+.approval-queue-container {
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  background-color: #fafafa;
+  border-radius: 4px;
+}
+
+.approval-queue-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.approval-queue-header h6 {
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #1976d2;
+}
+
+/* Task Table Styling */
+.approval-queue-container table {
+  background-color: white;
+}
+
+.approval-queue-container thead {
+  background-color: #f5f5f5;
+  border-bottom: 2px solid #e0e0e0;
+}
+
+.approval-queue-container thead th {
+  font-weight: 600;
+  color: #333;
+  font-size: 0.95rem;
+  padding: 12px 16px;
+}
+
+.approval-queue-container tbody tr {
+  border-bottom: 1px solid #e0e0e0;
+  transition: background-color 0.2s ease;
+}
+
+.approval-queue-container tbody tr:hover {
+  background-color: #f9f9f9;
+}
+
+.approval-queue-container td {
+  padding: 12px 16px;
+  font-size: 0.95rem;
+  color: #333;
+}
+
+/* Quality Score Badge */
+.quality-badge {
+  display: inline-block;
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-weight: 600;
+  font-size: 0.85rem;
+  text-align: center;
+  min-width: 50px;
+}
+
+.quality-high {
+  background-color: #4caf50;
+  color: white;
+}
+
+.quality-medium {
+  background-color: #ff9800;
+  color: white;
+}
+
+.quality-low {
+  background-color: #f44336;
+  color: white;
+}
+
+/* Feedback Text Truncation */
+.feedback-text {
+  max-width: 250px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Action Buttons */
+.approval-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+}
+
+.approval-actions button {
+  transition: all 0.2s ease;
+}
+
+.approval-actions button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+/* Dialog Styling */
+.approval-dialog-content {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 20px;
+}
+
+.task-info-card {
+  background-color: #f9f9f9;
+  border: 1px solid #e0e0e0;
+  border-radius: 4px;
+  padding: 12px;
+  margin-bottom: 16px;
+}
+
+.task-info-card p {
+  margin: 6px 0;
+  font-size: 0.9rem;
+  color: #555;
+}
+
+.task-info-card strong {
+  color: #333;
+  font-weight: 600;
+}
+
+/* Preview Content Box */
+.content-preview-box {
+  background-color: #f5f5f5;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  padding: 16px;
+  margin: 12px 0;
+  max-height: 300px;
+  overflow-y: auto;
+  font-family: 'Courier New', monospace;
+  font-size: 0.85rem;
+  line-height: 1.6;
+  color: #333;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+/* QA Feedback Box */
+.qa-feedback-box {
+  background-color: #fffbea;
+  border: 1px solid #ffe082;
+  border-radius: 4px;
+  padding: 12px;
+  margin: 12px 0;
+}
+
+.qa-feedback-box p {
+  margin: 0;
+  font-size: 0.9rem;
+  color: #666;
+  line-height: 1.5;
+}
+
+/* Featured Image Preview */
+.featured-image-preview {
+  max-width: 100%;
+  max-height: 300px;
+  border-radius: 4px;
+  border: 1px solid #ddd;
+  margin: 12px 0;
+  display: block;
+  background-color: #f9f9f9;
+}
+
+/* Tags Container */
+.tags-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 12px 0;
+}
+
+.tag-chip {
+  background-color: white;
+  border: 1px solid #1976d2;
+  color: #1976d2;
+  padding: 4px 12px;
+  border-radius: 16px;
+  font-size: 0.8rem;
+  display: inline-block;
+}
+
+/* Empty State */
+.approval-queue-empty {
+  text-align: center;
+  padding: 40px 20px;
+  color: #999;
+}
+
+.approval-queue-empty-icon {
+  font-size: 3rem;
+  margin-bottom: 16px;
+  opacity: 0.7;
+}
+
+.approval-queue-empty-text {
+  font-size: 1rem;
+  color: #666;
+}
+
+/* Loading State */
+.approval-queue-loading {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 60px 20px;
+  gap: 16px;
+}
+
+.approval-queue-loading-text {
+  font-size: 0.95rem;
+  color: #666;
+}
+
+/* Error Alert */
+.approval-error-alert {
+  background-color: #ffebee;
+  border: 1px solid #f5a5a7;
+  border-radius: 4px;
+  padding: 12px 16px;
+  margin-bottom: 16px;
+  color: #c62828;
+  font-size: 0.9rem;
+}
+
+.approval-error-alert strong {
+  font-weight: 600;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .approval-queue-container {
+    padding: 12px;
+  }
+
+  .approval-queue-container td {
+    padding: 8px 12px;
+    font-size: 0.85rem;
+  }
+
+  .approval-queue-container thead th {
+    font-size: 0.85rem;
+    padding: 8px 12px;
+  }
+
+  .feedback-text {
+    max-width: 150px;
+  }
+
+  .approval-actions {
+    gap: 4px;
+  }
+
+  .content-preview-box {
+    font-size: 0.8rem;
+    padding: 12px;
+  }
+}
+
+@media (max-width: 480px) {
+  .approval-queue-header {
+    flex-direction: column;
+    gap: 12px;
+    align-items: flex-start;
+  }
+
+  .approval-queue-header button {
+    width: 100%;
+  }
+
+  .approval-queue-container {
+    padding: 8px;
+  }
+
+  .approval-queue-container table {
+    font-size: 0.8rem;
+  }
+
+  .content-preview-box {
+    max-height: 200px;
+  }
+}
+
+/* Animation: Fade In */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.approval-queue-container {
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+/* Print Styles */
+@media print {
+  .approval-queue-header button {
+    display: none;
+  }
+
+  .approval-actions {
+    display: none;
+  }
+
+  .approval-queue-container {
+    background-color: white;
+    padding: 0;
+  }
+}
