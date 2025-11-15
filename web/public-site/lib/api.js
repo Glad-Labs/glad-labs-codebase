@@ -3,7 +3,10 @@
  *
  * This module has been updated to use FastAPI instead of Strapi.
  * All exports remain the same for backward compatibility.
+ * Now includes slugLookup caching for better performance.
  */
+
+import { getCachedSlug, setCachedSlug } from './slugLookup';
 
 // Re-export all FastAPI functions
 export {
@@ -114,11 +117,23 @@ export async function getFeaturedPost() {
 }
 
 export async function getPostBySlug(slug) {
+  // Check cache first
+  const cached = getCachedSlug('post', slug);
+  if (cached) {
+    return cached;
+  }
+
   const data = await fetchAPI(`/posts`, {
     filters: { slug: { $eq: slug } },
     populate: '*',
   });
   const item = data?.data?.[0];
+
+  // Cache the result
+  if (item) {
+    setCachedSlug('post', slug, item);
+  }
+
   return item || null;
 }
 
@@ -168,20 +183,36 @@ export async function getTags() {
 }
 
 export async function getCategoryBySlug(slug) {
+  // Check cache first
+  const cached = getCachedSlug('category', slug);
+  if (cached) {
+    return cached;
+  }
+
   const query = qs.stringify({ filters: { slug: { $eq: slug } } });
   const data = await fetchAPI(`/categories?${query}`);
   if (data && data.data && data.data.length > 0) {
     const category = data.data[0];
+    // Cache the result
+    setCachedSlug('category', slug, category);
     return category;
   }
   return null;
 }
 
 export async function getTagBySlug(slug) {
+  // Check cache first
+  const cached = getCachedSlug('tag', slug);
+  if (cached) {
+    return cached;
+  }
+
   const query = qs.stringify({ filters: { slug: { $eq: slug } } });
   const data = await fetchAPI(`/tags?${query}`);
   if (data && data.data && data.data.length > 0) {
     const tag = data.data[0];
+    // Cache the result
+    setCachedSlug('tag', slug, tag);
     return tag;
   }
   return null;

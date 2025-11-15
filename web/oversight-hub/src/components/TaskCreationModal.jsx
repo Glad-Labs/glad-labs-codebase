@@ -30,6 +30,7 @@ import {
 } from '@mui/material';
 import { CheckCircle as CheckCircleIcon } from '@mui/icons-material';
 import useAuth from '../hooks/useAuth';
+import useFormValidation from '../hooks/useFormValidation';
 import {
   createBlogPost,
   pollTaskStatus,
@@ -48,16 +49,20 @@ const STEPS = ['Create Task', 'Execution', 'Complete'];
  * @param {Function} props.onTaskCreated - Callback after task created
  */
 export default function TaskCreationModal({ open, onClose, onTaskCreated }) {
-  // Form state
-  const [topic, setTopic] = useState('');
-  const [primaryKeyword, setPrimaryKeyword] = useState('');
-  const [targetAudience, setTargetAudience] = useState('');
-  const [category, setCategory] = useState('technology');
+  // Form state and validation using custom hook
+  const form = useFormValidation({
+    initialValues: {
+      topic: '',
+      primaryKeyword: '',
+      targetAudience: '',
+      category: 'technology',
+    },
+    onSubmit: handleSubmit,
+  });
 
   // UI state
   const [step, setStep] = useState(0);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
   const [success, setSuccess] = useState(false);
   const [taskId, setTaskId] = useState(null);
   const [taskProgress, setTaskProgress] = useState(null);
@@ -67,37 +72,26 @@ export default function TaskCreationModal({ open, onClose, onTaskCreated }) {
   const { isAuthenticated } = useAuth();
 
   /**
-   * Validate form inputs
-   */
-  const validateForm = () => {
-    if (!topic.trim()) {
-      setError('Blog topic is required');
-      return false;
-    }
-    if (!primaryKeyword.trim()) {
-      setError('Primary keyword is required');
-      return false;
-    }
-    if (!targetAudience.trim()) {
-      setError('Target audience is required');
-      return false;
-    }
-    return true;
-  };
-
-  /**
    * Handle form submission
    */
-  const handleSubmit = async (e) => {
+  async function handleSubmit(e) {
     e.preventDefault();
-    setError(null);
 
-    if (!validateForm()) {
+    if (!form.values.topic.trim()) {
+      form.setFieldError('topic', 'Blog topic is required');
+      return;
+    }
+    if (!form.values.primaryKeyword.trim()) {
+      form.setFieldError('primaryKeyword', 'Primary keyword is required');
+      return;
+    }
+    if (!form.values.targetAudience.trim()) {
+      form.setFieldError('targetAudience', 'Target audience is required');
       return;
     }
 
     if (!isAuthenticated) {
-      setError('You must be logged in to create tasks');
+      form.setGeneralError('You must be logged in to create tasks');
       return;
     }
 
@@ -107,10 +101,10 @@ export default function TaskCreationModal({ open, onClose, onTaskCreated }) {
 
       // Create the blog post task
       const response = await createBlogPost(
-        topic,
-        primaryKeyword,
-        targetAudience,
-        category
+        form.values.topic,
+        form.values.primaryKeyword,
+        form.values.targetAudience,
+        form.values.category
       );
 
       if (!response.id) {
@@ -149,12 +143,12 @@ export default function TaskCreationModal({ open, onClose, onTaskCreated }) {
       }
     } catch (err) {
       console.error('Task creation error:', err);
-      setError(err.message || 'Failed to create task');
+      form.setGeneralError(err.message || 'Failed to create task');
       setStep(0);
     } finally {
       setLoading(false);
     }
-  };
+  }
 
   /**
    * Handle modal close
@@ -164,13 +158,9 @@ export default function TaskCreationModal({ open, onClose, onTaskCreated }) {
       return; // Don't allow closing while loading
     }
 
-    // Reset state
-    setTopic('');
-    setPrimaryKeyword('');
-    setTargetAudience('');
-    setCategory('technology');
+    // Reset form
+    form.reset();
     setStep(0);
-    setError(null);
     setSuccess(false);
     setTaskId(null);
     setTaskProgress(null);
@@ -183,7 +173,7 @@ export default function TaskCreationModal({ open, onClose, onTaskCreated }) {
    * Handle retry after error
    */
   const handleRetry = () => {
-    setError(null);
+    form.clearErrors();
     setSuccess(false);
     setStep(0);
     setTaskProgress(null);
@@ -213,9 +203,13 @@ export default function TaskCreationModal({ open, onClose, onTaskCreated }) {
         </Box>
 
         {/* Error Alert */}
-        {error && (
-          <Alert severity="error" sx={{ mb: 2 }} onClose={() => setError(null)}>
-            {error}
+        {form.errors.general && (
+          <Alert
+            severity="error"
+            sx={{ mb: 2 }}
+            onClose={() => form.clearErrors()}
+          >
+            {form.errors.general}
           </Alert>
         )}
 
@@ -223,45 +217,47 @@ export default function TaskCreationModal({ open, onClose, onTaskCreated }) {
         {step === 0 && !success && (
           <Box
             component="form"
-            onSubmit={handleSubmit}
+            onSubmit={form.handleSubmit}
             sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}
           >
             <TextField
               label="Blog Topic"
               fullWidth
-              value={topic}
-              onChange={(e) => setTopic(e.target.value)}
+              {...form.getFieldProps('topic')}
               placeholder="e.g., The Future of AI in Healthcare"
               disabled={loading}
               required
+              error={!!form.errors.topic}
+              helperText={form.errors.topic}
             />
 
             <TextField
               label="Primary Keyword"
               fullWidth
-              value={primaryKeyword}
-              onChange={(e) => setPrimaryKeyword(e.target.value)}
+              {...form.getFieldProps('primaryKeyword')}
               placeholder="e.g., AI healthcare trends"
               disabled={loading}
               required
+              error={!!form.errors.primaryKeyword}
+              helperText={form.errors.primaryKeyword}
             />
 
             <TextField
               label="Target Audience"
               fullWidth
-              value={targetAudience}
-              onChange={(e) => setTargetAudience(e.target.value)}
+              {...form.getFieldProps('targetAudience')}
               placeholder="e.g., Healthcare professionals"
               disabled={loading}
               required
+              error={!!form.errors.targetAudience}
+              helperText={form.errors.targetAudience}
             />
 
             <TextField
               label="Category"
               fullWidth
               select
-              value={category}
-              onChange={(e) => setCategory(e.target.value)}
+              {...form.getFieldProps('category')}
               disabled={loading}
               SelectProps={{
                 native: true,
@@ -403,18 +399,19 @@ export default function TaskCreationModal({ open, onClose, onTaskCreated }) {
       </DialogContent>
 
       {/* Dialog Actions */}
-      {!loading && (success || error) && (
+      {!loading && success && (
         <DialogActions>
-          {error && (
-            <Button onClick={handleRetry} variant="contained" color="primary">
-              Retry
-            </Button>
-          )}
-          {success && (
-            <Button onClick={handleClose} variant="contained" color="primary">
-              Done
-            </Button>
-          )}
+          <Button onClick={handleClose} variant="contained" color="primary">
+            Done
+          </Button>
+        </DialogActions>
+      )}
+
+      {!loading && form.errors.general && (
+        <DialogActions>
+          <Button onClick={handleRetry} variant="contained" color="primary">
+            Retry
+          </Button>
         </DialogActions>
       )}
     </Dialog>

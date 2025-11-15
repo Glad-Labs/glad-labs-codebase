@@ -20,7 +20,7 @@
  * @component
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Box,
@@ -57,6 +57,7 @@ import {
   CheckCircle as CheckCircleIcon,
 } from '@mui/icons-material';
 import useAuth from '../hooks/useAuth';
+import useFormValidation from '../hooks/useFormValidation';
 import './LoginForm.css';
 
 /**
@@ -150,12 +151,6 @@ function LoginForm({
   const navigate = useNavigate();
   const { setAuthUser } = useAuth();
 
-  // Login state
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [showPassword, setShowPassword] = useState(false);
-  const [rememberMe, setRememberMe] = useState(false);
-
   // 2FA state
   const [require2FA, setRequire2FA] = useState(false);
   const [twoFACode, setTwoFACode] = useState('');
@@ -164,84 +159,36 @@ function LoginForm({
 
   // UI state
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
+  const [error, setError] = useState(false);
   const [success, setSuccess] = useState(false);
   const [activeStep, setActiveStep] = useState(0);
+  const [showPassword, setShowPassword] = useState(false);
 
   // Dialog states
   const [showBackupCodesDialog, setShowBackupCodesDialog] = useState(false);
 
   /**
-   * Handle password visibility toggle
+   * Handle toggle password visibility
    */
   const handleTogglePasswordVisibility = () => {
     setShowPassword(!showPassword);
   };
 
   /**
-   * Validate email format
+   * Handle form submission (from useFormValidation hook)
    */
-  const isValidEmail = (email) => {
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    return emailRegex.test(email) || /^[a-zA-Z0-9_]+$/.test(email); // Allow username too
-  };
-
-  /**
-   * Validate form data
-   */
-  const validateLoginForm = () => {
-    if (!email.trim()) {
-      setError('Email or username is required');
-      return false;
-    }
-    if (!isValidEmail(email)) {
-      setError('Please enter a valid email or username');
-      return false;
-    }
-    if (!password) {
-      setError('Password is required');
-      return false;
-    }
-    if (password.length < 6) {
-      setError('Password must be at least 6 characters');
-      return false;
-    }
-    return true;
-  };
-
-  /**
-   * Validate 2FA code
-   */
-  const validate2FACode = () => {
-    if (!twoFACode) {
-      setError('2FA code is required');
-      return false;
-    }
-    if (!/^\d{6}$/.test(twoFACode)) {
-      setError('2FA code must be 6 digits');
-      return false;
-    }
-    return true;
-  };
-
-  /**
-   * Handle initial login
-   */
-  const handleLogin = async (e) => {
-    e.preventDefault();
-    setError(null);
-
-    if (!validateLoginForm()) {
-      return;
-    }
-
+  const handleLoginSubmit = async (values) => {
+    // values = { email, password, rememberMe }
+    // Validation already done by form hook
     try {
+      setError(null);
       setLoading(true);
-      const response = await authAPI.login(email, password);
+
+      const response = await authAPI.login(values.email, values.password);
 
       // Save credentials if remember me is checked
-      if (rememberMe) {
-        localStorage.setItem('rememberEmail', email);
+      if (values.rememberMe) {
+        localStorage.setItem('rememberEmail', values.email);
       } else {
         localStorage.removeItem('rememberEmail');
       }
@@ -254,7 +201,7 @@ function LoginForm({
         setBackupCodes(response.backup_codes || []);
       } else {
         // Login successful without 2FA
-        handleLoginSuccess(response);
+        handleLoginSuccess(response, values.rememberMe);
       }
     } catch (err) {
       setError(err.message);
@@ -266,6 +213,17 @@ function LoginForm({
     }
   };
 
+  // Initialize form with hook for initial credentials + 2FA
+  const form = useFormValidation({
+    initialValues: {
+      email: localStorage.getItem('rememberEmail') || '',
+      password: '',
+      rememberMe: !!localStorage.getItem('rememberEmail'),
+    },
+    formType: 'custom', // Custom form since we handle 2FA flow
+    onSubmit: handleLoginSubmit,
+  });
+
   /**
    * Handle 2FA verification
    */
@@ -273,18 +231,20 @@ function LoginForm({
     e.preventDefault();
     setError(null);
 
-    if (!validate2FACode()) {
+    // Validate 2FA code using utility function
+    if (!twoFACode || !/^\d{6}$/.test(twoFACode)) {
+      setError('2FA code must be 6 digits');
       return;
     }
 
     try {
       setLoading(true);
       const response = await authAPI.verify2FA(
-        email,
+        form.values.email,
         twoFACode,
         twoFAChallenge
       );
-      handleLoginSuccess(response);
+      handleLoginSuccess(response, form.values.rememberMe);
     } catch (err) {
       setError(err.message);
       // Try once more - they may have used a backup code
@@ -299,7 +259,7 @@ function LoginForm({
   /**
    * Handle successful login
    */
-  const handleLoginSuccess = (response) => {
+  const handleLoginSuccess = (response, rememberMe) => {
     setSuccess(true);
     setActiveStep(2);
 
@@ -309,7 +269,7 @@ function LoginForm({
     if (response.refresh_token) {
       storage.setItem('refreshToken', response.refresh_token);
     }
-    storage.setItem('userEmail', email);
+    storage.setItem('userEmail', form.values.email);
 
     // Store user info if available
     if (response.user) {
@@ -330,10 +290,9 @@ function LoginForm({
       }, 2000);
     }
 
-    // Reset form
+    // Reset form via hook and clear 2FA state
     setTimeout(() => {
-      setEmail('');
-      setPassword('');
+      form.reset();
       setTwoFACode('');
       setRequire2FA(false);
       setActiveStep(0);
@@ -341,26 +300,21 @@ function LoginForm({
   };
 
   /**
-   * Handle back to login from 2FA
+   * Handle back to login (reset form and state)
    */
   const handleBackToLogin = () => {
-    setRequire2FA(false);
+    // Reset form via hook (includes form fields)
+    form.reset();
+
+    // Reset 2FA and UI state
     setTwoFACode('');
+    setRequire2FA(false);
     setTwoFAChallenge(null);
     setError(null);
+    setSuccess(false);
     setActiveStep(0);
+    setShowBackupCodesDialog(false);
   };
-
-  /**
-   * Load remembered email on mount
-   */
-  useEffect(() => {
-    const rememberEmail = localStorage.getItem('rememberEmail');
-    if (rememberEmail) {
-      setEmail(rememberEmail);
-      setRememberMe(true);
-    }
-  }, []);
 
   /**
    * Steps for stepper
@@ -444,14 +398,15 @@ function LoginForm({
 
             {/* Login Form */}
             {!require2FA && !success && (
-              <form onSubmit={handleLogin}>
+              <form onSubmit={form.handleSubmit}>
                 {/* Email/Username Field */}
                 <TextField
                   fullWidth
                   label="Email or Username"
                   type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
+                  {...form.getFieldProps('email')}
+                  error={form.touched.email && !!form.errors.email}
+                  helperText={form.touched.email && form.errors.email}
                   disabled={loading}
                   variant="outlined"
                   margin="normal"
@@ -472,8 +427,9 @@ function LoginForm({
                   fullWidth
                   label="Password"
                   type={showPassword ? 'text' : 'password'}
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
+                  {...form.getFieldProps('password')}
+                  error={form.touched.password && !!form.errors.password}
+                  helperText={form.touched.password && form.errors.password}
                   disabled={loading}
                   variant="outlined"
                   margin="normal"
@@ -507,8 +463,10 @@ function LoginForm({
                 <FormControlLabel
                   control={
                     <Checkbox
-                      checked={rememberMe}
-                      onChange={(e) => setRememberMe(e.target.checked)}
+                      checked={form.values.rememberMe}
+                      onChange={(e) =>
+                        form.setFieldValue('rememberMe', e.target.checked)
+                      }
                       disabled={loading}
                     />
                   }
@@ -529,7 +487,9 @@ function LoginForm({
                   variant="contained"
                   size="large"
                   type="submit"
-                  disabled={loading || !email || !password}
+                  disabled={
+                    loading || !form.values.email || !form.values.password
+                  }
                   sx={{ mb: 2, position: 'relative' }}
                 >
                   {loading ? (
