@@ -27,7 +27,10 @@ const PostCard = ({ post }) => {
   const href = slug ? `/posts/${slug}` : '#';
   const isClickable = Boolean(slug);
   const displayDate = safeFormatDate(date || publishedAt);
-  const dateISO = new Date(date || publishedAt).toISOString().split('T')[0];
+  const dateISO =
+    date || publishedAt
+      ? new Date(date || publishedAt).toISOString().split('T')[0]
+      : new Date().toISOString().split('T')[0];
 
   return (
     <article

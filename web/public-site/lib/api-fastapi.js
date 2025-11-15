@@ -49,39 +49,43 @@ async function fetchAPI(endpoint, options = {}) {
 
 /**
  * Get paginated posts list
+ * ADAPTER: Maps old parameters to FastAPI format
  *
- * @param {number} page - Page number (1-indexed)
- * @param {number} limit - Items per page (default 10)
- * @param {string} category - Filter by category slug (optional)
- * @param {string} tag - Filter by tag slug (optional)
- * @returns {Promise<{data: Array, meta: Object}>}
+ * @param {number} page - Page number (1-indexed, default 1)
+ * @param {number} pageSize - Items per page (default 10)
+ * @param {string} excludeId - Post ID to exclude (optional)
+ * @returns {Promise<{data: Array, meta: {pagination: Object}}>}
  */
 export async function getPaginatedPosts(
   page = 1,
-  limit = 10,
-  category = null,
-  tag = null
+  pageSize = 10,
+  excludeId = null
 ) {
-  const skip = (page - 1) * limit;
+  const skip = (page - 1) * pageSize;
 
-  let endpoint = `/posts?skip=${skip}&limit=${limit}&published_only=true`;
-
-  if (category) {
-    endpoint += `&category=${encodeURIComponent(category)}`;
-  }
-  if (tag) {
-    endpoint += `&tag=${encodeURIComponent(tag)}`;
-  }
+  // Build endpoint: FastAPI uses skip/limit
+  let endpoint = `/posts?skip=${skip}&limit=${pageSize}&published_only=true`;
 
   const response = await fetchAPI(endpoint);
 
+  // Filter out excludeId if provided
+  let data = response.data || [];
+  if (excludeId) {
+    data = data.filter((post) => post.id !== excludeId);
+  }
+
+  // Return in format expected by pages
   return {
-    posts: response.data,
-    pagination: {
-      page,
-      limit,
-      total: response.meta.pagination.total,
-      pages: Math.ceil(response.meta.pagination.total / limit),
+    data: data,
+    meta: {
+      pagination: {
+        page: page,
+        pageSize: pageSize,
+        total: response.meta?.pagination?.total || 0,
+        pageCount: Math.ceil(
+          (response.meta?.pagination?.total || 0) / pageSize
+        ),
+      },
     },
   };
 }
