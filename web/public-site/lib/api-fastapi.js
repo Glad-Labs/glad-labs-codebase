@@ -336,8 +336,184 @@ export function formatPost(post) {
   };
 }
 
+// ============================================================================
+// OAUTH & AUTHENTICATION
+// ============================================================================
+
+/**
+ * Get OAuth login URL for a provider
+ * @param {string} provider - Provider name ('github', 'google', etc.)
+ * @returns {Promise<Object>} { login_url: 'https://...' }
+ */
+export async function getOAuthLoginURL(provider) {
+  const data = await fetchAPI(`/auth/${provider}/login`);
+  return data.login_url;
+}
+
+/**
+ * Handle OAuth callback
+ * @param {string} provider - OAuth provider name
+ * @param {string} code - Authorization code from provider
+ * @param {string} state - State parameter for CSRF protection
+ * @returns {Promise<Object>} { access_token, user, ... }
+ */
+export async function handleOAuthCallback(provider, code, state) {
+  return fetchAPI(`/auth/${provider}/callback`, {
+    method: 'POST',
+    body: JSON.stringify({ code, state }),
+  });
+}
+
+/**
+ * Get current authenticated user
+ * Requires valid JWT token in Authorization header
+ * @returns {Promise<Object|null>}
+ */
+export async function getCurrentUser() {
+  try {
+    const token = localStorage.getItem('auth_token');
+    if (!token) return null;
+
+    const response = await fetchAPI('/auth/verify', {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+    return response.data || null;
+  } catch (error) {
+    console.error('[FastAPI] Error getting current user:', error);
+    return null;
+  }
+}
+
+/**
+ * Logout current user
+ * @returns {Promise<Object>}
+ */
+export async function logout() {
+  const token = localStorage.getItem('auth_token');
+  if (!token) return { success: true };
+
+  return fetchAPI('/auth/logout', {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+}
+
+// ============================================================================
+// TASK MANAGEMENT
+// ============================================================================
+
+/**
+ * Create a new task
+ * @param {Object} taskData - Task data (title, description, type, parameters)
+ * @returns {Promise<Object>}
+ */
+export async function createTask(taskData) {
+  const token = localStorage.getItem('auth_token');
+  if (!token) throw new Error('Not authenticated');
+
+  return fetchAPI('/tasks', {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify(taskData),
+  });
+}
+
+/**
+ * List all tasks with filtering
+ * @param {number} limit - Number of tasks to return
+ * @param {number} offset - Pagination offset
+ * @param {string} status - Filter by status (optional)
+ * @returns {Promise<Object>} { data: [...tasks], meta: {...} }
+ */
+export async function listTasks(limit = 20, offset = 0, status = null) {
+  const token = localStorage.getItem('auth_token');
+  if (!token) throw new Error('Not authenticated');
+
+  let endpoint = `/tasks?limit=${limit}&offset=${offset}`;
+  if (status) {
+    endpoint += `&status=${encodeURIComponent(status)}`;
+  }
+
+  return fetchAPI(endpoint, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+}
+
+/**
+ * Get single task by ID
+ * @param {string|number} taskId - Task ID
+ * @returns {Promise<Object>}
+ */
+export async function getTaskById(taskId) {
+  const token = localStorage.getItem('auth_token');
+  if (!token) throw new Error('Not authenticated');
+
+  return fetchAPI(`/tasks/${taskId}`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+}
+
+/**
+ * Get task metrics and statistics
+ * @returns {Promise<Object>}
+ */
+export async function getTaskMetrics() {
+  const token = localStorage.getItem('auth_token');
+  if (!token) throw new Error('Not authenticated');
+
+  return fetchAPI('/tasks/metrics', {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+}
+
+// ============================================================================
+// MODEL MANAGEMENT
+// ============================================================================
+
+/**
+ * Get list of available AI models
+ * @returns {Promise<Object>}
+ */
+export async function getAvailableModels() {
+  try {
+    const response = await fetchAPI('/models');
+    return response.data || [];
+  } catch (error) {
+    console.error('[FastAPI] Error fetching models:', error);
+    return [];
+  }
+}
+
+/**
+ * Test connection to specific model provider
+ * @param {string} provider - Provider name
+ * @param {string} model - Model name (optional)
+ * @returns {Promise<Object>} { status: 'connected|error', message: '...' }
+ */
+export async function testModelProvider(provider, model = null) {
+  let endpoint = `/models/test?provider=${encodeURIComponent(provider)}`;
+  if (model) {
+    endpoint += `&model=${encodeURIComponent(model)}`;
+  }
+
+  return fetchAPI(endpoint);
+}
+
 // Default export for compatibility
 export default {
+  // CMS Functions
   getPaginatedPosts,
   getFeaturedPost,
   getPostBySlug,
@@ -352,4 +528,17 @@ export default {
   validateFastAPI,
   getImageURL,
   formatPost,
+  // OAuth Functions
+  getOAuthLoginURL,
+  handleOAuthCallback,
+  getCurrentUser,
+  logout,
+  // Task Functions
+  createTask,
+  listTasks,
+  getTaskById,
+  getTaskMetrics,
+  // Model Functions
+  getAvailableModels,
+  testModelProvider,
 };

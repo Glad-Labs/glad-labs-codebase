@@ -1,9 +1,65 @@
 import Link from 'next/link';
 import { useRouter } from 'next/router';
+import { useState, useEffect } from 'react';
 import SearchBar from './SearchBar';
+import { OAuthLoginButton, UserMenu } from './LoginLink';
+import { logout } from '../lib/api';
 
 const Header = () => {
   const router = useRouter();
+  const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  // Check authentication status on mount and when tab becomes visible
+  useEffect(() => {
+    const checkAuth = () => {
+      try {
+        const token = localStorage.getItem('auth_token');
+        const userData = localStorage.getItem('auth_user');
+
+        if (token && userData) {
+          setUser(JSON.parse(userData));
+        } else {
+          setUser(null);
+        }
+      } catch (error) {
+        console.error('[Auth] Error checking authentication:', error);
+        setUser(null);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    checkAuth();
+
+    // Listen for storage changes (logout from other tabs)
+    window.addEventListener('storage', checkAuth);
+    // Listen for visibility changes
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible') {
+        checkAuth();
+      }
+    });
+
+    return () => {
+      window.removeEventListener('storage', checkAuth);
+      document.removeEventListener('visibilitychange', checkAuth);
+    };
+  }, []);
+
+  const handleLogout = async () => {
+    try {
+      await logout();
+    } catch (error) {
+      console.error('[Auth] Logout error:', error);
+    } finally {
+      // Clear local state regardless of API response
+      localStorage.removeItem('auth_token');
+      localStorage.removeItem('auth_user');
+      setUser(null);
+      router.push('/');
+    }
+  };
 
   // Determine if route is active
   const isActive = (href) => router.pathname === href;
@@ -73,6 +129,25 @@ const Header = () => {
                 </Link>
               </div>
             </nav>
+
+            {/* Auth Section */}
+            <div className="flex items-center gap-2">
+              {!loading && (
+                <>
+                  {user ? (
+                    <UserMenu user={user} onLogout={handleLogout} />
+                  ) : (
+                    <div className="flex gap-2">
+                      <OAuthLoginButton
+                        provider="github"
+                        label="Sign In"
+                        className="text-sm"
+                      />
+                    </div>
+                  )}
+                </>
+              )}
+            </div>
           </div>
         </div>
       </header>

@@ -226,3 +226,159 @@ const authService = {
 };
 
 export default authService;
+
+// ============================================================================
+// Enhanced OAuth Functions (FastAPI Backend Compatible)
+// ============================================================================
+
+/**
+ * Get available OAuth providers from backend
+ * @returns {Promise<array>} List of available providers
+ */
+export async function getAvailableOAuthProviders() {
+  try {
+    const response = await fetch(`${API_BASE_URL}/api/auth/providers`, {
+      method: 'GET',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+    });
+
+    if (!response.ok) {
+      throw new Error(`Failed to fetch OAuth providers: ${response.statusText}`);
+    }
+
+    const data = await response.json();
+    return data.providers || [];
+  } catch (error) {
+    console.error('Error fetching OAuth providers:', error);
+    return [];
+  }
+}
+
+/**
+ * Get login URL for OAuth provider
+ * @param {string} provider - Provider name (github, google, etc)
+ * @returns {Promise<string>} OAuth login URL
+ */
+export async function getOAuthLoginURL(provider) {
+  try {
+    const response = await fetch(`${API_BASE_URL}/api/auth/${provider}/login`, {
+      method: 'GET',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+    });
+
+    if (!response.ok) {
+      throw new Error(`Failed to get OAuth login URL: ${response.statusText}`);
+    }
+
+    const data = await response.json();
+    return data.login_url;
+  } catch (error) {
+    console.error(`Error getting ${provider} login URL:`, error);
+    throw error;
+  }
+}
+
+/**
+ * Handle OAuth callback - NEW FastAPI endpoint
+ * @param {string} provider - OAuth provider
+ * @param {string} code - Authorization code
+ * @param {string} state - State parameter for CSRF verification
+ * @returns {Promise<object>} User data and tokens {user, token, refresh_token}
+ */
+export async function handleOAuthCallbackNew(provider, code, state) {
+  try {
+    // Verify CSRF state
+    const storedState = sessionStorage.getItem('oauth_state');
+    if (storedState && storedState !== state) {
+      throw new Error('CSRF state mismatch - potential security breach');
+    }
+
+    const response = await fetch(`${API_BASE_URL}/api/auth/${provider}/callback`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ code, state }),
+      credentials: 'include',
+    });
+
+    if (!response.ok) {
+      throw new Error(`OAuth callback failed: ${response.statusText}`);
+    }
+
+    const data = await response.json();
+
+    // Store tokens
+    if (data.token) {
+      localStorage.setItem('auth_token', data.token);
+    }
+    if (data.refresh_token) {
+      localStorage.setItem('refresh_token', data.refresh_token);
+    }
+    if (data.user) {
+      localStorage.setItem('user', JSON.stringify(data.user));
+    }
+
+    // Clear state
+    sessionStorage.removeItem('oauth_state');
+
+    return data;
+  } catch (error) {
+    console.error(`Error handling ${provider} callback:`, error);
+    throw error;
+  }
+}
+
+/**
+ * Validate token is still valid and get current user
+ * @returns {Promise<object>} Current user data
+ */
+export async function validateAndGetCurrentUser() {
+  try {
+    const token = getAuthToken();
+    if (!token) return null;
+
+    const response = await fetch(`${API_BASE_URL}/api/auth/me`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+      credentials: 'include',
+    });
+
+    if (!response.ok) {
+      if (response.status === 401) {
+        // Token expired
+        await logout();
+        return null;
+      }
+      throw new Error(`Failed to validate user: ${response.statusText}`);
+    }
+
+    const data = await response.json();
+    if (data.user) {
+      localStorage.setItem('user', JSON.stringify(data.user));
+    }
+    return data.user;
+  } catch (error) {
+    console.error('Error validating user:', error);
+    return null;
+  }
+}
+
+/**
+ * Clear authentication (alias for logout)
+ * @returns {Promise<void>}
+ */
+export async function clearAuth() {
+  return logout();
+}
+
+/**
+ * Check if user is authenticated
+ * @returns {boolean}
+ */
+export function isAuthenticated() {
+  return !!getAuthToken();
+}

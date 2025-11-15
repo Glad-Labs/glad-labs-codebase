@@ -10,6 +10,7 @@ import { getCachedSlug, setCachedSlug } from './slugLookup';
 
 // Re-export all FastAPI functions
 export {
+  // CMS Functions
   getPaginatedPosts,
   getFeaturedPost,
   getPostBySlug,
@@ -24,6 +25,19 @@ export {
   validateFastAPI,
   getImageURL,
   formatPost,
+  // OAuth Functions (NEW)
+  getOAuthLoginURL,
+  handleOAuthCallback,
+  getCurrentUser,
+  logout,
+  // Task Functions (NEW)
+  createTask,
+  listTasks,
+  getTaskById,
+  getTaskMetrics,
+  // Model Functions (NEW)
+  getAvailableModels,
+  testModelProvider,
 } from './api-fastapi';
 
 // For legacy code that calls getStrapiURL, redirect to getImageURL

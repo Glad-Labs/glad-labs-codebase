@@ -1,80 +1,145 @@
 /**
  * OAuth Callback Handler
- * Processes GitHub OAuth callback and exchanges code for token
+ * Processes GitHub/Google OAuth callback and exchanges code for token
+ * Supports both old (exchangeCodeForToken) and new (handleOAuthCallbackNew) auth functions
  */
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { exchangeCodeForToken } from '../services/authService';
+import { CircularProgress, Alert, Box } from '@mui/material';
+import { exchangeCodeForToken, handleOAuthCallbackNew } from '../services/authService';
 import useAuth from '../hooks/useAuth';
 
 const AuthCallback = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { setAuthUser } = useAuth();
+  const [error, setError] = useState(null);
 
   useEffect(() => {
     const handleCallback = async () => {
       try {
         const code = searchParams.get('code');
         const state = searchParams.get('state');
+        const provider = searchParams.get('provider') || 'github'; // Default to github
         const error = searchParams.get('error');
 
-        // Check for errors
+        // Check for OAuth provider errors
         if (error) {
           console.error('OAuth error:', error);
-          navigate('/login');
+          setError(`OAuth error: ${error}`);
+          setTimeout(() => navigate('/login'), 3000);
+          return;
+        }
+
+        if (!code) {
+          console.error('No authorization code received');
+          setError('No authorization code received');
+          setTimeout(() => navigate('/login'), 3000);
           return;
         }
 
         // For mock auth, skip state verification
-        const isMockAuth = code && code.startsWith('mock_auth_code_');
+        const isMockAuth = code.startsWith('mock_auth_code_');
 
         // Verify state for CSRF protection (skip for mock auth)
-        if (!isMockAuth) {
+        if (!isMockAuth && state) {
           const storedState = sessionStorage.getItem('oauth_state');
           if (state !== storedState) {
             console.error('State mismatch - possible CSRF attack');
-            navigate('/login');
+            setError('Security validation failed: state mismatch');
+            setTimeout(() => navigate('/login'), 3000);
             return;
           }
         }
 
-        // Exchange code for token
-        if (code) {
+        // Try new OAuth callback handler first (preferred)
+        let userData;
+        try {
+          userData = await handleOAuthCallbackNew(provider, code, state);
+        } catch (err) {
+          console.warn('New OAuth handler failed, trying legacy handler:', err.message);
+          // Fallback to legacy handler
           const data = await exchangeCodeForToken(code);
-          setAuthUser(data.user);
-
-          // Clear state
-          sessionStorage.removeItem('oauth_state');
-
-          // Redirect to dashboard
-          navigate('/', { replace: true });
+          userData = data.user || data;
         }
-      } catch (error) {
-        console.error('Error handling OAuth callback:', error);
-        navigate('/login');
+
+        // Update auth context
+        setAuthUser(userData);
+
+        // Clear CSRF state
+        sessionStorage.removeItem('oauth_state');
+        sessionStorage.removeItem('oauth_provider');
+
+        // Redirect to dashboard
+        navigate('/', { replace: true });
+      } catch (err) {
+        console.error('Error handling OAuth callback:', err);
+        setError(err.message || 'Failed to authenticate. Please try again.');
+        setError(prev => `${prev}`); // Keep error visible
       }
     };
 
     handleCallback();
   }, [searchParams, navigate, setAuthUser]);
 
+  // Render loading state
+  if (!error) {
+    return (
+      <Box
+        sx={{
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          height: '100vh',
+          background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+          flexDirection: 'column',
+          gap: 2,
+        }}
+      >
+        <CircularProgress sx={{ color: 'white' }} />
+        <div style={{ textAlign: 'center', color: 'white' }}>
+          <h2>Authenticating...</h2>
+          <p>Please wait while we verify your credentials.</p>
+        </div>
+      </Box>
+    );
+  }
+
+  // Render error state
   return (
-    <div
-      style={{
+    <Box
+      sx={{
         display: 'flex',
         justifyContent: 'center',
         alignItems: 'center',
         height: '100vh',
         background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+        p: 2,
       }}
     >
-      <div style={{ textAlign: 'center', color: 'white' }}>
-        <h2>Authenticating...</h2>
-        <p>Please wait while we verify your credentials.</p>
-      </div>
-    </div>
+      <Box sx={{ maxWidth: 400 }}>
+        <Alert severity="error" sx={{ mb: 2 }}>
+          {error}
+        </Alert>
+        <button
+          onClick={() => navigate('/login')}
+          style={{
+            width: '100%',
+            padding: '12px',
+            backgroundColor: '#667eea',
+            color: 'white',
+            border: 'none',
+            borderRadius: '4px',
+            cursor: 'pointer',
+            fontSize: '16px',
+            fontWeight: 'bold',
+          }}
+        >
+          Back to Login
+        </button>
+      </Box>
+    </Box>
   );
 };
 

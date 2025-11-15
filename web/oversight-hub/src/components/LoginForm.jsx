@@ -137,6 +137,28 @@ const authAPI = {
     }
     return response.json();
   },
+
+  /**
+   * Get OAuth login URL for social login
+   * @param {string} provider - OAuth provider (github, google, etc)
+   * @returns {Promise<string>} - Login URL to redirect to
+   */
+  getOAuthLoginURL: async (provider) => {
+    const response = await fetch(
+      `${process.env.REACT_APP_API_URL || 'http://localhost:8000'}/api/auth/${provider}/login`,
+      {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      }
+    );
+    if (!response.ok) {
+      throw new Error(`Failed to get ${provider} login URL`);
+    }
+    const data = await response.json();
+    return data.login_url;
+  },
 };
 
 /**
@@ -505,12 +527,22 @@ function LoginForm({
                 {/* Divider */}
                 <Divider sx={{ my: 2 }}>OR</Divider>
 
-                {/* Social Login Buttons (Ready for OAuth integration) */}
+                {/* Social Login Buttons (OAuth Integration) */}
                 <Button
                   fullWidth
                   variant="outlined"
                   disabled={loading}
                   sx={{ mb: 1 }}
+                  onClick={async () => {
+                    try {
+                      setLoading(true);
+                      const url = await authAPI.getOAuthLoginURL('google');
+                      window.location.href = url;
+                    } catch (err) {
+                      setError('Failed to start Google OAuth: ' + err.message);
+                      setLoading(false);
+                    }
+                  }}
                 >
                   Continue with Google
                 </Button>
@@ -520,6 +552,16 @@ function LoginForm({
                   variant="outlined"
                   disabled={loading}
                   sx={{ mb: 2 }}
+                  onClick={async () => {
+                    try {
+                      setLoading(true);
+                      const url = await authAPI.getOAuthLoginURL('github');
+                      window.location.href = url;
+                    } catch (err) {
+                      setError('Failed to start GitHub OAuth: ' + err.message);
+                      setLoading(false);
+                    }
+                  }}
                 >
                   Continue with GitHub
                 </Button>

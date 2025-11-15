@@ -258,6 +258,215 @@ export async function publishBlogDraft(postId, environment = 'production') {
   });
 }
 
+// ============================================================================
+// OAuth Provider Functions
+// ============================================================================
+
+/**
+ * Get available OAuth providers
+ * @returns {Promise} List of available OAuth providers
+ */
+export async function getOAuthProviders() {
+  return makeRequest('/api/auth/providers', 'GET');
+}
+
+/**
+ * Get OAuth login URL for a specific provider
+ * @param {string} provider - Provider name (e.g., 'github')
+ * @returns {Promise} Login URL redirect
+ */
+export async function getOAuthLoginURL(provider) {
+  const data = await makeRequest(`/api/auth/${provider}/login`, 'GET');
+  return data.login_url;
+}
+
+/**
+ * Handle OAuth callback after user authorization
+ * @param {string} provider - OAuth provider (e.g., 'github')
+ * @param {string} code - Authorization code from provider
+ * @param {string} state - State parameter for CSRF protection
+ * @returns {Promise} User data and tokens
+ */
+export async function handleOAuthCallback(provider, code, state) {
+  return makeRequest(`/api/auth/${provider}/callback`, 'GET', null, true, null, 15000);
+}
+
+/**
+ * Get current authenticated user
+ * @returns {Promise} Current user data
+ */
+export async function getCurrentUser() {
+  return makeRequest('/api/auth/me', 'GET');
+}
+
+/**
+ * Logout current user
+ * @returns {Promise} Logout confirmation
+ */
+export async function logout() {
+  return makeRequest('/api/auth/logout', 'POST');
+}
+
+// ============================================================================
+// CMS Operations - Posts
+// ============================================================================
+
+/**
+ * Get paginated posts
+ * @param {number} skip - Number of posts to skip
+ * @param {number} limit - Number of posts to return
+ * @param {boolean} publishedOnly - Only return published posts
+ * @returns {Promise} Paginated posts with metadata
+ */
+export async function getPosts(skip = 0, limit = 10, publishedOnly = true) {
+  const query = new URLSearchParams({
+    skip,
+    limit,
+    published_only: publishedOnly,
+  }).toString();
+  return makeRequest(`/api/posts?${query}`, 'GET');
+}
+
+/**
+ * Get post by slug
+ * @param {string} slug - Post slug
+ * @returns {Promise} Post data
+ */
+export async function getPostBySlug(slug) {
+  return makeRequest(`/api/posts/${slug}`, 'GET');
+}
+
+/**
+ * Create new post
+ * @param {object} postData - Post data {title, slug, content, excerpt, category_id, tags}
+ * @returns {Promise} Created post
+ */
+export async function createPost(postData) {
+  return makeRequest('/api/posts', 'POST', postData);
+}
+
+/**
+ * Update existing post
+ * @param {number} postId - Post ID
+ * @param {object} postData - Post updates
+ * @returns {Promise} Updated post
+ */
+export async function updatePost(postId, postData) {
+  return makeRequest(`/api/posts/${postId}`, 'PUT', postData);
+}
+
+/**
+ * Delete post
+ * @param {number} postId - Post ID
+ * @returns {Promise} Deletion confirmation
+ */
+export async function deletePost(postId) {
+  return makeRequest(`/api/posts/${postId}`, 'DELETE');
+}
+
+// ============================================================================
+// CMS Operations - Categories
+// ============================================================================
+
+/**
+ * Get all categories
+ * @returns {Promise} List of categories
+ */
+export async function getCategories() {
+  return makeRequest('/api/categories', 'GET');
+}
+
+/**
+ * Get category by slug
+ * @param {string} slug - Category slug
+ * @returns {Promise} Category data
+ */
+export async function getCategoryBySlug(slug) {
+  return makeRequest(`/api/categories/${slug}`, 'GET');
+}
+
+/**
+ * Create new category
+ * @param {object} categoryData - Category data {name, slug, description}
+ * @returns {Promise} Created category
+ */
+export async function createCategory(categoryData) {
+  return makeRequest('/api/categories', 'POST', categoryData);
+}
+
+// ============================================================================
+// CMS Operations - Tags
+// ============================================================================
+
+/**
+ * Get all tags
+ * @returns {Promise} List of tags
+ */
+export async function getTags() {
+  return makeRequest('/api/tags', 'GET');
+}
+
+/**
+ * Get tag by slug
+ * @param {string} slug - Tag slug
+ * @returns {Promise} Tag data
+ */
+export async function getTagBySlug(slug) {
+  return makeRequest(`/api/tags/${slug}`, 'GET');
+}
+
+/**
+ * Create new tag
+ * @param {object} tagData - Tag data {name, slug, color}
+ * @returns {Promise} Created tag
+ */
+export async function createTag(tagData) {
+  return makeRequest('/api/tags', 'POST', tagData);
+}
+
+// ============================================================================
+// Task Management
+// ============================================================================
+
+/**
+ * Create new task
+ * @param {object} taskData - Task data {title, description, type, parameters}
+ * @returns {Promise} Created task with ID
+ */
+export async function createTask(taskData) {
+  return makeRequest('/api/tasks', 'POST', taskData, false, null, 60000); // 60s for task creation
+}
+
+/**
+ * List tasks with optional filtering
+ * @param {number} limit - Number of tasks to return
+ * @param {number} offset - Offset for pagination
+ * @param {string} status - Filter by status (pending, in_progress, completed, failed)
+ * @returns {Promise} List of tasks
+ */
+export async function listTasks(limit = 20, offset = 0, status = null) {
+  const query = new URLSearchParams({ limit, offset });
+  if (status) query.append('status', status);
+  return makeRequest(`/api/tasks?${query.toString()}`, 'GET');
+}
+
+/**
+ * Get task details by ID
+ * @param {string} taskId - Task ID
+ * @returns {Promise} Task data with status and results
+ */
+export async function getTaskById(taskId) {
+  return makeRequest(`/api/tasks/${taskId}`, 'GET');
+}
+
+/**
+ * Get task metrics summary
+ * @returns {Promise} Task statistics and metrics
+ */
+export async function getTaskMetrics() {
+  return makeRequest('/api/tasks/metrics/summary', 'GET');
+}
+
 const cofounderAgentClient = {
   logout,
   refreshAccessToken,
@@ -267,6 +476,28 @@ const cofounderAgentClient = {
   createBlogPost,
   publishBlogDraft,
   getMetrics,
+  // OAuth functions
+  getOAuthProviders,
+  getOAuthLoginURL,
+  handleOAuthCallback,
+  getCurrentUser,
+  // CMS functions
+  getPosts,
+  getPostBySlug,
+  createPost,
+  updatePost,
+  deletePost,
+  getCategories,
+  getCategoryBySlug,
+  createCategory,
+  getTags,
+  getTagBySlug,
+  createTag,
+  // Task management
+  createTask,
+  listTasks,
+  getTaskById,
+  getTaskMetrics,
 };
 
 export default cofounderAgentClient;

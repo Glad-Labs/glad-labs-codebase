@@ -8,6 +8,8 @@ import {
   logout as authLogout,
   getStoredUser,
   getAuthToken,
+  handleOAuthCallbackNew,
+  validateAndGetCurrentUser,
 } from '../services/authService';
 import useStore from '../store/useStore';
 
@@ -109,6 +111,58 @@ export const AuthProvider = ({ children }) => {
     [setStoreUser, setStoreIsAuthenticated, setStoreAccessToken]
   );
 
+  // OAuth callback handler
+  const handleOAuthCallback = useCallback(
+    async (provider, code, state) => {
+      try {
+        console.log(
+          `🔐 [AuthContext] Processing ${provider} OAuth callback...`
+        );
+        setLoading(true);
+        const result = await handleOAuthCallbackNew(provider, code, state);
+
+        if (result.user && result.token) {
+          console.log(
+            `✅ [AuthContext] OAuth login successful for ${provider}`
+          );
+          setAuthUser(result.user);
+          setStoreAccessToken(result.token);
+          setError(null);
+          return result.user;
+        } else {
+          throw new Error(`No user data returned from ${provider} OAuth`);
+        }
+      } catch (err) {
+        console.error(`❌ [AuthContext] OAuth callback error:`, err);
+        setError(err.message);
+        setLoading(false);
+        throw err;
+      }
+    },
+    [setStoreAccessToken, setAuthUser]
+  );
+
+  // Validate current user token
+  const validateCurrentUser = useCallback(async () => {
+    try {
+      console.log('🔐 [AuthContext] Validating current user...');
+      const user = await validateAndGetCurrentUser();
+      if (user) {
+        setAuthUser(user);
+        setError(null);
+        return user;
+      } else {
+        setUser(null);
+        storeLogout();
+        return null;
+      }
+    } catch (err) {
+      console.error('❌ [AuthContext] Validation error:', err);
+      setError(err.message);
+      return null;
+    }
+  }, [setAuthUser, storeLogout]);
+
   const value = {
     user,
     loading,
@@ -116,6 +170,8 @@ export const AuthProvider = ({ children }) => {
     isAuthenticated: !!user,
     logout,
     setAuthUser,
+    handleOAuthCallback,
+    validateCurrentUser,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
