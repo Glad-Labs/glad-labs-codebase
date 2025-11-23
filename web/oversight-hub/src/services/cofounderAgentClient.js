@@ -39,6 +39,7 @@ async function makeRequest(
 ) {
   try {
     const url = `${API_BASE_URL}${endpoint}`;
+    console.log(`🔵 makeRequest: ${method} ${url}`);
     const config = { method, headers: getAuthHeaders() };
     if (data) config.body = JSON.stringify(data);
 
@@ -50,6 +51,7 @@ async function makeRequest(
     try {
       const response = await fetch(url, config);
       clearTimeout(timeoutId);
+      console.log(`🟡 makeRequest: Response status: ${response.status} ${response.statusText}`);
 
       if (response.status === 401 && !retry) {
         // Call the onUnauthorized callback if provided
@@ -60,11 +62,13 @@ async function makeRequest(
       }
 
       const result = await response.json().catch(() => response.text());
+      console.log(`🟢 makeRequest: Response parsed:`, result);
       if (!response.ok) {
         const error = new Error(result?.message || `HTTP ${response.status}`);
         error.status = response.status;
         throw error;
       }
+      console.log(`✅ makeRequest: Returning result`);
       return result;
     } catch (fetchError) {
       clearTimeout(timeoutId);
@@ -77,7 +81,7 @@ async function makeRequest(
       throw fetchError;
     }
   } catch (error) {
-    console.error(`API request failed: ${endpoint}`, error);
+    console.error(`❌ API request failed: ${endpoint}`, error);
     throw error;
   }
 }
@@ -292,19 +296,11 @@ export async function handleOAuthCallback(provider, code, state) {
 }
 
 /**
- * Get current authenticated user
+ * Get current user data
  * @returns {Promise} Current user data
  */
 export async function getCurrentUser() {
   return makeRequest('/api/auth/me', 'GET');
-}
-
-/**
- * Logout current user
- * @returns {Promise} Logout confirmation
- */
-export async function logout() {
-  return makeRequest('/api/auth/logout', 'POST');
 }
 
 // ============================================================================

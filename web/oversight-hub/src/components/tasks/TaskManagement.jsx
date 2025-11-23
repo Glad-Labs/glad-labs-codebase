@@ -138,10 +138,9 @@ const TaskManagement = () => {
         headers['Authorization'] = `Bearer ${token}`;
       }
 
-      // ✅ REFACTORED: Use /api/content/tasks endpoint (type-agnostic, replaces /api/content/blog-posts/drafts)
-      // Can add query parameters: ?task_type=blog_post&status=draft&limit=100
+      // ✅ FIXED: Use /api/tasks endpoint which returns {"tasks": [...], "total": ..., "offset": ..., "limit": ...}
       const response = await fetch(
-        'http://localhost:8000/api/content/tasks?limit=100',
+        'http://localhost:8000/api/tasks?limit=100&offset=0',
         {
           headers,
           signal: AbortSignal.timeout(5000),
@@ -150,25 +149,26 @@ const TaskManagement = () => {
 
       if (response.ok) {
         let data = await response.json();
-        // The response has 'drafts' array with draft_id, title, created_at, status, word_count, summary
-        let tasks = data.drafts || [];
+        console.log('✅ TaskManagement: API Response received:', data);
 
-        // Transform drafts to match expected task structure
-        const transformedTasks = tasks.map((draft) => ({
-          id: draft.draft_id,
-          task_name: draft.title,
-          topic: draft.title,
-          status: draft.status || 'draft',
-          created_at: draft.created_at,
-          word_count: draft.word_count,
-          summary: draft.summary,
-          category: 'blog_post',
-        }));
+        // The response has 'tasks' array
+        let apiTasks = data.tasks || [];
+        console.log(
+          '✅ TaskManagement: Tasks from API:',
+          apiTasks.length,
+          'items'
+        );
 
-        setTasks(transformedTasks);
+        // Tasks are already in correct format from API, no transformation needed
+        setTasks(apiTasks);
+        console.log(
+          '✅ TaskManagement: State updated with',
+          apiTasks.length,
+          'tasks'
+        );
       } else {
-        setError(`Failed to fetch content tasks: ${response.statusText}`);
-        console.error('Failed to fetch content tasks:', response.statusText);
+        setError(`Failed to fetch tasks: ${response.statusText}`);
+        console.error('Failed to fetch tasks:', response.statusText);
       }
     } catch (error) {
       const errorMessage =
@@ -897,7 +897,11 @@ const TaskManagement = () => {
         onTaskCreated={(newTaskData) => {
           setShowCreateModal(false);
 
-          // If we got task data back, add it to the top of the list immediately
+          // ✅ CRITICAL FIX: Always refresh tasks immediately after creation
+          // This ensures newly created tasks appear in the list right away
+          // Instead of waiting for auto-refresh (10 seconds)
+          // Also add optimistic UI update if data is available
+
           if (newTaskData) {
             // Create a task object from the response
             const newTask = {
@@ -907,17 +911,29 @@ const TaskManagement = () => {
                 'new-task-' + Date.now(),
               title: newTaskData.topic || 'New Task',
               description: newTaskData.description || '',
-              status: 'in_progress',
+              status: newTaskData.status || 'in_progress',
               priority: 'normal',
-              agent: 'Content Generator',
+              agent: newTaskData.agent_id || 'Content Generator',
               created_at: new Date().toISOString(),
               ...newTaskData, // Include all returned data
             };
 
-            // Add to beginning of tasks list
+            // Add to beginning of tasks list (optimistic update)
             setTasks([newTask, ...tasks]);
+
+            // Force immediate refresh from backend to ensure consistency
+            // This catches any tasks created server-side that weren't in the response
+            setTimeout(() => {
+              console.log(
+                '🔄 TaskManagement: Refreshing after task creation...'
+              );
+              fetchTasks();
+            }, 500);
           } else {
             // Fall back to fetching all tasks
+            console.log(
+              '🔄 TaskManagement: No data returned, fetching all tasks...'
+            );
             fetchTasks();
           }
         }}

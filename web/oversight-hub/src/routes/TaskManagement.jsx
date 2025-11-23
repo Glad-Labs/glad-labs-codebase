@@ -6,7 +6,7 @@ import './TaskManagement.css';
 
 function TaskManagement() {
   const { setTasks } = useStore();
-  const [tasks, setLocalTasks] = useState([]);
+  const [localTasks, setLocalTasks] = useState([]);
   const [sortBy, setSortBy] = useState('created_at');
   const [sortDirection, setSortDirection] = useState('desc');
   const [loading, setLoading] = useState(false);
@@ -17,13 +17,39 @@ function TaskManagement() {
     const fetchTasksWrapper = async () => {
       try {
         setLoading(true);
-        const response = await getTasks({ limit: 100 });
-        if (response && response.tasks) {
+        console.log('🔵 TaskManagement: Fetching tasks from API...');
+        const response = await getTasks(100, 0);
+        console.log('🟢 TaskManagement: API Response received:', response);
+        console.log('🟢 TaskManagement: Response type:', typeof response);
+        console.log('🟢 TaskManagement: Response.tasks:', response?.tasks);
+        console.log(
+          '🟢 TaskManagement: Array.isArray(response.tasks):',
+          Array.isArray(response?.tasks)
+        );
+
+        if (response && response.tasks && Array.isArray(response.tasks)) {
+          console.log(
+            '✅ TaskManagement: Setting tasks to state:',
+            response.tasks.length,
+            'tasks'
+          );
           setLocalTasks(response.tasks);
           setTasks(response.tasks);
+        } else {
+          console.warn('❌ Unexpected response format:', response);
+          console.warn('❌ response:', response);
+          console.warn('❌ response.tasks:', response?.tasks);
+          console.warn(
+            '❌ Array.isArray(response.tasks):',
+            Array.isArray(response?.tasks)
+          );
+          setLocalTasks([]);
         }
       } catch (error) {
-        console.error('Error fetching tasks:', error);
+        console.error('❌ Error fetching tasks:', error);
+        console.error('❌ Error message:', error?.message);
+        console.error('❌ Error stack:', error?.stack);
+        setLocalTasks([]);
       } finally {
         setLoading(false);
       }
@@ -38,21 +64,25 @@ function TaskManagement() {
   const fetchTasks = async () => {
     try {
       setLoading(true);
-      const response = await getTasks({ limit: 100 });
+      const response = await getTasks(100, 0);
       if (response && response.tasks) {
         setLocalTasks(response.tasks);
         setTasks(response.tasks);
+      } else {
+        console.warn('Unexpected response format:', response);
+        setLocalTasks([]);
       }
     } catch (error) {
       console.error('Error fetching tasks:', error);
+      setLocalTasks([]);
     } finally {
       setLoading(false);
     }
   };
 
   const getFilteredTasks = () => {
-    // Return ALL tasks regardless of status
-    let allTasks = tasks || [];
+    // Return ALL tasks regardless of status, use local state
+    let allTasks = localTasks || [];
     return allTasks.sort((a, b) => {
       let aVal = a[sortBy] || 0;
       let bVal = b[sortBy] || 0;
@@ -90,26 +120,27 @@ function TaskManagement() {
       {/* Summary Stats */}
       <div className="summary-stats">
         <div className="stat-box">
-          <span className="stat-count">{tasks?.length || 0}</span>
+          <span className="stat-count">{filteredTasks?.length || 0}</span>
           <span className="stat-label">Total Tasks</span>
         </div>
         <div className="stat-box">
           <span className="stat-count">
-            {tasks?.filter((t) => t.status?.toLowerCase() === 'completed')
-              .length || 0}
+            {filteredTasks?.filter(
+              (t) => t.status?.toLowerCase() === 'completed'
+            ).length || 0}
           </span>
           <span className="stat-label">Completed</span>
         </div>
         <div className="stat-box">
           <span className="stat-count">
-            {tasks?.filter((t) => t.status?.toLowerCase() === 'running')
+            {filteredTasks?.filter((t) => t.status?.toLowerCase() === 'running')
               .length || 0}
           </span>
           <span className="stat-label">Running</span>
         </div>
         <div className="stat-box">
           <span className="stat-count">
-            {tasks?.filter((t) => t.status?.toLowerCase() === 'failed')
+            {filteredTasks?.filter((t) => t.status?.toLowerCase() === 'failed')
               .length || 0}
           </span>
           <span className="stat-label">Failed</span>

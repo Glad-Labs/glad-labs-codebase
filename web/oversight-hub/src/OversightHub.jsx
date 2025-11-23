@@ -92,6 +92,17 @@ const OversightHub = () => {
 
   // Handle chat panel resize - persist height to localStorage
   const chatPanelRef = useRef(null);
+  const dragStartRef = useRef(null);
+
+  // Mouse down handler for drag start
+  const handleMouseDown = (e) => {
+    console.log('✅ Chat Resize: Mouse down on drag handle at Y:', e.clientY);
+    dragStartRef.current = {
+      startY: e.clientY,
+      startHeight: chatHeight,
+    };
+  };
+
   useEffect(() => {
     const observer = new ResizeObserver((entries) => {
       for (let entry of entries) {
@@ -111,6 +122,48 @@ const OversightHub = () => {
       observer.disconnect();
     };
   }, []);
+
+  // Drag event listeners
+  useEffect(() => {
+    const handleMouseMove = (e) => {
+      if (!dragStartRef.current) return;
+
+      const deltaY = e.clientY - dragStartRef.current.startY;
+      const newHeight = dragStartRef.current.startHeight + deltaY;
+
+      console.log(
+        '🔄 Chat Resize: Moving - deltaY:',
+        deltaY,
+        'newHeight:',
+        newHeight
+      );
+
+      // Keep height between 150px and 600px
+      if (newHeight >= 150 && newHeight <= 600) {
+        setChatHeight(newHeight);
+      }
+    };
+
+    const handleMouseUp = () => {
+      if (dragStartRef.current) {
+        console.log('✅ Chat Resize: Mouse up - saving height:', chatHeight);
+        localStorage.setItem('chatHeight', Math.round(chatHeight).toString());
+        dragStartRef.current = null;
+      }
+    };
+
+    if (dragStartRef.current) {
+      console.log('📌 Chat Resize: Attaching event listeners');
+      document.addEventListener('mousemove', handleMouseMove);
+      document.addEventListener('mouseup', handleMouseUp);
+
+      return () => {
+        console.log('🧹 Chat Resize: Removing event listeners');
+        document.removeEventListener('mousemove', handleMouseMove);
+        document.removeEventListener('mouseup', handleMouseUp);
+      };
+    }
+  }, [chatHeight]);
 
   // Initialize by fetching available Ollama models (fast, non-blocking)
   useEffect(() => {
@@ -688,7 +741,11 @@ const OversightHub = () => {
           }}
         >
           {/* Drag Handle for Resizing */}
-          <div className="chat-resize-handle" title="Drag to resize chat panel">
+          <div
+            className="chat-resize-handle"
+            title="Drag to resize chat panel"
+            onMouseDown={handleMouseDown}
+          >
             <div className="drag-indicator">⋮⋮</div>
           </div>
           <div className="chat-header">
