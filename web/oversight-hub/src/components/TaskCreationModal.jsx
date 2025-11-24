@@ -142,8 +142,26 @@ export default function TaskCreationModal({ open, onClose, onTaskCreated }) {
         onTaskCreated(response);
       }
     } catch (err) {
-      console.error('Task creation error:', err);
-      form.setGeneralError(err.message || 'Failed to create task');
+      console.error('❌ Task creation error:', err);
+      // Extract detailed error message for display
+      let errorMessage = 'Failed to create task';
+      if (err.message) {
+        errorMessage = err.message;
+      } else if (typeof err === 'string') {
+        errorMessage = err;
+      } else if (err.response) {
+        // Include backend response details
+        console.error('Backend response:', err.response);
+        if (typeof err.response === 'string') {
+          errorMessage = err.response;
+        } else if (typeof err.response === 'object') {
+          errorMessage =
+            err.response.message ||
+            JSON.stringify(err.response).substring(0, 200);
+        }
+      }
+      console.error('📋 Final error message:', errorMessage);
+      form.setGeneralError(errorMessage);
       setStep(0);
     } finally {
       setLoading(false);

@@ -64,8 +64,17 @@ async function makeRequest(
       const result = await response.json().catch(() => response.text());
       console.log(`🟢 makeRequest: Response parsed:`, result);
       if (!response.ok) {
-        const error = new Error(result?.message || `HTTP ${response.status}`);
+        // Extract error message from response
+        let errorMessage = `HTTP ${response.status}`;
+        if (typeof result === 'string') {
+          errorMessage = result || errorMessage;
+        } else if (typeof result === 'object' && result !== null) {
+          errorMessage =
+            result.message || result.detail || JSON.stringify(result);
+        }
+        const error = new Error(errorMessage);
         error.status = response.status;
+        error.response = result; // Include full response for debugging
         throw error;
       }
       console.log(`✅ makeRequest: Returning result`);
