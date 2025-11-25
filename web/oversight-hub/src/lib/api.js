@@ -17,7 +17,7 @@ const api = axios.create({
  */
 export const submitOrchestratorCommand = async (payload) => {
   try {
-    const response = await api.post('/api/orchestrator/command', payload);
+    const response = await api.post('/api/orchestrator/process', payload);
     return response.data;
   } catch (error) {
     console.error('Error submitting orchestrator command:', error);

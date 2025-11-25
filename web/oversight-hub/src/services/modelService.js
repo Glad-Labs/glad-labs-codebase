@@ -16,7 +16,9 @@ class ModelService {
    */
   async getAvailableModels() {
     try {
-      const response = await fetch('http://localhost:8000/api/models', {
+      const API_BASE_URL =
+        process.env.REACT_APP_API_URL || 'http://localhost:8000';
+      const response = await fetch(`${API_BASE_URL}/api/models`, {
         headers: {
           Accept: 'application/json',
         },

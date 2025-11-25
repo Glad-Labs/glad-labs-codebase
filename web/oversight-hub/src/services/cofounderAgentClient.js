@@ -472,6 +472,34 @@ export async function getTaskMetrics() {
   return makeRequest('/api/tasks/metrics/summary', 'GET');
 }
 
+// ============================================================================
+// Intelligent Orchestrator
+// ============================================================================
+
+export async function processOrchestratorRequest(request, businessMetrics, preferences) {
+  return makeRequest('/api/orchestrator/process', 'POST', {
+    request,
+    business_metrics: businessMetrics,
+    preferences
+  });
+}
+
+export async function getOrchestratorStatus(taskId) {
+  return makeRequest(`/api/orchestrator/status/${taskId}`, 'GET');
+}
+
+export async function getOrchestratorApproval(taskId) {
+  return makeRequest(`/api/orchestrator/approval/${taskId}`, 'GET');
+}
+
+export async function approveOrchestratorResult(taskId, action) {
+  return makeRequest(`/api/orchestrator/approve/${taskId}`, 'POST', action);
+}
+
+export async function getOrchestratorTools() {
+  return makeRequest('/api/orchestrator/tools', 'GET');
+}
+
 const cofounderAgentClient = {
   logout,
   refreshAccessToken,
@@ -503,6 +531,12 @@ const cofounderAgentClient = {
   listTasks,
   getTaskById,
   getTaskMetrics,
+  // Intelligent Orchestrator
+  processOrchestratorRequest,
+  getOrchestratorStatus,
+  getOrchestratorApproval,
+  approveOrchestratorResult,
+  getOrchestratorTools,
 };
 
 export default cofounderAgentClient;
