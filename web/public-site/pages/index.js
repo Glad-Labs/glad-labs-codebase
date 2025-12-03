@@ -135,7 +135,7 @@ export async function getStaticProps() {
 
   const postsData = await getPaginatedPosts(
     1, // page
-    6, // pageSize
+    12, // pageSize - increased from 6 to show more posts
     featuredPost ? featuredPost.id : null // excludeId
   ).catch(() => null);
 
