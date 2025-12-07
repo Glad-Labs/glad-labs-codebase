@@ -12,10 +12,12 @@
 
 ## 📚 Documentation
 
-### Setup & Deployment
+### Quick Links
 
-- **[DEPLOYMENT_READINESS.md](./DEPLOYMENT_READINESS.md)** - Pre-deployment verification checklist
-- **[VERCEL_DEPLOYMENT.md](./VERCEL_DEPLOYMENT.md)** - Vercel deployment configuration and process
+- **Deployment**: See [03-DEPLOYMENT_AND_INFRASTRUCTURE.md](../../03-DEPLOYMENT_AND_INFRASTRUCTURE.md) for deployment process
+- **Architecture**: See [02-ARCHITECTURE_AND_DESIGN.md](../../02-ARCHITECTURE_AND_DESIGN.md) for system design
+- **Troubleshooting**: See [troubleshooting/](./troubleshooting/) for common issues
+- **Source Code**: See `web/public-site/README.md` for detailed implementation
 
 ### Configuration
 
