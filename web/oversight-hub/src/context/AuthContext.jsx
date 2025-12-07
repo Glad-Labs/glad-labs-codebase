@@ -8,6 +8,7 @@ import {
   logout as authLogout,
   getStoredUser,
   getAuthToken,
+  initializeDevToken,
   handleOAuthCallbackNew,
   validateAndGetCurrentUser,
 } from '../services/authService';
@@ -35,7 +36,15 @@ export const AuthProvider = ({ children }) => {
         );
         const startTime = Date.now();
 
-        // First check if user is stored in localStorage (from recent login)
+        // Initialize dev token for local development if needed
+        if (process.env.NODE_ENV === 'development') {
+          console.log('[AuthContext] 🔧 Initializing development token...');
+          initializeDevToken();
+          // Small delay to ensure localStorage write is complete
+          await new Promise((resolve) => setTimeout(resolve, 10));
+        }
+
+        // First check if user is stored in localStorage (from recent login OR dev init)
         const storedUser = getStoredUser();
         const token = getAuthToken();
 
@@ -59,9 +68,18 @@ export const AuthProvider = ({ children }) => {
           return;
         }
 
-        // If no stored user, don't try backend verify - just proceed as not authenticated
-        // This prevents 30-second delays on first load
-        console.log('🔍 [AuthContext] No cached session - user needs to login');
+        // No user/token found - this is normal for production (user not logged in)
+        // In development, this should NOT happen since initializeDevToken creates them
+        if (process.env.NODE_ENV === 'development') {
+          console.warn(
+            '⚠️ [AuthContext] Development token initialization may have failed, no token in localStorage'
+          );
+        } else {
+          console.log(
+            '🔍 [AuthContext] No cached session - user needs to login'
+          );
+        }
+
         setStoreIsAuthenticated(false);
         setUser(null);
         setError(null);

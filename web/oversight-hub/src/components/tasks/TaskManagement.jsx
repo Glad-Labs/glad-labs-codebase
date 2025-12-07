@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import {
   Box,
   Grid,
@@ -19,6 +19,7 @@ import {
   Tooltip,
 } from '@mui/material';
 import { getAuthToken } from '../../services/authService';
+import { AuthContext } from '../../context/AuthContext';
 import {
   Add as AddIcon,
   PlayArrow as PlayIcon,
@@ -43,6 +44,10 @@ import ResultPreviewPanel from './ResultPreviewPanel';
  * - Manual intervention controls
  */
 const TaskManagement = () => {
+  // Get auth context
+  const authContext = useContext(AuthContext);
+  const authLoading = authContext?.loading || false;
+
   const [loading, setLoading] = useState(true);
   const [tasks, setTasks] = useState([]);
   const [selectedTasks, setSelectedTasks] = useState([]);
@@ -359,13 +364,20 @@ const TaskManagement = () => {
   };
 
   useEffect(() => {
+    // Don't fetch tasks until auth is ready (token initialized)
+    if (authLoading) {
+      console.log('⏳ TaskManagement: Waiting for auth to initialize...');
+      return;
+    }
+
+    console.log('✅ TaskManagement: Auth ready, fetching tasks...');
     fetchTasks();
 
     // Auto-refresh every 10 seconds
     const interval = setInterval(fetchTasks, 10000);
     return () => clearInterval(interval);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [authLoading]);
 
   const filteredTasks = getFilteredTasks();
 

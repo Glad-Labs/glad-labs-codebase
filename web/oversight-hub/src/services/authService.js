@@ -181,6 +181,34 @@ export const getAuthToken = () => {
 };
 
 /**
+ * Initialize development token if not present
+ * Only used in development/local environment
+ * @returns {string} - Mock development token
+ */
+export const initializeDevToken = () => {
+  // Only initialize if no token exists
+  if (!localStorage.getItem('auth_token')) {
+    const mockToken = 'mock_jwt_token_' + Math.random().toString(36).substring(2, 15);
+    const mockUser = {
+      id: 'dev_user_local',
+      email: 'dev@localhost',
+      username: 'dev-user',
+      login: 'dev-user',
+      name: 'Development User',
+      avatar_url: 'https://avatars.githubusercontent.com/u/1?v=4',
+      auth_provider: 'mock',
+    };
+    
+    localStorage.setItem('auth_token', mockToken);
+    localStorage.setItem('user', JSON.stringify(mockUser));
+    
+    console.log('[authService] 🔧 Development token initialized for local testing');
+    return mockToken;
+  }
+  return localStorage.getItem('auth_token');
+};
+
+/**
  * Make authenticated API request
  * @param {string} endpoint - API endpoint (relative to API_BASE_URL)
  * @param {object} options - Fetch options
@@ -222,6 +250,7 @@ const authService = {
   logout,
   getStoredUser,
   getAuthToken,
+  initializeDevToken,
   authenticatedFetch,
 };
 
