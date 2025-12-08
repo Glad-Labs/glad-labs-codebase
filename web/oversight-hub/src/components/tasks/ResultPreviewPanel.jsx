@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import ReactMarkdown from 'react-markdown';
+import { getAuthToken } from '../../services/authService';
 
 const ResultPreviewPanel = ({
   task = null,
@@ -12,21 +13,76 @@ const ResultPreviewPanel = ({
   const [editedTitle, setEditedTitle] = useState('');
   const [editedSEO, setEditedSEO] = useState({});
   const [publishDestination, setPublishDestination] = useState('');
+  const [approvalLoading, setApprovalLoading] = useState(false);
+  const [approvalFeedback, setApprovalFeedback] = useState('');
+  const [reviewerId, setReviewerId] = useState('admin');
 
   // Initialize editable content when task changes
   React.useEffect(() => {
-    if (task && task.content) {
-      // ✅ FIXED: Handle both content_tasks and legacy task structures
+    if (task) {
+      // ✅ PRIORITY: Check task_metadata.content (where orchestrator stores generated content)
+      const taskMeta = task.task_metadata || {};
       let content = '';
       let title = '';
       let seo = {};
+      let excerpt = '';
+      let featuredImage = '';
 
-      // Handle content_tasks structure (primary)
-      if (task.content) {
-        // Direct content field from content_tasks table
+      // PRIMARY: Load from task_metadata (orchestrator output)
+      if (taskMeta.content) {
+        content = taskMeta.content;
+        title =
+          taskMeta.title || task.title || task.topic || 'Generated Content';
+        excerpt = taskMeta.excerpt || '';
+        featuredImage = taskMeta.featured_image_url || '';
+
+        seo = {
+          title: taskMeta.seo_title || taskMeta.title || '',
+          description: taskMeta.seo_description || excerpt || '',
+          keywords: taskMeta.seo_keywords || '',
+        };
+
+        console.log('✅ Loaded content from task_metadata:', {
+          hasContent: !!content,
+          contentLength: content?.length || 0,
+          title,
+          hasExcerpt: !!excerpt,
+        });
+      }
+      // FALLBACK: Check result_data field (may be JSON string)
+      else if (task.result_data) {
+        try {
+          const resultData =
+            typeof task.result_data === 'string'
+              ? JSON.parse(task.result_data)
+              : task.result_data;
+
+          if (resultData.content) {
+            content = resultData.content;
+            title = resultData.title || task.title || 'Generated Content';
+            excerpt = resultData.excerpt || '';
+
+            seo = {
+              title: resultData.title || '',
+              description: excerpt || '',
+              keywords: resultData.keywords || '',
+            };
+
+            console.log('✅ Loaded content from result_data:', {
+              hasContent: !!content,
+              contentLength: content?.length || 0,
+            });
+          }
+        } catch (e) {
+          console.warn('Failed to parse result_data:', e);
+        }
+      }
+      // FALLBACK: Legacy content_tasks structure
+      else if (task.content) {
         content = task.content;
         title =
           task.title || task.topic || task.task_name || 'Generated Content';
+        excerpt = task.excerpt || '';
 
         seo = {
           title: task.title || task.topic || '',
@@ -38,18 +94,8 @@ const ResultPreviewPanel = ({
                 ? task.tags
                 : '',
         };
-
-        console.log(
-          '✅ ResultPreviewPanel loaded content from content_tasks:',
-          {
-            hasContent: !!content,
-            contentLength: content?.length || 0,
-            title,
-            hasExcerpt: !!task.excerpt,
-          }
-        );
       }
-      // Fallback: Handle result object (legacy)
+      // FALLBACK: Handle result object (legacy)
       else if (task.result) {
         if (typeof task.result === 'string') {
           content = task.result;
@@ -128,6 +174,92 @@ const ResultPreviewPanel = ({
     );
   }
 
+  // Handle approval submission
+  const handleApprovalSubmit = async (approved) => {
+    if (!task?.id && !task?.task_id) {
+      console.error('❌ No task ID available for approval');
+      alert('Error: Cannot approve without task ID');
+      return;
+    }
+
+    // Validate approval feedback
+    if (approvalFeedback.length < 10 || approvalFeedback.length > 1000) {
+      alert('Feedback must be between 10 and 1000 characters');
+      return;
+    }
+
+    if (!reviewerId || reviewerId.length < 2) {
+      alert('Reviewer ID is required (minimum 2 characters)');
+      return;
+    }
+
+    setApprovalLoading(true);
+
+    try {
+      const taskId = task.id || task.task_id;
+      const token = getAuthToken();
+
+      const response = await fetch(
+        `http://localhost:8000/api/content/tasks/${taskId}/approve`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            approved,
+            human_feedback: approvalFeedback,
+            reviewer_id: reviewerId,
+          }),
+        }
+      );
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(
+          errorData.detail || `HTTP ${response.status}: Approval failed`
+        );
+      }
+
+      const result = await response.json();
+      console.log('✅ Approval submitted:', result);
+
+      // Call the callback
+      if (approved) {
+        onApprove({
+          ...task,
+          status: 'approved',
+          approval_status: 'approved',
+          approval_timestamp: result.approval_timestamp,
+          reviewer_id: reviewerId,
+          cms_post_id: result.strapi_post_id,
+          published_url: result.published_url,
+        });
+      } else {
+        onReject({
+          ...task,
+          status: 'rejected',
+          approval_status: 'rejected',
+          rejection_reason: approvalFeedback,
+          reviewer_id: reviewerId,
+        });
+      }
+
+      const successMsg =
+        approved && result.published_url
+          ? `✅ Task approved and published!\n\nURL: ${result.published_url}\n\nMessage: ${result.message}`
+          : `✅ Task ${approved ? 'approved' : 'rejected'} successfully!\n\nMessage: ${result.message}`;
+
+      alert(successMsg);
+    } catch (error) {
+      console.error('❌ Approval error:', error);
+      alert(`❌ Error submitting approval: ${error.message}`);
+    } finally {
+      setApprovalLoading(false);
+    }
+  };
+
   // Task completed - show results
   return (
     <div className="h-full flex flex-col bg-gray-900 rounded-lg border border-cyan-500/30 overflow-hidden">
@@ -153,6 +285,45 @@ const ResultPreviewPanel = ({
 
       {/* Content Area */}
       <div className="flex-1 overflow-y-auto p-6 space-y-6">
+        {/* Task Summary */}
+        <div className="bg-gray-800/50 border border-cyan-500/30 rounded p-4">
+          <h3 className="text-sm font-semibold text-cyan-400 mb-3">
+            📊 Task Summary
+          </h3>
+          <div className="grid grid-cols-2 gap-3 text-xs">
+            <div>
+              <span className="text-gray-500">Task ID:</span>
+              <p className="text-gray-200 font-mono break-all">
+                {task?.id?.slice(0, 12)}...
+              </p>
+            </div>
+            <div>
+              <span className="text-gray-500">Status:</span>
+              <p className="text-gray-200 capitalize font-semibold">
+                {task?.status === 'awaiting_approval' ? (
+                  <span className="text-yellow-400">⏳ Awaiting Approval</span>
+                ) : (
+                  task?.status
+                )}
+              </p>
+            </div>
+            <div>
+              <span className="text-gray-500">Type:</span>
+              <p className="text-gray-200">
+                {task?.type || task?.task_type || 'unknown'}
+              </p>
+            </div>
+            <div>
+              <span className="text-gray-500">Quality Score:</span>
+              <p className="text-gray-200">
+                {task?.task_metadata?.quality_score
+                  ? `${task.task_metadata.quality_score}/100`
+                  : 'N/A'}
+              </p>
+            </div>
+          </div>
+        </div>
+
         {/* Title */}
         <div>
           <label className="block text-sm font-semibold text-cyan-400 mb-2">
@@ -166,16 +337,54 @@ const ResultPreviewPanel = ({
               className="w-full p-3 bg-gray-700 text-white rounded border border-gray-600 focus:outline-none focus:ring-2 focus:ring-cyan-500"
             />
           ) : (
-            <div className="p-3 bg-gray-800 rounded border border-gray-700 text-gray-100">
+            <div className="p-3 bg-gray-800 rounded border border-gray-700 text-gray-100 break-words whitespace-normal">
               {editedTitle || 'Untitled'}
             </div>
           )}
         </div>
 
+        {/* Featured Image */}
+        {task?.task_metadata?.featured_image_url && (
+          <div>
+            <label className="block text-sm font-semibold text-cyan-400 mb-2">
+              Featured Image
+            </label>
+            <div className="p-3 bg-gray-800 rounded border border-gray-700">
+              <img
+                src={task.task_metadata.featured_image_url}
+                alt="Featured"
+                className="w-full max-h-64 object-cover rounded"
+                onError={(e) => {
+                  e.target.style.display = 'none';
+                  e.target.nextSibling.style.display = 'block';
+                }}
+              />
+              <div
+                style={{ display: 'none' }}
+                className="text-gray-400 text-sm py-4"
+              >
+                Image URL: {task.task_metadata.featured_image_url}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Excerpt */}
+        {task?.task_metadata?.excerpt && (
+          <div>
+            <label className="block text-sm font-semibold text-cyan-400 mb-2">
+              Excerpt
+            </label>
+            <div className="p-3 bg-gray-800 rounded border border-gray-700 text-gray-300 italic">
+              {task.task_metadata.excerpt}
+            </div>
+          </div>
+        )}
+
         {/* Content Preview */}
         <div>
           <label className="block text-sm font-semibold text-cyan-400 mb-2">
-            Content
+            Content ({editedContent?.length || 0} characters)
           </label>
           {isEditing ? (
             <textarea
@@ -186,18 +395,38 @@ const ResultPreviewPanel = ({
             />
           ) : (
             <div className="p-4 bg-gray-800 rounded border border-gray-700 prose prose-invert max-w-none">
-              {task.type?.includes('blog') || task.type === 'blog_post' ? (
-                <div className="text-gray-300 max-h-96 overflow-y-auto">
-                  <ReactMarkdown>{editedContent}</ReactMarkdown>
-                </div>
+              {editedContent ? (
+                <>
+                  {task.type?.includes('blog') || task.type === 'blog_post' ? (
+                    <div className="text-gray-300 max-h-96 overflow-y-auto">
+                      <ReactMarkdown>{editedContent}</ReactMarkdown>
+                    </div>
+                  ) : (
+                    <pre className="text-gray-300 whitespace-pre-wrap break-words text-sm">
+                      {editedContent}
+                    </pre>
+                  )}
+                </>
               ) : (
-                <pre className="text-gray-300 whitespace-pre-wrap break-words text-sm">
-                  {editedContent}
-                </pre>
+                <div className="text-gray-500 text-center py-8">
+                  No content available. The generation may have failed.
+                </div>
               )}
             </div>
           )}
         </div>
+
+        {/* QA Feedback */}
+        {task?.task_metadata?.qa_feedback && (
+          <div className="bg-blue-900/20 border border-blue-500/30 rounded p-4">
+            <h4 className="text-sm font-semibold text-blue-400 mb-2">
+              🔍 QA Feedback
+            </h4>
+            <p className="text-sm text-gray-300">
+              {task.task_metadata.qa_feedback}
+            </p>
+          </div>
+        )}
 
         {/* SEO Metadata (for blog posts) */}
         {task.type?.includes('blog') && (
@@ -292,7 +521,7 @@ const ResultPreviewPanel = ({
             className="w-full p-3 bg-gray-700 text-white rounded border border-gray-600 focus:outline-none focus:ring-2 focus:ring-cyan-500"
           >
             <option value="">Select destination...</option>
-            <option value="strapi">📚 Strapi CMS</option>
+            <option value="cms-db">💾 CMS DB</option>
             <option value="twitter">𝕏 Twitter/X</option>
             <option value="facebook">👍 Facebook</option>
             <option value="instagram">📸 Instagram</option>
@@ -302,42 +531,117 @@ const ResultPreviewPanel = ({
             <option value="download">💾 Download Only</option>
           </select>
         </div>
+
+        {/* Approval Section */}
+        {task.status === 'awaiting_approval' && (
+          <div className="border-t border-yellow-700/50 pt-4 bg-yellow-900/20 p-4 rounded">
+            <h4 className="text-sm font-semibold text-yellow-400 mb-3">
+              ⏳ Human Approval Required
+            </h4>
+            <div className="space-y-3">
+              <div>
+                <label className="block text-xs font-medium text-gray-400 mb-1">
+                  Reviewer ID *
+                </label>
+                <input
+                  type="text"
+                  value={reviewerId}
+                  onChange={(e) => setReviewerId(e.target.value)}
+                  placeholder="your.username"
+                  className="w-full p-2 bg-gray-700 text-white rounded border border-gray-600 focus:outline-none focus:ring-2 focus:ring-yellow-500 text-sm"
+                />
+                <p className="text-xs text-gray-500 mt-1">
+                  Alphanumeric, dots, dashes, underscores
+                </p>
+              </div>
+
+              <div>
+                <label className="block text-xs font-medium text-gray-400 mb-1">
+                  Approval Feedback * (10-1000 characters)
+                </label>
+                <textarea
+                  value={approvalFeedback}
+                  onChange={(e) => setApprovalFeedback(e.target.value)}
+                  placeholder="Provide your review feedback, reason for decision..."
+                  className="w-full p-2 bg-gray-700 text-white rounded border border-gray-600 focus:outline-none focus:ring-2 focus:ring-yellow-500 text-sm"
+                  rows={3}
+                />
+                <p className="text-xs text-gray-500 mt-1">
+                  {approvalFeedback.length}/1000 characters
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Action Buttons */}
       <div className="border-t border-cyan-500/30 bg-gray-800 p-4 flex gap-3 justify-end">
-        <button
-          onClick={() => onReject(task)}
-          disabled={isLoading}
-          className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded font-medium transition disabled:opacity-50"
-        >
-          ✕ Reject
-        </button>
-        <button
-          onClick={() => {
-            const updatedTask = {
-              ...task,
-              title: editedTitle,
-              result: {
-                ...task.result,
-                content: editedContent,
-                seo: editedSEO,
-              },
-              publish_destination: publishDestination,
-            };
-            onApprove(updatedTask);
-          }}
-          disabled={isLoading || !publishDestination}
-          className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded font-medium transition disabled:opacity-50 flex items-center gap-2"
-        >
-          {isLoading ? (
-            <>
-              <span className="animate-spin">⟳</span> Publishing...
-            </>
-          ) : (
-            '✓ Approve & Publish'
-          )}
-        </button>
+        {task.status === 'awaiting_approval' ? (
+          <>
+            <button
+              onClick={() => handleApprovalSubmit(false)}
+              disabled={approvalLoading || !approvalFeedback || !reviewerId}
+              className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded font-medium transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+            >
+              {approvalLoading ? (
+                <>
+                  <span className="animate-spin">⟳</span> Rejecting...
+                </>
+              ) : (
+                '✕ Reject'
+              )}
+            </button>
+            <button
+              onClick={() => handleApprovalSubmit(true)}
+              disabled={approvalLoading || !approvalFeedback || !reviewerId}
+              className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded font-medium transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+            >
+              {approvalLoading ? (
+                <>
+                  <span className="animate-spin">⟳</span> Approving...
+                </>
+              ) : (
+                '✓ Approve'
+              )}
+            </button>
+          </>
+        ) : (
+          <>
+            <button
+              onClick={() => onReject(task)}
+              disabled={isLoading}
+              className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded font-medium transition disabled:opacity-50"
+            >
+              ✕ Reject
+            </button>
+            <button
+              onClick={() => {
+                const updatedTask = {
+                  ...task,
+                  title: editedTitle,
+                  result: {
+                    ...task.result,
+                    content: editedContent,
+                    seo: editedSEO,
+                  },
+                  publish_destination: publishDestination,
+                };
+                onApprove(updatedTask);
+              }}
+              disabled={isLoading || !publishDestination}
+              className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded font-medium transition disabled:opacity-50 flex items-center gap-2"
+            >
+              {isLoading ? (
+                <>
+                  <span className="animate-spin">⟳</span> Publishing...
+                </>
+              ) : (
+                '✓ Approve & Publish'
+              )}
+            </button>
+          </>
+        )}
       </div>
     </div>
   );

@@ -78,7 +78,7 @@ const CommandPane = () => {
   } = useStore();
   const isResizing = useRef(false);
   const [isTyping, setIsTyping] = useState(false);
-  const [selectedModel, setSelectedModel] = useState('gpt-4');
+  const [selectedModel, setSelectedModel] = useState('ollama-mistral');
   const [selectedAgent, setSelectedAgent] = useState('orchestrator');
   const [showContext, setShowContext] = useState(false);
   const [delegateMode, setDelegateMode] = useState(false);

@@ -28,7 +28,7 @@ const Dashboard = () => {
   const [chatInput, setChatInput] = useState('');
   const [navMenuOpen, setNavMenuOpen] = useState(false);
   const [chatMode, setChatMode] = useState('conversation');
-  const [selectedModel, setSelectedModel] = useState('ollama-llama2');
+  const [selectedModel, setSelectedModel] = useState('ollama-mistral');
   const [selectedAgent, setSelectedAgent] = useState('orchestrator');
   const [chatHeight, setChatHeight] = useState(
     parseInt(localStorage.getItem('chatHeight') || '300', 10)

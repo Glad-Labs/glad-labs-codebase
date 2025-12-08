@@ -48,7 +48,7 @@ const ModelsPage = () => {
     },
   ]);
 
-  const [selectedModel, setSelectedModel] = useState('gpt-4');
+  const [selectedModel, setSelectedModel] = useState('ollama-mistral');
   const [apiKey, setApiKey] = useState('sk-...');
   const [showApiKey, setShowApiKey] = useState(false);
   const [editingProvider, setEditingProvider] = useState(null);

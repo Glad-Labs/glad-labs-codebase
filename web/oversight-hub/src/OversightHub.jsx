@@ -23,7 +23,7 @@ const OversightHub = () => {
   const [chatInput, setChatInput] = useState('');
   const [navMenuOpen, setNavMenuOpen] = useState(false);
   const [chatMode, setChatMode] = useState('conversation'); // 'conversation' or 'agent'
-  const [selectedModel, setSelectedModel] = useState('ollama-llama2'); // Default model - lightweight
+  const [selectedModel, setSelectedModel] = useState('ollama-mistral'); // Default model - balanced quality/speed
   const [selectedAgent, setSelectedAgent] = useState('orchestrator'); // Agent selection
   const [currentPage, setCurrentPage] = useState('dashboard');
   const [chatHeight, setChatHeight] = useState(

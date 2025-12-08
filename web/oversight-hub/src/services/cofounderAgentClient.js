@@ -12,6 +12,19 @@ import { getAuthToken } from './authService';
 
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:8000';
 
+/**
+ * Capitalize each word in a string
+ * @param {string} str - The string to capitalize
+ * @returns {string} - The capitalized string
+ */
+function capitalizeWords(str) {
+  if (!str) return '';
+  return str
+    .split(' ')
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+    .join(' ');
+}
+
 // Log API configuration for debugging (remove in production if verbose)
 if (!process.env.REACT_APP_API_URL) {
   console.warn(
@@ -194,7 +207,7 @@ export async function createBlogPost(
     }
 
     const payload = {
-      task_name: `Blog Post: ${topicOrOptions.trim()}`,
+      task_name: `Blog Post: ${capitalizeWords(topicOrOptions.trim())}`,
       topic: topicOrOptions.trim(),
       primary_keyword: (primaryKeyword || '').trim(),
       target_audience: (targetAudience || '').trim(),

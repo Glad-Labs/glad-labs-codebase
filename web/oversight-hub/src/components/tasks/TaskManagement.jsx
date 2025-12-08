@@ -17,6 +17,10 @@ import {
   Alert,
   CircularProgress,
   Tooltip,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
 } from '@mui/material';
 import { getAuthToken } from '../../services/authService';
 import { AuthContext } from '../../context/AuthContext';
@@ -28,6 +32,7 @@ import {
   Delete as DeleteIcon,
   Edit as EditIcon,
   Refresh as RefreshIcon,
+  Close as CloseIcon,
 } from '@mui/icons-material';
 import CreateTaskModal from './CreateTaskModal';
 import ResultPreviewPanel from './ResultPreviewPanel';
@@ -833,51 +838,46 @@ const TaskManagement = () => {
                       <IconButton
                         size="small"
                         onClick={async () => {
-                          // ✅ FIXED: Fetch full content task from content_tasks table
-                          // All tasks are blog posts from content generation pipeline
-                          const contentStatus = await fetchContentTaskStatus(
-                            task.id
-                          );
-
-                          if (contentStatus) {
-                            // ✅ Build full task object with all content fields
-                            const taskToSelect = {
-                              ...task,
-                              id: contentStatus.task_id || task.id,
-                              task_id: contentStatus.task_id || task.id,
-                              title: contentStatus.title || task.task_name,
-                              topic: contentStatus.title || task.topic,
-                              status: contentStatus.status,
-                              content: contentStatus.content, // ✅ Now populated from content_tasks
-                              excerpt: contentStatus.excerpt,
-                              featured_image_url:
-                                contentStatus.featured_image_url,
-                              featured_image_data:
-                                contentStatus.featured_image_data,
-                              style: contentStatus.style,
-                              tone: contentStatus.tone,
-                              target_length: contentStatus.target_length,
-                              tags: contentStatus.tags,
-                              task_metadata: contentStatus.task_metadata,
-                              strapi_id: contentStatus.strapi_id,
-                              strapi_url: contentStatus.strapi_url,
-                              error_message: contentStatus.error_message,
-                              // Legacy fields for compatibility
-                              result: {
-                                content: contentStatus.content,
-                                excerpt: contentStatus.excerpt,
-                                seo: {
-                                  title: contentStatus.title,
-                                  description: contentStatus.excerpt,
-                                  keywords: (contentStatus.tags || []).join(
-                                    ', '
-                                  ),
-                                },
-                              },
+                          // ✅ FIXED: Fetch full task details from /api/tasks/{id}
+                          // This endpoint includes task_metadata with content, quality_score, etc.
+                          try {
+                            const token = getAuthToken();
+                            const headers = {
+                              'Content-Type': 'application/json',
                             };
-                            setSelectedTask(taskToSelect);
-                          } else {
-                            // Fallback: use basic task data if fetch fails
+                            if (token) {
+                              headers['Authorization'] = `Bearer ${token}`;
+                            }
+
+                            const response = await fetch(
+                              `http://localhost:8000/api/tasks/${task.id}`,
+                              {
+                                headers,
+                                signal: AbortSignal.timeout(5000),
+                              }
+                            );
+
+                            if (response.ok) {
+                              const fullTask = await response.json();
+                              console.log(
+                                '✅ Full task data fetched:',
+                                fullTask
+                              );
+
+                              // Task response includes task_metadata from convert_db_row_to_dict()
+                              setSelectedTask(fullTask);
+                            } else {
+                              console.warn(
+                                'Failed to fetch full task, using list data'
+                              );
+                              setSelectedTask(task);
+                            }
+                          } catch (error) {
+                            console.warn(
+                              'Error fetching full task:',
+                              error,
+                              'using list data'
+                            );
                             setSelectedTask(task);
                           }
                         }}
@@ -951,36 +951,58 @@ const TaskManagement = () => {
         }}
       />
 
-      {/* Result Preview Panel */}
-      {selectedTask && (
-        <Box
+      {/* Result Preview Dialog Modal */}
+      <Dialog
+        open={!!selectedTask}
+        onClose={() => setSelectedTask(null)}
+        maxWidth="md"
+        fullWidth
+        sx={{
+          '& .MuiDialog-paper': {
+            backgroundColor: '#1a1a1a',
+            backgroundImage:
+              'linear-gradient(135deg, #1a1a1a 0%, #262626 100%)',
+            border: '1px solid rgba(0, 212, 255, 0.2)',
+            borderRadius: 2,
+          },
+        }}
+      >
+        <DialogTitle
           sx={{
-            mt: 4,
-            animation: 'slideIn 0.3s ease-out',
-            '@keyframes slideIn': {
-              from: { opacity: 0, transform: 'translateY(20px)' },
-              to: { opacity: 1, transform: 'translateY(0)' },
-            },
+            backgroundColor: 'rgba(26, 26, 26, 0.8)',
+            borderBottom: '1px solid rgba(0, 212, 255, 0.2)',
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            color: '#00d4ff',
+            fontWeight: 600,
           }}
         >
-          <Box sx={{ mb: 2 }}>
-            <Typography variant="h6" sx={{ color: '#00d4ff', fontWeight: 600 }}>
-              ✓ Task Result Preview
-            </Typography>
-            <Typography variant="caption" sx={{ color: '#888' }}>
-              Review and approve task result before publishing
-            </Typography>
-          </Box>
-          <Box
+          ✓ Task Result Preview
+          <IconButton
+            onClick={() => setSelectedTask(null)}
+            size="small"
             sx={{
-              backgroundColor: 'rgba(26, 26, 26, 0.8)',
-              border: '1px solid rgba(0, 212, 255, 0.2)',
-              borderRadius: 1.5,
-              overflow: 'hidden',
-              backdropFilter: 'blur(10px)',
-              boxShadow: '0 8px 32px rgba(0, 0, 0, 0.4)',
+              color: '#888',
+              '&:hover': {
+                color: '#00d4ff',
+                backgroundColor: 'rgba(0, 212, 255, 0.1)',
+              },
             }}
           >
+            <CloseIcon />
+          </IconButton>
+        </DialogTitle>
+
+        <DialogContent
+          sx={{
+            backgroundColor: 'rgba(26, 26, 26, 0.5)',
+            py: 2,
+            maxHeight: '70vh',
+            overflowY: 'auto',
+          }}
+        >
+          {selectedTask && (
             <ResultPreviewPanel
               task={selectedTask}
               onApprove={async (updatedTask) => {
@@ -1020,9 +1042,9 @@ const TaskManagement = () => {
               onReject={() => setSelectedTask(null)}
               isLoading={isPublishing}
             />
-          </Box>
-        </Box>
-      )}
+          )}
+        </DialogContent>
+      </Dialog>
     </Box>
   );
 };
