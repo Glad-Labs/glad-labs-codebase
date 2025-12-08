@@ -3,6 +3,8 @@
  * Handles OAuth flow, token exchange, and user verification
  */
 
+import { createMockJWTToken } from '../utils/mockTokenGenerator';
+
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:8000';
 
 /**
@@ -41,8 +43,8 @@ export const exchangeCodeForToken = async (code) => {
         avatar_url: 'https://avatars.githubusercontent.com/u/1?v=4',
       };
 
-      const mockToken =
-        'mock_jwt_token_' + Math.random().toString(36).substring(2, 15);
+      // Generate a proper JWT token for development (awaiting async signing)
+      const mockToken = await createMockJWTToken(mockUser);
 
       // Store token and user data
       localStorage.setItem('auth_token', mockToken);
@@ -94,14 +96,20 @@ export const verifySession = async () => {
 
     if (!token) return null;
 
-    // For mock tokens (development/testing), trust the stored user
-    if (token.startsWith('mock_jwt_token_')) {
+    // For mock tokens (development/testing), trust the stored user if valid format
+    if (token.includes('.') && token.split('.').length === 3) {
+      // Token has proper JWT format
       try {
         return user ? JSON.parse(user) : null;
       } catch (e) {
         return null;
       }
     }
+
+    // Token format is invalid, clear it
+    localStorage.removeItem('auth_token');
+    localStorage.removeItem('user');
+    return null;
 
     // For real tokens, verify with backend
     const response = await fetch(`${API_BASE_URL}/api/auth/verify`, {
@@ -183,12 +191,11 @@ export const getAuthToken = () => {
 /**
  * Initialize development token if not present
  * Only used in development/local environment
- * @returns {string} - Mock development token
+ * @returns {Promise<string>} - Mock development token
  */
-export const initializeDevToken = () => {
+export const initializeDevToken = async () => {
   // Only initialize if no token exists
   if (!localStorage.getItem('auth_token')) {
-    const mockToken = 'mock_jwt_token_' + Math.random().toString(36).substring(2, 15);
     const mockUser = {
       id: 'dev_user_local',
       email: 'dev@localhost',
@@ -198,11 +205,16 @@ export const initializeDevToken = () => {
       avatar_url: 'https://avatars.githubusercontent.com/u/1?v=4',
       auth_provider: 'mock',
     };
-    
+
+    // Generate proper JWT token for development (awaiting async signing)
+    const mockToken = await createMockJWTToken(mockUser);
+
     localStorage.setItem('auth_token', mockToken);
     localStorage.setItem('user', JSON.stringify(mockUser));
-    
-    console.log('[authService] 🔧 Development token initialized for local testing');
+
+    console.log(
+      '[authService] Development token initialized with proper JWT format'
+    );
     return mockToken;
   }
   return localStorage.getItem('auth_token');
