@@ -686,6 +686,129 @@ const TaskManagement = () => {
         </Button>
       </Box>
 
+      {/* Bulk Operations Toolbar - Shows when tasks are selected */}
+      {selectedTasks.length > 0 && (
+        <Box
+          sx={{
+            mb: 3,
+            p: 2,
+            backgroundColor: 'rgba(0, 212, 255, 0.1)',
+            border: '1px solid rgba(0, 212, 255, 0.3)',
+            borderRadius: 1,
+            display: 'flex',
+            gap: 2,
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            flexWrap: 'wrap',
+          }}
+        >
+          <Typography sx={{ fontWeight: 600, color: '#00d4ff' }}>
+            {selectedTasks.length} task{selectedTasks.length !== 1 ? 's' : ''}{' '}
+            selected
+          </Typography>
+          <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+            <Button
+              size="small"
+              startIcon={<PlayIcon />}
+              onClick={() => handleBulkAction('resume')}
+              sx={{
+                textTransform: 'none',
+                backgroundColor: '#4CAF50',
+                color: '#fff',
+                '&:hover': { backgroundColor: '#66BB6A' },
+              }}
+            >
+              Resume
+            </Button>
+            <Button
+              size="small"
+              startIcon={<PauseIcon />}
+              onClick={() => handleBulkAction('pause')}
+              sx={{
+                textTransform: 'none',
+                backgroundColor: '#FF9800',
+                color: '#fff',
+                '&:hover': { backgroundColor: '#FFB74D' },
+              }}
+            >
+              Pause
+            </Button>
+            <Button
+              size="small"
+              startIcon={<StopIcon />}
+              onClick={() =>
+                window.confirm('Cancel selected tasks?') &&
+                handleBulkAction('cancel')
+              }
+              sx={{
+                textTransform: 'none',
+                backgroundColor: '#f44336',
+                color: '#fff',
+                '&:hover': { backgroundColor: '#EF5350' },
+              }}
+            >
+              Cancel
+            </Button>
+            <Tooltip title="Export selected tasks as JSON">
+              <Button
+                size="small"
+                onClick={() => {
+                  const tasksToExport = getSortedTasks(filteredTasks).filter(
+                    (t) => selectedTasks.includes(t.id)
+                  );
+                  const dataStr = JSON.stringify(tasksToExport, null, 2);
+                  const dataBlob = new Blob([dataStr], {
+                    type: 'application/json',
+                  });
+                  const url = URL.createObjectURL(dataBlob);
+                  const a = document.createElement('a');
+                  a.href = url;
+                  a.download = `tasks_${Date.now()}.json`;
+                  a.click();
+                  URL.revokeObjectURL(url);
+                }}
+                sx={{
+                  textTransform: 'none',
+                  backgroundColor: '#2196F3',
+                  color: '#fff',
+                  '&:hover': { backgroundColor: '#42A5F5' },
+                }}
+              >
+                Export
+              </Button>
+            </Tooltip>
+            <Button
+              size="small"
+              startIcon={<DeleteIcon />}
+              onClick={() =>
+                window.confirm('Delete selected tasks?') &&
+                handleBulkAction('delete')
+              }
+              sx={{
+                textTransform: 'none',
+                backgroundColor: '#9C27B0',
+                color: '#fff',
+                '&:hover': { backgroundColor: '#BA68C8' },
+              }}
+            >
+              Delete
+            </Button>
+            <Button
+              size="small"
+              onClick={() => setSelectedTasks([])}
+              sx={{
+                textTransform: 'none',
+                backgroundColor: '#666',
+                color: '#fff',
+                '&:hover': { backgroundColor: '#888' },
+              }}
+            >
+              Deselect All
+            </Button>
+          </Box>
+        </Box>
+      )}
+
       {/* Task Table */}
       <TableContainer component={Paper}>
         <Table>

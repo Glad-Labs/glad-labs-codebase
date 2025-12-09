@@ -55,15 +55,6 @@ const OversightHub = () => {
     { label: 'Settings', icon: '⚙️', path: 'settings' },
   ];
 
-  // Debug logging
-  useEffect(() => {
-    console.log(
-      '[OversightHub] navigationItems:',
-      navigationItems.length,
-      navigationItems.map((item) => item.label)
-    );
-  }, []);
-
   // eslint-disable-next-line no-unused-vars
   const models = [
     { id: 'ollama', name: 'Ollama (Local)', icon: '🏠' },
@@ -231,20 +222,27 @@ const OversightHub = () => {
     initializeModels();
   }, []);
 
+  // Debug: Log currentPage changes
+  useEffect(() => {
+    console.log(`[Navigation] currentPage changed to: ${currentPage}`);
+    console.log(`[Navigation] Available pages in this render:`, {
+      navMenuOpen,
+      timestamp: new Date().toISOString(),
+    });
+  }, [currentPage, navMenuOpen]);
+
   const handleTaskClick = (task) => {
     setSelectedTask(task);
   };
 
   const handleNavigate = (page) => {
-    console.log(
-      '[handleNavigate] Navigating to:',
-      page,
-      ', currentPage was:',
-      currentPage
-    );
+    console.log(`[Navigation] Navigating to page: ${page}`, {
+      currentPageBefore: currentPage,
+      navMenuOpenBefore: navMenuOpen,
+      timestamp: new Date().toISOString(),
+    });
     setCurrentPage(page);
-    setNavMenuOpen(false); // Close menu after navigation
-    console.log('[handleNavigate] setCurrentPage called for:', page);
+    setNavMenuOpen(false);
   };
 
   const handleOllamaModelChange = (newModel) => {

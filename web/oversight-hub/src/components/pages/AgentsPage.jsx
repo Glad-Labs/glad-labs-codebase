@@ -12,7 +12,7 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import cofounderAgentClient from '../../services/cofounderAgentClient';
+import * as cofounderAgentClient from '../../services/cofounderAgentClient';
 import './AgentsPage.css';
 
 const AgentsPage = () => {

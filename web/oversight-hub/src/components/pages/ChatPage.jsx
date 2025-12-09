@@ -13,7 +13,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import useStore from '../../store/useStore';
-import cofounderAgentClient from '../../services/cofounderAgentClient';
+import * as cofounderAgentClient from '../../services/cofounderAgentClient';
 import './ChatPage.css';
 
 const ChatPage = () => {

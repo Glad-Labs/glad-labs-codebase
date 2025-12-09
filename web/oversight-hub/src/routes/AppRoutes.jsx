@@ -10,9 +10,16 @@ import {
   SocialMediaManagement,
   CostMetricsDashboard,
 } from './index';
+import AgentsPage from '../components/pages/AgentsPage';
+import WorkflowHistoryPage from '../components/pages/WorkflowHistoryPage';
+import ApprovalQueue from '../components/ApprovalQueue';
+import TrainingDataDashboard from '../pages/TrainingDataDashboard';
+import CommandQueuePage from '../pages/CommandQueuePage';
+import OrchestratorPage from '../pages/OrchestratorPage';
 import Login from '../pages/Login';
 import AuthCallback from '../pages/AuthCallback';
 import ProtectedRoute from '../components/ProtectedRoute';
+import LayoutWrapper from '../components/LayoutWrapper';
 
 function AppRoutes() {
   return (
@@ -21,12 +28,14 @@ function AppRoutes() {
       <Route path="/login" element={<Login />} />
       <Route path="/auth/callback" element={<AuthCallback />} />
 
-      {/* Protected Routes */}
+      {/* Protected Routes with Layout */}
       <Route
         path="/"
         element={
           <ProtectedRoute>
-            <Dashboard />
+            <LayoutWrapper>
+              <Dashboard />
+            </LayoutWrapper>
           </ProtectedRoute>
         }
       />
@@ -34,7 +43,9 @@ function AppRoutes() {
         path="/tasks"
         element={
           <ProtectedRoute>
-            <TaskManagement />
+            <LayoutWrapper>
+              <TaskManagement />
+            </LayoutWrapper>
           </ProtectedRoute>
         }
       />
@@ -42,7 +53,9 @@ function AppRoutes() {
         path="/models"
         element={
           <ProtectedRoute>
-            <ModelManagement />
+            <LayoutWrapper>
+              <ModelManagement />
+            </LayoutWrapper>
           </ProtectedRoute>
         }
       />
@@ -50,7 +63,9 @@ function AppRoutes() {
         path="/social"
         element={
           <ProtectedRoute>
-            <SocialMediaManagement />
+            <LayoutWrapper>
+              <SocialMediaManagement />
+            </LayoutWrapper>
           </ProtectedRoute>
         }
       />
@@ -58,7 +73,9 @@ function AppRoutes() {
         path="/content"
         element={
           <ProtectedRoute>
-            <Content />
+            <LayoutWrapper>
+              <Content />
+            </LayoutWrapper>
           </ProtectedRoute>
         }
       />
@@ -66,7 +83,9 @@ function AppRoutes() {
         path="/analytics"
         element={
           <ProtectedRoute>
-            <Analytics />
+            <LayoutWrapper>
+              <Analytics />
+            </LayoutWrapper>
           </ProtectedRoute>
         }
       />
@@ -74,7 +93,9 @@ function AppRoutes() {
         path="/cost-metrics"
         element={
           <ProtectedRoute>
-            <CostMetricsDashboard />
+            <LayoutWrapper>
+              <CostMetricsDashboard />
+            </LayoutWrapper>
           </ProtectedRoute>
         }
       />
@@ -82,7 +103,69 @@ function AppRoutes() {
         path="/settings"
         element={
           <ProtectedRoute>
-            <Settings />
+            <LayoutWrapper>
+              <Settings />
+            </LayoutWrapper>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/agents"
+        element={
+          <ProtectedRoute>
+            <LayoutWrapper>
+              <AgentsPage />
+            </LayoutWrapper>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/workflow"
+        element={
+          <ProtectedRoute>
+            <LayoutWrapper>
+              <WorkflowHistoryPage />
+            </LayoutWrapper>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/approvals"
+        element={
+          <ProtectedRoute>
+            <LayoutWrapper>
+              <ApprovalQueue />
+            </LayoutWrapper>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/training"
+        element={
+          <ProtectedRoute>
+            <LayoutWrapper>
+              <TrainingDataDashboard />
+            </LayoutWrapper>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/queue"
+        element={
+          <ProtectedRoute>
+            <LayoutWrapper>
+              <CommandQueuePage />
+            </LayoutWrapper>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/orchestrator"
+        element={
+          <ProtectedRoute>
+            <LayoutWrapper>
+              <OrchestratorPage />
+            </LayoutWrapper>
           </ProtectedRoute>
         }
       />
