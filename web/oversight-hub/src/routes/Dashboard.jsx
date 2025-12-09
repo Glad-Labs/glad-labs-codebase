@@ -183,16 +183,66 @@ const Dashboard = () => {
 
     setChatMessages([...chatMessages, newMessage]);
     const userMessage = chatInput;
+    const selectedModel =
+      localStorage.getItem('selectedOllamaModel') || 'llama2';
     setChatInput('');
 
-    // For now, just echo back. Can integrate with actual backend later.
-    const systemReply = {
+    // Show loading indicator
+    const loadingReply = {
       id: chatMessages.length + 2,
       sender: 'system',
-      text: `Received: "${userMessage}". Backend integration coming soon.`,
+      text: '⏳ Thinking...',
     };
+    setChatMessages((prev) => [...prev, loadingReply]);
 
-    setChatMessages((prev) => [...prev, systemReply]);
+    try {
+      // Call the backend chat API
+      const response = await fetch('http://localhost:8000/api/chat', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${localStorage.getItem('token') || ''}`,
+        },
+        body: JSON.stringify({
+          message: userMessage,
+          model: `ollama-${selectedModel}`,
+          conversationId: 'oversight-hub-chat',
+          temperature: 0.7,
+          max_tokens: 500,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`API error: ${response.status} ${response.statusText}`);
+      }
+
+      const data = await response.json();
+
+      // Replace loading message with actual response
+      const systemReply = {
+        id: chatMessages.length + 2,
+        sender: 'system',
+        text: data.response,
+        model: data.model,
+      };
+
+      setChatMessages((prev) =>
+        prev.map((msg) => (msg.id === loadingReply.id ? systemReply : msg))
+      );
+    } catch (error) {
+      console.error('[Chat] Error:', error);
+
+      // Show error message
+      const errorReply = {
+        id: chatMessages.length + 2,
+        sender: 'system',
+        text: `❌ Error: ${error.message}. Make sure backend is running at http://localhost:8000 and Ollama is available.`,
+      };
+
+      setChatMessages((prev) =>
+        prev.map((msg) => (msg.id === loadingReply.id ? errorReply : msg))
+      );
+    }
   };
 
   return (

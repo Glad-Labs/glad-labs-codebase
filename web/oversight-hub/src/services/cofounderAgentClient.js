@@ -513,6 +513,190 @@ export async function getOrchestratorTools() {
   return makeRequest('/api/orchestrator/tools', 'GET');
 }
 
+/**
+ * Chat API Methods
+ * Endpoints for conversation-based AI interactions
+ */
+
+export async function sendChatMessage(message, model = 'openai-gpt4', conversationId = 'default') {
+  /**
+   * Send a chat message and get AI response
+   *
+   * @param {string} message - The user's message/prompt
+   * @param {string} model - The model to use (openai-gpt4, claude-opus, gemini-pro, ollama-mistral, etc.)
+   * @param {string} conversationId - Conversation ID to maintain context (default: 'default')
+   * @returns {Promise<object>} - Response with message and conversation_id
+   */
+  const payload = {
+    message,
+    model,
+    conversation_id: conversationId,
+  };
+  return makeRequest('/api/chat', 'POST', payload, false, null, 60000); // 60s timeout for chat
+}
+
+export async function getChatHistory(conversationId = 'default') {
+  /**
+   * Get conversation history
+   *
+   * @param {string} conversationId - The conversation ID to retrieve
+   * @returns {Promise<object>} - Conversation history with messages
+   */
+  return makeRequest(`/api/chat/history/${conversationId}`, 'GET', null, false, null, 30000);
+}
+
+export async function clearChatHistory(conversationId = 'default') {
+  /**
+   * Clear a conversation's history
+   *
+   * @param {string} conversationId - The conversation to clear
+   * @returns {Promise<object>} - Confirmation response
+   */
+  return makeRequest(`/api/chat/history/${conversationId}`, 'DELETE', null, false, null, 10000);
+}
+
+export async function getAvailableModels() {
+  /**
+   * Get list of available AI models
+   *
+   * @returns {Promise<object>} - List of available models with info
+   */
+  return makeRequest('/api/chat/models', 'GET', null, false, null, 10000);
+}
+
+/**
+ * Agent API Methods
+ * Endpoints for multi-agent orchestration and management
+ */
+
+export async function getAgentStatus(agentId) {
+  /**
+   * Get real-time status of a specific agent
+   *
+   * @param {string} agentId - The agent ID
+   * @returns {Promise<object>} - Agent status info (status, tasks_completed, current_task, etc.)
+   */
+  return makeRequest(`/api/agents/${agentId}/status`, 'GET', null, false, null, 10000);
+}
+
+export async function getAgentLogs(agentId, limit = 100) {
+  /**
+   * Get logs for a specific agent
+   *
+   * @param {string} agentId - The agent ID
+   * @param {number} limit - Maximum number of log entries to retrieve
+   * @returns {Promise<Array>} - Array of log entries
+   */
+  return makeRequest(
+    `/api/agents/${agentId}/logs?limit=${limit}`,
+    'GET',
+    null,
+    false,
+    null,
+    10000
+  );
+}
+
+export async function sendAgentCommand(agentId, command) {
+  /**
+   * Send a command/task to a specific agent
+   *
+   * @param {string} agentId - The agent ID
+   * @param {string} command - The command or task description
+   * @returns {Promise<object>} - Command execution result
+   */
+  const payload = { command };
+  return makeRequest(`/api/agents/${agentId}/command`, 'POST', payload, false, null, 30000);
+}
+
+export async function getAgentMetrics(agentId) {
+  /**
+   * Get performance metrics for a specific agent
+   *
+   * @param {string} agentId - The agent ID
+   * @returns {Promise<object>} - Agent metrics (success rate, avg response time, etc.)
+   */
+  return makeRequest(`/api/agents/${agentId}/metrics`, 'GET', null, false, null, 10000);
+}
+
+/**
+ * Workflow API Methods
+ * Endpoints for workflow execution history and management
+ */
+
+export async function getWorkflowHistory(limit = 50, offset = 0) {
+  /**
+   * Get workflow execution history
+   *
+   * @param {number} limit - Maximum number of executions to retrieve
+   * @param {number} offset - Pagination offset
+   * @returns {Promise<Array|object>} - List of workflow executions
+   */
+  return makeRequest(
+    `/api/workflow/history?limit=${limit}&offset=${offset}`,
+    'GET',
+    null,
+    false,
+    null,
+    15000
+  );
+}
+
+export async function getExecutionDetails(executionId) {
+  /**
+   * Get detailed information about a specific execution
+   *
+   * @param {string} executionId - The execution ID
+   * @returns {Promise<object>} - Detailed execution information
+   */
+  return makeRequest(`/api/workflow/execution/${executionId}`, 'GET', null, false, null, 10000);
+}
+
+export async function retryExecution(executionId) {
+  /**
+   * Retry a failed execution
+   *
+   * @param {string} executionId - The execution ID to retry
+   * @returns {Promise<object>} - New execution result
+   */
+  return makeRequest(`/api/workflow/execution/${executionId}/retry`, 'POST', null, false, null, 30000);
+}
+
+export async function getDetailedMetrics(timeRange = '24h') {
+  /**
+   * Get detailed performance metrics across all workflows and agents
+   *
+   * @param {string} timeRange - Time range for metrics ('1h', '24h', '7d', '30d')
+   * @returns {Promise<object>} - Detailed metrics data
+   */
+  return makeRequest(
+    `/api/metrics/detailed?range=${timeRange}`,
+    'GET',
+    null,
+    false,
+    null,
+    15000
+  );
+}
+
+export async function exportMetrics(format = 'csv', timeRange = '24h') {
+  /**
+   * Export metrics in specified format
+   *
+   * @param {string} format - Export format ('csv', 'json', 'pdf')
+   * @param {string} timeRange - Time range for export
+   * @returns {Promise<Blob>} - Exported data as file
+   */
+  return makeRequest(
+    `/api/metrics/export?format=${format}&range=${timeRange}`,
+    'GET',
+    null,
+    false,
+    null,
+    30000
+  );
+}
+
 const cofounderAgentClient = {
   logout,
   refreshAccessToken,
@@ -550,6 +734,20 @@ const cofounderAgentClient = {
   getOrchestratorApproval,
   approveOrchestratorResult,
   getOrchestratorTools,
+  // Chat
+  sendChatMessage,
+  getChatHistory,
+  clearChatHistory,
+  getAvailableModels,
+  // Agents
+  getAgentStatus,
+  getAgentLogs,
+  sendAgentCommand,
+  getAgentMetrics,
+  // Workflow
+  getWorkflowHistory,
+  getExecutionDetails,
+  retryExecution,
+  getDetailedMetrics,
+  exportMetrics,
 };
-
-export default cofounderAgentClient;

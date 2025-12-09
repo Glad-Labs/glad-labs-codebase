@@ -5,10 +5,17 @@ import TaskList from './components/tasks/TaskList';
 import TaskDetailModal from './components/tasks/TaskDetailModal';
 import TaskManagement from './components/tasks/TaskManagement';
 import CostMetricsDashboard from './components/CostMetricsDashboard';
+import EnhancedMetricsPage from './components/pages/EnhancedMetricsPage';
+import EnhancedContentPipelinePage from './components/pages/EnhancedContentPipelinePage';
+import EnhancedSocialPublishingPage from './components/pages/EnhancedSocialPublishingPage';
+import EnhancedOllamaModelsPage from './components/pages/EnhancedOllamaModelsPage';
 import SocialContentPage from './components/pages/SocialContentPage';
 import ContentManagementPage from './components/pages/ContentManagementPage';
 import AnalyticsPage from './components/pages/AnalyticsPage';
 import ModelsPage from './components/pages/ModelsPage';
+import ChatPage from './components/pages/ChatPage';
+import AgentsPage from './components/pages/AgentsPage';
+import WorkflowHistoryPage from './components/pages/WorkflowHistoryPage';
 import ApprovalQueue from './components/ApprovalQueue';
 import './OversightHub.css';
 
@@ -35,15 +42,27 @@ const OversightHub = () => {
 
   const navigationItems = [
     { label: 'Dashboard', icon: '📊', path: 'dashboard' },
+    { label: 'Chat', icon: '💬', path: 'chat' },
+    { label: 'Agents', icon: '🤖', path: 'agents' },
     { label: 'Tasks', icon: '✅', path: 'tasks' },
     { label: 'Approvals', icon: '📋', path: 'approvals' },
-    { label: 'Models', icon: '🤖', path: 'models' },
+    { label: 'Models', icon: '🧠', path: 'models' },
+    { label: 'Workflow', icon: '📈', path: 'workflow' },
     { label: 'Social', icon: '📱', path: 'social' },
     { label: 'Content', icon: '📝', path: 'content' },
     { label: 'Costs', icon: '💰', path: 'costs' },
-    { label: 'Analytics', icon: '📈', path: 'analytics' },
+    { label: 'Analytics', icon: '📊', path: 'analytics' },
     { label: 'Settings', icon: '⚙️', path: 'settings' },
   ];
+
+  // Debug logging
+  useEffect(() => {
+    console.log(
+      '[OversightHub] navigationItems:',
+      navigationItems.length,
+      navigationItems.map((item) => item.label)
+    );
+  }, []);
 
   // eslint-disable-next-line no-unused-vars
   const models = [
@@ -217,8 +236,15 @@ const OversightHub = () => {
   };
 
   const handleNavigate = (page) => {
+    console.log(
+      '[handleNavigate] Navigating to:',
+      page,
+      ', currentPage was:',
+      currentPage
+    );
     setCurrentPage(page);
     setNavMenuOpen(false); // Close menu after navigation
+    console.log('[handleNavigate] setCurrentPage called for:', page);
   };
 
   const handleOllamaModelChange = (newModel) => {
@@ -570,17 +596,23 @@ const OversightHub = () => {
             </>
           )}
 
+          {currentPage === 'chat' && <ChatPage />}
+
+          {currentPage === 'agents' && <AgentsPage />}
+
           {currentPage === 'tasks' && <TaskManagement />}
 
           {currentPage === 'approvals' && <ApprovalQueue />}
 
-          {currentPage === 'models' && <ModelsPage />}
+          {currentPage === 'models' && <EnhancedOllamaModelsPage />}
 
-          {currentPage === 'social' && <SocialContentPage />}
+          {currentPage === 'workflow' && <WorkflowHistoryPage />}
 
-          {currentPage === 'content' && <ContentManagementPage />}
+          {currentPage === 'social' && <EnhancedSocialPublishingPage />}
 
-          {currentPage === 'costs' && <CostMetricsDashboard />}
+          {currentPage === 'content' && <EnhancedContentPipelinePage />}
+
+          {currentPage === 'costs' && <EnhancedMetricsPage />}
 
           {currentPage === 'analytics' && <AnalyticsPage />}
 
