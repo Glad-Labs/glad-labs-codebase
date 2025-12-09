@@ -191,19 +191,43 @@ export async function getPostsByTag(slug, page = 1, limit = 10) {
 }
 
 /**
- * Get all posts for static generation (Next.js)
- * Used in getStaticPaths for SSG
+ * Get ALL posts (for generating static paths)
+ * Used by [slug].js getStaticPaths for ISR
+ * Note: Fetches in batches since backend max limit is 100
  *
  * @returns {Promise<Array<{slug: string}>>}
  */
 export async function getAllPosts() {
   try {
-    const response = await fetchAPI('/posts?limit=1000&published_only=true');
-    return (
-      response.data.map((post) => ({
-        slug: post.slug,
-      })) || []
-    );
+    const allPosts = [];
+    let skip = 0;
+    const limit = 100; // Backend max limit
+    
+    // Fetch all posts in batches
+    while (true) {
+      const response = await fetchAPI(
+        `/posts?skip=${skip}&limit=${limit}&published_only=true`
+      );
+      
+      if (!response.data || response.data.length === 0) {
+        break; // No more posts
+      }
+      
+      allPosts.push(
+        ...response.data.map((post) => ({
+          slug: post.slug,
+        }))
+      );
+      
+      // Check if we got fewer posts than requested (end of results)
+      if (response.data.length < limit) {
+        break;
+      }
+      
+      skip += limit;
+    }
+    
+    return allPosts;
   } catch (error) {
     console.error('[FastAPI] Error fetching all posts:', error);
     return [];
