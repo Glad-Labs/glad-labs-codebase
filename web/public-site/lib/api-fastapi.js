@@ -91,13 +91,14 @@ export async function getPaginatedPosts(
 }
 
 /**
- * Get featured post for homepage hero
+ * Get featured post (most recent published post)
  *
  * @returns {Promise<Object|null>}
  */
 export async function getFeaturedPost() {
   try {
-    const response = await fetchAPI('/posts?featured=true&limit=1');
+    // Get the most recent post (skip=0, limit=1, published_only=true)
+    const response = await fetchAPI('/posts?skip=0&limit=1&published_only=true');
 
     if (response.data && response.data.length > 0) {
       return response.data[0];
