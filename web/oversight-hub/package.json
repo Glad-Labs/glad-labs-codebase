@@ -42,6 +42,7 @@
     "confusing-browser-globals": "^1.0.11",
     "firebase": "^10.14.1",
     "is-path-inside": "^3.0.3",
+    "lucide-react": "^0.556.0",
     "psl": "^1.15.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",

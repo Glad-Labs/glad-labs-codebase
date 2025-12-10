@@ -4,8 +4,15 @@ import './index.css';
 import App from './App';
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
-root.render(
-  <React.StrictMode>
+
+// Only use StrictMode in production (ironically, to avoid double-render issues in dev that conflict with our auth initialization)
+const root_element =
+  process.env.NODE_ENV === 'production' ? (
+    <React.StrictMode>
+      <App />
+    </React.StrictMode>
+  ) : (
     <App />
-  </React.StrictMode>
-);
+  );
+
+root.render(root_element);

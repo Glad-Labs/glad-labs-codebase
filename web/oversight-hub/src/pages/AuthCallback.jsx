@@ -58,14 +58,18 @@ const AuthCallback = () => {
         try {
           userData = await handleOAuthCallbackNew(provider, code, state);
         } catch (err) {
-          console.warn('New OAuth handler failed, trying legacy handler:', err.message);
+          console.warn(
+            'New OAuth handler failed, trying legacy handler:',
+            err.message
+          );
           // Fallback to legacy handler
           const data = await exchangeCodeForToken(code);
           userData = data.user || data;
         }
 
-        // Update auth context
-        setAuthUser(userData);
+        // Update auth context with user data
+        const userToSet = userData.user || userData;
+        setAuthUser(userToSet);
 
         // Clear CSRF state
         sessionStorage.removeItem('oauth_state');

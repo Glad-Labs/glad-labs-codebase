@@ -39,7 +39,17 @@ export const AuthProvider = ({ children }) => {
         // Initialize dev token for local development if needed
         if (process.env.NODE_ENV === 'development') {
           console.log('[AuthContext] 🔧 Initializing development token...');
-          await initializeDevToken();
+          try {
+            await initializeDevToken();
+            console.log(
+              '[AuthContext] ✅ Development token initialized successfully'
+            );
+          } catch (tokenError) {
+            console.error(
+              '[AuthContext] ❌ Development token initialization failed:',
+              tokenError
+            );
+          }
           // Small delay to ensure localStorage write is complete
           await new Promise((resolve) => setTimeout(resolve, 10));
         }

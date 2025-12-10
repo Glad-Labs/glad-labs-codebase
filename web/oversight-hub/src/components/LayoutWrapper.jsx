@@ -34,19 +34,12 @@ const LayoutWrapper = ({ children }) => {
 
   const navigationItems = [
     { label: 'Dashboard', icon: '📊', path: 'dashboard' },
-    { label: 'Chat', icon: '💬', path: 'chat' },
-    { label: 'Agents', icon: '🤖', path: 'agents' },
     { label: 'Tasks', icon: '✅', path: 'tasks' },
-    { label: 'Approvals', icon: '📋', path: 'approvals' },
-    { label: 'Orchestrator', icon: '🧠', path: 'orchestrator' },
-    { label: 'Command Queue', icon: '🔄', path: 'queue' },
-    { label: 'Training', icon: '📚', path: 'training' },
-    { label: 'Models', icon: '🧠', path: 'models' },
-    { label: 'Workflow', icon: '📈', path: 'workflow' },
-    { label: 'Social', icon: '📱', path: 'social' },
+    { label: 'Execution', icon: '⚙️', path: 'execution' },
     { label: 'Content', icon: '📝', path: 'content' },
-    { label: 'Costs', icon: '💰', path: 'costs' },
-    { label: 'Analytics', icon: '📊', path: 'analytics' },
+    { label: 'Social', icon: '📱', path: 'social' },
+    { label: 'AI & Training', icon: '🧠', path: 'training' },
+    { label: 'Analytics', icon: '📈', path: 'analytics' },
     { label: 'Settings', icon: '⚙️', path: 'settings' },
   ];
 
@@ -133,18 +126,11 @@ const LayoutWrapper = ({ children }) => {
     setNavMenuOpen(false);
     const routeMap = {
       dashboard: '/',
-      chat: '/',
-      agents: '/agents',
       tasks: '/tasks',
-      approvals: '/approvals',
-      orchestrator: '/orchestrator',
-      queue: '/queue',
-      training: '/training',
-      models: '/models',
-      workflow: '/workflow',
-      social: '/social',
+      execution: '/execution',
       content: '/content',
-      costs: '/cost-metrics',
+      social: '/social',
+      training: '/training',
       analytics: '/analytics',
       settings: '/settings',
     };

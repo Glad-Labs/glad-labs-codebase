@@ -42,7 +42,7 @@ function getAuthHeaders() {
   return headers;
 }
 
-async function makeRequest(
+export async function makeRequest(
   endpoint,
   method = 'GET',
   data = null,
@@ -64,9 +64,34 @@ async function makeRequest(
     try {
       const response = await fetch(url, config);
       clearTimeout(timeoutId);
-      console.log(`🟡 makeRequest: Response status: ${response.status} ${response.statusText}`);
+      console.log(
+        `🟡 makeRequest: Response status: ${response.status} ${response.statusText}`
+      );
 
       if (response.status === 401 && !retry) {
+        // Try to refresh token in development
+        if (process.env.NODE_ENV === 'development') {
+          console.log(
+            '🔄 Token expired, attempting to refresh development token...'
+          );
+          try {
+            const { initializeDevToken } = await import('./authService');
+            await initializeDevToken();
+            console.log('✅ Token refreshed, retrying request...');
+            // Retry the request with new token
+            return makeRequest(
+              endpoint,
+              method,
+              data,
+              true,
+              onUnauthorized,
+              timeout
+            );
+          } catch (refreshError) {
+            console.error('❌ Failed to refresh token:', refreshError);
+          }
+        }
+
         // Call the onUnauthorized callback if provided
         if (onUnauthorized) {
           onUnauthorized();

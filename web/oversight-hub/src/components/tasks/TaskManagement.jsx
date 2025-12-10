@@ -21,6 +21,8 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
+  Tabs,
+  Tab,
 } from '@mui/material';
 import { getAuthToken } from '../../services/authService';
 import { AuthContext } from '../../context/AuthContext';
@@ -62,6 +64,7 @@ const TaskManagement = () => {
   const [error, setError] = useState(null);
   const [sortBy, setSortBy] = useState('created_at');
   const [sortDirection, setSortDirection] = useState('desc');
+  const [activeTab, setActiveTab] = useState(0); // 0 = Manual, 1 = Poindexter
 
   /**
    * Fetch full content task from /api/content/tasks endpoint
@@ -280,19 +283,41 @@ const TaskManagement = () => {
   };
 
   /**
-   * Calculate summary statistics
+   * Get tasks filtered by pipeline
+   * Manual Pipeline: User-created tasks (pipeline_type = 'manual' or undefined)
+   * Poindexter Pipeline: AI-created tasks (pipeline_type = 'poindexter')
+   */
+  const getTasksByPipeline = () => {
+    const filteredTasks = getFilteredTasks();
+
+    if (activeTab === 0) {
+      // Manual Pipeline - user-created tasks
+      return filteredTasks.filter(
+        (t) => !t.pipeline_type || t.pipeline_type === 'manual'
+      );
+    } else {
+      // Poindexter Pipeline - AI-created tasks
+      return filteredTasks.filter((t) => t.pipeline_type === 'poindexter');
+    }
+  };
+
+  /**
+   * Calculate summary statistics for current pipeline
    */
   const getTaskStats = () => {
-    if (!tasks) return { total: 0, completed: 0, inProgress: 0, failed: 0 };
+    const pipelineTasks = getTasksByPipeline();
+    if (!pipelineTasks)
+      return { total: 0, completed: 0, inProgress: 0, failed: 0 };
 
     return {
-      total: tasks.length,
-      completed: tasks.filter((t) => t.status === 'completed').length,
-      inProgress: tasks.filter((t) =>
+      total: pipelineTasks.length,
+      completed: pipelineTasks.filter((t) => t.status === 'completed').length,
+      inProgress: pipelineTasks.filter((t) =>
         ['queued', 'in_progress', 'pending_review'].includes(t.status)
       ).length,
-      failed: tasks.filter((t) => ['failed', 'cancelled'].includes(t.status))
-        .length,
+      failed: pipelineTasks.filter((t) =>
+        ['failed', 'cancelled'].includes(t.status)
+      ).length,
     };
   };
 
@@ -384,7 +409,7 @@ const TaskManagement = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [authLoading]);
 
-  const filteredTasks = getFilteredTasks();
+  const filteredTasks = getTasksByPipeline();
 
   if (loading) {
     return (
@@ -406,7 +431,7 @@ const TaskManagement = () => {
         display="flex"
         justifyContent="space-between"
         alignItems="center"
-        mb={4}
+        mb={2}
         sx={{
           borderBottom: '2px solid rgba(0, 212, 255, 0.1)',
           pb: 2,
@@ -424,7 +449,90 @@ const TaskManagement = () => {
           >
             📋 Task Management
           </Typography>
+          <Typography
+            variant="body2"
+            sx={{ color: '#888', fontSize: '0.9rem' }}
+          >
+            Manage manual and AI-generated tasks across your workflow
+          </Typography>
         </Box>
+      </Box>
+
+      {/* Pipeline Tabs */}
+      <Box sx={{ mb: 2, borderBottom: '1px solid rgba(0, 212, 255, 0.2)' }}>
+        <Tabs
+          value={activeTab}
+          onChange={(e, newValue) => setActiveTab(newValue)}
+          sx={{
+            '& .MuiTabs-indicator': {
+              backgroundColor: '#00d4ff',
+              height: 3,
+            },
+          }}
+        >
+          <Tab
+            label={
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                👤 Manual Pipeline
+                <Chip
+                  label={
+                    tasks.filter(
+                      (t) => !t.pipeline_type || t.pipeline_type === 'manual'
+                    ).length
+                  }
+                  size="small"
+                  sx={{
+                    backgroundColor:
+                      activeTab === 0
+                        ? 'rgba(0, 212, 255, 0.3)'
+                        : 'rgba(255, 255, 255, 0.1)',
+                    color: activeTab === 0 ? '#00d4ff' : '#888',
+                    height: 20,
+                    minWidth: 30,
+                    fontSize: '0.75rem',
+                  }}
+                />
+              </Box>
+            }
+            sx={{
+              textTransform: 'none',
+              color: activeTab === 0 ? '#00d4ff' : '#888',
+              fontWeight: activeTab === 0 ? 700 : 600,
+              fontSize: '1rem',
+              '&:hover': { color: '#00d4ff' },
+            }}
+          />
+          <Tab
+            label={
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                🤖 Poindexter Pipeline
+                <Chip
+                  label={
+                    tasks.filter((t) => t.pipeline_type === 'poindexter').length
+                  }
+                  size="small"
+                  sx={{
+                    backgroundColor:
+                      activeTab === 1
+                        ? 'rgba(0, 212, 255, 0.3)'
+                        : 'rgba(255, 255, 255, 0.1)',
+                    color: activeTab === 1 ? '#00d4ff' : '#888',
+                    height: 20,
+                    minWidth: 30,
+                    fontSize: '0.75rem',
+                  }}
+                />
+              </Box>
+            }
+            sx={{
+              textTransform: 'none',
+              color: activeTab === 1 ? '#00d4ff' : '#888',
+              fontWeight: activeTab === 1 ? 700 : 600,
+              fontSize: '1rem',
+              '&:hover': { color: '#00d4ff' },
+            }}
+          />
+        </Tabs>
       </Box>
 
       {/* Error Alert */}
@@ -927,9 +1035,25 @@ const TaskManagement = () => {
                     />
                   </TableCell>
                   <TableCell>
-                    <Typography variant="body2" fontWeight="medium">
-                      {task.title}
-                    </Typography>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                      <Typography variant="body2" fontWeight="medium">
+                        {task.title}
+                      </Typography>
+                      {task.pipeline_type === 'poindexter' && (
+                        <Tooltip title="AI-generated task (Poindexter)">
+                          <Chip
+                            label="🤖 AI"
+                            size="small"
+                            sx={{
+                              backgroundColor: 'rgba(0, 212, 255, 0.2)',
+                              color: '#00d4ff',
+                              height: 20,
+                              fontSize: '0.75rem',
+                            }}
+                          />
+                        </Tooltip>
+                      )}
+                    </Box>
                     <Typography variant="caption" color="text.secondary">
                       {task.description}
                     </Typography>
