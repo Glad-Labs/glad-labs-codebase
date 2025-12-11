@@ -9,8 +9,8 @@
  */
 
 // Development secret - MUST MATCH backend JWT_SECRET environment variable
-// This is read from .env.local as JWT_SECRET=dev-secret-change-in-production
-const DEV_JWT_SECRET = 'dev-secret-change-in-production';
+// This is read from .env.local as JWT_SECRET=dev-jwt-secret-change-in-production-to-random-64-chars
+const DEV_JWT_SECRET = 'dev-jwt-secret-change-in-production-to-random-64-chars';
 
 /**
  * Create a mock JWT token that matches backend expectations
