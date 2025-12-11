@@ -555,111 +555,101 @@ const TaskManagement = () => {
         </Alert>
       )}
 
-      )}
-
       {/* Summary Stats - Compact */}
-      <Grid container spacing={1} sx={{ mb: 1.5 }}>
-        <Grid item xs={12} sm={6} md={3}>
-          <Box
-            sx={{
-              backgroundColor: 'rgba(0, 212, 255, 0.1)',
-              border: '1px solid rgba(0, 212, 255, 0.3)',
-              borderRadius: 1,
-              p: 1,
-              textAlign: 'center',
-              backdropFilter: 'blur(10px)',
-            }}
+      <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr', md: '1fr 1fr 1fr 1fr' }, gap: 1, mb: 1.5 }}>
+        <Box
+          sx={{
+            backgroundColor: 'rgba(0, 212, 255, 0.1)',
+            border: '1px solid rgba(0, 212, 255, 0.3)',
+            borderRadius: 1,
+            p: 1,
+            textAlign: 'center',
+            backdropFilter: 'blur(10px)',
+          }}
+        >
+          <Typography
+            variant="body2"
+            sx={{ color: '#00d4ff', fontWeight: 700 }}
           >
-            <Typography
-              variant="body2"
-              sx={{ color: '#00d4ff', fontWeight: 700 }}
-            >
-              {getTaskStats().total}
-            </Typography>
-            <Typography
-              variant="caption"
-              sx={{ color: '#888', fontSize: '0.7rem' }}
-            >
-              Total Tasks
-            </Typography>
-          </Box>
-        </Grid>
-        <Grid item xs={12} sm={6} md={3}>
-          <Box
-            sx={{
-              backgroundColor: 'rgba(76, 175, 80, 0.1)',
-              border: '1px solid rgba(76, 175, 80, 0.3)',
-              borderRadius: 1,
-              p: 1,
-              textAlign: 'center',
-              backdropFilter: 'blur(10px)',
-            }}
+            {getTaskStats().total}
+          </Typography>
+          <Typography
+            variant="caption"
+            sx={{ color: '#888', fontSize: '0.7rem' }}
           >
-            <Typography
-              variant="body2"
-              sx={{ color: '#4CAF50', fontWeight: 700 }}
-            >
-              {getTaskStats().completed}
-            </Typography>
-            <Typography
-              variant="caption"
-              sx={{ color: '#888', fontSize: '0.7rem' }}
-            >
-              Completed
-            </Typography>
-          </Box>
-        </Grid>
-        <Grid item xs={12} sm={6} md={3}>
-          <Box
-            sx={{
-              backgroundColor: 'rgba(33, 150, 243, 0.1)',
-              border: '1px solid rgba(33, 150, 243, 0.3)',
-              borderRadius: 1,
-              p: 1,
-              textAlign: 'center',
-              backdropFilter: 'blur(10px)',
-            }}
+            Total Tasks
+          </Typography>
+        </Box>
+        <Box
+          sx={{
+            backgroundColor: 'rgba(76, 175, 80, 0.1)',
+            border: '1px solid rgba(76, 175, 80, 0.3)',
+            borderRadius: 1,
+            p: 1,
+            textAlign: 'center',
+            backdropFilter: 'blur(10px)',
+          }}
+        >
+          <Typography
+            variant="body2"
+            sx={{ color: '#4CAF50', fontWeight: 700 }}
           >
-            <Typography
-              variant="body2"
-              sx={{ color: '#2196F3', fontWeight: 700 }}
-            >
-              {getTaskStats().inProgress}
-            </Typography>
-            <Typography
-              variant="caption"
-              sx={{ color: '#888', fontSize: '0.7rem' }}
-            >
-              In Progress
-            </Typography>
-          </Box>
-        </Grid>
-        <Grid item xs={12} sm={6} md={3}>
-          <Box
-            sx={{
-              backgroundColor: 'rgba(244, 67, 54, 0.1)',
-              border: '1px solid rgba(244, 67, 54, 0.3)',
-              borderRadius: 1,
-              p: 1,
-              textAlign: 'center',
-              backdropFilter: 'blur(10px)',
-            }}
+            {getTaskStats().completed}
+          </Typography>
+          <Typography
+            variant="caption"
+            sx={{ color: '#888', fontSize: '0.7rem' }}
           >
-            <Typography
-              variant="body2"
-              sx={{ color: '#F44336', fontWeight: 700 }}
-            >
-              {getTaskStats().failed}
-            </Typography>
-            <Typography
-              variant="caption"
-              sx={{ color: '#888', fontSize: '0.7rem' }}
-            >
-              Failed
-            </Typography>
-          </Box>
-        </Grid>
-      </Grid>
+            Completed
+          </Typography>
+        </Box>
+        <Box
+          sx={{
+            backgroundColor: 'rgba(33, 150, 243, 0.1)',
+            border: '1px solid rgba(33, 150, 243, 0.3)',
+            borderRadius: 1,
+            p: 1,
+            textAlign: 'center',
+            backdropFilter: 'blur(10px)',
+          }}
+        >
+          <Typography
+            variant="body2"
+            sx={{ color: '#2196F3', fontWeight: 700 }}
+          >
+            {getTaskStats().inProgress}
+          </Typography>
+          <Typography
+            variant="caption"
+            sx={{ color: '#888', fontSize: '0.7rem' }}
+          >
+            In Progress
+          </Typography>
+        </Box>
+        <Box
+          sx={{
+            backgroundColor: 'rgba(244, 67, 54, 0.1)',
+            border: '1px solid rgba(244, 67, 54, 0.3)',
+            borderRadius: 1,
+            p: 1,
+            textAlign: 'center',
+            backdropFilter: 'blur(10px)',
+          }}
+        >
+          <Typography
+            variant="body2"
+            sx={{ color: '#F44336', fontWeight: 700 }}
+          >
+            {getTaskStats().failed}
+          </Typography>
+          <Typography
+            variant="caption"
+            sx={{ color: '#888', fontSize: '0.7rem' }}
+          >
+            Failed
+          </Typography>
+        </Box>
+      </Box>
 
       {/* Create Task and Refresh Buttons - Positioned above table */}
       <Box
