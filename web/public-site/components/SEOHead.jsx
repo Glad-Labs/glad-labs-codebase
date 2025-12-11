@@ -142,15 +142,6 @@ export default function SEOHead({
       {/* PWA Manifest - Enables offline accessibility and installability */}
       <link rel="manifest" href="/manifest.json" />
 
-      {/* Preload critical fonts for better performance (WCAG 2.1 Enhancement) */}
-      <link
-        rel="preload"
-        href="/fonts/inter-var.woff2"
-        as="font"
-        type="font/woff2"
-        crossOrigin="anonymous"
-      />
-
       {/* Preconnect and DNS Prefetch for external resources - Improves load time accessibility */}
       {/* eslint-disable-next-line @next/next/google-font-preconnect */}
       <link rel="preconnect" href="https://fonts.googleapis.com" />
