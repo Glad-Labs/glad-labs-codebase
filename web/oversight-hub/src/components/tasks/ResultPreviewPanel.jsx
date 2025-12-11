@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import ReactMarkdown from 'react-markdown';
 import { getAuthToken } from '../../services/authService';
+import ErrorDetailPanel from './ErrorDetailPanel';
 
 const ResultPreviewPanel = ({
   task = null,
@@ -158,18 +159,29 @@ const ResultPreviewPanel = ({
 
   if (task.status === 'failed') {
     return (
-      <div className="h-full flex flex-col items-center justify-center p-6 bg-gray-900 rounded-lg border border-red-500/30">
-        <div className="text-4xl mb-4">❌</div>
-        <div className="text-lg font-semibold text-red-400">Task Failed</div>
-        <div className="text-sm mt-4 text-red-300 text-center max-w-sm">
-          {task.error_message || 'An error occurred while processing this task'}
+      <div className="h-full flex flex-col bg-gray-900 rounded-lg border border-red-500/30 overflow-hidden">
+        {/* Header */}
+        <div className="border-b border-red-500/30 p-4 bg-gray-800">
+          <h3 className="text-lg font-bold text-red-400">✗ Task Failed</h3>
+          <p className="text-xs text-red-300 mt-1">
+            Review error details below
+          </p>
         </div>
-        <button
-          onClick={() => onReject(task)}
-          className="mt-6 px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded font-medium transition"
-        >
-          ✕ Discard
-        </button>
+
+        {/* Error Details */}
+        <div className="flex-1 overflow-y-auto p-6">
+          <ErrorDetailPanel task={task} />
+        </div>
+
+        {/* Action Buttons */}
+        <div className="border-t border-red-500/30 bg-gray-800 p-4 flex gap-3 justify-end">
+          <button
+            onClick={() => onReject(task)}
+            className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded font-medium transition"
+          >
+            ✕ Discard
+          </button>
+        </div>
       </div>
     );
   }

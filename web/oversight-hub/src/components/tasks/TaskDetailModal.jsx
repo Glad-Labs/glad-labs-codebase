@@ -1,5 +1,6 @@
 import React from 'react';
 import useStore from '../../store/useStore';
+import ErrorDetailPanel from './ErrorDetailPanel';
 
 const renderStatus = (status) => (
   <span
@@ -52,7 +53,14 @@ const TaskDetailModal = ({ onClose }) => {
               </a>
             </p>
           )}
-          {selectedTask.error && <ErrorMessage message={selectedTask.error} />}
+          {selectedTask.status === 'failed' && (
+            <div className="mt-4">
+              <ErrorDetailPanel task={selectedTask} />
+            </div>
+          )}
+          {selectedTask.error && !['failed'].includes(selectedTask.status) && (
+            <ErrorMessage message={selectedTask.error} />
+          )}
         </div>
       </div>
     </div>
