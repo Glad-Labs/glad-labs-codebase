@@ -172,7 +172,7 @@ function TaskManagement() {
                   onClick={() => handleSort('task_name')}
                   className={`sortable ${sortBy === 'task_name' ? 'active-sort' : ''}`}
                 >
-                  Task Name{' '}
+                  Task{' '}
                   {sortBy === 'task_name' &&
                     (sortDirection === 'asc' ? '↑' : '↓')}
                 </th>
@@ -180,7 +180,7 @@ function TaskManagement() {
                   onClick={() => handleSort('topic')}
                   className={`sortable ${sortBy === 'topic' ? 'active-sort' : ''}`}
                 >
-                  Topic{' '}
+                  Agent{' '}
                   {sortBy === 'topic' && (sortDirection === 'asc' ? '↑' : '↓')}
                 </th>
                 <th
@@ -190,14 +190,7 @@ function TaskManagement() {
                   Status{' '}
                   {sortBy === 'status' && (sortDirection === 'asc' ? '↑' : '↓')}
                 </th>
-                <th
-                  onClick={() => handleSort('category')}
-                  className={`sortable ${sortBy === 'category' ? 'active-sort' : ''}`}
-                >
-                  Category{' '}
-                  {sortBy === 'category' &&
-                    (sortDirection === 'asc' ? '↑' : '↓')}
-                </th>
+                <th>Priority</th>
                 <th
                   onClick={() => handleSort('created_at')}
                   className={`sortable ${sortBy === 'created_at' ? 'active-sort' : ''}`}
@@ -206,7 +199,6 @@ function TaskManagement() {
                   {sortBy === 'created_at' &&
                     (sortDirection === 'asc' ? '↑' : '↓')}
                 </th>
-                <th>Quality Score</th>
                 <th>Actions</th>
               </tr>
             </thead>
@@ -216,8 +208,23 @@ function TaskManagement() {
                   key={task.id}
                   className={`status-${task.status?.toLowerCase()}`}
                 >
-                  <td className="task-name">{task.task_name || 'Untitled'}</td>
-                  <td className="task-topic">{task.topic || '-'}</td>
+                  <td className="task-name">
+                    {task.task_name || task.topic || 'Untitled'}
+                  </td>
+                  <td className="agent">
+                    <span className="agent-badge">
+                      {task.agent_id
+                        ? task.agent_id
+                            .replace(/-/g, ' ')
+                            .split(' ')
+                            .map(
+                              (word) =>
+                                word.charAt(0).toUpperCase() + word.slice(1)
+                            )
+                            .join(' ')
+                        : 'Content Generator'}
+                    </span>
+                  </td>
                   <td>
                     <span
                       className={`status-badge status-${task.status?.toLowerCase()}`}
@@ -228,24 +235,28 @@ function TaskManagement() {
                         : 'Unknown'}
                     </span>
                   </td>
-                  <td>{task.category || '-'}</td>
+                  <td className="priority">
+                    <span className="priority-badge priority-normal">
+                      Normal
+                    </span>
+                  </td>
                   <td className="task-date">
                     {task.created_at
-                      ? new Date(task.created_at).toLocaleDateString()
+                      ? new Date(task.created_at).toLocaleDateString('en-US', {
+                          month: '2-digit',
+                          day: '2-digit',
+                          year: 'numeric',
+                          hour: '2-digit',
+                          minute: '2-digit',
+                        })
                       : '-'}
                   </td>
                   <td>
-                    {task.result?.quality_score ? (
-                      <span className="quality-score">
-                        {task.result.quality_score}/100
-                      </span>
-                    ) : (
-                      '-'
-                    )}
-                  </td>
-                  <td>
                     <button className="action-btn" title="View Details">
-                      �️
+                      ✏️
+                    </button>
+                    <button className="action-btn delete" title="Delete">
+                      🗑️
                     </button>
                   </td>
                 </tr>

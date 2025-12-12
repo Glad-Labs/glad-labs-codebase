@@ -55,6 +55,7 @@ const TaskManagement = () => {
   const authLoading = authContext?.loading || false;
 
   const [loading, setLoading] = useState(true);
+  const [isFetching, setIsFetching] = useState(false);
   const [tasks, setTasks] = useState([]);
   const [selectedTasks, setSelectedTasks] = useState([]);
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -142,8 +143,15 @@ const TaskManagement = () => {
    * Supports filtering by task_type (blog_post, social_media, email, newsletter)
    */
   const fetchTasks = async () => {
+    // Guard: prevent concurrent requests
+    if (isFetching) {
+      console.log('⏳ TaskManagement: Request already in flight, skipping...');
+      return;
+    }
+
     try {
       setError(null);
+      setIsFetching(true);
       const token = getAuthToken();
       const headers = { 'Content-Type': 'application/json' };
       if (token) {
@@ -151,11 +159,12 @@ const TaskManagement = () => {
       }
 
       // ✅ FIXED: Use /api/tasks endpoint which returns {"tasks": [...], "total": ..., "offset": ..., "limit": ...}
+      // Increased timeout from 5s to 15s to account for backend processing
       const response = await fetch(
         'http://localhost:8000/api/tasks?limit=100&offset=0',
         {
           headers,
-          signal: AbortSignal.timeout(5000),
+          signal: AbortSignal.timeout(15000),
         }
       );
 
@@ -189,6 +198,7 @@ const TaskManagement = () => {
       console.error('Failed to fetch tasks:', error);
     } finally {
       setLoading(false);
+      setIsFetching(false);
     }
   };
 
