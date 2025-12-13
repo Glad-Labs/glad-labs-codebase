@@ -24,6 +24,7 @@ import {
   Tab,
 } from '@mui/material';
 import { getAuthToken } from '../../services/authService';
+import { bulkUpdateTasks } from '../../services/cofounderAgentClient';
 import { AuthContext } from '../../context/AuthContext';
 import {
   Add as AddIcon,
@@ -248,28 +249,20 @@ const TaskManagement = () => {
 
     try {
       setError(null);
-      const token = getAuthToken();
-      const headers = { 'Content-Type': 'application/json' };
-      if (token) {
-        headers['Authorization'] = `Bearer ${token}`;
+
+      // ✅ Use API client instead of hardcoded fetch
+      const result = await bulkUpdateTasks(selectedTasks, action);
+
+      // ✅ Validate response
+      if (!result) {
+        throw new Error('Invalid response from bulk update');
       }
 
-      const response = await fetch('http://localhost:8000/api/tasks/bulk', {
-        method: 'POST',
-        headers,
-        body: JSON.stringify({
-          task_ids: selectedTasks,
-          action: action,
-        }),
-      });
+      console.log(`✅ Bulk ${action} completed:`, result);
+      setSelectedTasks([]);
 
-      if (response.ok) {
-        setSelectedTasks([]);
-        fetchTasks();
-      } else {
-        setError(`Bulk action failed: ${response.statusText}`);
-        console.error('Bulk action failed:', response.statusText);
-      }
+      // ✅ Refresh task list to show updated statuses
+      fetchTasks();
     } catch (error) {
       const errorMessage =
         error instanceof Error ? error.message : 'Unknown error';
@@ -565,7 +558,18 @@ const TaskManagement = () => {
       )}
 
       {/* Summary Stats - Compact */}
-      <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr', md: '1fr 1fr 1fr 1fr' }, gap: 1, mb: 1.5 }}>
+      <Box
+        sx={{
+          display: 'grid',
+          gridTemplateColumns: {
+            xs: '1fr',
+            sm: '1fr 1fr',
+            md: '1fr 1fr 1fr 1fr',
+          },
+          gap: 1,
+          mb: 1.5,
+        }}
+      >
         <Box
           sx={{
             backgroundColor: 'rgba(0, 212, 255, 0.1)',

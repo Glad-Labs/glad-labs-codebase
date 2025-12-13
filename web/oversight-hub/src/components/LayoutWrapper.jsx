@@ -140,10 +140,11 @@ const LayoutWrapper = ({ children }) => {
   const handleSendMessage = async () => {
     if (!chatInput.trim()) return;
 
+    const userMessage = chatInput; // Store before clearing
     const newMessage = {
       id: chatMessages.length + 1,
       sender: 'user',
-      text: chatInput,
+      text: userMessage,
     };
 
     setChatMessages([...chatMessages, newMessage]);
@@ -151,29 +152,28 @@ const LayoutWrapper = ({ children }) => {
     setIsLoading(true);
 
     try {
-      const response = await fetch('http://localhost:8000/api/chat', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          message: chatInput,
-          model: selectedModel,
-          mode: chatMode,
-          agent: selectedAgent,
-        }),
-      });
+      // ✅ Use API client instead of hardcoded fetch
+      const response = await cofounderAgentClient.sendChatMessage(
+        userMessage,
+        selectedModel,
+        selectedAgent || 'default'
+      );
 
-      if (response.ok) {
-        const data = await response.json();
-        setChatMessages((prev) => [
-          ...prev,
-          {
-            id: prev.length + 1,
-            sender: 'ai',
-            text: data.response,
-            timestamp: new Date(),
-          },
-        ]);
+      // ✅ Validate response
+      if (!response || !response.response) {
+        throw new Error('Invalid response: missing response field');
       }
+
+      setChatMessages((prev) => [
+        ...prev,
+        {
+          id: prev.length + 1,
+          sender: 'ai',
+          text: response.response,
+          model: response.model,
+          timestamp: new Date().toISOString(),
+        },
+      ]);
     } catch (error) {
       setChatMessages((prev) => [
         ...prev,

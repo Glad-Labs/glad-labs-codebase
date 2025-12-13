@@ -18,6 +18,7 @@ import {
   CheckCircle as CheckCircleIcon,
   Error as ErrorIcon,
 } from '@mui/icons-material';
+import { getCostMetrics } from '../services/cofounderAgentClient';
 
 /**
  * Cost Metrics Dashboard Component
@@ -42,14 +43,18 @@ const CostMetricsDashboard = () => {
       setLoading(true);
       setError(null);
 
-      const response = await fetch('http://localhost:8000/api/metrics/costs');
+      // ✅ Use API client instead of hardcoded fetch
+      const data = await getCostMetrics();
 
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+      // ✅ Validate response
+      if (!data) {
+        throw new Error('Invalid response: no metrics data');
       }
 
-      const data = await response.json();
-      setMetrics(data.costs);
+      // ✅ Handle response structure - endpoint returns different format
+      // If data has 'costs' field, use that; otherwise use data directly
+      const metricsData = data.costs || data;
+      setMetrics(metricsData);
       setLastUpdated(new Date());
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to fetch metrics');

@@ -11,6 +11,11 @@
  */
 
 import React, { useState, useEffect } from 'react';
+import {
+  getActiveAgents,
+  getTaskQueue,
+  getOrchestratorOverallStatus,
+} from '../../services/cofounderAgentClient';
 import './ExecutionHub.css';
 
 const ExecutionHub = () => {
@@ -26,35 +31,36 @@ const ExecutionHub = () => {
     const fetchExecutionData = async () => {
       try {
         setLoading(true);
-        const token = localStorage.getItem('access_token');
 
-        // Parallel fetch: active agents, command queue, history
-        const [activeRes, queueRes, historyRes] = await Promise.all([
-          fetch('http://localhost:8000/api/execution/active', {
-            headers: { Authorization: `Bearer ${token}` },
-          }),
-          fetch('http://localhost:8000/api/execution/queue', {
-            headers: { Authorization: `Bearer ${token}` },
-          }),
-          fetch('http://localhost:8000/api/execution/history', {
-            headers: { Authorization: `Bearer ${token}` },
-          }),
-        ]);
+        // ✅ Use API client methods instead of hardcoded fetch
+        // Parallel fetch: active agents, task queue, orchestrator status
+        const [activeAgents, taskQueue, orchestratorStatus] = await Promise.all(
+          [
+            getActiveAgents().catch(() => null),
+            getTaskQueue().catch(() => null),
+            getOrchestratorOverallStatus().catch(() => null),
+          ]
+        );
 
-        if (!activeRes.ok || !queueRes.ok || !historyRes.ok) {
-          throw new Error('Failed to fetch execution data');
+        // ✅ Validate responses
+        if (!activeAgents && !taskQueue && !orchestratorStatus) {
+          throw new Error(
+            'Failed to fetch execution data from orchestrator endpoints'
+          );
         }
 
-        const [activeData, queueData, historyData] = await Promise.all([
-          activeRes.json(),
-          queueRes.json(),
-          historyRes.json(),
-        ]);
-
         setExecutionData({
-          active: activeData,
-          queue: queueData,
-          history: historyData,
+          active: {
+            agents: activeAgents?.agents || activeAgents || [],
+            status: orchestratorStatus?.status || 'unknown',
+          },
+          queue: {
+            tasks: taskQueue?.tasks || taskQueue || [],
+          },
+          history: {
+            // TODO: Add workflow history endpoint if available
+            executions: [],
+          },
         });
         setError(null);
       } catch (err) {
@@ -268,7 +274,9 @@ const ExecutionHub = () => {
           className={`tab ${activeTab === 'active' ? 'active' : ''}`}
           onClick={() => setActiveTab('active')}
         >
-          🤖 Active Execution {active.agents && `(${active.agents.filter(a => a.status === 'running').length})`}
+          🤖 Active Execution{' '}
+          {active.agents &&
+            `(${active.agents.filter((a) => a.status === 'running').length})`}
         </button>
         <button
           className={`tab ${activeTab === 'queue' ? 'active' : ''}`}
@@ -300,7 +308,11 @@ const ExecutionHub = () => {
                       <div
                         key={agent.id}
                         className="agent-card"
-                        onClick={() => setExpandedAgent(expandedAgent === agent.id ? null : agent.id)}
+                        onClick={() =>
+                          setExpandedAgent(
+                            expandedAgent === agent.id ? null : agent.id
+                          )
+                        }
                       >
                         <div className="agent-header">
                           <div className="agent-name">{agent.name}</div>
@@ -323,11 +335,15 @@ const ExecutionHub = () => {
                                 className="progress-fill"
                                 style={{
                                   width: `${agent.progress}%`,
-                                  backgroundColor: getProgressColor(agent.progress),
+                                  backgroundColor: getProgressColor(
+                                    agent.progress
+                                  ),
                                 }}
                               />
                             </div>
-                            <div className="progress-text">{agent.progress}%</div>
+                            <div className="progress-text">
+                              {agent.progress}%
+                            </div>
                           </div>
                         )}
 
@@ -352,8 +368,14 @@ const ExecutionHub = () => {
                         {/* Time Info */}
                         {agent.status === 'running' && (
                           <div className="time-info">
-                            <div>Elapsed: {formatDuration(agent.startTime, new Date())}</div>
-                            <div>Est. Remaining: {formatDuration(new Date(), agent.estimatedEnd)}</div>
+                            <div>
+                              Elapsed:{' '}
+                              {formatDuration(agent.startTime, new Date())}
+                            </div>
+                            <div>
+                              Est. Remaining:{' '}
+                              {formatDuration(new Date(), agent.estimatedEnd)}
+                            </div>
                           </div>
                         )}
 
@@ -365,11 +387,15 @@ const ExecutionHub = () => {
                               <span>Agent ID:</span> {agent.id}
                             </div>
                             <div className="detail-item">
-                              <span>Start Time:</span> {new Date(agent.startTime).toLocaleTimeString()}
+                              <span>Start Time:</span>{' '}
+                              {new Date(agent.startTime).toLocaleTimeString()}
                             </div>
                             {agent.estimatedEnd && (
                               <div className="detail-item">
-                                <span>Est. End:</span> {new Date(agent.estimatedEnd).toLocaleTimeString()}
+                                <span>Est. End:</span>{' '}
+                                {new Date(
+                                  agent.estimatedEnd
+                                ).toLocaleTimeString()}
                               </div>
                             )}
                           </div>
@@ -387,19 +413,27 @@ const ExecutionHub = () => {
                 <div className="metrics-grid">
                   <div className="metric-card">
                     <div className="metric-label">Tasks Running</div>
-                    <div className="metric-value">{active.systemMetrics.tasksRunning}</div>
+                    <div className="metric-value">
+                      {active.systemMetrics.tasksRunning}
+                    </div>
                   </div>
                   <div className="metric-card">
                     <div className="metric-label">Tasks Queued</div>
-                    <div className="metric-value">{active.systemMetrics.tasksQueued}</div>
+                    <div className="metric-value">
+                      {active.systemMetrics.tasksQueued}
+                    </div>
                   </div>
                   <div className="metric-card">
                     <div className="metric-label">Avg Response Time</div>
-                    <div className="metric-value">{active.systemMetrics.avgResponseTime}</div>
+                    <div className="metric-value">
+                      {active.systemMetrics.avgResponseTime}
+                    </div>
                   </div>
                   <div className="metric-card">
                     <div className="metric-label">Success Rate</div>
-                    <div className="metric-value">{active.systemMetrics.successRate}%</div>
+                    <div className="metric-value">
+                      {active.systemMetrics.successRate}%
+                    </div>
                   </div>
                   <div className="metric-card">
                     <div className="metric-label">Tokens Used Today</div>
@@ -410,7 +444,9 @@ const ExecutionHub = () => {
                   </div>
                   <div className="metric-card">
                     <div className="metric-label">Est. Cost/Day</div>
-                    <div className="metric-value">${active.systemMetrics.estimatedCostPerDay}</div>
+                    <div className="metric-value">
+                      ${active.systemMetrics.estimatedCostPerDay}
+                    </div>
                   </div>
                 </div>
               </div>
@@ -431,13 +467,18 @@ const ExecutionHub = () => {
                       <div
                         key={cmd.id}
                         className="command-item"
-                        onClick={() => setExpandedCommand(expandedCommand === cmd.id ? null : cmd.id)}
+                        onClick={() =>
+                          setExpandedCommand(
+                            expandedCommand === cmd.id ? null : cmd.id
+                          )
+                        }
                       >
                         <div className="command-header">
                           <div className="command-info">
                             <div className="command-title">{cmd.command}</div>
                             <div className="command-meta">
-                              Submitted: {new Date(cmd.submittedAt).toLocaleString()}
+                              Submitted:{' '}
+                              {new Date(cmd.submittedAt).toLocaleString()}
                             </div>
                           </div>
                           <div
@@ -473,7 +514,9 @@ const ExecutionHub = () => {
                               const stepBadge = getStatusBadge(step.status);
                               return (
                                 <div key={step.step} className="breakdown-step">
-                                  <div className="step-number">Step {step.step}</div>
+                                  <div className="step-number">
+                                    Step {step.step}
+                                  </div>
                                   <div className="step-task">{step.task}</div>
                                   <div
                                     className="step-status"
@@ -507,19 +550,27 @@ const ExecutionHub = () => {
                 <div className="metrics-grid">
                   <div className="metric-card">
                     <div className="metric-label">Total Completed</div>
-                    <div className="metric-value">{history.stats.totalCompleted}</div>
+                    <div className="metric-value">
+                      {history.stats.totalCompleted}
+                    </div>
                   </div>
                   <div className="metric-card">
                     <div className="metric-label">Success Rate</div>
-                    <div className="metric-value">{history.stats.successRate}%</div>
+                    <div className="metric-value">
+                      {history.stats.successRate}%
+                    </div>
                   </div>
                   <div className="metric-card">
                     <div className="metric-label">Avg Duration</div>
-                    <div className="metric-value">{history.stats.avgDuration}</div>
+                    <div className="metric-value">
+                      {history.stats.avgDuration}
+                    </div>
                   </div>
                   <div className="metric-card">
                     <div className="metric-label">Tokens Used</div>
-                    <div className="metric-value">{history.stats.totalTokensUsed.toLocaleString()}</div>
+                    <div className="metric-value">
+                      {history.stats.totalTokensUsed.toLocaleString()}
+                    </div>
                   </div>
                 </div>
               </div>
@@ -534,16 +585,22 @@ const ExecutionHub = () => {
                     const badge = getStatusBadge(item.status);
                     return (
                       <div key={item.id} className="history-item">
-                        <div className="history-status" style={{ backgroundColor: badge.bg }}>
+                        <div
+                          className="history-status"
+                          style={{ backgroundColor: badge.bg }}
+                        >
                           {badge.text}
                         </div>
                         <div className="history-info">
                           <div className="history-name">{item.name}</div>
                           <div className="history-meta">
-                            {item.type} • {item.duration} • {new Date(item.completedAt).toLocaleString()}
+                            {item.type} • {item.duration} •{' '}
+                            {new Date(item.completedAt).toLocaleString()}
                           </div>
                           {item.error && (
-                            <div className="history-error">Error: {item.error}</div>
+                            <div className="history-error">
+                              Error: {item.error}
+                            </div>
                           )}
                         </div>
                       </div>

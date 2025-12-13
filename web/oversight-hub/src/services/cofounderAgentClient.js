@@ -722,6 +722,97 @@ export async function exportMetrics(format = 'csv', timeRange = '24h') {
   );
 }
 
+/**
+ * Cost Metrics - Get cost breakdown and usage statistics
+ */
+
+export async function getCostMetrics() {
+  /**
+   * Get AI model usage and cost metrics
+   *
+   * @returns {Promise<object>} - Cost breakdown by model and provider, token usage
+   */
+  return makeRequest('/api/metrics/costs', 'GET', null, true, null, 15000);
+}
+
+export async function getUsageMetrics(period = 'last_24h') {
+  /**
+   * Get comprehensive usage metrics
+   *
+   * @param {string} period - Time period: last_1h, last_24h, last_7d, all
+   * @returns {Promise<object>} - Usage stats, token counts, cost analysis
+   */
+  return makeRequest(`/api/metrics/usage?period=${period}`, 'GET', null, true, null, 15000);
+}
+
+/**
+ * Bulk Task Operations - Perform actions on multiple tasks at once
+ */
+
+export async function bulkUpdateTasks(taskIds, action) {
+  /**
+   * Perform bulk operations on multiple tasks
+   *
+   * @param {Array<string>} taskIds - List of task IDs to update
+   * @param {string} action - Action to perform: pause, resume, cancel, delete
+   * @returns {Promise<object>} - Result with updated count, failed count, errors
+   */
+  const payload = {
+    task_ids: taskIds,
+    action,
+  };
+  return makeRequest('/api/tasks/bulk', 'POST', payload, true, null, 30000);
+}
+
+/**
+ * Orchestrator Routes - Get orchestration status and analytics
+ */
+
+export async function getOrchestratorOverallStatus() {
+  /**
+   * Get overall orchestrator status
+   *
+   * @returns {Promise<object>} - Status of orchestrator, active agents, pending tasks
+   */
+  return makeRequest('/api/orchestrator/status', 'GET', null, true, null, 15000);
+}
+
+export async function getActiveAgents() {
+  /**
+   * Get list of currently active agents
+   *
+   * @returns {Promise<Array>} - List of active agents with status
+   */
+  return makeRequest('/api/orchestrator/active-agents', 'GET', null, true, null, 10000);
+}
+
+export async function getTaskQueue() {
+  /**
+   * Get current task queue pending execution
+   *
+   * @returns {Promise<Array>} - List of pending tasks
+   */
+  return makeRequest('/api/orchestrator/task-queue', 'GET', null, true, null, 10000);
+}
+
+export async function getLearningPatterns() {
+  /**
+   * Get patterns learned from execution history
+   *
+   * @returns {Promise<object>} - Learning patterns and insights
+   */
+  return makeRequest('/api/orchestrator/learning-patterns', 'GET', null, true, null, 15000);
+}
+
+export async function getBusinessMetricsAnalysis() {
+  /**
+   * Get business metrics analysis and trends
+   *
+   * @returns {Promise<object>} - Business metrics analysis
+   */
+  return makeRequest('/api/orchestrator/business-metrics-analysis', 'GET', null, true, null, 15000);
+}
+
 const cofounderAgentClient = {
   logout,
   refreshAccessToken,
@@ -753,6 +844,17 @@ const cofounderAgentClient = {
   listTasks,
   getTaskById,
   getTaskMetrics,
+  // Bulk operations
+  bulkUpdateTasks,
+  // Metrics & Analytics
+  getCostMetrics,
+  getUsageMetrics,
+  // Orchestrator
+  getOrchestratorOverallStatus,
+  getActiveAgents,
+  getTaskQueue,
+  getLearningPatterns,
+  getBusinessMetricsAnalysis,
   // Intelligent Orchestrator
   processOrchestratorRequest,
   getOrchestratorStatus,

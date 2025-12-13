@@ -6,24 +6,8 @@ const TaskQueueView = ({ tasks = [], onTaskSelect = () => {} }) => {
   const [statusFilter, setStatusFilter] = useState('all');
   const [selectedTaskId, setSelectedTaskId] = useState(null);
 
-  // Fetch tasks from backend
-  useEffect(() => {
-    const fetchTasks = async () => {
-      try {
-        const response = await fetch('http://localhost:8000/api/tasks');
-        if (!response.ok) throw new Error('Failed to fetch tasks');
-        // Tasks are passed as props, so we don't need to do anything here
-      } catch (err) {
-        console.error('Error fetching tasks:', err);
-      }
-    };
-
-    if (polling) {
-      fetchTasks();
-      const interval = setInterval(fetchTasks, 5000); // Poll every 5 seconds
-      return () => clearInterval(interval);
-    }
-  }, [polling]);
+  // ✅ Tasks are passed as props from parent, no fetch needed
+  // Polling state is used for UI controls but data comes from parent
 
   // Filter tasks by status
   useEffect(() => {

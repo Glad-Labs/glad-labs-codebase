@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { getAuthToken } from '../../services/authService';
+import { createTask } from '../../services/cofounderAgentClient';
 
 const CreateTaskModal = ({ isOpen, onClose, onTaskCreated }) => {
   const [taskType, setTaskType] = useState('');
@@ -206,50 +207,35 @@ const CreateTaskModal = ({ isOpen, onClose, onTaskCreated }) => {
         headers['Authorization'] = `Bearer ${token}`;
       }
 
-      let response;
-
       // ✅ ROUTE TO CORRECT ENDPOINT BASED ON TASK TYPE
+      let taskPayload;
+
       if (taskType === 'blog_post') {
-        // Use content generation endpoint for blog posts (triggers self-critique loop)
-        const contentPayload = {
+        // Create blog post task using generic endpoint with task_name mapping
+        taskPayload = {
+          task_name: `Blog: ${formData.topic}`,
           topic: formData.topic || '',
-          style: formData.style || 'professional',
-          tone: formData.tone || 'professional',
-          target_length: formData.word_count || 1500,
-          tags: formData.keywords
-            ? formData.keywords
-                .split(',')
-                .map((k) => k.trim())
-                .filter((k) => k)
-            : [],
-        };
-
-        console.log(
-          '📤 Sending to content generation endpoint:',
-          contentPayload
-        );
-
-        // ✅ CORRECT ENDPOINT FOR BLOG POSTS - Runs self-critique pipeline
-        // Uses the actual backend endpoint: POST /api/content/tasks
-        response = await fetch('http://localhost:8000/api/content/tasks', {
-          method: 'POST',
-          headers,
-          body: JSON.stringify({
+          primary_keyword: formData.keywords || '',
+          target_audience: formData.target_audience || '',
+          category: 'blog_post',
+          metadata: {
             task_type: 'blog_post',
-            topic: contentPayload.topic || '',
-            style: contentPayload.style || 'technical',
-            tone: contentPayload.tone || 'professional',
-            target_length: contentPayload.target_length || 1500,
-            tags: contentPayload.tags || [],
+            style: formData.style || 'technical',
+            tone: formData.tone || 'professional',
+            word_count: formData.word_count || 1500,
+            tags: formData.keywords
+              ? formData.keywords
+                  .split(',')
+                  .map((k) => k.trim())
+                  .filter((k) => k)
+              : [],
             generate_featured_image: true,
             publish_mode: 'draft',
-            enhanced: false,
-            target_environment: 'production',
-          }),
-        });
+          },
+        };
       } else {
         // Use generic task endpoint for other types
-        const taskPayload = {
+        taskPayload = {
           task_name: formData.title || formData.subject || `Task: ${taskType}`,
           topic: formData.topic || formData.description || '',
           primary_keyword: formData.keywords || formData.primary_keyword || '',
@@ -262,37 +248,20 @@ const CreateTaskModal = ({ isOpen, onClose, onTaskCreated }) => {
             ...formData, // Include all original form data in metadata
           },
         };
-
-        console.log('📤 Sending generic task payload:', taskPayload);
-
-        response = await fetch('http://localhost:8000/api/tasks', {
-          method: 'POST',
-          headers,
-          body: JSON.stringify(taskPayload),
-        });
       }
 
-      if (!response.ok) {
-        let errorMessage = `Failed to create task: ${response.statusText}`;
-        try {
-          const errorData = await response.json();
-          console.error('❌ Backend error response:', errorData);
-          if (errorData.detail) {
-            errorMessage = Array.isArray(errorData.detail)
-              ? errorData.detail
-                  .map((d) => `${d.loc?.join('.')}: ${d.msg}`)
-                  .join('; ')
-              : errorData.detail;
-          }
-        } catch (parseError) {
-          // Couldn't parse JSON error response, use status text
-        }
-        throw new Error(errorMessage);
-      }
+      console.log('📤 Creating task:', taskPayload);
 
-      // Success response
-      const result = await response.json();
+      // ✅ Use API client instead of hardcoded fetch
+      const result = await createTask(taskPayload);
       console.log('✅ Task created successfully:', result);
+
+      // ✅ Validate response has required fields
+      if (!result || !result.id) {
+        throw new Error(
+          'Invalid response: task was created but no ID returned'
+        );
+      }
 
       // Notify parent with the new task data and reset
       if (onTaskCreated) {

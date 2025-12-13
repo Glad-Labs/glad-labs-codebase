@@ -17,6 +17,7 @@ import {
   Grid,
 } from '@mui/material';
 import { getAuthToken } from '../../services/authService';
+import { createTask } from '../../services/cofounderAgentClient';
 
 /**
  * BlogPostCreator - Create blog posts through the AI pipeline
@@ -72,26 +73,38 @@ const BlogPostCreator = ({ onBlogPostCreated, onError }) => {
 
       console.log('📝 Creating blog post with payload:', payload);
 
-      const response = await fetch('http://localhost:8000/api/content/tasks', {
-        method: 'POST',
-        headers,
-        body: JSON.stringify({
+      // ✅ Use API client instead of hardcoded fetch
+      const taskPayload = {
+        task_name: `Blog: ${topic}`,
+        topic,
+        primary_keyword: tags ? tags.split(',')[0].trim() : '',
+        target_audience: '',
+        category: 'blog_post',
+        metadata: {
           task_type: 'blog_post',
-          ...payload,
-        }),
-        signal: AbortSignal.timeout(10000),
-      });
+          style,
+          tone,
+          target_length: parseInt(targetLength),
+          tags: tags ? tags.split(',').map((t) => t.trim()) : [],
+          categories: categories
+            ? categories.split(',').map((c) => c.trim())
+            : [],
+          generate_featured_image: generateImage,
+          enhanced: useEnhanced,
+          publish_mode: publishMode,
+          target_environment: 'production',
+        },
+      };
 
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
+      const data = await createTask(taskPayload);
+      console.log('✅ Blog post task created:', data);
+
+      // ✅ Validate response has required fields
+      if (!data || !data.id) {
         throw new Error(
-          errorData.detail ||
-            `Failed to create blog post: ${response.statusText}`
+          'Invalid response: task was created but no ID returned'
         );
       }
-
-      const data = await response.json();
-      console.log('✅ Blog post task created:', data);
 
       setSuccess(
         `✅ Blog post creation started! Task ID: ${data.task_id}\n\nPolling URL: ${data.polling_url}`
