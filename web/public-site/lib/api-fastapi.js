@@ -98,7 +98,9 @@ export async function getPaginatedPosts(
 export async function getFeaturedPost() {
   try {
     // Get the most recent post (skip=0, limit=1, published_only=true)
-    const response = await fetchAPI('/posts?skip=0&limit=1&published_only=true');
+    const response = await fetchAPI(
+      '/posts?skip=0&limit=1&published_only=true'
+    );
 
     if (response.data && response.data.length > 0) {
       return response.data[0];
@@ -202,31 +204,31 @@ export async function getAllPosts() {
     const allPosts = [];
     let skip = 0;
     const limit = 100; // Backend max limit
-    
+
     // Fetch all posts in batches
     while (true) {
       const response = await fetchAPI(
         `/posts?skip=${skip}&limit=${limit}&published_only=true`
       );
-      
+
       if (!response.data || response.data.length === 0) {
         break; // No more posts
       }
-      
+
       allPosts.push(
         ...response.data.map((post) => ({
           slug: post.slug,
         }))
       );
-      
+
       // Check if we got fewer posts than requested (end of results)
       if (response.data.length < limit) {
         break;
       }
-      
+
       skip += limit;
     }
-    
+
     return allPosts;
   } catch (error) {
     console.error('[FastAPI] Error fetching all posts:', error);

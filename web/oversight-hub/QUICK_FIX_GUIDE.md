@@ -2,7 +2,7 @@
 
 **Purpose:** Step-by-step fixes for identified integration issues  
 **Estimated Time:** 2-3 hours  
-**Difficulty:** Easy to Medium  
+**Difficulty:** Easy to Medium
 
 ---
 
@@ -51,11 +51,12 @@ const result = await createTask({
     tags: contentPayload.tags || [],
     generate_featured_image: true,
     publish_mode: 'draft',
-  }
+  },
 });
 ```
 
 **Change:** (Line ~268-280)
+
 ```jsx
 // ❌ BEFORE
 response = await fetch('http://localhost:8000/api/tasks', {
@@ -69,6 +70,7 @@ const result = await createTask(taskPayload);
 ```
 
 **Update Response Handling:**
+
 ```jsx
 // ❌ BEFORE (Line ~293-298)
 const result = await response.json();
@@ -91,7 +93,8 @@ if (onTaskCreated) {
 }
 ```
 
-**Impact:** 
+**Impact:**
+
 - ✅ Removes hardcoded localhost URL
 - ✅ Enables environment variable API_URL
 - ✅ Centralizes JWT token injection
@@ -126,10 +129,8 @@ import { getTask } from '../../services/cofounderAgentClient';
 
 const getSelectedTasks = async (taskIds) => {
   try {
-    const results = await Promise.all(
-      taskIds.map(id => getTask(id))
-    );
-    return results.filter(task => task !== null);
+    const results = await Promise.all(taskIds.map((id) => getTask(id)));
+    return results.filter((task) => task !== null);
   } catch (error) {
     console.error('Error fetching selected tasks:', error);
     throw error;
@@ -142,6 +143,7 @@ console.log('Fetched tasks:', selectedTasks);
 ```
 
 **Impact:**
+
 - ✅ Removes call to non-existent endpoint
 - ✅ Uses existing API client methods
 - ✅ Parallel fetching is fast enough for most cases
@@ -176,6 +178,7 @@ useEffect(() => {
 ```
 
 **Impact:**
+
 - ✅ Removes unused network call
 - ✅ Simplifies component logic
 - ✅ Improves performance (no unnecessary fetches)
@@ -209,11 +212,12 @@ const response = await createTask({
   metadata: {
     task_type: 'blog_post',
     // ... other metadata
-  }
+  },
 });
 ```
 
 **Impact:**
+
 - ✅ Consistent with other components
 - ✅ Uses centralized API client
 - ✅ Proper token injection
@@ -236,12 +240,14 @@ REACT_APP_API_URL=https://api.glad-labs.com
 ```
 
 **Verify in cofounderAgentClient.js:**
+
 ```javascript
 // This should already be there:
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:8000';
 ```
 
 **Impact:**
+
 - ✅ Environment-specific API URLs
 - ✅ No hardcoding in component code
 - ✅ Easy to change per deployment
@@ -251,6 +257,7 @@ const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:8000';
 ## 🧪 Testing Each Fix
 
 ### After Fix 1 (CreateTaskModal)
+
 ```javascript
 // Test in browser console:
 1. Go to Create Task Modal
@@ -265,6 +272,7 @@ const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:8000';
 ```
 
 ### After Fix 2 (Bulk endpoint)
+
 ```javascript
 // Test in browser console:
 1. Go to Task Management page
@@ -274,6 +282,7 @@ const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:8000';
 ```
 
 ### After Fix 3 (TaskQueueView)
+
 ```javascript
 // Test in browser console:
 1. Open any component using TaskQueueView
@@ -282,6 +291,7 @@ const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:8000';
 ```
 
 ### After Fix 4 (BlogPostCreator)
+
 ```javascript
 // Test blog creation:
 1. Open blog creator component
@@ -291,6 +301,7 @@ const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:8000';
 ```
 
 ### After Fix 5 (Environment Variables)
+
 ```bash
 # Test environment config:
 1. Set REACT_APP_API_URL=http://different-url:8000
@@ -320,15 +331,15 @@ After all fixes:
 
 ## 📊 Before/After Comparison
 
-| Aspect | Before | After |
-|--------|--------|-------|
-| Hardcoded URLs | 4 locations | 0 |
-| API Client Usage | 20% | 100% |
-| Environment Config | No | Yes |
-| Response Validation | Missing | Present |
-| Bulk Operations | Non-existent endpoint | Individual calls |
-| Token Management | Per component | Centralized |
-| Code Maintainability | Low | High |
+| Aspect               | Before                | After            |
+| -------------------- | --------------------- | ---------------- |
+| Hardcoded URLs       | 4 locations           | 0                |
+| API Client Usage     | 20%                   | 100%             |
+| Environment Config   | No                    | Yes              |
+| Response Validation  | Missing               | Present          |
+| Bulk Operations      | Non-existent endpoint | Individual calls |
+| Token Management     | Per component         | Centralized      |
+| Code Maintainability | Low                   | High             |
 
 ---
 
@@ -360,14 +371,14 @@ After all fixes:
 
 ## 📝 Files to Modify Summary
 
-| File | Changes | Time |
-|------|---------|------|
-| CreateTaskModal.jsx | Replace 2 fetch() calls, add validation | 30 min |
-| TaskManagement.jsx | Remove or fix /api/tasks/bulk | 15 min |
-| TaskQueueView.jsx | Remove unused fetch() | 5 min |
-| BlogPostCreator.jsx | Replace fetch() call | 15 min |
-| .env.example | Add REACT_APP_API_URL | 5 min |
-| **Total** | | **70 min** |
+| File                | Changes                                 | Time       |
+| ------------------- | --------------------------------------- | ---------- |
+| CreateTaskModal.jsx | Replace 2 fetch() calls, add validation | 30 min     |
+| TaskManagement.jsx  | Remove or fix /api/tasks/bulk           | 15 min     |
+| TaskQueueView.jsx   | Remove unused fetch()                   | 5 min      |
+| BlogPostCreator.jsx | Replace fetch() call                    | 15 min     |
+| .env.example        | Add REACT_APP_API_URL                   | 5 min      |
+| **Total**           |                                         | **70 min** |
 
 ---
 
@@ -382,7 +393,8 @@ After all fixes:
 
 ---
 
-**Need Help?** 
+**Need Help?**
+
 - Check ENDPOINT_AUDIT_REPORT.md for detailed audit
 - Check FASTAPI_INTEGRATION_GUIDE.md for API reference
 - Check cofounderAgentClient.js for all available methods

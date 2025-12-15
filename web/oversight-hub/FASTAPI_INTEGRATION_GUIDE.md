@@ -8,14 +8,14 @@
 
 ## 📌 Quick Status Summary
 
-| Category | Status | Notes |
-|----------|--------|-------|
-| **Task List** | ✅ WORKING | GET /api/tasks returns proper TaskListResponse |
-| **Task Creation** | ⚠️ PARTIAL | Works but uses hardcoded URLs instead of API client |
-| **Task Details** | ✅ WORKING | Read-only display, no updates required |
-| **Quality Assessment** | ✅ AVAILABLE | Endpoints exist, not used in current UI |
-| **Orchestrator** | ✅ WORKING | Uses api.js client correctly |
-| **API Client** | ✅ COMPLETE | cofounderAgentClient.js has all methods |
+| Category               | Status       | Notes                                               |
+| ---------------------- | ------------ | --------------------------------------------------- |
+| **Task List**          | ✅ WORKING   | GET /api/tasks returns proper TaskListResponse      |
+| **Task Creation**      | ⚠️ PARTIAL   | Works but uses hardcoded URLs instead of API client |
+| **Task Details**       | ✅ WORKING   | Read-only display, no updates required              |
+| **Quality Assessment** | ✅ AVAILABLE | Endpoints exist, not used in current UI             |
+| **Orchestrator**       | ✅ WORKING   | Uses api.js client correctly                        |
+| **API Client**         | ✅ COMPLETE  | cofounderAgentClient.js has all methods             |
 
 ---
 
@@ -24,6 +24,7 @@
 ### 1. GET /api/tasks - Task List with Pagination
 
 **Backend Endpoint:**
+
 ```python
 @router.get("", response_model=TaskListResponse)
 async def list_tasks(
@@ -37,6 +38,7 @@ async def list_tasks(
 ```
 
 **Response Schema:**
+
 ```python
 class TaskListResponse(BaseModel):
     tasks: List[TaskResponse]
@@ -46,6 +48,7 @@ class TaskListResponse(BaseModel):
 ```
 
 **Frontend Implementation:**
+
 ```jsx
 // web/oversight-hub/src/routes/TaskManagement.jsx
 import { getTasks } from '../services/cofounderAgentClient';
@@ -63,6 +66,7 @@ useEffect(() => {
 ```
 
 **API Client Method:**
+
 ```javascript
 // web/oversight-hub/src/services/cofounderAgentClient.js
 export async function getTasks(limit = 50, offset = 0) {
@@ -84,6 +88,7 @@ export async function getTasks(limit = 50, offset = 0) {
 ### 2. POST /api/tasks - Create Generic Task
 
 **Backend Endpoint:**
+
 ```python
 @router.post("", response_model=Dict[str, Any], status_code=201)
 async def create_task(
@@ -95,6 +100,7 @@ async def create_task(
 ```
 
 **Request Schema:**
+
 ```python
 class TaskCreateRequest(BaseModel):
     task_name: str = Field(..., min_length=3, max_length=200)
@@ -106,6 +112,7 @@ class TaskCreateRequest(BaseModel):
 ```
 
 **Response:**
+
 ```python
 {
   "id": "uuid-string",
@@ -119,13 +126,14 @@ class TaskCreateRequest(BaseModel):
 ```
 
 **Frontend Usage (Current - Hardcoded):**
+
 ```jsx
 // web/oversight-hub/src/components/tasks/CreateTaskModal.jsx
 response = await fetch('http://localhost:8000/api/tasks', {
   method: 'POST',
   headers: {
     'Content-Type': 'application/json',
-    'Authorization': `Bearer ${token}`
+    Authorization: `Bearer ${token}`,
   },
   body: JSON.stringify({
     task_name: formData.title,
@@ -133,7 +141,7 @@ response = await fetch('http://localhost:8000/api/tasks', {
     primary_keyword: formData.primary_keyword,
     target_audience: formData.target_audience,
     category: formData.category,
-    metadata: { task_type: taskType, ...formData }
+    metadata: { task_type: taskType, ...formData },
   }),
 });
 
@@ -142,6 +150,7 @@ if (onTaskCreated) onTaskCreated(result);
 ```
 
 **API Client Method (Available but Not Used):**
+
 ```javascript
 // web/oversight-hub/src/services/cofounderAgentClient.js
 export async function createTask(taskData) {
@@ -163,6 +172,7 @@ export async function createTask(taskData) {
 ```
 
 **Recommended Refactor:**
+
 ```jsx
 // ✅ BETTER APPROACH
 import { createTask } from '../services/cofounderAgentClient';
@@ -177,8 +187,8 @@ const handleCreateTask = async (taskData) => {
       category: taskData.category || 'general',
       metadata: {
         task_type: taskType,
-        ...taskData
-      }
+        ...taskData,
+      },
     });
     if (onTaskCreated) onTaskCreated(result);
   } catch (error) {
@@ -194,6 +204,7 @@ const handleCreateTask = async (taskData) => {
 ### 3. POST /api/content/tasks - Create Content Task
 
 **Backend Endpoint:**
+
 ```python
 # From content_routes.py (separate from task_routes.py)
 @content_router.post(
@@ -209,6 +220,7 @@ async def create_content_task(
 ```
 
 **Request Schema:**
+
 ```python
 class CreateBlogPostRequest(BaseModel):
     topic: str
@@ -222,6 +234,7 @@ class CreateBlogPostRequest(BaseModel):
 ```
 
 **Frontend Usage:**
+
 ```jsx
 // web/oversight-hub/src/components/tasks/CreateTaskModal.jsx
 if (taskType === 'blog_post') {
@@ -249,6 +262,7 @@ if (taskType === 'blog_post') {
 ### 4. GET /api/tasks/metrics/summary - Task Metrics
 
 **Backend Endpoint:**
+
 ```python
 @router.get("/metrics/summary", response_model=MetricsResponse)
 async def get_metrics(
@@ -258,6 +272,7 @@ async def get_metrics(
 ```
 
 **Response Schema:**
+
 ```python
 class MetricsResponse(BaseModel):
     total_tasks: int
@@ -269,6 +284,7 @@ class MetricsResponse(BaseModel):
 ```
 
 **Example Response:**
+
 ```json
 {
   "total_tasks": 42,
@@ -287,6 +303,7 @@ class MetricsResponse(BaseModel):
 ### 5. POST /api/quality/evaluate - Quality Assessment
 
 **Backend Endpoint:**
+
 ```python
 @quality_router.post(
     "/evaluate",
@@ -301,6 +318,7 @@ async def evaluate_quality(
 ```
 
 **Request Schema:**
+
 ```python
 class QualityEvaluationRequest(BaseModel):
     content: str = Field(..., min_length=10)
@@ -309,6 +327,7 @@ class QualityEvaluationRequest(BaseModel):
 ```
 
 **Response Schema:**
+
 ```python
 class QualityEvaluationResponse(BaseModel):
     content_id: str
@@ -319,6 +338,7 @@ class QualityEvaluationResponse(BaseModel):
 ```
 
 **7-Criteria Framework:**
+
 1. Clarity - Is content clear and easy to understand?
 2. Accuracy - Is information correct and fact-checked?
 3. Completeness - Does it cover the topic thoroughly?
@@ -338,6 +358,7 @@ class QualityEvaluationResponse(BaseModel):
 **File:** `web/oversight-hub/src/components/tasks/CreateTaskModal.jsx`
 
 **Change:**
+
 ```jsx
 // ❌ BEFORE
 response = await fetch('http://localhost:8000/api/tasks', {
@@ -362,6 +383,7 @@ if (result && result.id) {
 ### Fix 2: Implement /api/tasks/bulk Endpoint
 
 **Option A: Backend Implementation (Recommended)**
+
 ```python
 # Add to task_routes.py
 @router.post("/batch", response_model=List[TaskResponse])
@@ -375,13 +397,12 @@ async def get_tasks_batch(
 ```
 
 **Option B: Frontend Workaround (If backend unavailable)**
+
 ```javascript
 // Fetch multiple tasks in parallel
 const getTasksBatch = async (taskIds) => {
-  const results = await Promise.all(
-    taskIds.map(id => getTask(id))
-  );
-  return results.filter(t => t !== null);
+  const results = await Promise.all(taskIds.map((id) => getTask(id)));
+  return results.filter((t) => t !== null);
 };
 ```
 
@@ -392,6 +413,7 @@ const getTasksBatch = async (taskIds) => {
 **File:** `web/oversight-hub/src/components/tasks/CreateTaskModal.jsx`
 
 **Change:**
+
 ```javascript
 // ✅ Add validation
 const result = await response.json();
@@ -485,9 +507,7 @@ describe('CreateTaskModal', () => {
   it('should validate required fields', async () => {
     // ... render component
     // ... try to submit empty form
-    expect(setError).toHaveBeenCalledWith(
-      expect.stringContaining('task_name')
-    );
+    expect(setError).toHaveBeenCalledWith(expect.stringContaining('task_name'));
   });
 });
 ```
@@ -528,18 +548,18 @@ describe('CreateTaskModal', () => {
 ```
 GET  /api/tasks?offset=0&limit=20&status=pending&category=general
   Response: TaskListResponse { tasks[], total, offset, limit }
-  
+
 POST /api/tasks
   Request: TaskCreateRequest { task_name, topic, primary_keyword?, target_audience?, category?, metadata? }
   Response: { id, task_name, topic, status, task_metadata, ... }
-  
+
 GET  /api/tasks/{task_id}
   Response: TaskResponse { id, task_name, topic, status, created_at, updated_at, ... }
-  
+
 PATCH /api/tasks/{task_id}
   Request: TaskStatusUpdateRequest { status, metadata? }
   Response: TaskResponse { ... }
-  
+
 GET  /api/tasks/metrics/summary
   Response: MetricsResponse { total_tasks, completed_tasks, failed_tasks, pending_tasks, success_rate, avg_execution_time }
 ```
@@ -550,10 +570,10 @@ GET  /api/tasks/metrics/summary
 POST /api/content/tasks
   Request: CreateBlogPostRequest { topic, style, tone?, target_length?, task_type, tags?, generate_featured_image, publish_mode }
   Response: { id, task_name, status, task_metadata, ... }
-  
+
 GET  /api/content/tasks/{task_id}
   Response: TaskResponse with content-specific fields
-  
+
 GET  /api/content/tasks
   Query: status, limit, offset
   Response: TaskListResponse { tasks[], total, offset, limit }
@@ -565,11 +585,11 @@ GET  /api/content/tasks
 POST /api/quality/evaluate
   Request: QualityEvaluationRequest { content, content_type, evaluation_method? }
   Response: QualityEvaluationResponse { content_id, dimensions, overall_score, evaluated_at, recommendations? }
-  
+
 POST /api/quality/batch-evaluate
   Request: BatchQualityRequest { contents: [{content, content_type}] }
   Response: [QualityEvaluationResponse]
-  
+
 GET  /api/quality/statistics
   Response: Quality statistics and trends
 ```
@@ -596,7 +616,8 @@ Before considering integration complete:
 
 ---
 
-**Next Steps:** 
+**Next Steps:**
+
 1. Address the "Required Fixes" section
 2. Run testing plan
 3. Create pull request with all changes

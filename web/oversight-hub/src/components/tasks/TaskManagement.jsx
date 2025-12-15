@@ -866,16 +866,16 @@ const TaskManagement = () => {
                 {sortBy === 'title' && (sortDirection === 'asc' ? '↑' : '↓')}
               </TableCell>
               <TableCell
-                onClick={() => handleSort('agent')}
+                onClick={() => handleSort('type')}
                 sx={{
                   cursor: 'pointer',
-                  fontWeight: sortBy === 'agent' ? 700 : 600,
-                  color: sortBy === 'agent' ? '#00d4ff' : 'inherit',
+                  fontWeight: sortBy === 'type' ? 700 : 600,
+                  color: sortBy === 'type' ? '#00d4ff' : 'inherit',
                   userSelect: 'none',
                 }}
               >
-                Agent{' '}
-                {sortBy === 'agent' && (sortDirection === 'asc' ? '↑' : '↓')}
+                Type{' '}
+                {sortBy === 'type' && (sortDirection === 'asc' ? '↑' : '↓')}
               </TableCell>
               <TableCell
                 onClick={() => handleSort('status')}
@@ -890,16 +890,30 @@ const TaskManagement = () => {
                 {sortBy === 'status' && (sortDirection === 'asc' ? '↑' : '↓')}
               </TableCell>
               <TableCell
-                onClick={() => handleSort('priority')}
+                onClick={() => handleSort('approval_status')}
                 sx={{
                   cursor: 'pointer',
-                  fontWeight: sortBy === 'priority' ? 700 : 600,
-                  color: sortBy === 'priority' ? '#00d4ff' : 'inherit',
+                  fontWeight: sortBy === 'approval_status' ? 700 : 600,
+                  color: sortBy === 'approval_status' ? '#00d4ff' : 'inherit',
                   userSelect: 'none',
                 }}
               >
-                Priority{' '}
-                {sortBy === 'priority' && (sortDirection === 'asc' ? '↑' : '↓')}
+                Approval{' '}
+                {sortBy === 'approval_status' &&
+                  (sortDirection === 'asc' ? '↑' : '↓')}
+              </TableCell>
+              <TableCell
+                onClick={() => handleSort('quality_score')}
+                sx={{
+                  cursor: 'pointer',
+                  fontWeight: sortBy === 'quality_score' ? 700 : 600,
+                  color: sortBy === 'quality_score' ? '#00d4ff' : 'inherit',
+                  userSelect: 'none',
+                }}
+              >
+                Quality{' '}
+                {sortBy === 'quality_score' &&
+                  (sortDirection === 'asc' ? '↑' : '↓')}
               </TableCell>
               <TableCell
                 onClick={() => handleSort('created_at')}
@@ -944,31 +958,20 @@ const TaskManagement = () => {
                     />
                   </TableCell>
                   <TableCell>
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                      <Typography variant="body2" fontWeight="medium">
-                        {task.title}
-                      </Typography>
-                      {task.pipeline_type === 'poindexter' && (
-                        <Tooltip title="AI-generated task (Poindexter)">
-                          <Chip
-                            label="🤖 AI"
-                            size="small"
-                            sx={{
-                              backgroundColor: 'rgba(0, 212, 255, 0.2)',
-                              color: '#00d4ff',
-                              height: 20,
-                              fontSize: '0.75rem',
-                            }}
-                          />
-                        </Tooltip>
-                      )}
-                    </Box>
+                    <Typography variant="body2" fontWeight="medium">
+                      {task.title || task.task_name || 'Untitled'}
+                    </Typography>
                     <Typography variant="caption" color="text.secondary">
-                      {task.description}
+                      {task.description || task.topic}
                     </Typography>
                   </TableCell>
                   <TableCell>
-                    <Chip label={task.agent} size="small" variant="outlined" />
+                    <Chip
+                      label={task.task_type || task.type || 'general'}
+                      size="small"
+                      variant="outlined"
+                      sx={{ fontSize: '0.7rem' }}
+                    />
                   </TableCell>
                   <TableCell>
                     <Chip
@@ -979,10 +982,50 @@ const TaskManagement = () => {
                   </TableCell>
                   <TableCell>
                     <Chip
-                      label={task.priority}
+                      label={task.approval_status || task.status}
                       size="small"
-                      color={getPriorityColor(task.priority)}
+                      variant={
+                        task.approval_status === 'approved'
+                          ? 'filled'
+                          : 'outlined'
+                      }
+                      sx={{
+                        backgroundColor:
+                          task.approval_status === 'approved'
+                            ? 'rgba(76, 175, 80, 0.3)'
+                            : task.approval_status === 'rejected'
+                              ? 'rgba(244, 67, 54, 0.3)'
+                              : 'transparent',
+                        color:
+                          task.approval_status === 'approved'
+                            ? '#4CAF50'
+                            : task.approval_status === 'rejected'
+                              ? '#F44336'
+                              : '#FFC107',
+                      }}
                     />
+                  </TableCell>
+                  <TableCell>
+                    {task.quality_score ? (
+                      <Typography
+                        variant="caption"
+                        sx={{
+                          fontWeight: 600,
+                          color:
+                            task.quality_score >= 85
+                              ? '#4CAF50'
+                              : task.quality_score >= 70
+                                ? '#2196F3'
+                                : '#FFC107',
+                        }}
+                      >
+                        {task.quality_score}/100
+                      </Typography>
+                    ) : (
+                      <Typography variant="caption" color="text.secondary">
+                        N/A
+                      </Typography>
+                    )}
                   </TableCell>
                   <TableCell>
                     <Typography variant="caption">
@@ -1168,21 +1211,49 @@ const TaskManagement = () => {
                   // ✅ REFACTORED: Use /api/content/tasks/{id}/approve endpoint
                   // Replaces /api/content/blog-posts/drafts/{id}/publish
                   // Supports all task types with type-specific routing
+                  const token = getAuthToken();
+                  const headers = {
+                    'Content-Type': 'application/json',
+                  };
+                  if (token) {
+                    headers['Authorization'] = `Bearer ${token}`;
+                  }
+
                   const response = await fetch(
                     `http://localhost:8000/api/content/tasks/${selectedTask.id}/approve`,
                     {
                       method: 'POST',
-                      headers: { 'Content-Type': 'application/json' },
-                      body: JSON.stringify(updatedTask),
+                      headers,
+                      body: JSON.stringify({
+                        approved: true,
+                        human_feedback:
+                          updatedTask.feedback || 'Approved in oversight hub',
+                        reviewer_id: updatedTask.reviewer_id || 'admin',
+                      }),
                     }
                   );
                   if (response.ok) {
+                    // ✅ Update local task status to 'published' before closing
+                    setTasks(
+                      tasks.map((t) =>
+                        t.id === selectedTask.id
+                          ? {
+                              ...t,
+                              status: 'published',
+                              approval_status: 'approved',
+                            }
+                          : t
+                      )
+                    );
+                    // ✅ Close dialog and show success
                     setSelectedTask(null);
-                    fetchTasks();
+                    setError(null);
+                    // Fetch full task list to sync with backend
+                    setTimeout(() => fetchTasks(), 500);
                   } else {
                     const errorData = await response.json().catch(() => ({}));
                     setError(
-                      `Failed to publish: ${errorData.message || response.statusText}`
+                      `Failed to publish: ${errorData.detail || errorData.message || response.statusText}`
                     );
                     console.error('Failed to publish:', response.statusText);
                   }
@@ -1195,7 +1266,67 @@ const TaskManagement = () => {
                   setIsPublishing(false);
                 }
               }}
-              onReject={() => setSelectedTask(null)}
+              onReject={async (rejectedTask) => {
+                setIsPublishing(true);
+                setError(null);
+                try {
+                  // ✅ Send rejection to backend
+                  const token = getAuthToken();
+                  const headers = {
+                    'Content-Type': 'application/json',
+                  };
+                  if (token) {
+                    headers['Authorization'] = `Bearer ${token}`;
+                  }
+
+                  const response = await fetch(
+                    `http://localhost:8000/api/content/tasks/${selectedTask.id}/approve`,
+                    {
+                      method: 'POST',
+                      headers,
+                      body: JSON.stringify({
+                        approved: false,
+                        human_feedback:
+                          rejectedTask.rejection_reason ||
+                          'Rejected in oversight hub',
+                        reviewer_id: rejectedTask.reviewer_id || 'admin',
+                      }),
+                    }
+                  );
+                  if (response.ok) {
+                    // ✅ Update local task status to 'rejected' before closing
+                    setTasks(
+                      tasks.map((t) =>
+                        t.id === selectedTask.id
+                          ? {
+                              ...t,
+                              status: 'rejected',
+                              approval_status: 'rejected',
+                            }
+                          : t
+                      )
+                    );
+                    // ✅ Close dialog
+                    setSelectedTask(null);
+                    setError(null);
+                    // Fetch full task list to sync with backend
+                    setTimeout(() => fetchTasks(), 500);
+                  } else {
+                    const errorData = await response.json().catch(() => ({}));
+                    setError(
+                      `Failed to reject: ${errorData.detail || errorData.message || response.statusText}`
+                    );
+                    console.error('Failed to reject:', response.statusText);
+                  }
+                } catch (error) {
+                  const errorMessage =
+                    error instanceof Error ? error.message : 'Unknown error';
+                  setError(`Error rejecting task: ${errorMessage}`);
+                  console.error('Failed to reject:', error);
+                } finally {
+                  setIsPublishing(false);
+                }
+              }}
               isLoading={isPublishing}
             />
           )}

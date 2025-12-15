@@ -17,8 +17,90 @@ const ResultPreviewPanel = ({
   const [approvalLoading, setApprovalLoading] = useState(false);
   const [approvalFeedback, setApprovalFeedback] = useState('');
   const [reviewerId, setReviewerId] = useState('admin');
+  const [featuredImageUrl, setFeaturedImageUrl] = useState('');
+  const [isGeneratingImage, setIsGeneratingImage] = useState(false);
 
-  // Initialize editable content when task changes
+  // Helper function to clean content - remove title and section headers
+  const cleanContent = (content, title) => {
+    if (!content) return '';
+
+    let cleaned = content;
+
+    // Remove title if it appears at the beginning of content
+    if (title && cleaned.includes(title)) {
+      const titleIndex = cleaned.indexOf(title);
+      if (titleIndex === 0 || titleIndex < 50) {
+        cleaned = cleaned.replace(title, '').trim();
+      }
+    }
+
+    // Remove common section headers that shouldn't be in the body
+    const sectionHeaders = [
+      /^Introduction:\s*/gm,
+      /^Main Points:\s*/gm,
+      /^Main Content:\s*/gm,
+      /^Conclusion:\s*/gm,
+      /^Summary:\s*/gm,
+      /^Body:\s*/gm,
+      /^Content:\s*/gm,
+    ];
+
+    sectionHeaders.forEach((pattern) => {
+      cleaned = cleaned.replace(pattern, '');
+    });
+
+    // Remove extra whitespace that might result from cleanup
+    cleaned = cleaned
+      .split('\n')
+      .filter((line) => line.trim().length > 0)
+      .join('\n');
+
+    return cleaned.trim();
+  };
+
+  // Helper function to generate featured image using DALL-E or Ollama
+  const generateFeaturedImage = async () => {
+    if (!editedTitle) {
+      alert('⚠️ Please set a title first');
+      return;
+    }
+
+    setIsGeneratingImage(true);
+    try {
+      const token = getAuthToken();
+      const imagePrompt = `Create a professional blog post featured image for: "${editedTitle}". The image should be modern, visually appealing, and suitable for a technology/AI blog. 1200x630 pixels.`;
+
+      const response = await fetch(
+        'http://localhost:8000/api/media/generate-image',
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            prompt: imagePrompt,
+            style: 'professional',
+            size: '1200x630',
+          }),
+        }
+      );
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.detail || 'Image generation failed');
+      }
+
+      const result = await response.json();
+      setFeaturedImageUrl(result.image_url || result.url);
+      console.log('✅ Featured image generated:', result);
+    } catch (error) {
+      console.error('❌ Image generation error:', error);
+      alert(`⚠️ Image generation unavailable. You can provide a URL manually.`);
+    } finally {
+      setIsGeneratingImage(false);
+    }
+  };
   React.useEffect(() => {
     if (task) {
       // ✅ PRIORITY: Check task_metadata.content (where orchestrator stores generated content)
@@ -127,9 +209,13 @@ const ResultPreviewPanel = ({
         }
       }
 
-      setEditedContent(content);
+      // ✅ Clean up content by removing section headers and title duplicates
+      const cleanedContent = cleanContent(content, title);
+
+      setEditedContent(cleanedContent);
       setEditedTitle(title);
       setEditedSEO(seo || { title: '', description: '', keywords: '' });
+      setFeaturedImageUrl(featuredImage);
     }
   }, [task]);
 
@@ -247,6 +333,7 @@ const ResultPreviewPanel = ({
           reviewer_id: reviewerId,
           cms_post_id: result.strapi_post_id,
           published_url: result.published_url,
+          featured_image_url: featuredImageUrl,
         });
       } else {
         onReject({
@@ -356,14 +443,14 @@ const ResultPreviewPanel = ({
         </div>
 
         {/* Featured Image */}
-        {task?.task_metadata?.featured_image_url && (
+        {task?.task_metadata?.featured_image_url || featuredImageUrl ? (
           <div>
             <label className="block text-sm font-semibold text-cyan-400 mb-2">
               Featured Image
             </label>
             <div className="p-3 bg-gray-800 rounded border border-gray-700">
               <img
-                src={task.task_metadata.featured_image_url}
+                src={featuredImageUrl || task.task_metadata?.featured_image_url}
                 alt="Featured"
                 className="w-full max-h-64 object-cover rounded"
                 onError={(e) => {
@@ -375,11 +462,46 @@ const ResultPreviewPanel = ({
                 style={{ display: 'none' }}
                 className="text-gray-400 text-sm py-4"
               >
-                Image URL: {task.task_metadata.featured_image_url}
+                Image URL:{' '}
+                {featuredImageUrl || task.task_metadata?.featured_image_url}
               </div>
             </div>
           </div>
-        )}
+        ) : null}
+
+        {/* Featured Image URL Input or Generator */}
+        <div>
+          <label className="block text-sm font-semibold text-cyan-400 mb-2">
+            Featured Image URL
+          </label>
+          <div className="flex gap-2">
+            <input
+              type="text"
+              value={featuredImageUrl}
+              onChange={(e) => setFeaturedImageUrl(e.target.value)}
+              placeholder="Enter image URL or generate one..."
+              className="flex-1 p-3 bg-gray-700 text-white rounded border border-gray-600 focus:outline-none focus:ring-2 focus:ring-cyan-500"
+            />
+            <button
+              onClick={generateFeaturedImage}
+              disabled={isGeneratingImage || !editedTitle}
+              className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded font-medium transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 whitespace-nowrap"
+            >
+              {isGeneratingImage ? (
+                <>
+                  <span className="animate-spin">⟳</span> Generating...
+                </>
+              ) : (
+                '🎨 Generate'
+              )}
+            </button>
+          </div>
+          {!editedTitle && (
+            <p className="text-xs text-gray-500 mt-1">
+              💡 Tip: Set a title first to generate a relevant image
+            </p>
+          )}
+        </div>
 
         {/* Excerpt */}
         {task?.task_metadata?.excerpt && (
@@ -632,6 +754,7 @@ const ResultPreviewPanel = ({
                 const updatedTask = {
                   ...task,
                   title: editedTitle,
+                  featured_image_url: featuredImageUrl,
                   result: {
                     ...task.result,
                     content: editedContent,

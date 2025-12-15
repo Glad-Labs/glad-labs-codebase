@@ -105,7 +105,10 @@ const ExecutiveDashboard = () => {
     trends: {
       publishing: {
         title: 'Publishing Trend (30 days)',
-        data: [1, 2, 3, 5, 4, 6, 7, 8, 9, 8, 10, 11, 12, 10, 9, 8, 7, 6, 8, 9, 10, 11, 12, 11, 10, 9, 8, 10, 12, 14],
+        data: [
+          1, 2, 3, 5, 4, 6, 7, 8, 9, 8, 10, 11, 12, 10, 9, 8, 7, 6, 8, 9, 10,
+          11, 12, 11, 10, 9, 8, 10, 12, 14,
+        ],
         avg: 5.2,
         peak: 14,
         low: 1,
@@ -113,7 +116,11 @@ const ExecutiveDashboard = () => {
       },
       engagement: {
         title: 'Engagement Metrics (30 days)',
-        data: [2.1, 2.3, 2.5, 3.2, 3.5, 3.8, 4.0, 4.2, 4.5, 4.3, 4.6, 4.8, 5.0, 4.9, 4.7, 4.5, 4.8, 5.1, 5.3, 5.2, 5.4, 5.6, 5.8, 5.7, 5.5, 5.4, 5.2, 5.0, 5.1, 5.3],
+        data: [
+          2.1, 2.3, 2.5, 3.2, 3.5, 3.8, 4.0, 4.2, 4.5, 4.3, 4.6, 4.8, 5.0, 4.9,
+          4.7, 4.5, 4.8, 5.1, 5.3, 5.2, 5.4, 5.6, 5.8, 5.7, 5.5, 5.4, 5.2, 5.0,
+          5.1, 5.3,
+        ],
         avg: 4.6,
         peak: 5.8,
         low: 2.1,
@@ -193,7 +200,10 @@ const ExecutiveDashboard = () => {
           <p>AI-Powered Business Management System - Real-time KPI Overview</p>
         </div>
         <div className="time-range-selector">
-          <select value={timeRange} onChange={(e) => setTimeRange(e.target.value)}>
+          <select
+            value={timeRange}
+            onChange={(e) => setTimeRange(e.target.value)}
+          >
             <option value="7days">Last 7 Days</option>
             <option value="30days">Last 30 Days</option>
             <option value="90days">Last 90 Days</option>
@@ -213,9 +223,14 @@ const ExecutiveDashboard = () => {
                 <div className="kpi-icon">{kpis.revenue.icon}</div>
                 <div className="kpi-title">Revenue</div>
               </div>
-              <div className="kpi-value">{formatCurrency(kpis.revenue.current)}</div>
-              <div className={`kpi-change ${kpis.revenue.change >= 0 ? 'positive' : 'negative'}`}>
-                {kpis.revenue.change >= 0 ? '↑' : '↓'} {Math.abs(kpis.revenue.change)}% MoM
+              <div className="kpi-value">
+                {formatCurrency(kpis.revenue.current)}
+              </div>
+              <div
+                className={`kpi-change ${kpis.revenue.change >= 0 ? 'positive' : 'negative'}`}
+              >
+                {kpis.revenue.change >= 0 ? '↑' : '↓'}{' '}
+                {Math.abs(kpis.revenue.change)}% MoM
               </div>
               <div className="kpi-previous">
                 vs {formatCurrency(kpis.revenue.previous)} last month
@@ -230,9 +245,14 @@ const ExecutiveDashboard = () => {
                 <div className="kpi-icon">{kpis.contentPublished.icon}</div>
                 <div className="kpi-title">Content Published</div>
               </div>
-              <div className="kpi-value">{formatNumber(kpis.contentPublished.current)}</div>
-              <div className={`kpi-change ${kpis.contentPublished.change >= 0 ? 'positive' : 'negative'}`}>
-                {kpis.contentPublished.change >= 0 ? '↑' : '↓'} {Math.abs(kpis.contentPublished.change)}% MoM
+              <div className="kpi-value">
+                {formatNumber(kpis.contentPublished.current)}
+              </div>
+              <div
+                className={`kpi-change ${kpis.contentPublished.change >= 0 ? 'positive' : 'negative'}`}
+              >
+                {kpis.contentPublished.change >= 0 ? '↑' : '↓'}{' '}
+                {Math.abs(kpis.contentPublished.change)}% MoM
               </div>
               <div className="kpi-previous">
                 {kpis.contentPublished.unit} published
@@ -247,9 +267,14 @@ const ExecutiveDashboard = () => {
                 <div className="kpi-icon">{kpis.tasksCompleted.icon}</div>
                 <div className="kpi-title">Tasks Completed</div>
               </div>
-              <div className="kpi-value">{formatNumber(kpis.tasksCompleted.current)}</div>
-              <div className={`kpi-change ${kpis.tasksCompleted.change >= 0 ? 'positive' : 'negative'}`}>
-                {kpis.tasksCompleted.change >= 0 ? '↑' : '↓'} {Math.abs(kpis.tasksCompleted.change)}% MoM
+              <div className="kpi-value">
+                {formatNumber(kpis.tasksCompleted.current)}
+              </div>
+              <div
+                className={`kpi-change ${kpis.tasksCompleted.change >= 0 ? 'positive' : 'negative'}`}
+              >
+                {kpis.tasksCompleted.change >= 0 ? '↑' : '↓'}{' '}
+                {Math.abs(kpis.tasksCompleted.change)}% MoM
               </div>
               <div className="kpi-previous">
                 {kpis.tasksCompleted.unit} automated
@@ -264,13 +289,16 @@ const ExecutiveDashboard = () => {
                 <div className="kpi-icon">{kpis.aiSavings.icon}</div>
                 <div className="kpi-title">AI Savings</div>
               </div>
-              <div className="kpi-value">{formatCurrency(kpis.aiSavings.current)}</div>
-              <div className={`kpi-change ${kpis.aiSavings.change >= 0 ? 'positive' : 'negative'}`}>
-                {kpis.aiSavings.change >= 0 ? '↑' : '↓'} {Math.abs(kpis.aiSavings.change)}% MoM
+              <div className="kpi-value">
+                {formatCurrency(kpis.aiSavings.current)}
               </div>
-              <div className="kpi-previous">
-                this month vs last
+              <div
+                className={`kpi-change ${kpis.aiSavings.change >= 0 ? 'positive' : 'negative'}`}
+              >
+                {kpis.aiSavings.change >= 0 ? '↑' : '↓'}{' '}
+                {Math.abs(kpis.aiSavings.change)}% MoM
               </div>
+              <div className="kpi-previous">this month vs last</div>
             </div>
           )}
         </div>
@@ -339,15 +367,21 @@ const ExecutiveDashboard = () => {
               <div className="trend-stats">
                 <div className="stat">
                   <span className="label">Average:</span>
-                  <span className="value">{trends.engagement.avg.toFixed(1)}%</span>
+                  <span className="value">
+                    {trends.engagement.avg.toFixed(1)}%
+                  </span>
                 </div>
                 <div className="stat">
                   <span className="label">Peak:</span>
-                  <span className="value">{trends.engagement.peak.toFixed(1)}%</span>
+                  <span className="value">
+                    {trends.engagement.peak.toFixed(1)}%
+                  </span>
                 </div>
                 <div className="stat">
                   <span className="label">Low:</span>
-                  <span className="value">{trends.engagement.low.toFixed(1)}%</span>
+                  <span className="value">
+                    {trends.engagement.low.toFixed(1)}%
+                  </span>
                 </div>
               </div>
             </div>
@@ -432,19 +466,27 @@ const ExecutiveDashboard = () => {
               <h4>This Month</h4>
               <div className="stat-row">
                 <span className="stat-name">Posts Created:</span>
-                <span className="stat-number">{formatNumber(quickStats.thisMonth.postsCreated)}</span>
+                <span className="stat-number">
+                  {formatNumber(quickStats.thisMonth.postsCreated)}
+                </span>
               </div>
               <div className="stat-row">
                 <span className="stat-name">Tasks Completed:</span>
-                <span className="stat-number">{formatNumber(quickStats.thisMonth.tasksCompleted)}</span>
+                <span className="stat-number">
+                  {formatNumber(quickStats.thisMonth.tasksCompleted)}
+                </span>
               </div>
               <div className="stat-row">
                 <span className="stat-name">Automation Rate:</span>
-                <span className="stat-number">{quickStats.thisMonth.automationRate}%</span>
+                <span className="stat-number">
+                  {quickStats.thisMonth.automationRate}%
+                </span>
               </div>
               <div className="stat-row cost-saved">
                 <span className="stat-name">Cost Saved:</span>
-                <span className="stat-number">{formatCurrency(quickStats.thisMonth.costSaved)}</span>
+                <span className="stat-number">
+                  {formatCurrency(quickStats.thisMonth.costSaved)}
+                </span>
               </div>
             </div>
             {quickStats.thisYear && (
@@ -452,19 +494,27 @@ const ExecutiveDashboard = () => {
                 <h4>This Year</h4>
                 <div className="stat-row">
                   <span className="stat-name">Posts Created:</span>
-                  <span className="stat-number">{formatNumber(quickStats.thisYear.postsCreated)}</span>
+                  <span className="stat-number">
+                    {formatNumber(quickStats.thisYear.postsCreated)}
+                  </span>
                 </div>
                 <div className="stat-row">
                   <span className="stat-name">Tasks Completed:</span>
-                  <span className="stat-number">{formatNumber(quickStats.thisYear.tasksCompleted)}</span>
+                  <span className="stat-number">
+                    {formatNumber(quickStats.thisYear.tasksCompleted)}
+                  </span>
                 </div>
                 <div className="stat-row">
                   <span className="stat-name">Automation Rate:</span>
-                  <span className="stat-number">{quickStats.thisYear.automationRate}%</span>
+                  <span className="stat-number">
+                    {quickStats.thisYear.automationRate}%
+                  </span>
                 </div>
                 <div className="stat-row cost-saved">
                   <span className="stat-name">Cost Saved:</span>
-                  <span className="stat-number">{formatCurrency(quickStats.thisYear.costSaved)}</span>
+                  <span className="stat-number">
+                    {formatCurrency(quickStats.thisYear.costSaved)}
+                  </span>
                 </div>
               </div>
             )}

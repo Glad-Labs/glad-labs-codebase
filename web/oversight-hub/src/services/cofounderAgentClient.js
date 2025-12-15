@@ -339,7 +339,14 @@ export async function getOAuthLoginURL(provider) {
  * @returns {Promise} User data and tokens
  */
 export async function handleOAuthCallback(provider, code, state) {
-  return makeRequest(`/api/auth/${provider}/callback`, 'GET', null, true, null, 15000);
+  return makeRequest(
+    `/api/auth/${provider}/callback`,
+    'GET',
+    null,
+    true,
+    null,
+    15000
+  );
 }
 
 /**
@@ -514,11 +521,15 @@ export async function getTaskMetrics() {
 // Intelligent Orchestrator
 // ============================================================================
 
-export async function processOrchestratorRequest(request, businessMetrics, preferences) {
+export async function processOrchestratorRequest(
+  request,
+  businessMetrics,
+  preferences
+) {
   return makeRequest('/api/orchestrator/process', 'POST', {
     request,
     business_metrics: businessMetrics,
-    preferences
+    preferences,
   });
 }
 
@@ -543,7 +554,11 @@ export async function getOrchestratorTools() {
  * Endpoints for conversation-based AI interactions
  */
 
-export async function sendChatMessage(message, model = 'openai-gpt4', conversationId = 'default') {
+export async function sendChatMessage(
+  message,
+  model = 'openai-gpt4',
+  conversationId = 'default'
+) {
   /**
    * Send a chat message and get AI response
    *
@@ -567,7 +582,14 @@ export async function getChatHistory(conversationId = 'default') {
    * @param {string} conversationId - The conversation ID to retrieve
    * @returns {Promise<object>} - Conversation history with messages
    */
-  return makeRequest(`/api/chat/history/${conversationId}`, 'GET', null, false, null, 30000);
+  return makeRequest(
+    `/api/chat/history/${conversationId}`,
+    'GET',
+    null,
+    false,
+    null,
+    30000
+  );
 }
 
 export async function clearChatHistory(conversationId = 'default') {
@@ -577,7 +599,14 @@ export async function clearChatHistory(conversationId = 'default') {
    * @param {string} conversationId - The conversation to clear
    * @returns {Promise<object>} - Confirmation response
    */
-  return makeRequest(`/api/chat/history/${conversationId}`, 'DELETE', null, false, null, 10000);
+  return makeRequest(
+    `/api/chat/history/${conversationId}`,
+    'DELETE',
+    null,
+    false,
+    null,
+    10000
+  );
 }
 
 export async function getAvailableModels() {
@@ -601,7 +630,14 @@ export async function getAgentStatus(agentId) {
    * @param {string} agentId - The agent ID
    * @returns {Promise<object>} - Agent status info (status, tasks_completed, current_task, etc.)
    */
-  return makeRequest(`/api/agents/${agentId}/status`, 'GET', null, false, null, 10000);
+  return makeRequest(
+    `/api/agents/${agentId}/status`,
+    'GET',
+    null,
+    false,
+    null,
+    10000
+  );
 }
 
 export async function getAgentLogs(agentId, limit = 100) {
@@ -631,7 +667,14 @@ export async function sendAgentCommand(agentId, command) {
    * @returns {Promise<object>} - Command execution result
    */
   const payload = { command };
-  return makeRequest(`/api/agents/${agentId}/command`, 'POST', payload, false, null, 30000);
+  return makeRequest(
+    `/api/agents/${agentId}/command`,
+    'POST',
+    payload,
+    false,
+    null,
+    30000
+  );
 }
 
 export async function getAgentMetrics(agentId) {
@@ -641,7 +684,14 @@ export async function getAgentMetrics(agentId) {
    * @param {string} agentId - The agent ID
    * @returns {Promise<object>} - Agent metrics (success rate, avg response time, etc.)
    */
-  return makeRequest(`/api/agents/${agentId}/metrics`, 'GET', null, false, null, 10000);
+  return makeRequest(
+    `/api/agents/${agentId}/metrics`,
+    'GET',
+    null,
+    false,
+    null,
+    10000
+  );
 }
 
 /**
@@ -674,7 +724,14 @@ export async function getExecutionDetails(executionId) {
    * @param {string} executionId - The execution ID
    * @returns {Promise<object>} - Detailed execution information
    */
-  return makeRequest(`/api/workflow/execution/${executionId}`, 'GET', null, false, null, 10000);
+  return makeRequest(
+    `/api/workflow/execution/${executionId}`,
+    'GET',
+    null,
+    false,
+    null,
+    10000
+  );
 }
 
 export async function retryExecution(executionId) {
@@ -684,7 +741,14 @@ export async function retryExecution(executionId) {
    * @param {string} executionId - The execution ID to retry
    * @returns {Promise<object>} - New execution result
    */
-  return makeRequest(`/api/workflow/execution/${executionId}/retry`, 'POST', null, false, null, 30000);
+  return makeRequest(
+    `/api/workflow/execution/${executionId}/retry`,
+    'POST',
+    null,
+    false,
+    null,
+    30000
+  );
 }
 
 export async function getDetailedMetrics(timeRange = '24h') {
@@ -742,7 +806,14 @@ export async function getUsageMetrics(period = 'last_24h') {
    * @param {string} period - Time period: last_1h, last_24h, last_7d, all
    * @returns {Promise<object>} - Usage stats, token counts, cost analysis
    */
-  return makeRequest(`/api/metrics/usage?period=${period}`, 'GET', null, true, null, 15000);
+  return makeRequest(
+    `/api/metrics/usage?period=${period}`,
+    'GET',
+    null,
+    true,
+    null,
+    15000
+  );
 }
 
 /**
@@ -774,7 +845,14 @@ export async function getOrchestratorOverallStatus() {
    *
    * @returns {Promise<object>} - Status of orchestrator, active agents, pending tasks
    */
-  return makeRequest('/api/orchestrator/status', 'GET', null, true, null, 15000);
+  return makeRequest(
+    '/api/orchestrator/status',
+    'GET',
+    null,
+    true,
+    null,
+    15000
+  );
 }
 
 export async function getActiveAgents() {
@@ -783,7 +861,14 @@ export async function getActiveAgents() {
    *
    * @returns {Promise<Array>} - List of active agents with status
    */
-  return makeRequest('/api/orchestrator/active-agents', 'GET', null, true, null, 10000);
+  return makeRequest(
+    '/api/orchestrator/active-agents',
+    'GET',
+    null,
+    true,
+    null,
+    10000
+  );
 }
 
 export async function getTaskQueue() {
@@ -792,7 +877,14 @@ export async function getTaskQueue() {
    *
    * @returns {Promise<Array>} - List of pending tasks
    */
-  return makeRequest('/api/orchestrator/task-queue', 'GET', null, true, null, 10000);
+  return makeRequest(
+    '/api/orchestrator/task-queue',
+    'GET',
+    null,
+    true,
+    null,
+    10000
+  );
 }
 
 export async function getLearningPatterns() {
@@ -801,7 +893,14 @@ export async function getLearningPatterns() {
    *
    * @returns {Promise<object>} - Learning patterns and insights
    */
-  return makeRequest('/api/orchestrator/learning-patterns', 'GET', null, true, null, 15000);
+  return makeRequest(
+    '/api/orchestrator/learning-patterns',
+    'GET',
+    null,
+    true,
+    null,
+    15000
+  );
 }
 
 export async function getBusinessMetricsAnalysis() {
@@ -810,7 +909,14 @@ export async function getBusinessMetricsAnalysis() {
    *
    * @returns {Promise<object>} - Business metrics analysis
    */
-  return makeRequest('/api/orchestrator/business-metrics-analysis', 'GET', null, true, null, 15000);
+  return makeRequest(
+    '/api/orchestrator/business-metrics-analysis',
+    'GET',
+    null,
+    true,
+    null,
+    15000
+  );
 }
 
 const cofounderAgentClient = {

@@ -7,7 +7,10 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { CircularProgress, Alert, Box } from '@mui/material';
-import { exchangeCodeForToken, handleOAuthCallbackNew } from '../services/authService';
+import {
+  exchangeCodeForToken,
+  handleOAuthCallbackNew,
+} from '../services/authService';
 import useAuth from '../hooks/useAuth';
 
 const AuthCallback = () => {
@@ -80,7 +83,7 @@ const AuthCallback = () => {
       } catch (err) {
         console.error('Error handling OAuth callback:', err);
         setError(err.message || 'Failed to authenticate. Please try again.');
-        setError(prev => `${prev}`); // Keep error visible
+        setError((prev) => `${prev}`); // Keep error visible
       }
     };
 

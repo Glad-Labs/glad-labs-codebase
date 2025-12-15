@@ -62,6 +62,7 @@ npm run dev:cofounder     # FastAPI Co-Founder Agent on http://localhost:8000
 ```
 
 **IMPORTANT: NO STRAPI SERVICE** - CMS is database-driven directly via FastAPI routes:
+
 - CMS endpoints are in `src/cofounder_agent/routes/cms_routes.py`
 - Data is stored in PostgreSQL (Strapi schema tables)
 - StrapiPublisher writes directly to database (no REST API middleware)
@@ -219,11 +220,11 @@ npm run setup:python     # Just pip install for backend
 | Next.js public site      | `web/public-site/pages/`, `lib/api.js`, `components/`                   |
 | CMS routes (NOT Strapi)  | `src/cofounder_agent/routes/cms_routes.py` (direct PostgreSQL access)   |
 | Database schema          | `src/cofounder_agent/database.py` (SQLAlchemy models)                   |
-| Strapi schema reference  | `cms/strapi-main/src/` (for understanding table structure, not running)  |
+| Strapi schema reference  | `cms/strapi-main/src/` (for understanding table structure, not running) |
 | Authentication flow      | `src/cofounder_agent/routes/auth_routes.py`, `middleware/auth.py`       |
 | Audit logging            | `src/cofounder_agent/middleware/audit_logging.py` (type-safe, 0 errors) |
 | PostgreSQL operations    | `src/cofounder_agent/services/database_service.py`, route files         |
-| Direct to DB writes      | `src/cofounder_agent/services/content_publisher.py` (asyncpg, no REST)   |
+| Direct to DB writes      | `src/cofounder_agent/services/content_publisher.py` (asyncpg, no REST)  |
 | Tests                    | `src/cofounder_agent/tests/`, `**/__tests__/` (Jest)                    |
 | NPM workspace configs    | Root `package.json` (`workspaces` array)                                |
 
@@ -426,7 +427,7 @@ Glad Labs uses a **PRAGMATIC DOCUMENTATION** approach balancing usefulness with 
 
 1. **Architecture & Decisions** (MAINTAIN ACTIVELY - Quarterly)
    - Core docs 00-07 (system design, deployment, workflows)
-   - `docs/decisions/` with WHY_*.md files (decision rationale)
+   - `docs/decisions/` with WHY\_\*.md files (decision rationale)
    - `docs/roadmap/` for future planning
    - ✅ Update when architecture or strategic direction changes
    - **Example:** WHY_FASTAPI.md, WHY_POSTGRESQL.md
@@ -457,15 +458,15 @@ Glad Labs uses a **PRAGMATIC DOCUMENTATION** approach balancing usefulness with 
 
 **Update Schedules & Maintenance Levels:**
 
-| Category | Frequency | Effort | Status |
-|----------|-----------|--------|--------|
-| Core Docs (00-07) | Quarterly review | 2-3 hours | Active ✅ |
-| Architecture Decisions | When decision made | 1-2 hours | Active ✅ |
-| API References | As APIs change | Ongoing | Active ✅ |
-| Roadmaps | Plan updates | Monthly | Active ✅ |
-| Guides | Minimal | 30 min per | Minimal ⚠️ |
-| Troubleshooting | As issues solved | Variable | Living 📝 |
-| Archive | Never | 0 hours | Frozen 🔒 |
+| Category               | Frequency          | Effort     | Status     |
+| ---------------------- | ------------------ | ---------- | ---------- |
+| Core Docs (00-07)      | Quarterly review   | 2-3 hours  | Active ✅  |
+| Architecture Decisions | When decision made | 1-2 hours  | Active ✅  |
+| API References         | As APIs change     | Ongoing    | Active ✅  |
+| Roadmaps               | Plan updates       | Monthly    | Active ✅  |
+| Guides                 | Minimal            | 30 min per | Minimal ⚠️ |
+| Troubleshooting        | As issues solved   | Variable   | Living 📝  |
+| Archive                | Never              | 0 hours    | Frozen 🔒  |
 
 **MAINTENANCE PHILOSOPHY:**
 
@@ -480,11 +481,12 @@ Glad Labs uses a **PRAGMATIC DOCUMENTATION** approach balancing usefulness with 
 If something helps developers and is maintainable, document it. If it gets stale, archive it. We don't follow rigid rules that reduce usefulness.
 
 **Current Metrics (Phase 1 Complete):**
+
 - ✅ 8 new documents created (3,700+ lines)
 - ✅ 5-category framework established
 - ✅ 70+ historical files archived
 - ✅ Root folder reduced from 100+ to 5 files
-- ✅ Decision document pattern established (2 WHY_*.md examples)
+- ✅ Decision document pattern established (2 WHY\_\*.md examples)
 - ✅ API reference complete (50+ endpoints documented)
 
 ### Update Process
@@ -726,14 +728,14 @@ echo $DATABASE_URL
 
 ## 📋 Document Control
 
-| Field            | Value                                          |
-| ---------------- | ---------------------------------------------- | 
-| **Version**      | 2.1                                            |
-| **Last Updated** | November 14, 2025                              |
-| **Next Review**  | February 14, 2026 (quarterly)                  |
-| **Author**       | GitHub Copilot & Glad Labs Team                |
-| **Status**       | Active & Maintained | Production Ready       |
-| **Audience**     | All team members (developers, DevOps, QA, PMs) |
+| Field            | Value                                                                               |
+| ---------------- | ----------------------------------------------------------------------------------- | ---------------- |
+| **Version**      | 2.1                                                                                 |
+| **Last Updated** | November 14, 2025                                                                   |
+| **Next Review**  | February 14, 2026 (quarterly)                                                       |
+| **Author**       | GitHub Copilot & Glad Labs Team                                                     |
+| **Status**       | Active & Maintained                                                                 | Production Ready |
+| **Audience**     | All team members (developers, DevOps, QA, PMs)                                      |
 | **Key Changes**  | Phase 1 complete - Archive structure, pragmatic documentation framework established |
 
 ---

@@ -23,16 +23,19 @@ The oversight-hub UI was built for the old endpoint structure and **has NOT been
 **Location:** `web/oversight-hub/src/routes/TaskManagement.jsx` (lines 21, 67)
 
 **Current Code:**
+
 ```jsx
-const response = await getTasks(100, 0);  // getTasks(limit, offset)
+const response = await getTasks(100, 0); // getTasks(limit, offset)
 ```
 
 **Backend Expects:**
+
 ```
 GET /api/tasks?offset=0&limit=20
 ```
 
 **Frontend Implementation (cofounderAgentClient.js:162):**
+
 ```javascript
 export async function getTasks(limit = 50, offset = 0) {
   return makeRequest(
@@ -57,6 +60,7 @@ export async function getTasks(limit = 50, offset = 0) {
 **Location:** `web/oversight-hub/src/routes/TaskManagement.jsx` (lines 29-43)
 
 **Code:**
+
 ```jsx
 if (response && response.tasks && Array.isArray(response.tasks)) {
   setLocalTasks(response.tasks);
@@ -68,6 +72,7 @@ if (response && response.tasks && Array.isArray(response.tasks)) {
 ```
 
 **Backend Response (TaskListResponse):**
+
 ```python
 {
   "tasks": [TaskResponse, ...],
@@ -86,6 +91,7 @@ if (response && response.tasks && Array.isArray(response.tasks)) {
 **Location:** `web/oversight-hub/src/components/tasks/CreateTaskModal.jsx` (lines 234, 268)
 
 **Code:**
+
 ```jsx
 if (taskType === 'blog_post') {
   // Uses POST /api/content/tasks for blog posts
@@ -111,10 +117,10 @@ if (taskType === 'blog_post') {
 ```
 
 **Backend Endpoints:**
+
 - ✅ `POST /api/tasks` - Uses `TaskCreateRequest` schema
   - Required: `task_name` (3-200 chars), `topic` (3-200 chars)
   - Optional: `primary_keyword`, `target_audience`, `category`, `metadata`
-  
 - ✅ `POST /api/content/tasks` - Exists and creates content tasks
 
 **Issue:** Mixed endpoint usage - blog_post goes to `/api/content/tasks`, others to `/api/tasks`
@@ -128,23 +134,29 @@ if (taskType === 'blog_post') {
 ### 4. Hardcoded API URLs Instead of Using API Client
 
 **Locations:**
+
 - `CreateTaskModal.jsx` (lines 234, 268)
 - `TaskManagement.jsx` (line 257)
 - `TaskQueueView.jsx` (line 13)
 - `BlogPostCreator.jsx` (line 75)
 
 **Current Pattern:**
+
 ```jsx
-await fetch('http://localhost:8000/api/tasks', { /* ... */ })
+await fetch('http://localhost:8000/api/tasks', {
+  /* ... */
+});
 ```
 
 **Better Pattern:**
+
 ```jsx
 import { createTask, getTasks } from '../services/cofounderAgentClient';
 const result = await createTask(taskData);
 ```
 
 **Benefits:**
+
 - Centralized API management
 - Automatic JWT token injection
 - Consistent error handling
@@ -160,6 +172,7 @@ const result = await createTask(taskData);
 **Location:** `CreateTaskModal.jsx` (lines 293-305)
 
 **Code:**
+
 ```javascript
 const result = await response.json();
 console.log('✅ Task created successfully:', result);
@@ -172,6 +185,7 @@ if (onTaskCreated) {
 **Issue:** No validation that response has expected shape
 
 **Backend Returns:**
+
 ```python
 # For POST /api/tasks (TaskCreateRequest):
 {
@@ -194,6 +208,7 @@ if (onTaskCreated) {
 **Location:** `TaskManagement.jsx` (line 257)
 
 **Code:**
+
 ```javascript
 response = await fetch('http://localhost:8000/api/tasks/bulk', {
   method: 'POST',
@@ -214,6 +229,7 @@ response = await fetch('http://localhost:8000/api/tasks/bulk', {
 **Location:** Components using quality assessment
 
 **Backend Available:**
+
 - ✅ `POST /api/quality/evaluate` - Evaluate single content
 - ✅ `POST /api/quality/batch-evaluate` - Batch evaluation
 - ✅ `GET /api/quality/statistics` - Get quality stats
@@ -233,6 +249,7 @@ response = await fetch('http://localhost:8000/api/tasks/bulk', {
 **Not Yet Used In UI:** Should add metrics dashboard
 
 **Backend Response:**
+
 ```python
 {
   "total_tasks": 42,
@@ -253,6 +270,7 @@ response = await fetch('http://localhost:8000/api/tasks/bulk', {
 **Not Yet Used In UI:** Natural language task creation interface not implemented
 
 **Backend Endpoint:**
+
 ```python
 POST /api/tasks/intent
 {
@@ -265,17 +283,20 @@ POST /api/tasks/intent
 ## ✅ WORKING IMPLEMENTATIONS
 
 ### GET /api/tasks - List Tasks
+
 - ✅ TaskManagement.jsx uses correct endpoint
 - ✅ getTasks() in cofounderAgentClient.js correctly builds query string
 - ✅ Response parsing matches TaskListResponse schema
 - ✅ Pagination works (offset, limit)
 
 ### POST /api/tasks - Create Task
+
 - ✅ CreateTaskModal.jsx sends to correct endpoint
 - ✅ TaskCreateRequest schema matches payload
 - ✅ Response includes task ID and metadata
 
 ### GET /api/orchestrator endpoints
+
 - ✅ api.js properly implements orchestrator endpoints
 - ✅ OrchestratorMessageCard components should work
 
@@ -283,22 +304,23 @@ POST /api/tasks/intent
 
 ## 📊 AUDIT SUMMARY BY COMPONENT
 
-| Component | Endpoint | Status | Issues |
-|-----------|----------|--------|--------|
-| TaskManagement.jsx | GET /api/tasks | ✅ | None |
-| CreateTaskModal.jsx | POST /api/tasks, POST /api/content/tasks | ⚠️ | Hardcoded URLs, mixed endpoints |
-| TaskQueueView.jsx | GET /api/tasks | ⚠️ | Hardcoded URL, unused fetch |
-| BlogPostCreator.jsx | POST /api/content/tasks | ⚠️ | Hardcoded URL |
-| TaskDetailModal.jsx | GET /api/tasks/{id} | ✅ | Read-only display, no fetch calls |
-| TaskPreviewModal.jsx | GET /api/tasks/{id} | ? | Not found in oversight-hub |
-| OrchestratorMessageCard.jsx | POST /api/orchestrator/* | ✅ | Uses api.js client |
-| TrainingDataDashboard.jsx | Various | ✅ | Uses quality metrics display |
+| Component                   | Endpoint                                 | Status | Issues                            |
+| --------------------------- | ---------------------------------------- | ------ | --------------------------------- |
+| TaskManagement.jsx          | GET /api/tasks                           | ✅     | None                              |
+| CreateTaskModal.jsx         | POST /api/tasks, POST /api/content/tasks | ⚠️     | Hardcoded URLs, mixed endpoints   |
+| TaskQueueView.jsx           | GET /api/tasks                           | ⚠️     | Hardcoded URL, unused fetch       |
+| BlogPostCreator.jsx         | POST /api/content/tasks                  | ⚠️     | Hardcoded URL                     |
+| TaskDetailModal.jsx         | GET /api/tasks/{id}                      | ✅     | Read-only display, no fetch calls |
+| TaskPreviewModal.jsx        | GET /api/tasks/{id}                      | ?      | Not found in oversight-hub        |
+| OrchestratorMessageCard.jsx | POST /api/orchestrator/\*                | ✅     | Uses api.js client                |
+| TrainingDataDashboard.jsx   | Various                                  | ✅     | Uses quality metrics display      |
 
 ---
 
 ## 🔧 RECOMMENDED FIXES
 
 ### Priority 1 (Critical - Fix Now)
+
 1. **Replace hardcoded fetch() calls with API client functions**
    - Use `createTask()`, `getTasks()`, `getTask()`, `updateTask()` from cofounderAgentClient.js
    - Removes hardcoded localhost URLs
@@ -309,6 +331,7 @@ POST /api/tasks/intent
    - Or fetch tasks individually in parallel: `Promise.all(ids.map(id => getTask(id)))`
 
 ### Priority 2 (Medium - Fix Soon)
+
 3. **Add response validation for task creation**
    - Verify `response.id` exists before passing to `onTaskCreated()`
    - Add try-catch for JSON parsing
@@ -319,6 +342,7 @@ POST /api/tasks/intent
    - Show quality metrics in analytics dashboard
 
 ### Priority 3 (Nice to Have)
+
 5. **Add metrics dashboard component**
    - Display GET /api/tasks/metrics/summary data
    - Show charts: success rate, avg execution time, task distribution
@@ -333,12 +357,13 @@ POST /api/tasks/intent
 ## 📝 Implementation Notes
 
 ### API Client Pattern (Recommended)
+
 ```javascript
 // ❌ OLD WAY
 const response = await fetch('http://localhost:8000/api/tasks', {
   method: 'POST',
-  headers: { 'Authorization': `Bearer ${token}` },
-  body: JSON.stringify(data)
+  headers: { Authorization: `Bearer ${token}` },
+  body: JSON.stringify(data),
 });
 
 // ✅ NEW WAY
@@ -347,12 +372,14 @@ const result = await createTask(data);
 ```
 
 ### Environment Configuration
+
 ```env
 # .env.local
 REACT_APP_API_URL=http://localhost:8000
 ```
 
 Then use in cofounderAgentClient.js:
+
 ```javascript
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:8000';
 ```

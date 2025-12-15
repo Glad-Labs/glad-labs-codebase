@@ -29,11 +29,31 @@ const AI_MODELS = [
 
 // Available Agents for delegation
 const AVAILABLE_AGENTS = [
-  { id: 'content', name: '📝 Content Agent', description: 'Generate and manage content' },
-  { id: 'financial', name: '📊 Financial Agent', description: 'Business metrics & analysis' },
-  { id: 'market', name: '🔍 Market Insight Agent', description: 'Market analysis & trends' },
-  { id: 'compliance', name: '✓ Compliance Agent', description: 'Legal & regulatory checks' },
-  { id: 'orchestrator', name: '🧠 Co-Founder Orchestrator', description: 'Multi-agent orchestration' },
+  {
+    id: 'content',
+    name: '📝 Content Agent',
+    description: 'Generate and manage content',
+  },
+  {
+    id: 'financial',
+    name: '📊 Financial Agent',
+    description: 'Business metrics & analysis',
+  },
+  {
+    id: 'market',
+    name: '🔍 Market Insight Agent',
+    description: 'Market analysis & trends',
+  },
+  {
+    id: 'compliance',
+    name: '✓ Compliance Agent',
+    description: 'Legal & regulatory checks',
+  },
+  {
+    id: 'orchestrator',
+    name: '🧠 Co-Founder Orchestrator',
+    description: 'Multi-agent orchestration',
+  },
 ];
 
 // Command type configurations

@@ -67,10 +67,9 @@ export const approveOrchestratorResult = async (executionId, feedback = {}) => {
  */
 export const rejectOrchestratorResult = async (executionId, feedback = {}) => {
   try {
-    const response = await api.post(
-      `/api/orchestrator/reject/${executionId}`,
-      { feedback }
-    );
+    const response = await api.post(`/api/orchestrator/reject/${executionId}`, {
+      feedback,
+    });
     return response.data;
   } catch (error) {
     console.error('Error rejecting orchestrator result:', error);
@@ -86,13 +85,10 @@ export const rejectOrchestratorResult = async (executionId, feedback = {}) => {
  */
 export const exportTrainingData = async (executionId, options = {}) => {
   try {
-    const response = await api.get(
-      `/api/orchestrator/export/${executionId}`,
-      {
-        params: options,
-        responseType: 'blob',
-      }
-    );
+    const response = await api.get(`/api/orchestrator/export/${executionId}`, {
+      params: options,
+      responseType: 'blob',
+    });
     return response.data;
   } catch (error) {
     console.error('Error exporting training data:', error);
@@ -113,7 +109,8 @@ export const connectToStatusUpdates = (
   onError = null
 ) => {
   // Determine WebSocket URL from API base URL
-  const wsBaseUrl = process.env.REACT_APP_WS_BASE_URL ||
+  const wsBaseUrl =
+    process.env.REACT_APP_WS_BASE_URL ||
     (process.env.REACT_APP_API_BASE_URL || 'http://localhost:8000')
       .replace('http://', 'ws://')
       .replace('https://', 'wss://');
@@ -151,7 +148,9 @@ export const connectToStatusUpdates = (
     };
 
     ws.onclose = () => {
-      console.log(`Disconnected from status updates for execution ${executionId}`);
+      console.log(
+        `Disconnected from status updates for execution ${executionId}`
+      );
     };
   } catch (error) {
     console.error('Error establishing WebSocket connection:', error);
