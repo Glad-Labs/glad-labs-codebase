@@ -161,8 +161,9 @@ const TaskManagement = () => {
 
       // ✅ FIXED: Use /api/tasks endpoint which returns {"tasks": [...], "total": ..., "offset": ..., "limit": ...}
       // Increased timeout from 5s to 15s to account for backend processing
+      // Load only latest 10 tasks on initial load for better performance
       const response = await fetch(
-        'http://localhost:8000/api/tasks?limit=100&offset=0',
+        'http://localhost:8000/api/tasks?limit=10&offset=0',
         {
           headers,
           signal: AbortSignal.timeout(15000),
@@ -975,19 +976,21 @@ const TaskManagement = () => {
                   </TableCell>
                   <TableCell>
                     <Chip
-                      label={task.status}
+                      label={task.status || 'queued'}
                       size="small"
                       color={getStatusColor(task.status)}
                     />
                   </TableCell>
                   <TableCell>
                     <Chip
-                      label={task.approval_status || task.status}
+                      label={task.approval_status || 'pending'}
                       size="small"
                       variant={
                         task.approval_status === 'approved'
                           ? 'filled'
-                          : 'outlined'
+                          : task.approval_status === 'rejected'
+                            ? 'filled'
+                            : 'outlined'
                       }
                       sx={{
                         backgroundColor:
@@ -1233,7 +1236,7 @@ const TaskManagement = () => {
                     }
                   );
                   if (response.ok) {
-                    // ✅ Update local task status to 'published' before closing
+                    // ✅ Update local task status to 'published' and approval_status to 'approved' before closing
                     setTasks(
                       tasks.map((t) =>
                         t.id === selectedTask.id
@@ -1294,7 +1297,7 @@ const TaskManagement = () => {
                     }
                   );
                   if (response.ok) {
-                    // ✅ Update local task status to 'rejected' before closing
+                    // ✅ Update local task status to 'rejected' and approval_status to 'rejected' before closing
                     setTasks(
                       tasks.map((t) =>
                         t.id === selectedTask.id

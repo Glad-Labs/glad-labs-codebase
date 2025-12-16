@@ -210,7 +210,68 @@ const CreateTaskModal = ({ isOpen, onClose, onTaskCreated }) => {
       // ✅ ROUTE TO CORRECT ENDPOINT BASED ON TASK TYPE
       let taskPayload;
 
-      if (taskType === 'blog_post') {
+      if (taskType === 'image_generation') {
+        // 🖼️ Handle image generation task - call FastAPI endpoint directly
+        console.log('🖼️ Generating images with:', formData);
+
+        // Call the FastAPI image generation endpoint
+        const imagePayload = {
+          prompt: formData.description,
+          title: formData.description.substring(0, 50), // Use first 50 chars as title
+          use_pexels: true,
+          use_generation: true, // Try both Pexels and SDXL
+          count: formData.count || 1,
+          style: formData.style || 'realistic',
+          resolution: formData.resolution || '1024x1024',
+        };
+
+        const imageResponse = await fetch(
+          'http://localhost:8000/api/media/generate-image',
+          {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(imagePayload),
+          }
+        );
+
+        if (!imageResponse.ok) {
+          throw new Error(
+            `Image generation failed: ${imageResponse.status} ${imageResponse.statusText}`
+          );
+        }
+
+        const imageResult = await imageResponse.json();
+        if (!imageResult.success) {
+          throw new Error(imageResult.message || 'Image generation failed');
+        }
+
+        console.log('✅ Image generated:', imageResult);
+
+        // Create task record with image results
+        taskPayload = {
+          task_name: `Image Generation: ${formData.description.substring(0, 50)}`,
+          topic: formData.description || '',
+          primary_keyword: formData.style || 'image',
+          target_audience: 'visual-content',
+          category: 'image_generation',
+          metadata: {
+            task_type: 'image_generation',
+            style: formData.style || 'realistic',
+            resolution: formData.resolution || '1024x1024',
+            count: formData.count || 1,
+            image_url: imageResult.image_url,
+            image_source: imageResult.image?.source || 'generated',
+            generation_time: imageResult.generation_time,
+            image_metadata: imageResult.image,
+            status: 'completed',
+            result: {
+              success: true,
+              image_url: imageResult.image_url,
+              generation_time: imageResult.generation_time,
+            },
+          },
+        };
+      } else if (taskType === 'blog_post') {
         // Create blog post task using generic endpoint with task_name mapping
         taskPayload = {
           task_name: `Blog: ${formData.topic}`,

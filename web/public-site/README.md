@@ -5,11 +5,11 @@
 ![Tailwind](https://img.shields.io/badge/Styling-Tailwind_CSS-38B2AC)
 ![SSG](https://img.shields.io/badge/Rendering-Static_Generation-green)
 
-High-performance public website built with Next.js 15, featuring static site generation, SEO optimization, and seamless Strapi v5 integration.
+High-performance public website built with Next.js 15, featuring static site generation, SEO optimization, and seamless postgres DB integration.
 
 ## Overview
 
-The Glad Labs public site serves as the primary content distribution platform, consuming content from the Strapi v5 CMS and presenting it through a fast, SEO-optimized interface.
+The Glad Labs public site serves as the primary content distribution platform, consuming content from the postgres database and presenting it through a fast, SEO-optimized interface.
 
 **Status:** ✅ Production Ready  
 **Version:** 3.0  
