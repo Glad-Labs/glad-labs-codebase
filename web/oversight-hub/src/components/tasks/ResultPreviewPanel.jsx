@@ -19,8 +19,29 @@ const ResultPreviewPanel = ({
   const [reviewerId, setReviewerId] = useState('admin');
   const [featuredImageUrl, setFeaturedImageUrl] = useState('');
   const [isGeneratingImage, setIsGeneratingImage] = useState(false);
+  const [imageGenerationProgress, setImageGenerationProgress] = useState(0);
   const [imageSource, setImageSource] = useState('pexels'); // 'pexels', 'sdxl', or 'both'
   const [imageGenerationMessage, setImageGenerationMessage] = useState('');
+  const [hasGeneratedImage, setHasGeneratedImage] = useState(false);
+
+  // Helper function to extract full title from content (e.g., "Title: Best Eats in the Northeast USA: A Culinary Guide")
+  const extractTitleFromContent = (content, fallbackTitle) => {
+    if (!content) return fallbackTitle;
+
+    // Look for "Title: ..." pattern on its own line or at start
+    const titleMatch = content.match(/^[\s]*Title:\s*(.+?)(?:\n|$)/im);
+    if (titleMatch && titleMatch[1]) {
+      return titleMatch[1].trim();
+    }
+
+    // Fallback to first heading if no Title: pattern
+    const headingMatch = content.match(/^#+\s*(.+?)$/m);
+    if (headingMatch && headingMatch[1]) {
+      return headingMatch[1].trim();
+    }
+
+    return fallbackTitle;
+  };
 
   // Helper function to clean content - remove title and section headers
   const cleanContent = (content, title) => {
@@ -68,17 +89,48 @@ const ResultPreviewPanel = ({
     }
 
     setIsGeneratingImage(true);
+    setImageGenerationProgress(0);
     setImageGenerationMessage('');
+    setHasGeneratedImage(false);
+
+    let progressInterval = null;
+
     try {
       const token = getAuthToken();
+
+      // Simulate progress updates
+      progressInterval = setInterval(() => {
+        setImageGenerationProgress((prev) => {
+          if (prev < 80) return prev + Math.random() * 30;
+          return prev;
+        });
+      }, 300);
 
       // Determine which image sources to try based on user selection
       const usePexels = imageSource === 'pexels' || imageSource === 'both';
       const useSDXL = imageSource === 'sdxl' || imageSource === 'both';
 
+      // Extract keywords from SEO metadata if available
+      let keywords = [];
+      if (editedSEO?.keywords) {
+        // Handle both string and array formats
+        if (typeof editedSEO.keywords === 'string') {
+          keywords = editedSEO.keywords
+            .split(',')
+            .map((kw) => kw.trim())
+            .filter((kw) => kw.length > 0)
+            .slice(0, 5); // Limit to top 5 keywords
+        } else if (Array.isArray(editedSEO.keywords)) {
+          keywords = editedSEO.keywords
+            .slice(0, 5)
+            .map((kw) => String(kw).trim());
+        }
+      }
+
       const requestPayload = {
         prompt: editedTitle,
         title: editedTitle,
+        keywords: keywords.length > 0 ? keywords : undefined,
         use_pexels: usePexels,
         use_generation: useSDXL,
       };
@@ -116,6 +168,8 @@ const ResultPreviewPanel = ({
         setImageGenerationMessage(
           `✅ Image from ${result.image?.source || 'image service'} in ${result.generation_time?.toFixed(2) || '?'}s`
         );
+        setHasGeneratedImage(true);
+        setImageGenerationProgress(100);
         console.log('✅ Featured image generated:', result);
       } else {
         throw new Error(result.message || 'No image URL returned');
@@ -126,7 +180,9 @@ const ResultPreviewPanel = ({
         `❌ Failed: ${error.message || 'Unknown error'}`
       );
     } finally {
+      clearInterval(progressInterval);
       setIsGeneratingImage(false);
+      setTimeout(() => setImageGenerationProgress(0), 500);
     }
   };
   React.useEffect(() => {
@@ -142,8 +198,11 @@ const ResultPreviewPanel = ({
       // PRIMARY: Load from task_metadata (orchestrator output)
       if (taskMeta.content) {
         content = taskMeta.content;
-        title =
-          taskMeta.title || task.title || task.topic || 'Generated Content';
+        // First try to extract from content, then fall back to metadata
+        title = extractTitleFromContent(
+          content,
+          taskMeta.title || task.title || task.topic || 'Generated Content'
+        );
         excerpt = taskMeta.excerpt || '';
         featuredImage = taskMeta.featured_image_url || '';
 
@@ -170,7 +229,11 @@ const ResultPreviewPanel = ({
 
           if (resultData.content) {
             content = resultData.content;
-            title = resultData.title || task.title || 'Generated Content';
+            // First try to extract from content, then fall back to metadata
+            title = extractTitleFromContent(
+              content,
+              resultData.title || task.title || 'Generated Content'
+            );
             excerpt = resultData.excerpt || '';
 
             seo = {
@@ -191,8 +254,11 @@ const ResultPreviewPanel = ({
       // FALLBACK: Legacy content_tasks structure
       else if (task.content) {
         content = task.content;
-        title =
-          task.title || task.topic || task.task_name || 'Generated Content';
+        // First try to extract from content, then fall back to metadata
+        title = extractTitleFromContent(
+          content,
+          task.title || task.topic || task.task_name || 'Generated Content'
+        );
         excerpt = task.excerpt || '';
 
         seo = {
@@ -220,16 +286,17 @@ const ResultPreviewPanel = ({
             task.result.text ||
             JSON.stringify(task.result, null, 2);
 
-          // 🎯 For blog posts, prioritize seo_title (generated by model)
-          // Otherwise use the original title, article_title, etc.
-          title =
+          // 🎯 For blog posts, prioritize extracted title from content, then fall back to other sources
+          title = extractTitleFromContent(
+            content,
             task.result.seo_title ||
-            task.result.title ||
-            task.result.article_title ||
-            task.result.seo?.title ||
-            task.title ||
-            task.task_name ||
-            'Generated Content';
+              task.result.title ||
+              task.result.article_title ||
+              task.result.seo?.title ||
+              task.title ||
+              task.task_name ||
+              'Generated Content'
+          );
 
           seo = task.result.seo || {
             title: task.result.seo_title || task.result.article_title || '',
@@ -542,7 +609,44 @@ const ResultPreviewPanel = ({
                 '🎨 Generate'
               )}
             </button>
+
+            {hasGeneratedImage && (
+              <button
+                onClick={generateFeaturedImage}
+                disabled={isGeneratingImage}
+                className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded font-medium transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 whitespace-nowrap"
+                title="Generate another image and replace the current one"
+              >
+                {isGeneratingImage ? (
+                  <>
+                    <span className="animate-spin">⟳</span> Regenerating...
+                  </>
+                ) : (
+                  '🔄 Try Again'
+                )}
+              </button>
+            )}
           </div>
+
+          {/* Progress Bar */}
+          {isGeneratingImage && imageGenerationProgress > 0 && (
+            <div className="mt-3">
+              <div className="w-full h-2 bg-gray-700 rounded-full overflow-hidden border border-gray-600">
+                <div
+                  className="h-full bg-gradient-to-r from-blue-500 to-cyan-500 transition-all duration-300"
+                  style={{
+                    width: `${Math.min(imageGenerationProgress, 100)}%`,
+                  }}
+                />
+              </div>
+              <p className="text-xs text-gray-400 mt-1 text-center">
+                {Math.round(Math.min(imageGenerationProgress, 100))}% -{' '}
+                {imageGenerationMessage
+                  ? imageGenerationMessage.split(' in ')[0]
+                  : 'Generating...'}
+              </p>
+            </div>
+          )}
 
           {imageGenerationMessage && (
             <p

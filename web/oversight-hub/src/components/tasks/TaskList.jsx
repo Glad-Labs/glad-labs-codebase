@@ -39,7 +39,15 @@ const getStatusColor = (status) => {
   }
 };
 
-const TaskList = ({ tasks, onTaskClick }) => {
+const TaskList = ({
+  tasks,
+  onTaskClick,
+  page = 1,
+  totalPages = 1,
+  total = 0,
+  limit = 10,
+  onPageChange = () => {},
+}) => {
   if (!tasks || tasks.length === 0) {
     return (
       <div className="task-list-empty">
@@ -48,6 +56,9 @@ const TaskList = ({ tasks, onTaskClick }) => {
       </div>
     );
   }
+
+  const startIndex = (page - 1) * limit + 1;
+  const endIndex = Math.min(page * limit, total);
 
   return (
     <div className="task-list-container">
@@ -116,6 +127,68 @@ const TaskList = ({ tasks, onTaskClick }) => {
           </div>
         ))}
       </div>
+
+      {/* Pagination Controls */}
+      {totalPages > 1 && (
+        <div className="pagination-container">
+          <div className="pagination-info">
+            Showing {startIndex}-{endIndex} of {total} tasks
+          </div>
+
+          <div className="pagination-controls">
+            <button
+              onClick={() => onPageChange(page - 1)}
+              disabled={page === 1}
+              className="pagination-btn"
+              title="Previous page"
+            >
+              ← Previous
+            </button>
+
+            <div className="pagination-pages">
+              {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => {
+                let pageNum;
+                if (totalPages <= 5) {
+                  pageNum = i + 1;
+                } else if (page <= 3) {
+                  pageNum = i + 1;
+                } else if (page > totalPages - 3) {
+                  pageNum = totalPages - 4 + i;
+                } else {
+                  pageNum = page - 2 + i;
+                }
+
+                return (
+                  <button
+                    key={pageNum}
+                    onClick={() => onPageChange(pageNum)}
+                    className={`page-btn ${page === pageNum ? 'active' : ''}`}
+                    title={`Go to page ${pageNum}`}
+                  >
+                    {pageNum}
+                  </button>
+                );
+              })}
+              {totalPages > 5 && page < totalPages - 2 && (
+                <span className="pagination-dots">...</span>
+              )}
+            </div>
+
+            <button
+              onClick={() => onPageChange(page + 1)}
+              disabled={page === totalPages}
+              className="pagination-btn"
+              title="Next page"
+            >
+              Next →
+            </button>
+          </div>
+
+          <div className="pagination-page-info">
+            Page {page} of {totalPages}
+          </div>
+        </div>
+      )}
     </div>
   );
 };

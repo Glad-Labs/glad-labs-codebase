@@ -58,6 +58,7 @@ const TaskManagement = () => {
   const [loading, setLoading] = useState(true);
   const [isFetching, setIsFetching] = useState(false);
   const [tasks, setTasks] = useState([]);
+  const [allTasks, setAllTasks] = useState([]); // Store ALL tasks for KPI calculation
   const [selectedTasks, setSelectedTasks] = useState([]);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [selectedTask, setSelectedTask] = useState(null);
@@ -66,6 +67,9 @@ const TaskManagement = () => {
   const [sortBy, setSortBy] = useState('created_at');
   const [sortDirection, setSortDirection] = useState('desc');
   const [activeTab, setActiveTab] = useState(0); // 0 = Manual, 1 = Poindexter
+  const [page, setPage] = useState(1);
+  const [limit] = useState(10);
+  const [total, setTotal] = useState(0);
 
   /**
    * Fetch full content task from /api/content/tasks endpoint
@@ -159,11 +163,11 @@ const TaskManagement = () => {
         headers['Authorization'] = `Bearer ${token}`;
       }
 
-      // ✅ FIXED: Use /api/tasks endpoint which returns {"tasks": [...], "total": ..., "offset": ..., "limit": ...}
-      // Increased timeout from 5s to 15s to account for backend processing
-      // Load only latest 10 tasks on initial load for better performance
+      // ✅ FIXED: Fetch with a reasonable high limit (100) to get more tasks in one request for KPI
+      // This way KPI stats are more representative, while still paginating for display
+      // Request all available tasks to calculate stats correctly
       const response = await fetch(
-        'http://localhost:8000/api/tasks?limit=10&offset=0',
+        `http://localhost:8000/api/tasks?limit=100&offset=0`,
         {
           headers,
           signal: AbortSignal.timeout(15000),
@@ -174,19 +178,27 @@ const TaskManagement = () => {
         let data = await response.json();
         console.log('✅ TaskManagement: API Response received:', data);
 
-        // The response has 'tasks' array
+        // The response has 'tasks' array and total count
         let apiTasks = data.tasks || [];
+        let totalCount = data.total || apiTasks.length;
         console.log(
           '✅ TaskManagement: Tasks from API:',
           apiTasks.length,
-          'items'
+          'items, Total:',
+          totalCount
         );
 
-        // Tasks are already in correct format from API, no transformation needed
-        setTasks(apiTasks);
+        // Store ALL tasks for KPI calculation (this is the full dataset from first request)
+        setAllTasks(apiTasks);
+        // For pagination display, show the first page
+        const paginatedTasks = apiTasks.slice(0, limit);
+        setTasks(paginatedTasks);
+        setTotal(totalCount);
         console.log(
-          '✅ TaskManagement: State updated with',
+          '✅ TaskManagement: Stored',
           apiTasks.length,
+          'total tasks, displaying first page with',
+          paginatedTasks.length,
           'tasks'
         );
       } else {
@@ -306,11 +318,25 @@ const TaskManagement = () => {
 
   /**
    * Calculate summary statistics for current pipeline
+   * Now uses allTasks (full dataset) not just current page
    */
   const getTaskStats = () => {
-    const pipelineTasks = getTasksByPipeline();
-    if (!pipelineTasks)
+    // Filter all tasks by pipeline to get stats for entire pipeline
+    let pipelineTasks = allTasks;
+    if (!pipelineTasks || pipelineTasks.length === 0)
       return { total: 0, completed: 0, inProgress: 0, failed: 0 };
+
+    if (activeTab === 0) {
+      // Manual Pipeline - user-created tasks
+      pipelineTasks = pipelineTasks.filter(
+        (t) => !t.pipeline_type || t.pipeline_type === 'manual'
+      );
+    } else {
+      // Poindexter Pipeline - AI-created tasks
+      pipelineTasks = pipelineTasks.filter(
+        (t) => t.pipeline_type === 'poindexter'
+      );
+    }
 
     return {
       total: pipelineTasks.length,
@@ -404,13 +430,30 @@ const TaskManagement = () => {
     }
 
     console.log('✅ TaskManagement: Auth ready, fetching tasks...');
+    // Only fetch on initial load and tab change, not on page change
     fetchTasks();
 
     // Auto-refresh every 10 seconds
     const interval = setInterval(fetchTasks, 10000);
     return () => clearInterval(interval);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [authLoading]);
+  }, [authLoading, activeTab]);
+
+  // Handle pagination separately - paginate allTasks without refetching
+  useEffect(() => {
+    if (allTasks.length > 0) {
+      const offset = (page - 1) * limit;
+      const paginatedTasks = allTasks.slice(offset, offset + limit);
+      setTasks(paginatedTasks);
+      console.log(
+        '✅ TaskManagement: Paginated to page',
+        page,
+        'showing',
+        paginatedTasks.length,
+        'tasks'
+      );
+    }
+  }, [page, allTasks.length]);
 
   const filteredTasks = getTasksByPipeline();
 
@@ -836,17 +879,29 @@ const TaskManagement = () => {
                 <Checkbox
                   checked={
                     selectedTasks.length ===
-                      getSortedTasks(filteredTasks).length &&
-                    getSortedTasks(filteredTasks).length > 0
+                      getSortedTasks(filteredTasks).slice(
+                        (page - 1) * limit,
+                        page * limit
+                      ).length &&
+                    getSortedTasks(filteredTasks).slice(
+                      (page - 1) * limit,
+                      page * limit
+                    ).length > 0
                   }
                   indeterminate={
                     selectedTasks.length > 0 &&
-                    selectedTasks.length < getSortedTasks(filteredTasks).length
+                    selectedTasks.length <
+                      getSortedTasks(filteredTasks).slice(
+                        (page - 1) * limit,
+                        page * limit
+                      ).length
                   }
                   onChange={(e) => {
                     if (e.target.checked) {
                       setSelectedTasks(
-                        getSortedTasks(filteredTasks).map((t) => t.id)
+                        getSortedTasks(filteredTasks)
+                          .slice((page - 1) * limit, page * limit)
+                          .map((t) => t.id)
                       );
                     } else {
                       setSelectedTasks([]);
@@ -1103,6 +1158,146 @@ const TaskManagement = () => {
           </TableBody>
         </Table>
       </TableContainer>
+
+      {/* Pagination Controls */}
+      {total > limit && (
+        <Box
+          sx={{
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 2,
+            alignItems: 'center',
+            marginTop: 3,
+            padding: 2,
+            backgroundColor: 'rgba(0, 217, 255, 0.03)',
+            borderTop: '1px solid rgba(0, 217, 255, 0.1)',
+            borderRadius: 1,
+          }}
+        >
+          <Typography variant="body2" sx={{ color: '#999' }}>
+            Showing {Math.min((page - 1) * limit + 1, getTaskStats().total)}-
+            {Math.min(page * limit, getTaskStats().total)} of{' '}
+            {getTaskStats().total} tasks
+          </Typography>
+
+          <Box
+            sx={{
+              display: 'flex',
+              gap: 1,
+              alignItems: 'center',
+              flexWrap: 'wrap',
+            }}
+          >
+            <Button
+              onClick={() => setPage(Math.max(1, page - 1))}
+              disabled={page === 1}
+              variant="outlined"
+              sx={{
+                borderColor: 'rgba(0, 217, 255, 0.3)',
+                color: '#00d4ff',
+                '&:hover': {
+                  borderColor: '#00d4ff',
+                  backgroundColor: 'rgba(0, 217, 255, 0.1)',
+                },
+                '&:disabled': {
+                  opacity: 0.4,
+                  color: '#666',
+                  borderColor: '#666',
+                },
+              }}
+            >
+              ← Previous
+            </Button>
+
+            <Box sx={{ display: 'flex', gap: 0.5 }}>
+              {Array.from(
+                {
+                  length: Math.min(Math.ceil(total / limit), 5),
+                },
+                (_, i) => {
+                  const totalPages = Math.ceil(total / limit);
+                  let pageNum;
+                  if (totalPages <= 5) {
+                    pageNum = i + 1;
+                  } else if (page <= 3) {
+                    pageNum = i + 1;
+                  } else if (page > totalPages - 3) {
+                    pageNum = totalPages - 4 + i;
+                  } else {
+                    pageNum = page - 2 + i;
+                  }
+
+                  return (
+                    <Button
+                      key={pageNum}
+                      onClick={() => setPage(pageNum)}
+                      variant={page === pageNum ? 'contained' : 'outlined'}
+                      sx={{
+                        minWidth: '36px',
+                        height: '36px',
+                        padding: 0,
+                        borderColor:
+                          page === pageNum
+                            ? '#00d4ff'
+                            : 'rgba(0, 217, 255, 0.3)',
+                        backgroundColor:
+                          page === pageNum
+                            ? 'rgba(0, 217, 255, 0.2)'
+                            : 'transparent',
+                        color: '#00d4ff',
+                        '&:hover': {
+                          backgroundColor:
+                            page === pageNum
+                              ? 'rgba(0, 217, 255, 0.3)'
+                              : 'rgba(0, 217, 255, 0.1)',
+                          borderColor: '#00d4ff',
+                        },
+                      }}
+                    >
+                      {pageNum}
+                    </Button>
+                  );
+                }
+              )}
+              {Math.ceil(getSortedTasks(filteredTasks).length / limit) > 5 &&
+                page <
+                  Math.ceil(getSortedTasks(filteredTasks).length / limit) -
+                    2 && (
+                  <Typography sx={{ padding: '0 8px', color: '#666' }}>
+                    ...
+                  </Typography>
+                )}
+            </Box>
+
+            <Button
+              onClick={() =>
+                setPage(Math.min(page + 1, Math.ceil(total / limit)))
+              }
+              disabled={page === Math.ceil(total / limit)}
+              variant="outlined"
+              sx={{
+                borderColor: 'rgba(0, 217, 255, 0.3)',
+                color: '#00d4ff',
+                '&:hover': {
+                  borderColor: '#00d4ff',
+                  backgroundColor: 'rgba(0, 217, 255, 0.1)',
+                },
+                '&:disabled': {
+                  opacity: 0.4,
+                  color: '#666',
+                  borderColor: '#666',
+                },
+              }}
+            >
+              Next →
+            </Button>
+          </Box>
+
+          <Typography variant="caption" sx={{ color: '#666' }}>
+            Page {page} of {Math.ceil(total / limit)}
+          </Typography>
+        </Box>
+      )}
 
       {/* Create Task Modal */}
       <CreateTaskModal
