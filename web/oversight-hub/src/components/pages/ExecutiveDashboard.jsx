@@ -16,12 +16,14 @@
 
 import React, { useState, useEffect } from 'react';
 import './ExecutiveDashboard.css';
+import CreateTaskModal from '../tasks/CreateTaskModal';
 
 const ExecutiveDashboard = () => {
   const [dashboardData, setDashboardData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [timeRange, setTimeRange] = useState('30days');
+  const [taskModalOpen, setTaskModalOpen] = useState(false);
 
   // Fetch dashboard data from API
   useEffect(() => {
@@ -437,7 +439,10 @@ const ExecutiveDashboard = () => {
         <div className="quick-actions">
           <h3>⚡ Quick Actions</h3>
           <div className="actions-grid">
-            <button className="action-button create-button">
+            <button
+              className="action-button create-button"
+              onClick={() => setTaskModalOpen(true)}
+            >
               <span className="action-icon">➕</span>
               <span className="action-label">Create Task</span>
             </button>
@@ -521,6 +526,17 @@ const ExecutiveDashboard = () => {
           </div>
         </div>
       )}
+
+      {/* Task Creation Modal */}
+      <CreateTaskModal
+        isOpen={taskModalOpen}
+        onClose={() => setTaskModalOpen(false)}
+        onTaskCreated={(task) => {
+          setTaskModalOpen(false);
+          // Optionally refresh dashboard data
+          console.log('Task created:', task);
+        }}
+      />
     </div>
   );
 };

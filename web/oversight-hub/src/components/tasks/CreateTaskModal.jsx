@@ -292,6 +292,9 @@ const CreateTaskModal = ({ isOpen, onClose, onTaskCreated }) => {
           primary_keyword: formData.keywords || '',
           target_audience: formData.target_audience || '',
           category: 'blog_post',
+          model_selections: modelSelection.modelSelections || {},
+          quality_preference: modelSelection.qualityPreference || 'balanced',
+          estimated_cost: modelSelection.estimatedCost || 0.0,
           metadata: {
             task_type: 'blog_post',
             style: formData.style || 'technical',
@@ -308,13 +311,16 @@ const CreateTaskModal = ({ isOpen, onClose, onTaskCreated }) => {
           },
         };
       } else {
-        // Use generic task endpoint for other types
+        // Use generic task endpoint for other types with model selections
         taskPayload = {
           task_name: formData.title || formData.subject || `Task: ${taskType}`,
           topic: formData.topic || formData.description || '',
           primary_keyword: formData.keywords || formData.primary_keyword || '',
           target_audience: formData.target_audience || formData.audience || '',
           category: formData.category || taskType || 'general',
+          model_selections: modelSelection.modelSelections || {},
+          quality_preference: modelSelection.qualityPreference || 'balanced',
+          estimated_cost: modelSelection.estimatedCost || 0.0,
           metadata: {
             task_type: taskType,
             style: formData.style,
@@ -481,6 +487,24 @@ const CreateTaskModal = ({ isOpen, onClose, onTaskCreated }) => {
                     ) : null}
                   </div>
                 ))}
+              </div>
+
+              {/* Model Selection Panel */}
+              <div className="mt-6 p-4 bg-gray-700 rounded-lg">
+                <h3 className="text-lg font-bold text-cyan-400 mb-4">
+                  🤖 AI Model Configuration
+                </h3>
+                <div
+                  className="bg-gray-800 p-4 rounded-lg"
+                  style={{ maxHeight: '600px', overflowY: 'auto' }}
+                >
+                  <ModelSelectionPanel
+                    onSelectionChange={(selection) => {
+                      setModelSelection(selection);
+                    }}
+                    initialQuality="balanced"
+                  />
+                </div>
               </div>
 
               {/* Action Buttons */}
