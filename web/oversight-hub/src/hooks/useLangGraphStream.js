@@ -1,0 +1,107 @@
+import { useState, useEffect } from 'react';
+
+/**
+ * Hook for streaming blog creation progress from LangGraph
+ *
+ * Usage:
+ *   const progress = useLangGraphStream(requestId);
+ *   if (progress.status === 'error') return <ErrorMessage error={progress.error} />;
+ *   return <ProgressStepper phases={progress.phases} currentPhase={progress.phase} />;
+ */
+export function useLangGraphStream(requestId) {
+  const [progress, setProgress] = useState({
+    phase: 'pending',
+    progress: 0,
+    status: 'waiting',
+    content: '',
+    quality: 0,
+    refinements: 0,
+    error: null,
+    phases: [
+      { name: 'Research', completed: false },
+      { name: 'Outline', completed: false },
+      { name: 'Draft', completed: false },
+      { name: 'Quality Check', completed: false },
+      { name: 'Finalization', completed: false },
+    ],
+  });
+
+  useEffect(() => {
+    if (!requestId) return;
+
+    const ws = new WebSocket(
+      `ws://localhost:8000/api/content/langgraph/ws/blog-posts/${requestId}`
+    );
+
+    ws.onopen = () => {
+      console.log('LangGraph WebSocket connected:', requestId);
+    };
+
+    ws.onmessage = (event) => {
+      const data = JSON.parse(event.data);
+
+      if (data.type === 'progress') {
+        const phaseIndex = getPhaseIndex(data.node);
+        setProgress((prev) => ({
+          ...prev,
+          phase: data.node,
+          progress: data.progress,
+          status: 'in_progress',
+          content: data.current_content_preview || prev.content,
+          quality: data.quality_score || prev.quality,
+          refinements: data.refinement_count || prev.refinements,
+          phases: prev.phases.map((p, i) => ({
+            ...p,
+            completed: i < phaseIndex,
+          })),
+        }));
+      } else if (data.type === 'complete') {
+        setProgress((prev) => ({
+          ...prev,
+          phase: 'complete',
+          progress: 100,
+          status: 'completed',
+          phases: prev.phases.map((p) => ({ ...p, completed: true })),
+        }));
+      } else if (data.type === 'error') {
+        setProgress((prev) => ({
+          ...prev,
+          status: 'error',
+          error: data.error,
+        }));
+      }
+    };
+
+    ws.onerror = (error) => {
+      console.error('LangGraph WebSocket error:', error);
+      setProgress((prev) => ({
+        ...prev,
+        status: 'error',
+        error: 'Connection failed',
+      }));
+    };
+
+    ws.onclose = () => {
+      console.log('LangGraph WebSocket disconnected');
+    };
+
+    return () => {
+      if (ws.readyState === WebSocket.OPEN) {
+        ws.close();
+      }
+    };
+  }, [requestId]);
+
+  return progress;
+}
+
+function getPhaseIndex(phase) {
+  const map = {
+    research: 0,
+    outline: 1,
+    draft: 2,
+    assess: 3,
+    finalize: 4,
+  };
+  return map[phase] || 0;
+}

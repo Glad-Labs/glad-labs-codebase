@@ -38,11 +38,10 @@ Data Tier
 └── Google Cloud: No longer used (Firestore/Pub/Sub removed)
 ```
 
-**Key Integration Pattern (NO STRAPI SERVICE):**
+**Key Integration Pattern :**
 
 - Frontend → FastAPI REST API (GET/POST/PUT/DELETE endpoints)
 - FastAPI routes → PostgreSQL database directly (psycopg2/asyncpg)
-- StrapiPublisher service → Writes directly to Strapi schema tables in PostgreSQL
 - Model router → LLM calls with automatic provider fallback
 - No separate Strapi service/port - CMS is database-driven
 
@@ -65,7 +64,6 @@ npm run dev:cofounder     # FastAPI Co-Founder Agent on http://localhost:8000
 
 - CMS endpoints are in `src/cofounder_agent/routes/cms_routes.py`
 - Data is stored in PostgreSQL (Strapi schema tables)
-- StrapiPublisher writes directly to database (no REST API middleware)
 
 ### Code Quality (MUST run before committing)
 

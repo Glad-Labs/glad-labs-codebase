@@ -13,6 +13,7 @@ import {
 import ExecutionHub from '../components/pages/ExecutionHub';
 import ExecutiveDashboard from '../components/pages/ExecutiveDashboard';
 import TrainingDataDashboard from '../pages/TrainingDataDashboard';
+import LangGraphTestPage from '../pages/LangGraphTest';
 import Login from '../pages/Login';
 import AuthCallback from '../pages/AuthCallback';
 import ProtectedRoute from '../components/ProtectedRoute';
@@ -102,6 +103,16 @@ function AppRoutes() {
           <ProtectedRoute>
             <LayoutWrapper>
               <TrainingDataDashboard />
+            </LayoutWrapper>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/langgraph-test"
+        element={
+          <ProtectedRoute>
+            <LayoutWrapper>
+              <LangGraphTestPage />
             </LayoutWrapper>
           </ProtectedRoute>
         }

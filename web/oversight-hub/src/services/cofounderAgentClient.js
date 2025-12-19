@@ -220,11 +220,14 @@ export async function createBlogPost(
   topicOrOptions,
   primaryKeyword,
   targetAudience,
-  category
+  category,
+  modelSelections,
+  qualityPreference,
+  estimatedCost
 ) {
   // Support both old and new API formats for backwards compatibility
 
-  // Old format: createBlogPost(topic, primaryKeyword, targetAudience, category)
+  // Old format: createBlogPost(topic, primaryKeyword, targetAudience, category, modelSelections, qualityPreference, estimatedCost)
   if (typeof topicOrOptions === 'string') {
     // Validate required fields
     if (!topicOrOptions?.trim()) {
@@ -237,6 +240,9 @@ export async function createBlogPost(
       primary_keyword: (primaryKeyword || '').trim(),
       target_audience: (targetAudience || '').trim(),
       category: (category || 'general').trim(),
+      model_selections: modelSelections || {},
+      quality_preference: qualityPreference || 'balanced',
+      estimated_cost: estimatedCost || 0.0,
       metadata: {},
     };
 
@@ -244,6 +250,9 @@ export async function createBlogPost(
     console.log('✅ Validation - Required Fields:', {
       topic_valid: Boolean(payload.topic),
       task_name_valid: Boolean(payload.task_name),
+      model_selections: payload.model_selections,
+      quality_preference: payload.quality_preference,
+      estimated_cost: payload.estimated_cost,
     });
 
     return makeRequest(
@@ -256,7 +265,7 @@ export async function createBlogPost(
     );
   }
 
-  // New format: createBlogPost({ topic, style, tone, ... })
+  // New format: createBlogPost({ topic, style, tone, modelSelections, qualityPreference, estimatedCost, ... })
   // Use 60 second timeout for content generation with Ollama
   const options = topicOrOptions;
 
@@ -279,6 +288,10 @@ export async function createBlogPost(
       ''
     ).trim(),
     category: (options.category || 'general').trim(),
+    model_selections: options.model_selections || options.modelSelections || {},
+    quality_preference:
+      options.quality_preference || options.qualityPreference || 'balanced',
+    estimated_cost: options.estimated_cost || options.estimatedCost || 0.0,
     metadata: options.metadata || {},
   };
 
@@ -286,6 +299,9 @@ export async function createBlogPost(
   console.log('✅ Validation - Required Fields:', {
     topic_valid: Boolean(payload.topic),
     task_name_valid: Boolean(payload.task_name),
+    model_selections: payload.model_selections,
+    quality_preference: payload.quality_preference,
+    estimated_cost: payload.estimated_cost,
   });
 
   return makeRequest(
@@ -816,6 +832,78 @@ export async function getUsageMetrics(period = 'last_24h') {
   );
 }
 
+// ============================================================================
+// NEW Week 2 Cost Analytics Methods (Database-Backed)
+// ============================================================================
+
+export async function getCostsByPhase(period = 'week') {
+  /**
+   * Get cost breakdown by pipeline phase
+   *
+   * @param {string} period - Time period: today, week, month
+   * @returns {Promise<object>} - Costs per phase with task counts and percentages
+   */
+  return makeRequest(
+    `/api/metrics/costs/breakdown/phase?period=${period}`,
+    'GET',
+    null,
+    true,
+    null,
+    10000
+  );
+}
+
+export async function getCostsByModel(period = 'week') {
+  /**
+   * Get cost breakdown by AI model
+   *
+   * @param {string} period - Time period: today, week, month
+   * @returns {Promise<object>} - Costs per model with provider and percentages
+   */
+  return makeRequest(
+    `/api/metrics/costs/breakdown/model?period=${period}`,
+    'GET',
+    null,
+    true,
+    null,
+    10000
+  );
+}
+
+export async function getCostHistory(period = 'week') {
+  /**
+   * Get cost history and trends
+   *
+   * @param {string} period - Time period: week, month
+   * @returns {Promise<object>} - Daily costs, trend direction, weekly average
+   */
+  return makeRequest(
+    `/api/metrics/costs/history?period=${period}`,
+    'GET',
+    null,
+    true,
+    null,
+    10000
+  );
+}
+
+export async function getBudgetStatus(monthlyBudget = 150.0) {
+  /**
+   * Get budget status and alerts
+   *
+   * @param {number} monthlyBudget - Monthly budget limit in USD (default $150)
+   * @returns {Promise<object>} - Budget metrics, burn rate, projections, alerts
+   */
+  return makeRequest(
+    `/api/metrics/costs/budget?monthly_budget=${monthlyBudget}`,
+    'GET',
+    null,
+    true,
+    null,
+    10000
+  );
+}
+
 /**
  * Bulk Task Operations - Perform actions on multiple tasks at once
  */
@@ -955,6 +1043,11 @@ const cofounderAgentClient = {
   // Metrics & Analytics
   getCostMetrics,
   getUsageMetrics,
+  // Week 2 Cost Analytics
+  getCostsByPhase,
+  getCostsByModel,
+  getCostHistory,
+  getBudgetStatus,
   // Orchestrator
   getOrchestratorOverallStatus,
   getActiveAgents,

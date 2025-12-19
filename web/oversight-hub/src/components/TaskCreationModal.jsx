@@ -31,6 +31,7 @@ import {
 import { CheckCircle as CheckCircleIcon } from '@mui/icons-material';
 import useAuth from '../hooks/useAuth';
 import useFormValidation from '../hooks/useFormValidation';
+import ModelSelectionPanel from './ModelSelectionPanel';
 import {
   createBlogPost,
   pollTaskStatus,
@@ -68,6 +69,20 @@ export default function TaskCreationModal({ open, onClose, onTaskCreated }) {
   const [taskProgress, setTaskProgress] = useState(null);
   const [progressPercentage, setProgressPercentage] = useState(0);
 
+  // Model selection state
+  const [modelSelection, setModelSelection] = useState({
+    modelSelections: {
+      research: 'auto',
+      outline: 'auto',
+      draft: 'auto',
+      assess: 'auto',
+      refine: 'auto',
+      finalize: 'auto',
+    },
+    qualityPreference: 'balanced',
+    estimatedCost: 0.015,
+  });
+
   // Get authentication state from AuthContext
   const { isAuthenticated } = useAuth();
 
@@ -104,7 +119,10 @@ export default function TaskCreationModal({ open, onClose, onTaskCreated }) {
         form.values.topic,
         form.values.primaryKeyword,
         form.values.targetAudience,
-        form.values.category
+        form.values.category,
+        modelSelection.modelSelections,
+        modelSelection.qualityPreference,
+        modelSelection.estimatedCost
       );
 
       if (!response.id) {
@@ -288,6 +306,14 @@ export default function TaskCreationModal({ open, onClose, onTaskCreated }) {
               <option value="education">Education</option>
               <option value="other">Other</option>
             </TextField>
+
+            {/* Model Selection Panel */}
+            <Box sx={{ mt: 3, pt: 2, borderTop: '1px solid #ddd' }}>
+              <ModelSelectionPanel
+                onSelectionChange={(selection) => setModelSelection(selection)}
+                initialQuality="balanced"
+              />
+            </Box>
 
             <DialogActions sx={{ mt: 2 }}>
               <Button onClick={handleClose} disabled={loading}>

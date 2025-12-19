@@ -1,12 +1,25 @@
 import React, { useState } from 'react';
 import { getAuthToken } from '../../services/authService';
 import { createTask } from '../../services/cofounderAgentClient';
+import ModelSelectionPanel from '../ModelSelectionPanel';
 
 const CreateTaskModal = ({ isOpen, onClose, onTaskCreated }) => {
   const [taskType, setTaskType] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState(null);
   const [formData, setFormData] = useState({});
+  const [modelSelection, setModelSelection] = useState({
+    modelSelections: {
+      research: 'auto',
+      outline: 'auto',
+      draft: 'auto',
+      assess: 'auto',
+      refine: 'auto',
+      finalize: 'auto',
+    },
+    qualityPreference: 'balanced',
+    estimatedCost: 0.015,
+  });
 
   // Task type definitions with required fields
   const taskTypes = {
