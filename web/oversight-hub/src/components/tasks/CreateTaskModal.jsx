@@ -84,6 +84,16 @@ const CreateTaskModal = ({ isOpen, onClose, onTaskCreated }) => {
           options: ['512x512', '768x768', '1024x1024'],
           defaultValue: '768x768',
         },
+        {
+          name: 'imageSource',
+          label: 'Image Source',
+          type: 'select',
+          required: true,
+          options: ['pexels', 'sdxl', 'both'],
+          defaultValue: 'pexels',
+          description:
+            'Choose "pexels" to search free stock photos (fast), "sdxl" for AI generation (slower), or "both" to try Pexels first then fall back to SDXL',
+        },
       ],
     },
     social_media_post: {
@@ -228,11 +238,17 @@ const CreateTaskModal = ({ isOpen, onClose, onTaskCreated }) => {
         console.log('🖼️ Generating images with:', formData);
 
         // Call the FastAPI image generation endpoint
+        // Determine which image sources to try based on user selection
+        const usePexels =
+          formData.imageSource === 'pexels' || formData.imageSource === 'both';
+        const useSDXL =
+          formData.imageSource === 'sdxl' || formData.imageSource === 'both';
+
         const imagePayload = {
           prompt: formData.description,
           title: formData.description.substring(0, 50), // Use first 50 chars as title
-          use_pexels: true,
-          use_generation: true, // Try both Pexels and SDXL
+          use_pexels: usePexels,
+          use_generation: useSDXL,
           count: formData.count || 1,
           style: formData.style || 'realistic',
           resolution: formData.resolution || '1024x1024',

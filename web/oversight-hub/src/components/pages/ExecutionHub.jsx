@@ -33,17 +33,30 @@ const ExecutionHub = () => {
         setLoading(true);
 
         // ✅ Use API client methods instead of hardcoded fetch
-        // Parallel fetch: active agents, task queue, orchestrator status
-        const [activeAgents, taskQueue, orchestratorStatus] = await Promise.all(
-          [
+        // Parallel fetch: active agents, task queue, orchestrator status, AND workflow history
+        const [activeAgents, taskQueue, orchestratorStatus, workflowHistory] =
+          await Promise.all([
             getActiveAgents().catch(() => null),
             getTaskQueue().catch(() => null),
             getOrchestratorOverallStatus().catch(() => null),
-          ]
-        );
+            // 🆕 Fetch workflow history from backend
+            fetch('http://localhost:8000/api/workflow/history', {
+              headers: {
+                Authorization: `Bearer ${localStorage.getItem('auth_token') || ''}`,
+                'Content-Type': 'application/json',
+              },
+            })
+              .then((r) => (r.ok ? r.json() : null))
+              .catch(() => null),
+          ]);
 
         // ✅ Validate responses
-        if (!activeAgents && !taskQueue && !orchestratorStatus) {
+        if (
+          !activeAgents &&
+          !taskQueue &&
+          !orchestratorStatus &&
+          !workflowHistory
+        ) {
           throw new Error(
             'Failed to fetch execution data from orchestrator endpoints'
           );
@@ -58,8 +71,10 @@ const ExecutionHub = () => {
             tasks: taskQueue?.tasks || taskQueue || [],
           },
           history: {
-            // TODO: Add workflow history endpoint if available
-            executions: [],
+            // ✅ Now populated from real API endpoint
+            executions:
+              workflowHistory?.executions || workflowHistory?.workflows || [],
+            statistics: workflowHistory?.statistics || null,
           },
         });
         setError(null);
