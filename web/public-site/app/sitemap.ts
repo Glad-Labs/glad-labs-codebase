@@ -1,0 +1,136 @@
+import type { MetadataRoute } from 'next';
+
+/**
+ * Dynamic Sitemap Generation for Next.js 15
+ *
+ * This generates yourdomain.com/sitemap.xml from Postgres data.
+ * Automatically indexes all published posts, categories, and tags.
+ *
+ * Google will crawl this immediately on deployment.
+ */
+
+// Import FastAPI client to query published posts
+async function fetchPublishedContent() {
+  const FASTAPI_URL =
+    process.env.NEXT_PUBLIC_FASTAPI_URL || 'http://localhost:8000';
+  const API_BASE = `${FASTAPI_URL}/api`;
+
+  try {
+    // Fetch all published posts with pagination (API max limit is 100)
+    let allPosts: any[] = [];
+    let skip = 0;
+    const limit = 100;
+    let hasMore = true;
+
+    while (hasMore) {
+      const postsResponse = await fetch(
+        `${API_BASE}/posts?skip=${skip}&limit=${limit}&published_only=true`,
+        {
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        }
+      );
+
+      if (!postsResponse.ok) break;
+
+      const pageData = (await postsResponse.json()).data || [];
+      if (pageData.length === 0) {
+        hasMore = false;
+      } else {
+        allPosts = [...allPosts, ...pageData];
+        skip += limit;
+      }
+    }
+
+    // Fetch all categories
+    const categoriesResponse = await fetch(`${API_BASE}/categories`, {
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+    const allCategories = categoriesResponse.ok
+      ? (await categoriesResponse.json()).data || []
+      : [];
+
+    // Fetch all tags
+    const tagsResponse = await fetch(`${API_BASE}/tags`, {
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+    const allTags = tagsResponse.ok
+      ? (await tagsResponse.json()).data || []
+      : [];
+
+    return { allPosts, allCategories, allTags };
+  } catch (error) {
+    console.error('Error fetching content for sitemap:', error);
+    return { allPosts: [], allCategories: [], allTags: [] };
+  }
+}
+
+export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
+  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://yourdomain.com';
+  const { allPosts, allCategories, allTags } = await fetchPublishedContent();
+
+  // Static pages
+  const staticPages: MetadataRoute.Sitemap = [
+    {
+      url: baseUrl,
+      lastModified: new Date(),
+      changeFrequency: 'weekly',
+      priority: 1,
+    },
+    {
+      url: `${baseUrl}/about`,
+      lastModified: new Date(),
+      changeFrequency: 'monthly',
+      priority: 0.8,
+    },
+    {
+      url: `${baseUrl}/privacy-policy`,
+      lastModified: new Date(),
+      changeFrequency: 'yearly',
+      priority: 0.5,
+    },
+    {
+      url: `${baseUrl}/terms-of-service`,
+      lastModified: new Date(),
+      changeFrequency: 'yearly',
+      priority: 0.5,
+    },
+  ];
+
+  // Blog posts
+  const postPages: MetadataRoute.Sitemap = (allPosts || []).map(
+    (post: any) => ({
+      url: `${baseUrl}/posts/${post.slug}`,
+      lastModified: post.updatedAt
+        ? new Date(post.updatedAt)
+        : new Date(post.publishedAt || new Date()),
+      changeFrequency: 'monthly' as const,
+      priority: 0.8,
+    })
+  );
+
+  // Category pages
+  const categoryPages: MetadataRoute.Sitemap = (allCategories || []).map(
+    (category: any) => ({
+      url: `${baseUrl}/category/${category.slug}`,
+      lastModified: new Date(),
+      changeFrequency: 'weekly' as const,
+      priority: 0.7,
+    })
+  );
+
+  // Tag pages
+  const tagPages: MetadataRoute.Sitemap = (allTags || []).map((tag: any) => ({
+    url: `${baseUrl}/tag/${tag.slug}`,
+    lastModified: new Date(),
+    changeFrequency: 'weekly' as const,
+    priority: 0.6,
+  }));
+
+  return [...staticPages, ...postPages, ...categoryPages, ...tagPages];
+}

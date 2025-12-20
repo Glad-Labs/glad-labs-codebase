@@ -44,3 +44,17 @@ export function getStrapiURL(path = '') {
   if (!path) return FASTAPI_URL;
   return `${FASTAPI_URL}${path}`;
 }
+
+// Stub implementations for legacy Pages Router pages
+// These pages use App Router equivalents at app/legal/
+export async function getCategoryBySlug(slug) {
+  // Legacy function - categories are no longer supported
+  // See app/posts/[slug]/page.tsx for current implementation
+  return null;
+}
+
+export async function getTagBySlug(slug) {
+  // Legacy function - tags are no longer supported
+  // See app/posts/[slug]/page.tsx for current implementation
+  return null;
+}

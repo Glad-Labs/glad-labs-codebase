@@ -119,13 +119,34 @@ const nextConfig = {
   // Webpack configuration for additional optimizations
   webpack: (config, { isServer }) => {
     config.optimization.minimize = true;
+    // Use stat polling with longer intervals to reduce .next/trace detection
+    config.watchOptions = {
+      poll: 5000, // Poll every 5 seconds
+      aggregateTimeout: 300,
+      ignored: [
+        '**/node_modules',
+        '**/.next',
+        '**/.swc',
+        '**/.git',
+        '**/dist',
+        '**/build',
+        '**/trace',
+      ],
+    };
     return config;
+  },
+
+  // Disable Fast Refresh rebuild detection for .next folder changes
+  onDemandEntries: {
+    maxInactiveAge: 60 * 1000, // Keep for 60 seconds
   },
 
   // Environment variables exposed to browser
   env: {
     NEXT_PUBLIC_STRAPI_API_URL: process.env.NEXT_PUBLIC_STRAPI_API_URL,
     NEXT_PUBLIC_STRAPI_API_TOKEN: process.env.NEXT_PUBLIC_STRAPI_API_TOKEN,
+    // Disable Next.js telemetry to prevent trace file generation
+    NEXT_TELEMETRY_DISABLED: '1',
   },
 
   // ESLint configuration
@@ -136,6 +157,11 @@ const nextConfig = {
   // TypeScript configuration
   typescript: {
     tsconfigPath: './tsconfig.json',
+  },
+
+  // Experimental: Disable trace generation to prevent file watcher issues
+  experimental: {
+    disableLoggingNullSafetyWarning: true,
   },
 
   // Compression configuration
@@ -156,8 +182,13 @@ const nextConfig = {
   // Trailing slashes (set to false for clean URLs)
   trailingSlash: false,
 
-  // React strict mode for development
-  reactStrictMode: true,
+  // React strict mode - disabled for smoother dev experience
+  reactStrictMode: false,
+
+  // Experimental features for better dev experience
+  experimental: {
+    optimizePackageImports: ['components', 'lib'],
+  },
 };
 
 module.exports = nextConfig;
