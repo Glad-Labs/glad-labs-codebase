@@ -35,6 +35,24 @@ const ResultPreviewPanel = ({
       return titleMatch[1].trim();
     }
 
+    // Look for standalone title (word followed by newline/end, before headings)
+    // This catches cases like "My Title\nIntroduction"
+    const standaloneTitleMatch = content.match(
+      /^[\s]*([A-Z][^\n]+?)[\s]*\n(?=[A-Z])/
+    );
+    if (standaloneTitleMatch && standaloneTitleMatch[1]) {
+      const candidate = standaloneTitleMatch[1].trim();
+      // Only use if it's at least 5 characters and looks like a title
+      if (
+        candidate.length >= 5 &&
+        !candidate.match(
+          /^(Introduction|Content|Body|Summary|Conclusion|Main|Points):/i
+        )
+      ) {
+        return candidate;
+      }
+    }
+
     // Fallback to first heading if no Title: pattern
     const headingMatch = content.match(/^#+\s*(.+?)$/m);
     if (headingMatch && headingMatch[1]) {
@@ -142,13 +160,9 @@ const ResultPreviewPanel = ({
       );
 
       // Determine which image sources to try based on user selection
-      // When retrying, only fetch from Pexels to avoid GPU spike
-      const usePexels = isRetry
-        ? true
-        : imageSource === 'pexels' || imageSource === 'both';
-      const useSDXL = isRetry
-        ? false
-        : imageSource === 'sdxl' || imageSource === 'both';
+      // NOTE: isRetry just means "fetch another one", doesn't override user's source selection
+      const usePexels = imageSource === 'pexels' || imageSource === 'both';
+      const useSDXL = imageSource === 'sdxl' || imageSource === 'both';
 
       // Extract keywords from SEO metadata if available
       let keywords = [];
@@ -167,12 +181,21 @@ const ResultPreviewPanel = ({
         }
       }
 
+      // Use primary keyword (first keyword) as the search topic if available
+      // This gives better Pexels results than the full title
+      // Example: title="How AI Revolutionizes Healthcare" + keywords=["AI", "healthcare", ...]
+      // becomes search prompt: "AI" instead of the full title
+      const searchPrompt = keywords.length > 0 ? keywords[0] : editedTitle;
+
       const requestPayload = {
-        prompt: editedTitle,
+        prompt: searchPrompt, // Primary keyword or full title as fallback
         title: editedTitle,
         keywords: keywords.length > 0 ? keywords : undefined,
         use_pexels: usePexels,
         use_generation: useSDXL,
+        // Request different image on retry by adding random offset
+        // This tells Pexels to return different results (e.g., next page)
+        page: isRetry ? Math.floor(Math.random() * 5) + 2 : 1, // Pages 2-6 on retry
       };
 
       console.log('📸 Generating image with:', requestPayload);
@@ -661,11 +684,11 @@ const ResultPreviewPanel = ({
                 onClick={() => generateFeaturedImage(true)}
                 disabled={isGeneratingImage}
                 className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded font-medium transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 whitespace-nowrap"
-                title="Fetch another image from Pexels (no GPU usage)"
+                title="Fetch another image using the same source"
               >
                 {isGeneratingImage ? (
                   <>
-                    <span className="animate-spin">⟳</span> Fetching...
+                    <span className="animate-spin">⟳</span> Searching...
                   </>
                 ) : (
                   '🔄 Try Again'

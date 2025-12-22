@@ -946,19 +946,6 @@ const TaskManagement = () => {
                 {sortBy === 'status' && (sortDirection === 'asc' ? '↑' : '↓')}
               </TableCell>
               <TableCell
-                onClick={() => handleSort('approval_status')}
-                sx={{
-                  cursor: 'pointer',
-                  fontWeight: sortBy === 'approval_status' ? 700 : 600,
-                  color: sortBy === 'approval_status' ? '#00d4ff' : 'inherit',
-                  userSelect: 'none',
-                }}
-              >
-                Approval{' '}
-                {sortBy === 'approval_status' &&
-                  (sortDirection === 'asc' ? '↑' : '↓')}
-              </TableCell>
-              <TableCell
                 onClick={() => handleSort('quality_score')}
                 sx={{
                   cursor: 'pointer',
@@ -990,7 +977,7 @@ const TaskManagement = () => {
           <TableBody>
             {getSortedTasks(filteredTasks).length === 0 ? (
               <TableRow>
-                <TableCell colSpan={7} align="center">
+                <TableCell colSpan={6} align="center">
                   <Typography color="text.secondary" py={4}>
                     No tasks found
                   </Typography>
@@ -1034,33 +1021,6 @@ const TaskManagement = () => {
                       label={task.status || 'queued'}
                       size="small"
                       color={getStatusColor(task.status)}
-                    />
-                  </TableCell>
-                  <TableCell>
-                    <Chip
-                      label={task.approval_status || 'pending'}
-                      size="small"
-                      variant={
-                        task.approval_status === 'approved'
-                          ? 'filled'
-                          : task.approval_status === 'rejected'
-                            ? 'filled'
-                            : 'outlined'
-                      }
-                      sx={{
-                        backgroundColor:
-                          task.approval_status === 'approved'
-                            ? 'rgba(76, 175, 80, 0.3)'
-                            : task.approval_status === 'rejected'
-                              ? 'rgba(244, 67, 54, 0.3)'
-                              : 'transparent',
-                        color:
-                          task.approval_status === 'approved'
-                            ? '#4CAF50'
-                            : task.approval_status === 'rejected'
-                              ? '#F44336'
-                              : '#FFC107',
-                      }}
                     />
                   </TableCell>
                   <TableCell>
