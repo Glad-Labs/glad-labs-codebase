@@ -1,9 +1,6 @@
 /** @type {import('next').NextConfig} */
 
 const nextConfig = {
-  // Development server configuration
-  swcMinify: true,
-
   // Disable Fast Refresh to prevent constant rebuild loops
   experimental: {
     disableLoggingNullSafetyWarning: true,
