@@ -1,6 +1,14 @@
 /** @type {import('next').NextConfig} */
 
 const nextConfig = {
+  // Development server configuration
+  swcMinify: true,
+
+  // Disable Fast Refresh to prevent constant rebuild loops
+  experimental: {
+    disableLoggingNullSafetyWarning: true,
+  },
+
   // Image Optimization Configuration
   images: {
     // Supported image formats with automatic optimization
@@ -119,19 +127,11 @@ const nextConfig = {
   // Webpack configuration for additional optimizations
   webpack: (config, { isServer }) => {
     config.optimization.minimize = true;
-    // Use stat polling with longer intervals to reduce .next/trace detection
+    // Disable file watching entirely - only changes to source files matter
     config.watchOptions = {
-      poll: 5000, // Poll every 5 seconds
-      aggregateTimeout: 300,
-      ignored: [
-        '**/node_modules',
-        '**/.next',
-        '**/.swc',
-        '**/.git',
-        '**/dist',
-        '**/build',
-        '**/trace',
-      ],
+      ignored: /node_modules|\.next|\.swc|\.git|dist|build|trace/,
+      poll: false,
+      aggregateTimeout: 0,
     };
     return config;
   },

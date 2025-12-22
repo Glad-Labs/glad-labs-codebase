@@ -130,6 +130,8 @@ export async function getStaticProps() {
   try {
     featuredPost = await getFeaturedPost();
   } catch (_) {
+    // Silently fail if FastAPI is not available (e.g., during development)
+    // The page will render with empty featured post
     featuredPost = null;
   }
 
@@ -137,7 +139,10 @@ export async function getStaticProps() {
     1, // page
     12, // pageSize - increased from 6 to show more posts
     featuredPost ? featuredPost.id : null // excludeId
-  ).catch(() => null);
+  ).catch(() => {
+    // Return null if fetch fails, page will show no posts but won't crash
+    return null;
+  });
 
   let posts = postsData ? postsData.data.filter((p) => Boolean(p.slug)) : [];
 
