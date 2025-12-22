@@ -23,6 +23,7 @@ const ResultPreviewPanel = ({
   const [imageSource, setImageSource] = useState('pexels'); // 'pexels', 'sdxl', or 'both'
   const [imageGenerationMessage, setImageGenerationMessage] = useState('');
   const [hasGeneratedImage, setHasGeneratedImage] = useState(false);
+  const [isRetrying, setIsRetrying] = useState(false); // Track if 'Try Again' is being used
 
   // Helper function to extract full title from content (e.g., "Title: Best Eats in the Northeast USA: A Culinary Guide")
   const extractTitleFromContent = (content, fallbackTitle) => {
@@ -49,30 +50,52 @@ const ResultPreviewPanel = ({
 
     let cleaned = content;
 
-    // Remove title if it appears at the beginning of content
-    if (title && cleaned.includes(title)) {
-      const titleIndex = cleaned.indexOf(title);
-      if (titleIndex === 0 || titleIndex < 50) {
-        cleaned = cleaned.replace(title, '').trim();
+    // STEP 1: Remove full title if it appears at the beginning
+    // Handle multi-line titles and "Title: " prefixed titles
+    if (title) {
+      const escapedTitle = title.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+      // Pattern 1: "Title: {actual_title}" at start
+      cleaned = cleaned.replace(
+        new RegExp(`^Title:\\s*${escapedTitle}\\s*\\n*`, 'im'),
+        ''
+      );
+
+      // Pattern 2: Just the title on its own line at start
+      cleaned = cleaned.replace(
+        new RegExp(`^${escapedTitle}\\s*\\n*`, 'im'),
+        ''
+      );
+
+      // Pattern 3: Title anywhere in first 200 chars (fallback for extracted titles)
+      if (cleaned.length > 0 && cleaned.substring(0, 200).includes(title)) {
+        const idx = cleaned.indexOf(title);
+        if (idx < 150) {
+          cleaned =
+            cleaned.substring(0, idx) + cleaned.substring(idx + title.length);
+        }
       }
     }
 
-    // Remove common section headers that shouldn't be in the body
+    // STEP 2: Remove "Title: " prefix if it remains at the beginning
+    cleaned = cleaned.replace(/^Title:\s*/im, '');
+
+    // STEP 3: Remove common section headers that shouldn't be in the body
     const sectionHeaders = [
-      /^Introduction:\s*/gm,
-      /^Main Points:\s*/gm,
-      /^Main Content:\s*/gm,
-      /^Conclusion:\s*/gm,
-      /^Summary:\s*/gm,
-      /^Body:\s*/gm,
-      /^Content:\s*/gm,
+      /^Introduction:\s*\n?/gm,
+      /^Main Points:\s*\n?/gm,
+      /^Main Content:\s*\n?/gm,
+      /^Conclusion:\s*\n?/gm,
+      /^Summary:\s*\n?/gm,
+      /^Body:\s*\n?/gm,
+      /^Content:\s*\n?/gm,
     ];
 
     sectionHeaders.forEach((pattern) => {
       cleaned = cleaned.replace(pattern, '');
     });
 
-    // Remove extra whitespace that might result from cleanup
+    // STEP 4: Remove extra whitespace that might result from cleanup
     cleaned = cleaned
       .split('\n')
       .filter((line) => line.trim().length > 0)
@@ -82,33 +105,50 @@ const ResultPreviewPanel = ({
   };
 
   // Helper function to generate featured image using Pexels or SDXL
-  const generateFeaturedImage = async () => {
+  const generateFeaturedImage = async (isRetry = false) => {
     if (!editedTitle) {
       alert('⚠️ Please set a title first');
       return;
     }
 
+    setIsRetrying(isRetry);
     setIsGeneratingImage(true);
     setImageGenerationProgress(0);
     setImageGenerationMessage('');
-    setHasGeneratedImage(false);
+    if (!isRetry) {
+      setHasGeneratedImage(false);
+    }
 
     let progressInterval = null;
 
     try {
       const token = getAuthToken();
 
-      // Simulate progress updates
-      progressInterval = setInterval(() => {
-        setImageGenerationProgress((prev) => {
-          if (prev < 80) return prev + Math.random() * 30;
-          return prev;
-        });
-      }, 300);
+      // Simulate progress updates (faster for Pexels retries)
+      progressInterval = setInterval(
+        () => {
+          setImageGenerationProgress((prev) => {
+            if (isRetry) {
+              // Pexels-only retry should finish faster
+              if (prev < 60) return prev + Math.random() * 40;
+            } else {
+              // Full generation might use SDXL
+              if (prev < 80) return prev + Math.random() * 30;
+            }
+            return prev;
+          });
+        },
+        isRetry ? 200 : 300
+      );
 
       // Determine which image sources to try based on user selection
-      const usePexels = imageSource === 'pexels' || imageSource === 'both';
-      const useSDXL = imageSource === 'sdxl' || imageSource === 'both';
+      // When retrying, only fetch from Pexels to avoid GPU spike
+      const usePexels = isRetry
+        ? true
+        : imageSource === 'pexels' || imageSource === 'both';
+      const useSDXL = isRetry
+        ? false
+        : imageSource === 'sdxl' || imageSource === 'both';
 
       // Extract keywords from SEO metadata if available
       let keywords = [];
@@ -165,17 +205,23 @@ const ResultPreviewPanel = ({
 
       if (result.success && result.image_url) {
         setFeaturedImageUrl(result.image_url);
+        const source = result.image?.source || result.source || 'image service';
         setImageGenerationMessage(
-          `✅ Image from ${result.image?.source || 'image service'} in ${result.generation_time?.toFixed(2) || '?'}s`
+          `✅ Image from ${source} in ${result.generation_time?.toFixed(2) || '?'}s`
         );
         setHasGeneratedImage(true);
         setImageGenerationProgress(100);
-        console.log('✅ Featured image generated:', result);
+        setIsRetrying(false);
+        console.log(
+          `✅ Featured image ${isRetry ? 'refetched' : 'generated'}:`,
+          result
+        );
       } else {
         throw new Error(result.message || 'No image URL returned');
       }
     } catch (error) {
       console.error('❌ Image generation error:', error);
+      setIsRetrying(false);
       setImageGenerationMessage(
         `❌ Failed: ${error.message || 'Unknown error'}`
       );
@@ -612,14 +658,14 @@ const ResultPreviewPanel = ({
 
             {hasGeneratedImage && (
               <button
-                onClick={generateFeaturedImage}
+                onClick={() => generateFeaturedImage(true)}
                 disabled={isGeneratingImage}
                 className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded font-medium transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 whitespace-nowrap"
-                title="Generate another image and replace the current one"
+                title="Fetch another image from Pexels (no GPU usage)"
               >
                 {isGeneratingImage ? (
                   <>
-                    <span className="animate-spin">⟳</span> Regenerating...
+                    <span className="animate-spin">⟳</span> Fetching...
                   </>
                 ) : (
                   '🔄 Try Again'
