@@ -1,5 +1,4 @@
 import { formatDateISO, formatDate } from './content-utils';
-import { getStrapiURL } from './api';
 
 /**
  * Generate JSON-LD structured data for a blog post

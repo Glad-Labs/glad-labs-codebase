@@ -7,13 +7,16 @@
   "author": "Matthew M. Gladding (Glad Labs, LLC)",
   "scripts": {
     "build": "next build",
-    "dev": "next dev",
+    "dev": "cross-env PORT=3000 next dev",
     "lint": "next lint",
+    "lint:fix": "next lint --fix",
     "start": "next start",
     "test": "jest",
+    "test:coverage": "jest --coverage",
     "postbuild": "node ./scripts/generate-sitemap.js"
   },
   "dependencies": {
+    "cross-env": "^7.0.3",
     "date-fns": "^4.1.0",
     "gray-matter": "^4.0.3",
     "marked": "^14.1.0",

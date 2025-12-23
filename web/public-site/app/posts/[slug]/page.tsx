@@ -107,12 +107,20 @@ export async function generateMetadata(
   const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://yourdomain.com';
   const canonicalUrl = `${baseUrl}/posts/${post.slug}`;
 
-  // Map coverImage to Cloudinary URL
-  const imageUrl = post.coverImage
-    ? post.coverImage.startsWith('http')
-      ? post.coverImage
-      : `${process.env.NEXT_PUBLIC_FASTAPI_URL || 'http://localhost:8000'}${post.coverImage}`
-    : `${baseUrl}/og-default.jpg`;
+  // Map coverImage to URL - handle both string and object types
+  let imageUrl = `${baseUrl}/og-default.jpg`;
+  if (post.coverImage) {
+    if (typeof post.coverImage === 'string') {
+      imageUrl = post.coverImage.startsWith('http')
+        ? post.coverImage
+        : `${process.env.NEXT_PUBLIC_FASTAPI_URL || 'http://localhost:8000'}${post.coverImage}`;
+    } else if (typeof post.coverImage === 'object' && post.coverImage.url) {
+      const imgUrl = post.coverImage.url;
+      imageUrl = imgUrl.startsWith('http')
+        ? imgUrl
+        : `${process.env.NEXT_PUBLIC_FASTAPI_URL || 'http://localhost:8000'}${imgUrl}`;
+    }
+  }
 
   return {
     title: post.title || 'Blog Post',
@@ -177,11 +185,21 @@ export default async function PostPage({ params }: Props) {
   }
 
   const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://yourdomain.com';
-  const imageUrl = post.coverImage
-    ? post.coverImage.startsWith('http')
-      ? post.coverImage
-      : `${process.env.NEXT_PUBLIC_FASTAPI_URL || 'http://localhost:8000'}${post.coverImage}`
-    : null;
+
+  // Handle coverImage - it could be a string, object, or undefined
+  let imageUrl: string | null = null;
+  if (post.coverImage) {
+    if (typeof post.coverImage === 'string') {
+      imageUrl = post.coverImage.startsWith('http')
+        ? post.coverImage
+        : `${process.env.NEXT_PUBLIC_FASTAPI_URL || 'http://localhost:8000'}${post.coverImage}`;
+    } else if (typeof post.coverImage === 'object' && post.coverImage.url) {
+      // If it's an object with a url property
+      imageUrl = post.coverImage.url.startsWith('http')
+        ? post.coverImage.url
+        : `${process.env.NEXT_PUBLIC_FASTAPI_URL || 'http://localhost:8000'}${post.coverImage.url}`;
+    }
+  }
 
   return (
     <article className="min-h-screen bg-gray-900 text-white py-12">

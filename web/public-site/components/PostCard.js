@@ -9,7 +9,6 @@ const safeFormatDate = (value) => {
 };
 
 const PostCard = ({ post }) => {
-  // Strapi schema uses lowercase field names
   const {
     title,
     excerpt,

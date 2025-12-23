@@ -30,10 +30,13 @@ const CreateTaskModal = ({ isOpen, onClose, onTaskCreated }) => {
         { name: 'topic', label: 'Topic', type: 'text', required: true },
         {
           name: 'word_count',
-          label: 'Word Count',
+          label: 'Target Word Count',
           type: 'number',
           required: true,
           defaultValue: 1500,
+          min: 300,
+          max: 5000,
+          description: 'Target word count for the article (300-5000 words)',
         },
         {
           name: 'style',
@@ -47,6 +50,26 @@ const CreateTaskModal = ({ isOpen, onClose, onTaskCreated }) => {
             'educational',
             'thought-leadership',
           ],
+          description: 'Choose the tone and structure for your content',
+        },
+        {
+          name: 'word_count_tolerance',
+          label: 'Word Count Tolerance',
+          type: 'range',
+          required: false,
+          defaultValue: 10,
+          min: 5,
+          max: 20,
+          step: 1,
+          description: 'Acceptable variance from target: ±5-20%',
+        },
+        {
+          name: 'strict_mode',
+          label: 'Enforce Constraints',
+          type: 'checkbox',
+          required: false,
+          defaultValue: false,
+          description: 'If enabled, task fails if constraints are violated',
         },
       ],
     },
@@ -302,6 +325,8 @@ const CreateTaskModal = ({ isOpen, onClose, onTaskCreated }) => {
         };
       } else if (taskType === 'blog_post') {
         // Create blog post task using generic endpoint with task_name mapping
+        const strictMode =
+          formData.strict_mode === true || formData.strict_mode === 'true';
         taskPayload = {
           task_name: `Blog: ${formData.topic}`,
           topic: formData.topic || '',
@@ -311,11 +336,20 @@ const CreateTaskModal = ({ isOpen, onClose, onTaskCreated }) => {
           model_selections: modelSelection.modelSelections || {},
           quality_preference: modelSelection.qualityPreference || 'balanced',
           estimated_cost: modelSelection.estimatedCost || 0.0,
+          // NEW: Content constraints (Tier 1-3)
+          content_constraints: {
+            word_count: parseInt(formData.word_count) || 1500,
+            writing_style: formData.style || 'educational',
+            word_count_tolerance: parseInt(formData.word_count_tolerance) || 10,
+            strict_mode: strictMode,
+          },
           metadata: {
             task_type: 'blog_post',
             style: formData.style || 'technical',
             tone: formData.tone || 'professional',
-            word_count: formData.word_count || 1500,
+            word_count: parseInt(formData.word_count) || 1500,
+            word_count_tolerance: parseInt(formData.word_count_tolerance) || 10,
+            strict_mode: strictMode,
             tags: formData.keywords
               ? formData.keywords
                   .split(',')
@@ -453,6 +487,11 @@ const CreateTaskModal = ({ isOpen, onClose, onTaskCreated }) => {
                         <span className="text-red-400 ml-1">*</span>
                       )}
                     </label>
+                    {field.description && field.type !== 'checkbox' && (
+                      <p className="text-xs text-gray-400 mb-2">
+                        {field.description}
+                      </p>
+                    )}
 
                     {field.type === 'text' || field.type === 'number' ? (
                       <input
@@ -470,6 +509,54 @@ const CreateTaskModal = ({ isOpen, onClose, onTaskCreated }) => {
                         max={field.max}
                         className="w-full p-3 bg-gray-700 text-white rounded-md border border-gray-600 focus:outline-none focus:ring-2 focus:ring-cyan-500 placeholder-gray-500"
                       />
+                    ) : field.type === 'range' ? (
+                      <div className="flex items-center gap-4">
+                        <input
+                          id={field.name}
+                          type="range"
+                          value={
+                            formData[field.name] ||
+                            (field.defaultValue
+                              ? field.defaultValue
+                              : field.min || 0)
+                          }
+                          onChange={(e) =>
+                            handleInputChange(field.name, e.target.value)
+                          }
+                          min={field.min || 5}
+                          max={field.max || 20}
+                          step={field.step || 1}
+                          className="flex-1 h-2 bg-gray-600 rounded-lg appearance-none cursor-pointer accent-cyan-500"
+                        />
+                        <span className="text-gray-300 font-medium min-w-[3rem] text-right">
+                          {formData[field.name] ||
+                            field.defaultValue ||
+                            field.min ||
+                            0}
+                          %
+                        </span>
+                      </div>
+                    ) : field.type === 'checkbox' ? (
+                      <div className="flex items-center gap-3">
+                        <input
+                          id={field.name}
+                          type="checkbox"
+                          checked={
+                            formData[field.name] === true ||
+                            formData[field.name] === 'true'
+                          }
+                          onChange={(e) =>
+                            handleInputChange(field.name, e.target.checked)
+                          }
+                          className="w-5 h-5 bg-gray-700 border border-gray-600 rounded cursor-pointer accent-cyan-500"
+                        />
+                        <label
+                          htmlFor={field.name}
+                          className="text-gray-300 cursor-pointer"
+                        >
+                          {field.description || 'Enable this option'}
+                        </label>
+                      </div>
                     ) : field.type === 'textarea' ? (
                       <textarea
                         id={field.name}

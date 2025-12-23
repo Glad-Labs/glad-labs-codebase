@@ -21,6 +21,12 @@ import {
   TableHead,
   TableRow,
   Paper,
+  Tabs,
+  Tab,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
 } from '@mui/material';
 import {
   AttachMoney as CostIcon,
@@ -28,6 +34,7 @@ import {
   Speed as FastIcon,
   SyncAlt as BalanceIcon,
   Star as QualityIcon,
+  Info as InfoIcon,
 } from '@mui/icons-material';
 
 const PHASES = ['research', 'outline', 'draft', 'assess', 'refine', 'finalize'];
@@ -174,6 +181,8 @@ export function ModelSelectionPanel({
   const [totalElectricityCost, setTotalElectricityCost] = useState(0);
   const [error, setError] = useState(null);
   const [phaseModels, setPhaseModels] = useState({});
+  const [activeTab, setActiveTab] = useState(0); // Tab state
+  const [showModelInfoDialog, setShowModelInfoDialog] = useState(false);
 
   // Load available models on mount
   useEffect(() => {
@@ -515,11 +524,12 @@ export function ModelSelectionPanel({
   return (
     <Box sx={{ width: '100%' }}>
       {/* Header */}
-      <Card sx={{ mb: 3 }}>
+      <Card sx={{ mb: 3, backgroundColor: '#f5f5f5' }}>
         <CardHeader
           title="Model Selection & Cost Control"
-          subheader="Choose which AI model to use for each pipeline step"
-          avatar={<CostIcon sx={{ fontSize: 40 }} />}
+          subheader="Configure AI models and review costs per pipeline step"
+          avatar={<CostIcon sx={{ fontSize: 40, color: '#1976d2' }} />}
+          sx={{ pb: 2 }}
         />
       </Card>
 
@@ -530,496 +540,552 @@ export function ModelSelectionPanel({
         </Alert>
       )}
 
-      {/* Quality Preference Buttons */}
+      {/* Tab Navigation */}
       <Card sx={{ mb: 3 }}>
-        <CardHeader title="Quick Presets" />
-        <CardContent>
-          <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
-            {Object.entries(QUALITY_PRESETS).map(([key, preset]) => (
-              <Button
-                key={key}
-                variant={qualityPreference === key ? 'contained' : 'outlined'}
-                color={preset.color}
-                startIcon={preset.icon}
-                onClick={() => applyQualityPreset(key)}
-                sx={{
-                  flex: 1,
-                  minWidth: 200,
-                  py: 2,
-                  flexDirection: 'column',
-                  alignItems: 'flex-start',
-                  justifyContent: 'flex-start',
-                  textAlign: 'left',
-                }}
-              >
-                <Typography variant="subtitle2" sx={{ fontWeight: 'bold' }}>
-                  {preset.label}
-                </Typography>
-                <Typography variant="caption" sx={{ mt: 0.5 }}>
-                  {preset.description}
-                </Typography>
-                <Typography
-                  variant="caption"
-                  sx={{ mt: 0.5, fontWeight: 'bold' }}
-                >
-                  {preset.avgCost}
-                </Typography>
-              </Button>
-            ))}
-          </Box>
-        </CardContent>
-      </Card>
+        <Tabs
+          value={activeTab}
+          onChange={(e, newValue) => setActiveTab(newValue)}
+          sx={{
+            borderBottom: '1px solid #e0e0e0',
+            backgroundColor: '#fafafa',
+          }}
+        >
+          <Tab label="Quick Presets" />
+          <Tab label="Fine-Tune Per Phase" />
+          <Tab label="Cost Details" />
+          <Tab label="Model Info" />
+        </Tabs>
 
-      {/* Per-Phase Selection */}
-      <Card sx={{ mb: 3 }}>
-        <CardHeader
-          title="Fine-Tune Per Phase"
-          action={
-            <Tooltip title="Reset to Auto-Select">
-              <Button size="small" onClick={resetToAuto}>
-                Reset to Auto
-              </Button>
-            </Tooltip>
-          }
-        />
-        <CardContent>
-          <TableContainer component={Paper} variant="outlined">
-            <Table>
-              <TableHead>
-                <TableRow sx={{ backgroundColor: '#f5f5f5' }}>
-                  <TableCell sx={{ fontWeight: 'bold' }}>Phase</TableCell>
-                  <TableCell sx={{ fontWeight: 'bold' }}>
-                    Selected Model
-                  </TableCell>
-                  <TableCell sx={{ fontWeight: 'bold' }} align="right">
-                    API Cost
-                  </TableCell>
-                  <TableCell sx={{ fontWeight: 'bold' }} align="right">
-                    ⚡ Electricity
-                  </TableCell>
-                  <TableCell sx={{ fontWeight: 'bold' }} align="right">
-                    Total
-                  </TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {PHASES.map((phase) => (
-                  <TableRow key={phase}>
-                    <TableCell>
-                      <Box
-                        sx={{ display: 'flex', alignItems: 'center', gap: 1 }}
-                      >
-                        <Typography sx={{ fontSize: 20 }}>
-                          {getPhaseIcon(phase)}
-                        </Typography>
-                        <Typography sx={{ fontWeight: 500 }}>
-                          {PHASE_NAMES[phase]}
-                        </Typography>
-                      </Box>
+        {/* TAB 0: Quick Presets */}
+        {activeTab === 0 && (
+          <CardContent sx={{ pt: 3 }}>
+            <Grid container spacing={2}>
+              {Object.entries(QUALITY_PRESETS).map(([key, preset]) => (
+                <Grid item xs={12} sm={6} md={4} key={key}>
+                  <Button
+                    fullWidth
+                    variant={
+                      qualityPreference === key ? 'contained' : 'outlined'
+                    }
+                    color={preset.color}
+                    startIcon={preset.icon}
+                    onClick={() => applyQualityPreset(key)}
+                    sx={{
+                      py: 3,
+                      flexDirection: 'column',
+                      alignItems: 'flex-start',
+                      justifyContent: 'flex-start',
+                      textAlign: 'left',
+                      height: '100%',
+                    }}
+                  >
+                    <Typography
+                      variant="subtitle2"
+                      sx={{ fontWeight: 'bold', mb: 1 }}
+                    >
+                      {preset.label}
+                    </Typography>
+                    <Typography variant="caption" sx={{ mb: 1 }}>
+                      {preset.description}
+                    </Typography>
+                    <Typography
+                      variant="caption"
+                      sx={{ fontWeight: 'bold', mt: 1 }}
+                    >
+                      {preset.avgCost}
+                    </Typography>
+                  </Button>
+                </Grid>
+              ))}
+            </Grid>
+          </CardContent>
+        )}
+
+        {/* TAB 1: Fine-Tune Per Phase */}
+        {activeTab === 1 && (
+          <CardContent sx={{ pt: 3 }}>
+            <Box sx={{ mb: 3, display: 'flex', justifyContent: 'flex-end' }}>
+              <Tooltip title="Reset all phases to Auto-Select">
+                <Button size="small" onClick={resetToAuto} variant="outlined">
+                  Reset to Auto
+                </Button>
+              </Tooltip>
+            </Box>
+
+            <TableContainer component={Paper} variant="outlined">
+              <Table size="small">
+                <TableHead>
+                  <TableRow sx={{ backgroundColor: '#f5f5f5' }}>
+                    <TableCell sx={{ fontWeight: 'bold', width: '15%' }}>
+                      Phase
                     </TableCell>
-                    <TableCell>
-                      {phaseModels[phase] && (
-                        <FormControl size="small" sx={{ minWidth: 200 }}>
-                          <Select
-                            value={modelSelections[phase]}
-                            onChange={(e) =>
-                              handlePhaseChange(phase, e.target.value)
-                            }
-                          >
-                            <MenuItem value="auto">Auto-Select</MenuItem>
-                            <Divider />
-                            {Object.entries(phaseModels[phase]).map(
-                              ([providerKey, providerData]) => [
-                                <MenuItem
-                                  key={`header-${providerKey}`}
-                                  disabled
-                                  sx={{
-                                    fontWeight: 'bold',
-                                    backgroundColor: '#f5f5f5',
-                                  }}
-                                >
-                                  {providerData.name}
-                                </MenuItem>,
-                                ...providerData.models.map((model) => (
-                                  <MenuItem
-                                    key={model.id}
-                                    value={model.id}
-                                    sx={{ pl: 4 }}
-                                  >
-                                    {model.name}
-                                    {model.cost === 0 && (
-                                      <Chip
-                                        label="Free"
-                                        size="small"
-                                        color="success"
-                                        variant="outlined"
-                                        sx={{ ml: 1, height: 20 }}
-                                      />
-                                    )}
-                                  </MenuItem>
-                                )),
-                              ]
-                            )}
-                          </Select>
-                        </FormControl>
-                      )}
+                    <TableCell sx={{ fontWeight: 'bold', width: '35%' }}>
+                      Model
                     </TableCell>
-                    <TableCell align="right">
-                      <Chip
-                        label={`$${(costEstimates[phase] || 0).toFixed(4)}`}
-                        size="small"
-                        variant="outlined"
-                        color={
-                          (costEstimates[phase] || 0) === 0
-                            ? 'success'
-                            : 'warning'
-                        }
-                      />
+                    <TableCell
+                      sx={{ fontWeight: 'bold', align: 'right', width: '15%' }}
+                    >
+                      API Cost
                     </TableCell>
-                    <TableCell align="right">
-                      <Tooltip
-                        title={`Power cost: ~${getModelPowerConsumption(modelSelections[phase])}W`}
-                      >
-                        <Chip
-                          label={`$${(electricityCosts[phase] || 0).toFixed(4)}`}
-                          size="small"
-                          variant="outlined"
-                          icon={
-                            <Typography sx={{ fontSize: '0.8em' }}>
-                              ⚡
-                            </Typography>
-                          }
-                          color={
-                            (electricityCosts[phase] || 0) === 0
-                              ? 'default'
-                              : 'info'
-                          }
-                        />
-                      </Tooltip>
+                    <TableCell
+                      sx={{ fontWeight: 'bold', align: 'right', width: '15%' }}
+                    >
+                      ⚡ Elec.
                     </TableCell>
-                    <TableCell align="right">
-                      <Chip
-                        label={`$${((costEstimates[phase] || 0) + (electricityCosts[phase] || 0)).toFixed(4)}`}
-                        size="small"
-                        variant="filled"
-                        color={
-                          (costEstimates[phase] || 0) +
-                            (electricityCosts[phase] || 0) ===
-                          0
-                            ? 'success'
-                            : (costEstimates[phase] || 0) +
-                                  (electricityCosts[phase] || 0) >
-                                0.005
-                              ? 'warning'
-                              : 'default'
-                        }
-                      />
+                    <TableCell
+                      sx={{ fontWeight: 'bold', align: 'right', width: '20%' }}
+                    >
+                      Total
                     </TableCell>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </TableContainer>
+                </TableHead>
+                <TableBody>
+                  {PHASES.map((phase, idx) => (
+                    <TableRow
+                      key={phase}
+                      sx={{
+                        '&:nth-of-type(even)': { backgroundColor: '#fafafa' },
+                      }}
+                    >
+                      <TableCell>
+                        <Box
+                          sx={{ display: 'flex', alignItems: 'center', gap: 1 }}
+                        >
+                          <Typography sx={{ fontSize: 18 }}>
+                            {getPhaseIcon(phase)}
+                          </Typography>
+                          <Typography
+                            sx={{ fontWeight: 500, fontSize: '0.9rem' }}
+                          >
+                            {PHASE_NAMES[phase]}
+                          </Typography>
+                        </Box>
+                      </TableCell>
+                      <TableCell>
+                        {phaseModels[phase] && (
+                          <FormControl size="small" sx={{ width: '100%' }}>
+                            <Select
+                              value={modelSelections[phase]}
+                              onChange={(e) =>
+                                handlePhaseChange(phase, e.target.value)
+                              }
+                            >
+                              <MenuItem value="auto">Auto-Select</MenuItem>
+                              <Divider />
+                              {Object.entries(phaseModels[phase]).map(
+                                ([providerKey, providerData]) => [
+                                  <MenuItem
+                                    key={`header-${providerKey}`}
+                                    disabled
+                                    sx={{
+                                      fontWeight: 'bold',
+                                      fontSize: '0.85rem',
+                                      backgroundColor: '#f5f5f5',
+                                    }}
+                                  >
+                                    {providerData.name}
+                                  </MenuItem>,
+                                  ...providerData.models.map((model) => (
+                                    <MenuItem
+                                      key={model.id}
+                                      value={model.id}
+                                      sx={{ pl: 4, fontSize: '0.85rem' }}
+                                    >
+                                      {model.name}
+                                      {model.cost === 0 && (
+                                        <Chip
+                                          label="Free"
+                                          size="small"
+                                          color="success"
+                                          variant="outlined"
+                                          sx={{
+                                            ml: 1,
+                                            height: 18,
+                                            fontSize: '0.65rem',
+                                          }}
+                                        />
+                                      )}
+                                    </MenuItem>
+                                  )),
+                                ]
+                              )}
+                            </Select>
+                          </FormControl>
+                        )}
+                      </TableCell>
+                      <TableCell align="right">
+                        <Chip
+                          label={`$${(costEstimates[phase] || 0).toFixed(4)}`}
+                          size="small"
+                          variant="outlined"
+                          color={
+                            (costEstimates[phase] || 0) === 0
+                              ? 'success'
+                              : 'warning'
+                          }
+                        />
+                      </TableCell>
+                      <TableCell align="right">
+                        <Tooltip
+                          title={`Power: ~${getModelPowerConsumption(modelSelections[phase])}W`}
+                        >
+                          <Chip
+                            label={`$${(electricityCosts[phase] || 0).toFixed(4)}`}
+                            size="small"
+                            variant="outlined"
+                            color={
+                              (electricityCosts[phase] || 0) === 0
+                                ? 'default'
+                                : 'info'
+                            }
+                          />
+                        </Tooltip>
+                      </TableCell>
+                      <TableCell align="right">
+                        <Chip
+                          label={`$${((costEstimates[phase] || 0) + (electricityCosts[phase] || 0)).toFixed(4)}`}
+                          size="small"
+                          variant="filled"
+                          color={
+                            (costEstimates[phase] || 0) +
+                              (electricityCosts[phase] || 0) ===
+                            0
+                              ? 'success'
+                              : (costEstimates[phase] || 0) +
+                                    (electricityCosts[phase] || 0) >
+                                  0.005
+                                ? 'warning'
+                                : 'default'
+                          }
+                        />
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </TableContainer>
+          </CardContent>
+        )}
 
-          <Divider sx={{ my: 2 }} />
-
-          {/* Total Cost Summary */}
-          <Box sx={{ display: 'flex', gap: 3, mb: 3, flexWrap: 'wrap' }}>
-            <Box sx={{ flex: 1, minWidth: 250 }}>
-              <Typography variant="h6" sx={{ fontWeight: 'bold' }}>
-                API Cost Per Post
-              </Typography>
-              <Typography variant="body2" color="textSecondary" sx={{ mb: 1 }}>
-                Service provider fees (OpenAI, Anthropic, etc.)
-              </Typography>
-              <Typography
-                variant="h4"
-                sx={{
-                  fontWeight: 'bold',
-                  color:
-                    totalCost === 0
-                      ? '#4caf50'
-                      : totalCost < 0.02
-                        ? '#ff9800'
-                        : '#f44336',
-                }}
-              >
-                ${totalCost.toFixed(4)}
-              </Typography>
-            </Box>
-
-            <Box sx={{ flex: 1, minWidth: 250 }}>
-              <Typography variant="h6" sx={{ fontWeight: 'bold' }}>
-                ⚡ Electricity Cost Per Post
-              </Typography>
-              <Typography variant="body2" color="textSecondary" sx={{ mb: 1 }}>
-                Local power consumption (~${ELECTRICITY_COST_CONFIG.pricePerKwh}
-                /kWh)
-              </Typography>
-              <Typography
-                variant="h4"
-                sx={{
-                  fontWeight: 'bold',
-                  color: totalElectricityCost === 0 ? '#666' : '#1976d2',
-                }}
-              >
-                ${totalElectricityCost.toFixed(4)}
-              </Typography>
-            </Box>
-
-            <Box sx={{ flex: 1, minWidth: 250 }}>
-              <Typography variant="h6" sx={{ fontWeight: 'bold' }}>
-                Total Combined Cost
-              </Typography>
-              <Typography variant="body2" color="textSecondary" sx={{ mb: 1 }}>
-                API + Electricity costs per post
-              </Typography>
-              <Typography
-                variant="h4"
-                sx={{
-                  fontWeight: 'bold',
-                  color:
-                    totalCost + totalElectricityCost === 0
-                      ? '#4caf50'
-                      : totalCost + totalElectricityCost < 0.02
-                        ? '#ff9800'
-                        : '#f44336',
-                }}
-              >
-                ${(totalCost + totalElectricityCost).toFixed(4)}
-              </Typography>
-            </Box>
-          </Box>
-
-          {/* Cost Breakdown */}
-          <Box sx={{ mt: 3, mb: 3 }}>
-            <Typography variant="subtitle2" sx={{ fontWeight: 'bold', mb: 2 }}>
-              Cost Breakdown by Phase
-            </Typography>
-            <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
-              {PHASES.map((phase) => (
-                <Tooltip
-                  key={phase}
-                  title={`API: $${(costEstimates[phase] || 0).toFixed(4)} + Electricity: $${(electricityCosts[phase] || 0).toFixed(4)}`}
-                >
-                  <Chip
-                    label={`${PHASE_NAMES[phase]}: $${((costEstimates[phase] || 0) + (electricityCosts[phase] || 0)).toFixed(4)}`}
-                    size="small"
-                    variant="outlined"
-                  />
-                </Tooltip>
-              ))}
-            </Box>
-          </Box>
-
-          {/* Savings Information */}
-          {(totalCost > 0 || totalElectricityCost > 0) && (
-            <Alert severity="info" sx={{ mt: 2 }}>
-              <Typography variant="body2" sx={{ mb: 1 }}>
-                <SaveIcon
-                  sx={{ fontSize: 18, mr: 1, verticalAlign: 'middle' }}
-                />
-                <strong>Cost Impact Analysis:</strong>
-              </Typography>
-              {totalCost > 0 && (
-                <Typography
-                  variant="caption"
-                  sx={{ display: 'block', ml: 3, mb: 0.5 }}
-                >
-                  • API costs: ${totalCost.toFixed(4)} per post
-                </Typography>
-              )}
-              {totalElectricityCost > 0 && (
-                <Typography
-                  variant="caption"
-                  sx={{ display: 'block', ml: 3, mb: 0.5 }}
-                >
-                  • Electricity costs: ${totalElectricityCost.toFixed(4)} per
-                  post (local hardware)
-                </Typography>
-              )}
-              <Typography
-                variant="caption"
-                sx={{ display: 'block', ml: 3, mb: 0.5 }}
-              >
-                • Monthly total (30 posts): $
-                {((totalCost + totalElectricityCost) * 30).toFixed(2)}
-              </Typography>
-              {totalCost === 0 && totalElectricityCost > 0 && (
-                <Typography
-                  variant="caption"
-                  sx={{ display: 'block', ml: 3, mt: 1, fontStyle: 'italic' }}
-                >
-                  Using local Ollama models saves on API costs, but requires
-                  electricity to run on your hardware.
-                </Typography>
-              )}
-            </Alert>
-          )}
-        </CardContent>
-      </Card>
-
-      {/* Information Card */}
-      <Card sx={{ mb: 3 }}>
-        <CardHeader title="Available AI Models" />
-        <CardContent>
-          <Grid container spacing={2}>
-            {Object.entries(AVAILABLE_MODELS).map(([key, provider]) => (
-              <Grid
-                key={key}
-                sx={{
-                  display: 'flex',
-                  width: { xs: '100%', sm: '50%', md: '33.333%' },
-                  px: 1,
-                  pb: 2,
-                }}
-              >
+        {/* TAB 2: Cost Details */}
+        {activeTab === 2 && (
+          <CardContent sx={{ pt: 3 }}>
+            <Grid container spacing={3} sx={{ mb: 3 }}>
+              <Grid item xs={12} sm={6} md={4}>
                 <Box
                   sx={{
-                    p: 2,
-                    backgroundColor: '#f5f5f5',
-                    borderRadius: 1,
-                    width: '100%',
+                    p: 2.5,
+                    backgroundColor: totalCost === 0 ? '#e8f5e9' : '#fff3e0',
+                    borderRadius: 1.5,
+                    borderLeft: '4px solid #1976d2',
                   }}
                 >
                   <Typography
                     variant="subtitle2"
                     sx={{ fontWeight: 'bold', mb: 1 }}
                   >
-                    {provider.name}
+                    API Cost Per Post
                   </Typography>
-                  <Box
-                    sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}
+                  <Typography variant="caption" color="textSecondary">
+                    Service provider fees
+                  </Typography>
+                  <Typography
+                    variant="h5"
+                    sx={{
+                      fontWeight: 'bold',
+                      mt: 1,
+                      color:
+                        totalCost === 0
+                          ? '#4caf50'
+                          : totalCost < 0.02
+                            ? '#ff9800'
+                            : '#f44336',
+                    }}
                   >
-                    {provider.models.map((model) => (
-                      <Typography key={model.id} variant="caption">
-                        • {model.name}
-                        {model.cost === 0 ? (
-                          <Chip
-                            label="Free"
-                            size="small"
-                            color="success"
-                            variant="outlined"
-                            sx={{ ml: 1, height: 18 }}
-                          />
-                        ) : (
-                          ` - $${(model.cost * 1000).toFixed(2)}/1K tokens`
-                        )}
-                      </Typography>
-                    ))}
-                  </Box>
+                    ${totalCost.toFixed(4)}
+                  </Typography>
                 </Box>
               </Grid>
-            ))}
-          </Grid>
-        </CardContent>
-      </Card>
 
-      {/* Electricity Cost Information Card */}
-      <Card>
-        <CardHeader title="⚡ Electricity Cost Tracking" />
-        <CardContent>
-          <Grid container spacing={2}>
-            <Grid
-              sx={{
-                display: 'flex',
-                width: { xs: '100%', sm: '50%' },
-                px: 1,
-                pb: 2,
-              }}
-            >
-              <Box
-                sx={{
-                  p: 2,
-                  backgroundColor: '#e3f2fd',
-                  borderRadius: 1,
-                  width: '100%',
-                }}
-              >
-                <Typography
-                  variant="subtitle2"
-                  sx={{ fontWeight: 'bold', mb: 1 }}
+              <Grid item xs={12} sm={6} md={4}>
+                <Box
+                  sx={{
+                    p: 2.5,
+                    backgroundColor:
+                      totalElectricityCost === 0 ? '#f5f5f5' : '#e3f2fd',
+                    borderRadius: 1.5,
+                    borderLeft: '4px solid #1976d2',
+                  }}
                 >
-                  How It Works
-                </Typography>
-                <Typography variant="caption" sx={{ display: 'block', mb: 1 }}>
-                  <strong>Power Consumption:</strong> Each model consumes
-                  different amounts of electricity based on its size:
-                </Typography>
-                <Box sx={{ ml: 2, mb: 2 }}>
-                  <Typography variant="caption" sx={{ display: 'block' }}>
-                    • Small (7B): ~30W
+                  <Typography
+                    variant="subtitle2"
+                    sx={{ fontWeight: 'bold', mb: 1 }}
+                  >
+                    ⚡ Electricity Per Post
                   </Typography>
-                  <Typography variant="caption" sx={{ display: 'block' }}>
-                    • Medium (14B): ~50W
+                  <Typography variant="caption" color="textSecondary">
+                    Local power consumption
                   </Typography>
-                  <Typography variant="caption" sx={{ display: 'block' }}>
-                    • Large (30B+): ~80-150W
+                  <Typography
+                    variant="h5"
+                    sx={{
+                      fontWeight: 'bold',
+                      mt: 1,
+                      color: totalElectricityCost === 0 ? '#999' : '#1976d2',
+                    }}
+                  >
+                    ${totalElectricityCost.toFixed(4)}
                   </Typography>
                 </Box>
-                <Typography variant="caption" sx={{ display: 'block', mb: 1 }}>
-                  <strong>Electricity Rate:</strong> $
-                  {ELECTRICITY_COST_CONFIG.pricePerKwh}/kWh (US average)
-                </Typography>
-                <Typography variant="caption" sx={{ display: 'block' }}>
-                  <strong>Processing Time:</strong> ~
-                  {ELECTRICITY_COST_CONFIG.secondsPerPost / 60} minutes per blog
-                  post
-                </Typography>
-              </Box>
+              </Grid>
+
+              <Grid item xs={12} sm={6} md={4}>
+                <Box
+                  sx={{
+                    p: 2.5,
+                    backgroundColor:
+                      totalCost + totalElectricityCost === 0
+                        ? '#e8f5e9'
+                        : totalCost + totalElectricityCost < 0.02
+                          ? '#fff3e0'
+                          : '#ffebee',
+                    borderRadius: 1.5,
+                    borderLeft: '4px solid #1976d2',
+                  }}
+                >
+                  <Typography
+                    variant="subtitle2"
+                    sx={{ fontWeight: 'bold', mb: 1 }}
+                  >
+                    Total Combined
+                  </Typography>
+                  <Typography variant="caption" color="textSecondary">
+                    API + Electricity
+                  </Typography>
+                  <Typography
+                    variant="h5"
+                    sx={{
+                      fontWeight: 'bold',
+                      mt: 1,
+                      color:
+                        totalCost + totalElectricityCost === 0
+                          ? '#4caf50'
+                          : totalCost + totalElectricityCost < 0.02
+                            ? '#ff9800'
+                            : '#f44336',
+                    }}
+                  >
+                    ${(totalCost + totalElectricityCost).toFixed(4)}
+                  </Typography>
+                </Box>
+              </Grid>
             </Grid>
-            <Grid
-              sx={{
-                display: 'flex',
-                width: { xs: '100%', sm: '50%' },
-                px: 1,
-                pb: 2,
-              }}
-            >
+
+            <Divider sx={{ my: 3 }} />
+
+            <Box>
+              <Typography
+                variant="subtitle2"
+                sx={{ fontWeight: 'bold', mb: 2 }}
+              >
+                Monthly Impact (30 posts)
+              </Typography>
+              <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
+                <Box>
+                  <Typography variant="caption" color="textSecondary">
+                    API Cost
+                  </Typography>
+                  <Typography variant="h6" sx={{ fontWeight: 'bold' }}>
+                    ${(totalCost * 30).toFixed(2)}
+                  </Typography>
+                </Box>
+                <Box>
+                  <Typography variant="caption" color="textSecondary">
+                    Electricity Cost
+                  </Typography>
+                  <Typography variant="h6" sx={{ fontWeight: 'bold' }}>
+                    ${(totalElectricityCost * 30).toFixed(2)}
+                  </Typography>
+                </Box>
+                <Box>
+                  <Typography variant="caption" color="textSecondary">
+                    Combined Total
+                  </Typography>
+                  <Typography
+                    variant="h6"
+                    sx={{
+                      fontWeight: 'bold',
+                      color:
+                        (totalCost + totalElectricityCost) * 30 === 0
+                          ? '#4caf50'
+                          : '#1976d2',
+                    }}
+                  >
+                    ${((totalCost + totalElectricityCost) * 30).toFixed(2)}
+                  </Typography>
+                </Box>
+              </Box>
+            </Box>
+
+            {(totalCost > 0 || totalElectricityCost > 0) && (
+              <Alert severity="info" sx={{ mt: 3 }}>
+                <Box sx={{ display: 'flex', gap: 1, alignItems: 'flex-start' }}>
+                  <SaveIcon sx={{ fontSize: 18, mt: 0.5, flexShrink: 0 }} />
+                  <Box>
+                    <Typography
+                      variant="body2"
+                      sx={{ fontWeight: 'bold', mb: 1 }}
+                    >
+                      Cost Breakdown
+                    </Typography>
+                    {totalCost > 0 && (
+                      <Typography
+                        variant="caption"
+                        sx={{ display: 'block', mb: 0.5 }}
+                      >
+                        • API costs: ${totalCost.toFixed(4)} per post
+                      </Typography>
+                    )}
+                    {totalElectricityCost > 0 && (
+                      <Typography
+                        variant="caption"
+                        sx={{ display: 'block', mb: 0.5 }}
+                      >
+                        • Electricity: ${totalElectricityCost.toFixed(4)} per
+                        post
+                      </Typography>
+                    )}
+                  </Box>
+                </Box>
+              </Alert>
+            )}
+          </CardContent>
+        )}
+
+        {/* TAB 3: Model Info */}
+        {activeTab === 3 && (
+          <CardContent sx={{ pt: 3 }}>
+            <Grid container spacing={2} sx={{ mb: 3 }}>
+              {Object.entries(AVAILABLE_MODELS).map(([key, provider]) => (
+                <Grid item xs={12} sm={6} md={4} key={key}>
+                  <Box
+                    sx={{
+                      p: 2,
+                      backgroundColor: '#f5f5f5',
+                      borderRadius: 1.5,
+                      borderLeft: '3px solid #1976d2',
+                    }}
+                  >
+                    <Typography
+                      variant="subtitle2"
+                      sx={{ fontWeight: 'bold', mb: 1.5 }}
+                    >
+                      {provider.name}
+                    </Typography>
+                    <Box
+                      sx={{
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: 0.75,
+                      }}
+                    >
+                      {provider.models.slice(0, 4).map((model) => (
+                        <Box key={model.id}>
+                          <Typography
+                            variant="caption"
+                            sx={{ display: 'block' }}
+                          >
+                            {model.name}
+                          </Typography>
+                          {model.cost === 0 ? (
+                            <Chip
+                              label="Free (Local)"
+                              size="small"
+                              color="success"
+                              variant="outlined"
+                              sx={{ height: 18, fontSize: '0.65rem' }}
+                            />
+                          ) : (
+                            <Typography
+                              variant="caption"
+                              color="textSecondary"
+                              sx={{ fontSize: '0.75rem' }}
+                            >
+                              ${(model.cost * 1000).toFixed(2)}/1K tokens
+                            </Typography>
+                          )}
+                        </Box>
+                      ))}
+                      {provider.models.length > 4 && (
+                        <Typography
+                          variant="caption"
+                          color="textSecondary"
+                          sx={{ fontStyle: 'italic', mt: 1 }}
+                        >
+                          + {provider.models.length - 4} more models
+                        </Typography>
+                      )}
+                    </Box>
+                  </Box>
+                </Grid>
+              ))}
+            </Grid>
+
+            <Divider sx={{ my: 3 }} />
+
+            <Box sx={{ p: 2, backgroundColor: '#f0f4f8', borderRadius: 1.5 }}>
               <Box
                 sx={{
-                  p: 2,
-                  backgroundColor: '#f3e5f5',
-                  borderRadius: 1,
-                  width: '100%',
+                  display: 'flex',
+                  gap: 1,
+                  alignItems: 'flex-start',
+                  mb: 2,
                 }}
               >
-                <Typography
-                  variant="subtitle2"
-                  sx={{ fontWeight: 'bold', mb: 1 }}
-                >
-                  Cost Examples
-                </Typography>
-                <Typography variant="caption" sx={{ display: 'block', mb: 1 }}>
-                  <strong>Mistral 7B (30W):</strong> ~$0.0005 per post
-                </Typography>
-                <Typography variant="caption" sx={{ display: 'block', mb: 1 }}>
-                  <strong>Qwen 2.5 14B (50W):</strong> ~$0.0008 per post
-                </Typography>
-                <Typography variant="caption" sx={{ display: 'block', mb: 1 }}>
-                  <strong>Llama 3 70B (120W):</strong> ~$0.002 per post
-                </Typography>
-                <Divider sx={{ my: 1 }} />
-                <Typography
-                  variant="caption"
-                  sx={{ display: 'block', fontStyle: 'italic' }}
-                >
-                  <strong>30 posts/month:</strong> Electricity cost ranges from
-                  $0.015 to $0.06
-                </Typography>
+                <InfoIcon
+                  sx={{
+                    fontSize: 20,
+                    color: '#1976d2',
+                    mt: 0.5,
+                    flexShrink: 0,
+                  }}
+                />
+                <Box>
+                  <Typography
+                    variant="subtitle2"
+                    sx={{ fontWeight: 'bold', mb: 1 }}
+                  >
+                    ⚡ About Electricity Costs
+                  </Typography>
+                  <Typography
+                    variant="caption"
+                    sx={{ display: 'block', mb: 0.5 }}
+                  >
+                    <strong>Only applies to local Ollama models</strong>
+                  </Typography>
+                  <Typography
+                    variant="caption"
+                    sx={{ display: 'block', mb: 1 }}
+                  >
+                    Cloud models (GPT, Claude) don't have local electricity
+                    costs.
+                  </Typography>
+                  <Typography
+                    variant="caption"
+                    sx={{ display: 'block', mb: 0.5 }}
+                  >
+                    Small models (7B): ~30W | Medium (14B): ~50W | Large (30B+):
+                    ~80-150W
+                  </Typography>
+                  <Typography variant="caption" color="textSecondary">
+                    Based on ${ELECTRICITY_COST_CONFIG.pricePerKwh}/kWh US
+                    average rate
+                  </Typography>
+                </Box>
               </Box>
-            </Grid>
-          </Grid>
-          <Typography
-            variant="caption"
-            sx={{ display: 'block', mt: 2, color: 'textSecondary' }}
-          >
-            💡 <strong>Tip:</strong> Smaller models (7-14B) offer the best
-            balance of cost and quality for content generation. Compare
-            electricity costs with API service costs to find your optimal
-            price-to-performance ratio.
-          </Typography>
-        </CardContent>
+            </Box>
+          </CardContent>
+        )}
       </Card>
     </Box>
   );

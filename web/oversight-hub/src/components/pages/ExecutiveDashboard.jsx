@@ -15,10 +15,12 @@
  */
 
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import './ExecutiveDashboard.css';
 import CreateTaskModal from '../tasks/CreateTaskModal';
 
 const ExecutiveDashboard = () => {
+  const navigate = useNavigate();
   const [dashboardData, setDashboardData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -446,15 +448,24 @@ const ExecutiveDashboard = () => {
               <span className="action-icon">➕</span>
               <span className="action-label">Create Task</span>
             </button>
-            <button className="action-button review-button">
+            <button
+              className="action-button review-button"
+              onClick={() => navigate('/tasks')}
+            >
               <span className="action-icon">👁️</span>
               <span className="action-label">Review Queue</span>
             </button>
-            <button className="action-button publish-button">
+            <button
+              className="action-button publish-button"
+              onClick={() => navigate('/content')}
+            >
               <span className="action-icon">🚀</span>
               <span className="action-label">Publish Now</span>
             </button>
-            <button className="action-button reports-button">
+            <button
+              className="action-button reports-button"
+              onClick={() => navigate('/analytics')}
+            >
               <span className="action-icon">📊</span>
               <span className="action-label">View Reports</span>
             </button>

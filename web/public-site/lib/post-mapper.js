@@ -1,10 +1,10 @@
 /**
  * Post Data Mapper
  *
- * Maps PostgreSQL posts table format to React component format
+ * Maps FastAPI JSON response to React component format
  * This bridges the gap between:
- * - Database: Simple flat structure with featured_image_url
- * - Components: Expecting nested Strapi-like structure
+ * - API: FastAPI with nested coverImage structure
+ * - Components: Expecting coverImage.data.attributes format
  */
 
 /**

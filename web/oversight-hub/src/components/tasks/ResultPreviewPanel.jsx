@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import ReactMarkdown from 'react-markdown';
 import { getAuthToken } from '../../services/authService';
 import ErrorDetailPanel from './ErrorDetailPanel';
+import ConstraintComplianceDisplay from './ConstraintComplianceDisplay';
 
 const ResultPreviewPanel = ({
   task = null,
@@ -20,10 +21,10 @@ const ResultPreviewPanel = ({
   const [featuredImageUrl, setFeaturedImageUrl] = useState('');
   const [isGeneratingImage, setIsGeneratingImage] = useState(false);
   const [imageGenerationProgress, setImageGenerationProgress] = useState(0);
-  const [imageSource, setImageSource] = useState('pexels'); // 'pexels', 'sdxl', or 'both'
+  const [imageSource, setImageSource] = useState('pexels');
   const [imageGenerationMessage, setImageGenerationMessage] = useState('');
   const [hasGeneratedImage, setHasGeneratedImage] = useState(false);
-  const [isRetrying, setIsRetrying] = useState(false); // Track if 'Try Again' is being used
+  const [isRetrying, setIsRetrying] = useState(false);
 
   // Helper function to extract full title from content (e.g., "Title: Best Eats in the Northeast USA: A Culinary Guide")
   const extractTitleFromContent = (content, fallbackTitle) => {
@@ -898,6 +899,16 @@ const ResultPreviewPanel = ({
             <option value="download">💾 Download Only</option>
           </select>
         </div>
+
+        {/* Compliance Metrics */}
+        {task.constraint_compliance && (
+          <div className="border-t border-gray-700 pt-4">
+            <ConstraintComplianceDisplay
+              compliance={task.constraint_compliance}
+              phaseBreakdown={task.task_metadata?.phase_compliance}
+            />
+          </div>
+        )}
 
         {/* Approval Section */}
         {task.status === 'awaiting_approval' && (

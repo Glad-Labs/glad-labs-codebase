@@ -37,11 +37,20 @@ export {
   testModelProvider,
 } from './api-fastapi';
 
-// For legacy code that calls getStrapiURL, redirect to getImageURL
+// Helper to construct absolute URLs for images and assets
+// Handles both relative paths and already-absolute URLs
 export function getStrapiURL(path = '') {
   const FASTAPI_URL =
     process.env.NEXT_PUBLIC_FASTAPI_URL || 'http://localhost:8000';
+
   if (!path) return FASTAPI_URL;
+
+  // If already an absolute URL (http:// or https://), return as-is
+  if (path.startsWith('http://') || path.startsWith('https://')) {
+    return path;
+  }
+
+  // If relative path, prepend base URL
   return `${FASTAPI_URL}${path}`;
 }
 

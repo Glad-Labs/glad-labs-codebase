@@ -1,6 +1,7 @@
 import React from 'react';
 import useStore from '../../store/useStore';
 import ErrorDetailPanel from './ErrorDetailPanel';
+import ConstraintComplianceDisplay from './ConstraintComplianceDisplay';
 
 const renderStatus = (status) => (
   <span
@@ -52,6 +53,14 @@ const TaskDetailModal = ({ onClose }) => {
                 {selectedTask.publishedUrl}
               </a>
             </p>
+          )}
+          {selectedTask.constraint_compliance && (
+            <div className="mt-4 border-t pt-4">
+              <ConstraintComplianceDisplay
+                compliance={selectedTask.constraint_compliance}
+                phaseBreakdown={selectedTask.task_metadata?.phase_compliance}
+              />
+            </div>
           )}
           {selectedTask.status === 'failed' && (
             <div className="mt-4">
