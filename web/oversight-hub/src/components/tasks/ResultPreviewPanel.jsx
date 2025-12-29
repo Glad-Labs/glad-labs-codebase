@@ -465,6 +465,18 @@ const ResultPreviewPanel = ({
       const taskId = task.id || task.task_id;
       const token = getAuthToken();
 
+      const approvalPayload = {
+        approved,
+        human_feedback: approvalFeedback,
+        reviewer_id: reviewerId,
+        featured_image_url: featuredImageUrl,
+      };
+
+      console.log('📤 Sending approval request:', {
+        taskId,
+        ...approvalPayload,
+      });
+
       const response = await fetch(
         `http://localhost:8000/api/content/tasks/${taskId}/approve`,
         {
@@ -473,11 +485,7 @@ const ResultPreviewPanel = ({
             'Content-Type': 'application/json',
             Authorization: `Bearer ${token}`,
           },
-          body: JSON.stringify({
-            approved,
-            human_feedback: approvalFeedback,
-            reviewer_id: reviewerId,
-          }),
+          body: JSON.stringify(approvalPayload),
         }
       );
 

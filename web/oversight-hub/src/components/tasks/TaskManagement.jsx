@@ -1387,6 +1387,8 @@ const TaskManagement = () => {
                         human_feedback:
                           updatedTask.feedback || 'Approved in oversight hub',
                         reviewer_id: updatedTask.reviewer_id || 'admin',
+                        featured_image_url:
+                          updatedTask.featured_image_url || null,
                       }),
                     }
                   );

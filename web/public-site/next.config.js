@@ -146,13 +146,13 @@ const nextConfig = {
   },
 
   // Webpack configuration for additional optimizations
-  webpack: (config, { isServer }) => {
+  webpack(config, { isServer }) {
     config.optimization.minimize = true;
-    // Disable file watching entirely - only changes to source files matter
     config.watchOptions = {
-      ignored: /node_modules|\.next|\.swc|\.git|dist|build|trace/,
+      ignored:
+        /node_modules|\.next|\.swc|\.git|dist|build|trace|\.vercel|coverage/,
       poll: false,
-      aggregateTimeout: 0,
+      aggregateTimeout: 300,
     };
     return config;
   },
@@ -180,9 +180,8 @@ const nextConfig = {
     tsconfigPath: './tsconfig.json',
   },
 
-  // Experimental: Disable trace generation and optimize package imports
+  // Experimental: Optimize package imports
   experimental: {
-    disableLoggingNullSafetyWarning: true,
     optimizePackageImports: ['components', 'lib'],
   },
 
