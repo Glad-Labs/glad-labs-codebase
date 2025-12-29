@@ -48,7 +48,7 @@ const ConstraintComplianceDisplay = ({
 
   const getStatusIcon = (isCompliant) => {
     return isCompliant ? (
-      <CheckCircle sx={{ color: '#4ade80', mr: 1 }} />
+      <PassIcon sx={{ color: '#4ade80', mr: 1 }} />
     ) : (
       <FailIcon sx={{ color: '#ef4444', mr: 1 }} />
     );

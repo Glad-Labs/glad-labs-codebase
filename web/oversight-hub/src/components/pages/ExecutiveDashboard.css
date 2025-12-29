@@ -408,6 +408,11 @@
   border-color: #9c27b0;
 }
 
+.costs-button:hover {
+  background: rgba(76, 175, 80, 0.1);
+  border-color: #4caf50;
+}
+
 /* Quick Stats Section */
 .quick-stats-section {
   margin-bottom: 20px;

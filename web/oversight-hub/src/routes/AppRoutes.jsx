@@ -127,6 +127,16 @@ function AppRoutes() {
           </ProtectedRoute>
         }
       />
+      <Route
+        path="/costs"
+        element={
+          <ProtectedRoute>
+            <LayoutWrapper>
+              <CostMetricsDashboard />
+            </LayoutWrapper>
+          </ProtectedRoute>
+        }
+      />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );

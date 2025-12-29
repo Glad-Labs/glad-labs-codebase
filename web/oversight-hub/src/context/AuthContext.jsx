@@ -161,7 +161,7 @@ export const AuthProvider = ({ children }) => {
           throw new Error(`No user data returned from ${provider} OAuth`);
         }
       } catch (err) {
-        console.error(`❌ [AuthContext] OAuth callback error:`, err);
+        console.error('❌ [AuthContext] OAuth callback error:', err);
         setError(err.message);
         setLoading(false);
         throw err;

@@ -179,7 +179,7 @@ const ApprovalQueue = () => {
         alert(
           decision === 'approve'
             ? `✅ Task approved and published!\nURL: ${result.published_url || 'N/A'}`
-            : `❌ Task rejected.\nFeedback saved.`
+            : '❌ Task rejected.\nFeedback saved.'
         );
 
         // Refresh task list and close dialogs

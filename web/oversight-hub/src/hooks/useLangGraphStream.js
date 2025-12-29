@@ -27,7 +27,7 @@ export function useLangGraphStream(requestId) {
   });
 
   useEffect(() => {
-    if (!requestId) return;
+    if (!requestId) {return;}
 
     const ws = new WebSocket(
       `ws://localhost:8000/api/content/langgraph/ws/blog-posts/${requestId}`

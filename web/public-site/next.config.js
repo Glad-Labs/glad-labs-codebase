@@ -1,11 +1,6 @@
 /** @type {import('next').NextConfig} */
 
 const nextConfig = {
-  // Disable Fast Refresh to prevent constant rebuild loops
-  experimental: {
-    disableLoggingNullSafetyWarning: true,
-  },
-
   // Image Optimization Configuration
   images: {
     // Supported image formats with automatic optimization
@@ -185,9 +180,10 @@ const nextConfig = {
     tsconfigPath: './tsconfig.json',
   },
 
-  // Experimental: Disable trace generation to prevent file watcher issues
+  // Experimental: Disable trace generation and optimize package imports
   experimental: {
     disableLoggingNullSafetyWarning: true,
+    optimizePackageImports: ['components', 'lib'],
   },
 
   // Compression configuration
@@ -210,11 +206,6 @@ const nextConfig = {
 
   // React strict mode - disabled for smoother dev experience
   reactStrictMode: false,
-
-  // Experimental features for better dev experience
-  experimental: {
-    optimizePackageImports: ['components', 'lib'],
-  },
 };
 
 module.exports = nextConfig;

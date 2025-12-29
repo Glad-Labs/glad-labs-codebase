@@ -18,13 +18,14 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import './ExecutiveDashboard.css';
 import CreateTaskModal from '../tasks/CreateTaskModal';
+import CostBreakdownCards from '../CostBreakdownCards';
 
 const ExecutiveDashboard = () => {
   const navigate = useNavigate();
   const [dashboardData, setDashboardData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [timeRange, setTimeRange] = useState('30days');
+  const [timeRange, setTimeRange] = useState('30d');
   const [taskModalOpen, setTaskModalOpen] = useState(false);
 
   // Fetch dashboard data from API
@@ -91,6 +92,20 @@ const ExecutiveDashboard = () => {
         currency: 'USD',
         icon: '💰',
       },
+      totalCost: {
+        current: 127.5,
+        previous: 95.3,
+        change: 33.85,
+        currency: 'USD',
+        icon: '💸',
+      },
+      avgCostPerTask: {
+        current: 0.0087,
+        previous: 0.0105,
+        change: -17.14,
+        currency: 'USD',
+        icon: '🎯',
+      },
       engagementRate: {
         current: 4.8,
         previous: 3.2,
@@ -104,6 +119,19 @@ const ExecutiveDashboard = () => {
         change: 0.6,
         unit: '%',
         icon: '✓',
+      },
+      costByPhase: {
+        research: 0.0,
+        draft: 0.00525,
+        assess: 0.00275,
+        refine: 0.0035,
+        other: 0.00025,
+      },
+      costByModel: {
+        ollama: 0.0,
+        'gpt-3.5': 0.00525,
+        'gpt-4': 0.00075,
+        claude: 0.00095,
       },
     },
     trends: {
@@ -129,6 +157,18 @@ const ExecutiveDashboard = () => {
         peak: 5.8,
         low: 2.1,
         unit: '%',
+      },
+      costTrend: {
+        title: 'AI Cost Trend (30 days)',
+        data: [
+          2.5, 2.8, 3.2, 3.5, 3.8, 4.1, 4.2, 4.5, 4.8, 5.1, 5.2, 5.4, 5.6, 5.5,
+          5.3, 5.2, 5.0, 4.8, 5.1, 5.3, 5.5, 5.7, 5.9, 6.0, 5.8, 5.6, 5.4, 5.2,
+          5.3, 5.5,
+        ],
+        avg: 5.0,
+        peak: 6.0,
+        low: 2.5,
+        unit: '$/day',
       },
     },
     systemStatus: {
@@ -208,10 +248,11 @@ const ExecutiveDashboard = () => {
             value={timeRange}
             onChange={(e) => setTimeRange(e.target.value)}
           >
-            <option value="7days">Last 7 Days</option>
-            <option value="30days">Last 30 Days</option>
-            <option value="90days">Last 90 Days</option>
-            <option value="1year">Last Year</option>
+            <option value="1d">Last 24 Hours</option>
+            <option value="7d">Last 7 Days</option>
+            <option value="30d">Last 30 Days</option>
+            <option value="90d">Last 90 Days</option>
+            <option value="all">All Time</option>
           </select>
         </div>
       </div>
@@ -305,6 +346,50 @@ const ExecutiveDashboard = () => {
               <div className="kpi-previous">this month vs last</div>
             </div>
           )}
+
+          {/* Total AI Cost */}
+          {kpis.totalCost && (
+            <div className="kpi-card cost-card">
+              <div className="kpi-header">
+                <div className="kpi-icon">{kpis.totalCost.icon}</div>
+                <div className="kpi-title">Total AI Cost</div>
+              </div>
+              <div className="kpi-value">
+                ${kpis.totalCost.current.toFixed(2)}
+              </div>
+              <div
+                className={`kpi-change ${kpis.totalCost.change >= 0 ? 'negative' : 'positive'}`}
+              >
+                {kpis.totalCost.change >= 0 ? '↑' : '↓'}{' '}
+                {Math.abs(kpis.totalCost.change).toFixed(2)}% MoM
+              </div>
+              <div className="kpi-previous">
+                vs ${kpis.totalCost.previous.toFixed(2)} last month
+              </div>
+            </div>
+          )}
+
+          {/* Avg Cost Per Task */}
+          {kpis.avgCostPerTask && (
+            <div className="kpi-card cost-efficiency-card">
+              <div className="kpi-header">
+                <div className="kpi-icon">{kpis.avgCostPerTask.icon}</div>
+                <div className="kpi-title">Cost per Task</div>
+              </div>
+              <div className="kpi-value">
+                ${kpis.avgCostPerTask.current.toFixed(6)}
+              </div>
+              <div
+                className={`kpi-change ${kpis.avgCostPerTask.change < 0 ? 'positive' : 'negative'}`}
+              >
+                {kpis.avgCostPerTask.change < 0 ? '↓' : '↑'}{' '}
+                {Math.abs(kpis.avgCostPerTask.change).toFixed(2)}%
+              </div>
+              <div className="kpi-previous">
+                optimization vs ${kpis.avgCostPerTask.previous.toFixed(6)}
+              </div>
+            </div>
+          )}
         </div>
       </div>
 
@@ -391,7 +476,58 @@ const ExecutiveDashboard = () => {
             </div>
           )}
         </div>
+
+        {/* Cost Trend */}
+        {trends.costTrend && (
+          <div className="trend-card">
+            <h3>{trends.costTrend.title}</h3>
+            <div className="chart-container">
+              <div className="mini-bar-chart">
+                {trends.costTrend.data.map((value, idx) => {
+                  const maxVal = Math.max(...trends.costTrend.data);
+                  const height = (value / maxVal) * 100;
+                  return (
+                    <div
+                      key={idx}
+                      className="bar cost-bar"
+                      style={{ height: `${height}%` }}
+                      title={`Day ${idx + 1}: $${value.toFixed(2)}`}
+                    />
+                  );
+                })}
+              </div>
+            </div>
+            <div className="trend-stats">
+              <div className="stat">
+                <span className="label">Average:</span>
+                <span className="value">
+                  ${trends.costTrend.avg.toFixed(2)}/day
+                </span>
+              </div>
+              <div className="stat">
+                <span className="label">Peak:</span>
+                <span className="value">
+                  ${trends.costTrend.peak.toFixed(2)}
+                </span>
+              </div>
+              <div className="stat">
+                <span className="label">Low:</span>
+                <span className="value">
+                  ${trends.costTrend.low.toFixed(2)}
+                </span>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
+
+      {/* Cost Breakdown Analysis */}
+      {kpis && kpis.costByPhase && (
+        <CostBreakdownCards
+          costByPhase={kpis.costByPhase}
+          costByModel={kpis.costByModel}
+        />
+      )}
 
       {/* System Status & Quick Actions */}
       <div className="status-actions-section">
@@ -468,6 +604,13 @@ const ExecutiveDashboard = () => {
             >
               <span className="action-icon">📊</span>
               <span className="action-label">View Reports</span>
+            </button>
+            <button
+              className="action-button costs-button"
+              onClick={() => navigate('/costs')}
+            >
+              <span className="action-icon">💰</span>
+              <span className="action-label">View Costs</span>
             </button>
           </div>
         </div>

@@ -1,92 +1,246 @@
-import React, { useState } from 'react';
+import { useState, useEffect } from 'react';
 import './CostMetricsDashboard.css';
+import {
+  getCostMetrics,
+  getCostsByPhase,
+  getCostsByModel,
+  getCostHistory,
+  getBudgetStatus,
+} from '../services/cofounderAgentClient';
 
 function CostMetricsDashboard() {
-  const [costMetrics] = useState([
-    {
-      label: 'Total Spend',
-      value: '$12,450',
-      change: '+12.5%',
-      positive: false,
-    },
-    { label: 'API Calls', value: '1.2M', change: '+8.2%', positive: false },
-    {
-      label: 'Cost per Call',
-      value: '$0.0104',
-      change: '-2.1%',
-      positive: true,
-    },
-    {
-      label: 'Monthly Budget',
-      value: '$15,000',
-      change: '83% used',
-      positive: false,
-    },
-  ]);
+  const [costMetrics, setCostMetrics] = useState(null);
+  const [costsByPhase, setCostsByPhase] = useState(null);
+  const [costsByModel, setCostsByModel] = useState(null);
+  const [costHistory, setCostHistory] = useState(null);
+  const [budgetStatus, setBudgetStatus] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [timeRange, setTimeRange] = useState('month');
 
-  const [costBreakdown] = useState([
-    { service: 'AI Models', cost: 5240, percentage: 42 },
-    { service: 'Storage', cost: 2156, percentage: 17 },
-    { service: 'Compute', cost: 3120, percentage: 25 },
-    { service: 'Network', cost: 1240, percentage: 10 },
-    { service: 'Other', cost: 694, percentage: 6 },
-  ]);
+  // Fetch real cost data from API
+  useEffect(() => {
+    const fetchCostData = async () => {
+      try {
+        setLoading(true);
+        setError(null);
 
-  const [costTrend] = useState([
-    { month: 'Jul', cost: 8500 },
-    { month: 'Aug', cost: 9200 },
-    { month: 'Sep', cost: 10800 },
-    { month: 'Oct', cost: 12450 },
-  ]);
+        const [metrics, phaseData, modelData, historyData, budgetData] = 
+          await Promise.all([
+            getCostMetrics(),
+            getCostsByPhase(timeRange),
+            getCostsByModel(timeRange),
+            getCostHistory(timeRange),
+            getBudgetStatus(150.0),
+          ]).catch(() => {
+            // Return mock data if API calls fail (during development)
+            return [
+              {
+                total_cost: 127.50,
+                avg_cost_per_task: 0.0087,
+                total_tasks: 15000,
+              },
+              { phases: {} },
+              { models: {} },
+              { daily_data: [] },
+              {
+                monthly_budget: 150.0,
+                amount_spent: 127.50,
+                amount_remaining: 22.50,
+                percent_used: 85,
+              },
+            ];
+          });
+
+        // Process metrics data
+        const totalCost = metrics?.total_cost || 0;
+        const avgCostPerTask = metrics?.avg_cost_per_task || 0;
+        const totalTasks = metrics?.total_tasks || 0;
+
+        setCostMetrics([
+          {
+            label: 'Total Cost (Period)',
+            value: `$${totalCost.toFixed(2)}`,
+            change: `${totalTasks} tasks`,
+            positive: true,
+          },
+          {
+            label: 'Avg Cost/Task',
+            value: `$${avgCostPerTask.toFixed(6)}`,
+            change: 'Optimization target',
+            positive: true,
+          },
+          {
+            label: 'Total Tasks',
+            value: totalTasks.toLocaleString(),
+            change: `${(totalTasks * avgCostPerTask).toFixed(2)}$ total`,
+            positive: true,
+          },
+          {
+            label: 'Monthly Budget',
+            value: '$150.00',
+            change: `${(budgetData?.percent_used || 0)}% used`,
+            positive: (budgetData?.percent_used || 0) < 80,
+          },
+        ]);
+
+        setCostsByPhase(phaseData?.phases || {});
+        setCostsByModel(modelData?.models || {});
+        setCostHistory(historyData?.daily_data || []);
+        setBudgetStatus(budgetData);
+      } catch (err) {
+        console.error('Error fetching cost data:', err);
+        setError(err instanceof Error ? err.message : 'Failed to fetch cost data');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchCostData();
+  }, [timeRange]);
+
+  // Mock cost breakdown by service (for visualization)
+  const costBreakdown = Object.entries(costsByPhase || {})
+    .map(([phase, cost]) => ({
+      service: phase.charAt(0).toUpperCase() + phase.slice(1),
+      cost: Math.round((cost || 0) * 100),
+      percentage: Math.round((cost || 0) * 100 / 100),
+    }))
+    .filter(item => item.cost > 0)
+    .sort((a, b) => b.cost - a.cost);
+
+  // Format cost history into monthly trend data
+  const costTrend = (costHistory || []).map((item, idx) => ({
+    month: item.date ? new Date(item.date).toLocaleDateString('en-US', { month: 'short' }) : `Month ${idx + 1}`,
+    cost: item.cost || 0,
+  })).slice(-4); // Last 4 months
 
   return (
     <div className="cost-metrics-container">
       <div className="dashboard-header">
-        <h1 className="dashboard-title">Cost Metrics Dashboard</h1>
-        <p className="dashboard-subtitle">
-          Monitor and optimize your resource spending
-        </p>
-      </div>
-
-      {/* Key Metrics */}
-      <div className="metrics-grid">
-        {costMetrics.map((metric, idx) => (
-          <div key={idx} className="metric-card">
-            <h3 className="metric-label">{metric.label}</h3>
-            <p className="metric-value">{metric.value}</p>
-            <p
-              className={`metric-change ${metric.positive ? 'positive' : 'negative'}`}
-            >
-              {metric.positive ? '📉' : '📈'} {metric.change}
-            </p>
-          </div>
-        ))}
-      </div>
-
-      {/* Budget Overview */}
-      <div className="budget-section">
-        <h2 className="section-title">💰 Monthly Budget Overview</h2>
-        <div className="budget-card">
-          <div className="budget-header">
-            <span className="budget-label">Current Spend</span>
-            <span className="budget-value">$12,450 / $15,000</span>
-          </div>
-          <div className="budget-bar">
-            <div className="budget-fill" style={{ width: '83%' }}>
-              <span className="budget-percent">83%</span>
-            </div>
-          </div>
-          <div className="budget-info">
-            <span className="budget-remaining">💵 $2,550 remaining</span>
-            <span className="budget-days">📅 6 days left in cycle</span>
-          </div>
+        <div>
+          <h1 className="dashboard-title">💰 Cost Metrics Dashboard</h1>
+          <p className="dashboard-subtitle">
+            Real-time AI cost tracking and optimization analysis
+          </p>
+        </div>
+        <div className="time-range-selector">
+          <select value={timeRange} onChange={(e) => setTimeRange(e.target.value)}>
+            <option value="today">Today</option>
+            <option value="week">Last 7 Days</option>
+            <option value="month">This Month</option>
+          </select>
         </div>
       </div>
 
-      {/* Cost Breakdown */}
-      <div className="breakdown-section">
-        <h2 className="section-title">📊 Cost Breakdown by Service</h2>
-        <div className="breakdown-grid">
+      {loading && (
+        <div className="loading">
+          <p>Loading cost metrics...</p>
+        </div>
+      )}
+
+      {error && (
+        <div className="error">
+          <p>⚠️ {error}</p>
+          <small>Showing mock data for development</small>
+        </div>
+      )}
+
+      {!loading && costMetrics && (
+        <>
+          {/* Key Metrics */}
+          <div className="metrics-grid">
+            {costMetrics.map((metric, idx) => (
+              <div key={idx} className="metric-card">
+                <h3 className="metric-label">{metric.label}</h3>
+                <p className="metric-value">{metric.value}</p>
+                <p
+                  className={`metric-change ${metric.positive ? 'positive' : 'negative'}`}
+                >
+                  {metric.positive ? '✓' : '⚠️'} {metric.change}
+                </p>
+              </div>
+            ))}
+          </div>
+
+          {/* Budget Overview */}
+          {budgetStatus && (
+            <div className="budget-section">
+              <h2 className="section-title">💳 Monthly Budget Overview</h2>
+              <div className="budget-card">
+                <div className="budget-header">
+                  <span className="budget-label">Current Spend</span>
+                  <span className="budget-value">
+                    ${budgetStatus.amount_spent?.toFixed(2) || '0.00'} / $
+                    {budgetStatus.monthly_budget?.toFixed(2) || '150.00'}
+                  </span>
+                </div>
+                <div className="budget-bar">
+                  <div
+                    className={`budget-fill ${
+                      budgetStatus.percent_used >= 90
+                        ? 'critical'
+                        : budgetStatus.percent_used >= 75
+                          ? 'warning'
+                          : 'normal'
+                    }`}
+                    style={{ width: `${budgetStatus.percent_used || 0}%` }}
+                  >
+                    <span className="budget-percent">
+                      {budgetStatus.percent_used?.toFixed(1) || 0}%
+                    </span>
+                  </div>
+                </div>
+                <div className="budget-info">
+                  <span className="budget-remaining">
+                    💵 ${budgetStatus.amount_remaining?.toFixed(2) || '0.00'} remaining
+                  </span>
+                  <span className="budget-days">📅 Projected daily: ${((budgetStatus.amount_spent || 0) / 30).toFixed(2)}</span>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Cost Breakdown */}
+          {costBreakdown.length > 0 && (
+            <div className="breakdown-section">
+              <h2 className="section-title">📊 Cost by Pipeline Phase</h2>
+              <div className="breakdown-list">
+                {costBreakdown.map((item, idx) => (
+                  <div key={idx} className="breakdown-item">
+                    <div className="item-info">
+                      <span className="item-label">{item.service}</span>
+                      <span className="item-cost">${item.cost.toFixed(6)}</span>
+                    </div>
+                    <div className="progress-bar">
+                      <div
+                        className="progress-fill"
+                        style={{ width: `${item.percentage * 100}%` }}
+                      />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Model Costs */}
+          {costsByModel && Object.keys(costsByModel).length > 0 && (
+            <div className="models-section">
+              <h2 className="section-title">🤖 Cost by AI Model</h2>
+              <div className="models-grid">
+                {Object.entries(costsByModel).map(([model, cost]) => (
+                  <div key={model} className="model-card">
+                    <div className="model-name">{model.toUpperCase()}</div>
+                    <div className="model-cost">${(cost || 0).toFixed(6)}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Cost Breakdown Grid */}
+          <div className="breakdown-grid">
           <div className="breakdown-chart">
             <div className="pie-chart">
               <svg
@@ -160,11 +314,12 @@ function CostMetricsDashboard() {
             ))}
           </div>
         </div>
-      </div>
+        </>
+      )}
 
-      {/* Cost Trend */}
+      {/* Cost Trend - Last 4 Months */}
       <div className="trend-section">
-        <h2 className="section-title">📈 Cost Trend (Last 4 Months)</h2>
+        <h2 className="section-title">Cost Trend (Last 4 Months)</h2>
         <div className="trend-chart">
           <div className="trend-graph">
             {costTrend.map((data, idx) => (

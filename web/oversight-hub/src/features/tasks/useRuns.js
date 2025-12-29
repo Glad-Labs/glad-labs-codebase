@@ -9,7 +9,7 @@ export const useRuns = (taskId) => {
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    if (!taskId) return;
+    if (!taskId) {return;}
 
     let isMounted = true;
     let retryCount = 0;

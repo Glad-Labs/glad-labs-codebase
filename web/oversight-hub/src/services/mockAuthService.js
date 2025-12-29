@@ -69,7 +69,7 @@ export const exchangeCodeForToken = async (code) => {
 export const verifySession = async () => {
   try {
     const token = localStorage.getItem('auth_token');
-    if (!token) return null;
+    if (!token) {return null;}
 
     // If token exists, consider session valid
     const user = localStorage.getItem('user');

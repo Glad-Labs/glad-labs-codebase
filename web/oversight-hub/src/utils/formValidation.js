@@ -312,7 +312,7 @@ export const validateRegistrationForm = (formData) => {
   };
 };
 
-export default {
+const formValidation = {
   validateEmail,
   validatePassword,
   validatePasswordStrict,
@@ -328,3 +328,5 @@ export default {
   validateLoginForm,
   validateRegistrationForm,
 };
+
+export default formValidation;

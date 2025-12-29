@@ -240,8 +240,8 @@ const OrchestratorMessageCard = ({
         transition: 'box-shadow 200ms cubic-bezier(0.4, 0, 0.2, 1)',
         '&:hover': {
           boxShadow: expanded
-            ? `0 8px 24px rgba(0,0,0,0.15)`
-            : `0 4px 12px rgba(0,0,0,0.1)`,
+            ? '0 8px 24px rgba(0,0,0,0.15)'
+            : '0 4px 12px rgba(0,0,0,0.1)',
         },
       }}
     >

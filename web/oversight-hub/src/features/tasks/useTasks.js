@@ -52,7 +52,7 @@ export const useTasks = (page = 1, limit = 10) => {
           },
         });
 
-        if (loadingTimeout) clearTimeout(loadingTimeout);
+        if (loadingTimeout) {clearTimeout(loadingTimeout);}
 
         if (isMounted) {
           // Handle TaskListResponse format with pagination info
@@ -83,7 +83,7 @@ export const useTasks = (page = 1, limit = 10) => {
           setLoading(false);
         }
       } catch (err) {
-        if (loadingTimeout) clearTimeout(loadingTimeout);
+        if (loadingTimeout) {clearTimeout(loadingTimeout);}
 
         if (isMounted) {
           console.error('❌ Error fetching tasks:', err.message, {
@@ -118,7 +118,7 @@ export const useTasks = (page = 1, limit = 10) => {
 
     return () => {
       isMounted = false;
-      if (loadingTimeout) clearTimeout(loadingTimeout);
+      if (loadingTimeout) {clearTimeout(loadingTimeout);}
     };
   }, [page, limit, setStoreTasks]);
 

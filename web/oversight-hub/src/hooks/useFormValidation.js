@@ -19,9 +19,6 @@ import { useState, useCallback } from 'react';
 import {
   validateLoginForm,
   validateRegistrationForm,
-  validateEmail,
-  validatePassword,
-  validate2FACode,
 } from '../utils/formValidation';
 
 /**

@@ -167,7 +167,7 @@ const TaskManagement = () => {
       // This way KPI stats are more representative, while still paginating for display
       // Request all available tasks to calculate stats correctly
       const response = await fetch(
-        `http://localhost:8000/api/tasks?limit=100&offset=0`,
+        'http://localhost:8000/api/tasks?limit=100&offset=0',
         {
           headers,
           signal: AbortSignal.timeout(15000),

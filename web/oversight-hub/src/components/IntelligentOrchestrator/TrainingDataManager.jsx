@@ -165,9 +165,9 @@ function TrainingDataManager({ taskId, onReset }) {
         </div>
       </div>
 
-      {/* What's Included */}
+      {/* What is Included */}
       <div className="data-contents">
-        <h3>📦 What's Included</h3>
+        <h3>📦 What&apos;s Included</h3>
         <div className="contents-list">
           <div className="content-item">
             <span className="content-icon">✓</span>

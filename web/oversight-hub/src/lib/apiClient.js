@@ -88,7 +88,7 @@ apiClient.interceptors.response.use(
 export const listTasks = async (skip = 0, limit = 20, status = null) => {
   try {
     const params = new URLSearchParams({ skip, limit });
-    if (status) params.append('status', status);
+    if (status) {params.append('status', status);}
 
     const response = await apiClient.get(`/api/tasks?${params.toString()}`);
     return response.data;
@@ -619,7 +619,7 @@ export const retryWithBackoff = async (apiCall, maxRetries = 3) => {
 // EXPORT ALL
 // ============================================================================
 
-export default {
+const apiClientMethods = {
   // Tasks
   listTasks,
   createTask,
@@ -669,3 +669,5 @@ export default {
   isRecoverableError,
   retryWithBackoff,
 };
+
+export default apiClientMethods;

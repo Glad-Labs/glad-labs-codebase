@@ -40,6 +40,7 @@ const LayoutWrapper = ({ children }) => {
     { label: 'Social', icon: '📱', path: 'social' },
     { label: 'AI & Training', icon: '🧠', path: 'training' },
     { label: 'Analytics', icon: '📈', path: 'analytics' },
+    { label: 'Costs', icon: '💰', path: 'costs' },
     { label: 'Settings', icon: '⚙️', path: 'settings' },
   ];
 
@@ -132,6 +133,7 @@ const LayoutWrapper = ({ children }) => {
       social: '/social',
       training: '/training',
       analytics: '/analytics',
+      costs: '/costs',
       settings: '/settings',
     };
     navigate(routeMap[page] || '/');

@@ -561,7 +561,7 @@ export function ModelSelectionPanel({
           <CardContent sx={{ pt: 3 }}>
             <Grid container spacing={2}>
               {Object.entries(QUALITY_PRESETS).map(([key, preset]) => (
-                <Grid item xs={12} sm={6} md={4} key={key}>
+                <Grid size={{ xs: 12, sm: 6, md: 4 }} key={key}>
                   <Button
                     fullWidth
                     variant={
@@ -771,7 +771,7 @@ export function ModelSelectionPanel({
         {activeTab === 2 && (
           <CardContent sx={{ pt: 3 }}>
             <Grid container spacing={3} sx={{ mb: 3 }}>
-              <Grid item xs={12} sm={6} md={4}>
+              <Grid size={{ xs: 12, sm: 6, md: 4 }}>
                 <Box
                   sx={{
                     p: 2.5,
@@ -807,7 +807,7 @@ export function ModelSelectionPanel({
                 </Box>
               </Grid>
 
-              <Grid item xs={12} sm={6} md={4}>
+              <Grid size={{ xs: 12, sm: 6, md: 4 }}>
                 <Box
                   sx={{
                     p: 2.5,
@@ -839,7 +839,7 @@ export function ModelSelectionPanel({
                 </Box>
               </Grid>
 
-              <Grid item xs={12} sm={6} md={4}>
+              <Grid size={{ xs: 12, sm: 6, md: 4 }}>
                 <Box
                   sx={{
                     p: 2.5,
@@ -967,7 +967,7 @@ export function ModelSelectionPanel({
           <CardContent sx={{ pt: 3 }}>
             <Grid container spacing={2} sx={{ mb: 3 }}>
               {Object.entries(AVAILABLE_MODELS).map(([key, provider]) => (
-                <Grid item xs={12} sm={6} md={4} key={key}>
+                <Grid size={{ xs: 12, sm: 6, md: 4 }} key={key}>
                   <Box
                     sx={{
                       p: 2,
@@ -1067,7 +1067,7 @@ export function ModelSelectionPanel({
                     variant="caption"
                     sx={{ display: 'block', mb: 1 }}
                   >
-                    Cloud models (GPT, Claude) don't have local electricity
+                    Cloud models (GPT, Claude) don&apos;t have local electricity
                     costs.
                   </Typography>
                   <Typography

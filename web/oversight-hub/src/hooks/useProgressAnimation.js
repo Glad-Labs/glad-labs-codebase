@@ -51,7 +51,7 @@ export const useProgressAnimation = (
 
   // Animate phase progress
   useEffect(() => {
-    if (!isAnimating) return;
+    if (!isAnimating) {return;}
 
     const animationInterval = setInterval(() => {
       setPhaseProgress((prev) => {

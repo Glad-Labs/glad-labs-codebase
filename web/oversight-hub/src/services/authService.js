@@ -94,7 +94,7 @@ export const verifySession = async () => {
     const token = localStorage.getItem('auth_token');
     const user = localStorage.getItem('user');
 
-    if (!token) return null;
+    if (!token) {return null;}
 
     // For mock tokens (development/testing), trust the stored user if valid format
     if (token.includes('.') && token.split('.').length === 3) {
@@ -191,7 +191,7 @@ export const getStoredUser = () => {
  * @returns {boolean} - True if expired, false otherwise
  */
 export const isTokenExpired = (token) => {
-  if (!token) return true;
+  if (!token) {return true;}
 
   try {
     const parts = token.split('.');
@@ -226,7 +226,7 @@ export const isTokenExpired = (token) => {
     console.log('[authService.isTokenExpired]', {
       expiryTime: new Date(expiryTime).toISOString(),
       now: new Date(now).toISOString(),
-      isExpired: isExpired,
+      isExpired,
     });
 
     return isExpired;
@@ -548,7 +548,7 @@ export async function handleOAuthCallbackNew(provider, code, state) {
 export async function validateAndGetCurrentUser() {
   try {
     const token = getAuthToken();
-    if (!token) return null;
+    if (!token) {return null;}
 
     const response = await fetch(`${API_BASE_URL}/api/auth/me`, {
       method: 'GET',
