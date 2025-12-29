@@ -6,15 +6,44 @@ const nextConfig = {
     // Supported image formats with automatic optimization
     formats: ['image/avif', 'image/webp'],
 
-    // Domain configuration for Strapi CMS images
-    domains: [
-      'localhost',
-      'localhost:1337',
-      'cms.railway.app', // Production Strapi
-      'staging-cms.railway.app', // Staging Strapi
-      'strapi-main.railway.app',
-      'res.cloudinary.com', // If using Cloudinary
-      'cdn.example.com', // Your CDN
+    // Use remotePatterns instead of deprecated domains property
+    remotePatterns: [
+      {
+        protocol: 'http',
+        hostname: 'localhost',
+        port: '8000',
+        pathname: '/**',
+      },
+      {
+        protocol: 'http',
+        hostname: 'localhost',
+        pathname: '/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'via.placeholder.com',
+        pathname: '/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'res.cloudinary.com',
+        pathname: '/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'cdn.example.com',
+        pathname: '/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'pexels.com',
+        pathname: '/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'images.pexels.com',
+        pathname: '/**',
+      },
     ],
 
     // Image size optimization
@@ -117,15 +146,28 @@ const nextConfig = {
   },
 
   // Webpack configuration for additional optimizations
-  webpack: (config, { isServer }) => {
+  webpack(config, { isServer }) {
     config.optimization.minimize = true;
+    config.watchOptions = {
+      ignored:
+        /node_modules|\.next|\.swc|\.git|dist|build|trace|\.vercel|coverage/,
+      poll: false,
+      aggregateTimeout: 300,
+    };
     return config;
+  },
+
+  // Disable Fast Refresh rebuild detection for .next folder changes
+  onDemandEntries: {
+    maxInactiveAge: 60 * 1000, // Keep for 60 seconds
   },
 
   // Environment variables exposed to browser
   env: {
     NEXT_PUBLIC_STRAPI_API_URL: process.env.NEXT_PUBLIC_STRAPI_API_URL,
     NEXT_PUBLIC_STRAPI_API_TOKEN: process.env.NEXT_PUBLIC_STRAPI_API_TOKEN,
+    // Disable Next.js telemetry to prevent trace file generation
+    NEXT_TELEMETRY_DISABLED: '1',
   },
 
   // ESLint configuration
@@ -136,6 +178,11 @@ const nextConfig = {
   // TypeScript configuration
   typescript: {
     tsconfigPath: './tsconfig.json',
+  },
+
+  // Experimental: Optimize package imports
+  experimental: {
+    optimizePackageImports: ['components', 'lib'],
   },
 
   // Compression configuration
@@ -156,8 +203,8 @@ const nextConfig = {
   // Trailing slashes (set to false for clean URLs)
   trailingSlash: false,
 
-  // React strict mode for development
-  reactStrictMode: true,
+  // React strict mode - disabled for smoother dev experience
+  reactStrictMode: false,
 };
 
 export default nextConfig;

@@ -1,14 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import {
   Box,
-  Grid,
   Typography,
   Button,
   Chip,
-  Select,
-  MenuItem,
-  FormControl,
-  InputLabel,
   IconButton,
   Table,
   TableBody,
@@ -18,13 +13,19 @@ import {
   TableRow,
   Paper,
   Checkbox,
-  Tabs,
-  Tab,
   Alert,
   CircularProgress,
   Tooltip,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Tabs,
+  Tab,
 } from '@mui/material';
 import { getAuthToken } from '../../services/authService';
+import { bulkUpdateTasks } from '../../services/cofounderAgentClient';
+import { AuthContext } from '../../context/AuthContext';
 import {
   Add as AddIcon,
   PlayArrow as PlayIcon,
@@ -33,11 +34,9 @@ import {
   Delete as DeleteIcon,
   Edit as EditIcon,
   Refresh as RefreshIcon,
-  CheckCircle as CheckCircleIcon,
-  Assignment as AssignmentIcon,
+  Close as CloseIcon,
 } from '@mui/icons-material';
 import CreateTaskModal from './CreateTaskModal';
-import TaskQueueView from './TaskQueueView';
 import ResultPreviewPanel from './ResultPreviewPanel';
 
 /**
@@ -52,38 +51,156 @@ import ResultPreviewPanel from './ResultPreviewPanel';
  * - Manual intervention controls
  */
 const TaskManagement = () => {
+  // Get auth context
+  const authContext = useContext(AuthContext);
+  const authLoading = authContext?.loading || false;
+
   const [loading, setLoading] = useState(true);
+  const [isFetching, setIsFetching] = useState(false);
   const [tasks, setTasks] = useState([]);
+  const [allTasks, setAllTasks] = useState([]); // Store ALL tasks for KPI calculation
   const [selectedTasks, setSelectedTasks] = useState([]);
-  const [filterStatus, setFilterStatus] = useState('all');
-  const [filterPriority, setFilterPriority] = useState('all');
-  const [filterAgent, setFilterAgent] = useState('all');
-  const [currentTab, setCurrentTab] = useState(0); // 0: Active, 1: Completed, 2: Failed
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [selectedTask, setSelectedTask] = useState(null);
   const [isPublishing, setIsPublishing] = useState(false);
   const [error, setError] = useState(null);
+  const [sortBy, setSortBy] = useState('created_at');
+  const [sortDirection, setSortDirection] = useState('desc');
+  const [activeTab, setActiveTab] = useState(0); // 0 = Manual, 1 = Poindexter
+  const [page, setPage] = useState(1);
+  const [limit] = useState(10);
+  const [total, setTotal] = useState(0);
 
   /**
-   * Fetch tasks from backend with authorization
+   * Fetch full content task from /api/content/tasks endpoint
+   * Gets complete task data with content, excerpt, images
+   * ✅ REFACTORED: Changed from /api/content/blog-posts/tasks/{id} to /api/content/tasks/{id}
+   * Now supports all task types: blog_post, social_media, email, newsletter
    */
-  const fetchTasks = async () => {
+  const fetchContentTaskStatus = async (taskId) => {
     try {
-      setError(null);
       const token = getAuthToken();
       const headers = { 'Content-Type': 'application/json' };
       if (token) {
         headers['Authorization'] = `Bearer ${token}`;
       }
 
-      const response = await fetch('http://localhost:8000/api/tasks', {
-        headers,
-        signal: AbortSignal.timeout(5000),
-      });
+      // ✅ UPDATED ENDPOINT: /api/content/tasks/{taskId}
+      // Returns: { task_id, status, progress, result, error, created_at, task_type }
+      // Content is nested in result.content, result.article_title, etc.
+      const response = await fetch(
+        `http://localhost:8000/api/content/tasks/${taskId}`,
+        {
+          headers,
+          signal: AbortSignal.timeout(5000),
+        }
+      );
 
       if (response.ok) {
         const data = await response.json();
-        setTasks(data.tasks || []);
+        const result = data.result || {};
+
+        console.log('✅ Content task status fetched:', {
+          taskId: data.task_id || taskId,
+          status: data.status,
+          hasResult: !!result,
+          hasContent: !!result.content,
+          contentLength: result.content?.length || 0,
+        });
+
+        return {
+          status: data.status || 'completed',
+          task_id: data.task_id || taskId,
+          // Extract from result object (nested structure from backend)
+          title: result.title || result.article_title || result.topic || '',
+          content:
+            result.content || result.generated_content || result.article || '',
+          excerpt: result.excerpt || result.summary || '',
+          featured_image_url: result.featured_image_url || null,
+          featured_image_data: result.featured_image_data || null,
+          // Config fields
+          style: result.style || '',
+          tone: result.tone || '',
+          target_length: result.target_length || 0,
+          // Metadata
+          tags: result.tags || [],
+          task_metadata: result.task_metadata || data.progress || {},
+          strapi_id: result.strapi_id || result.strapi_post_id || null,
+          strapi_url: result.strapi_url || result.published_url || null,
+          // Error handling
+          error_message: data.error || result.error || '',
+          // Additional data
+          progress: data.progress || {},
+        };
+      } else {
+        console.warn(`Failed to fetch content task: ${response.statusText}`);
+        return null;
+      }
+    } catch (error) {
+      console.error('Failed to fetch content task:', error);
+      return null;
+    }
+  };
+
+  /**
+   * Fetch tasks from backend with authorization
+   * Fetches from /api/content/tasks which shows all content generation tasks
+   * Supports filtering by task_type (blog_post, social_media, email, newsletter)
+   */
+  const fetchTasks = async () => {
+    // Guard: prevent concurrent requests
+    if (isFetching) {
+      console.log('⏳ TaskManagement: Request already in flight, skipping...');
+      return;
+    }
+
+    try {
+      setError(null);
+      setIsFetching(true);
+      const token = getAuthToken();
+      const headers = { 'Content-Type': 'application/json' };
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+
+      // ✅ FIXED: Fetch with a reasonable high limit (100) to get more tasks in one request for KPI
+      // This way KPI stats are more representative, while still paginating for display
+      // Request all available tasks to calculate stats correctly
+      const response = await fetch(
+        'http://localhost:8000/api/tasks?limit=100&offset=0',
+        {
+          headers,
+          signal: AbortSignal.timeout(15000),
+        }
+      );
+
+      if (response.ok) {
+        let data = await response.json();
+        console.log('✅ TaskManagement: API Response received:', data);
+
+        // The response has 'tasks' array and total count
+        let apiTasks = data.tasks || [];
+        let totalCount = data.total || apiTasks.length;
+        console.log(
+          '✅ TaskManagement: Tasks from API:',
+          apiTasks.length,
+          'items, Total:',
+          totalCount
+        );
+
+        // Store ALL tasks for KPI calculation (this is the full dataset from first request)
+        setAllTasks(apiTasks);
+        // For pagination display, show the first page
+        const paginatedTasks = apiTasks.slice(0, limit);
+        setTasks(paginatedTasks);
+        setTotal(totalCount);
+        console.log(
+          '✅ TaskManagement: Stored',
+          apiTasks.length,
+          'total tasks, displaying first page with',
+          paginatedTasks.length,
+          'tasks'
+        );
       } else {
         setError(`Failed to fetch tasks: ${response.statusText}`);
         console.error('Failed to fetch tasks:', response.statusText);
@@ -95,11 +212,13 @@ const TaskManagement = () => {
       console.error('Failed to fetch tasks:', error);
     } finally {
       setLoading(false);
+      setIsFetching(false);
     }
   };
 
   /**
-   * Delete task (uses PATCH with cancelled status instead of DELETE)
+   * Delete task (uses content endpoint to delete tasks of any type)
+   * Supports: blog_post, social_media, email, newsletter
    */
   const handleDeleteTask = async (taskId) => {
     if (!window.confirm('Are you sure you want to delete this task?')) return;
@@ -112,12 +231,12 @@ const TaskManagement = () => {
         headers['Authorization'] = `Bearer ${token}`;
       }
 
+      // ✅ REFACTORED: Use /api/content/tasks/{id} endpoint (replaces /api/content/blog-posts/drafts/{id})
       const response = await fetch(
-        `http://localhost:8000/api/tasks/${taskId}`,
+        `http://localhost:8000/api/content/tasks/${taskId}`,
         {
-          method: 'PATCH',
+          method: 'DELETE',
           headers,
-          body: JSON.stringify({ status: 'cancelled' }),
         }
       );
 
@@ -143,28 +262,20 @@ const TaskManagement = () => {
 
     try {
       setError(null);
-      const token = getAuthToken();
-      const headers = { 'Content-Type': 'application/json' };
-      if (token) {
-        headers['Authorization'] = `Bearer ${token}`;
+
+      // ✅ Use API client instead of hardcoded fetch
+      const result = await bulkUpdateTasks(selectedTasks, action);
+
+      // ✅ Validate response
+      if (!result) {
+        throw new Error('Invalid response from bulk update');
       }
 
-      const response = await fetch('http://localhost:8000/api/tasks/bulk', {
-        method: 'POST',
-        headers,
-        body: JSON.stringify({
-          task_ids: selectedTasks,
-          action: action,
-        }),
-      });
+      console.log(`✅ Bulk ${action} completed:`, result);
+      setSelectedTasks([]);
 
-      if (response.ok) {
-        setSelectedTasks([]);
-        fetchTasks();
-      } else {
-        setError(`Bulk action failed: ${response.statusText}`);
-        console.error('Bulk action failed:', response.statusText);
-      }
+      // ✅ Refresh task list to show updated statuses
+      fetchTasks();
     } catch (error) {
       const errorMessage =
         error instanceof Error ? error.message : 'Unknown error';
@@ -174,40 +285,69 @@ const TaskManagement = () => {
   };
 
   /**
-   * Filter tasks based on criteria
+   * Get all tasks - unified view without filtering
    */
   const getFilteredTasks = () => {
-    let filtered = tasks;
+    if (!tasks) return [];
 
-    // Filter by tab (status groups)
-    if (currentTab === 0) {
-      filtered = filtered.filter((t) =>
+    // Return all tasks sorted by creation date (newest first)
+    // Unified view - no filtering by status/priority/agent
+    return tasks.sort((a, b) => {
+      return new Date(b.created_at || 0) - new Date(a.created_at || 0);
+    });
+  };
+
+  /**
+   * Get tasks filtered by pipeline
+   * Manual Pipeline: User-created tasks (pipeline_type = 'manual' or undefined)
+   * Poindexter Pipeline: AI-created tasks (pipeline_type = 'poindexter')
+   */
+  const getTasksByPipeline = () => {
+    const filteredTasks = getFilteredTasks();
+
+    if (activeTab === 0) {
+      // Manual Pipeline - user-created tasks
+      return filteredTasks.filter(
+        (t) => !t.pipeline_type || t.pipeline_type === 'manual'
+      );
+    } else {
+      // Poindexter Pipeline - AI-created tasks
+      return filteredTasks.filter((t) => t.pipeline_type === 'poindexter');
+    }
+  };
+
+  /**
+   * Calculate summary statistics for current pipeline
+   * Now uses allTasks (full dataset) not just current page
+   */
+  const getTaskStats = () => {
+    // Filter all tasks by pipeline to get stats for entire pipeline
+    let pipelineTasks = allTasks;
+    if (!pipelineTasks || pipelineTasks.length === 0)
+      return { total: 0, completed: 0, inProgress: 0, failed: 0 };
+
+    if (activeTab === 0) {
+      // Manual Pipeline - user-created tasks
+      pipelineTasks = pipelineTasks.filter(
+        (t) => !t.pipeline_type || t.pipeline_type === 'manual'
+      );
+    } else {
+      // Poindexter Pipeline - AI-created tasks
+      pipelineTasks = pipelineTasks.filter(
+        (t) => t.pipeline_type === 'poindexter'
+      );
+    }
+
+    return {
+      total: pipelineTasks.length,
+      completed: pipelineTasks.filter((t) => t.status === 'completed').length,
+      inProgress: pipelineTasks.filter((t) =>
         ['queued', 'in_progress', 'pending_review'].includes(t.status)
-      );
-    } else if (currentTab === 1) {
-      filtered = filtered.filter((t) => t.status === 'completed');
-    } else if (currentTab === 2) {
-      filtered = filtered.filter((t) =>
+      ).length,
+      failed: pipelineTasks.filter((t) =>
         ['failed', 'cancelled'].includes(t.status)
-      );
-    }
-
-    // Filter by specific status
-    if (filterStatus !== 'all') {
-      filtered = filtered.filter((t) => t.status === filterStatus);
-    }
-
-    // Filter by priority
-    if (filterPriority !== 'all') {
-      filtered = filtered.filter((t) => t.priority === filterPriority);
-    }
-
-    // Filter by agent
-    if (filterAgent !== 'all') {
-      filtered = filtered.filter((t) => t.agent === filterAgent);
-    }
-
-    return filtered;
+      ).length,
+    };
   };
 
   /**
@@ -238,15 +378,84 @@ const TaskManagement = () => {
     return colors[priority] || 'default';
   };
 
+  /**
+   * Handle table header click for sorting
+   */
+  const handleSort = (field) => {
+    if (sortBy === field) {
+      // Toggle direction if clicking same field
+      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
+    } else {
+      // New field - sort ascending by default
+      setSortBy(field);
+      setSortDirection('asc');
+    }
+  };
+
+  /**
+   * Sort tasks based on current sortBy and sortDirection
+   */
+  const getSortedTasks = (tasksToSort) => {
+    const sorted = [...tasksToSort].sort((a, b) => {
+      let aVal = a[sortBy];
+      let bVal = b[sortBy];
+
+      // Handle dates
+      if (sortBy === 'created_at' || sortBy === 'updated_at') {
+        aVal = new Date(aVal || 0).getTime();
+        bVal = new Date(bVal || 0).getTime();
+      }
+
+      // Handle strings
+      if (typeof aVal === 'string') {
+        aVal = aVal.toLowerCase();
+        bVal = bVal.toLowerCase();
+      }
+
+      if (sortDirection === 'asc') {
+        return aVal > bVal ? 1 : -1;
+      } else {
+        return aVal < bVal ? 1 : -1;
+      }
+    });
+
+    return sorted;
+  };
+
   useEffect(() => {
+    // Don't fetch tasks until auth is ready (token initialized)
+    if (authLoading) {
+      console.log('⏳ TaskManagement: Waiting for auth to initialize...');
+      return;
+    }
+
+    console.log('✅ TaskManagement: Auth ready, fetching tasks...');
+    // Only fetch on initial load and tab change, not on page change
     fetchTasks();
 
     // Auto-refresh every 10 seconds
     const interval = setInterval(fetchTasks, 10000);
     return () => clearInterval(interval);
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [authLoading, activeTab]);
 
-  const filteredTasks = getFilteredTasks();
+  // Handle pagination separately - paginate allTasks without refetching
+  useEffect(() => {
+    if (allTasks.length > 0) {
+      const offset = (page - 1) * limit;
+      const paginatedTasks = allTasks.slice(offset, offset + limit);
+      setTasks(paginatedTasks);
+      console.log(
+        '✅ TaskManagement: Paginated to page',
+        page,
+        'showing',
+        paginatedTasks.length,
+        'tasks'
+      );
+    }
+  }, [page, allTasks.length]);
+
+  const filteredTasks = getTasksByPipeline();
 
   if (loading) {
     return (
@@ -268,7 +477,7 @@ const TaskManagement = () => {
         display="flex"
         justifyContent="space-between"
         alignItems="center"
-        mb={4}
+        mb={2}
         sx={{
           borderBottom: '2px solid rgba(0, 212, 255, 0.1)',
           pb: 2,
@@ -286,44 +495,90 @@ const TaskManagement = () => {
           >
             📋 Task Management
           </Typography>
-          <Typography variant="body2" color="text.secondary">
-            {tasks.length} total tasks • {selectedTasks.length} selected
+          <Typography
+            variant="body2"
+            sx={{ color: '#888', fontSize: '0.9rem' }}
+          >
+            Manage manual and AI-generated tasks across your workflow
           </Typography>
         </Box>
-        <Box display="flex" gap={1.5}>
-          <Button
-            variant="outlined"
-            startIcon={<RefreshIcon />}
-            onClick={fetchTasks}
-            sx={{
-              textTransform: 'none',
-              borderColor: '#00d4ff',
-              color: '#00d4ff',
-              '&:hover': {
-                backgroundColor: 'rgba(0, 212, 255, 0.1)',
-                borderColor: '#00d4ff',
-              },
-            }}
-          >
-            Refresh
-          </Button>
-          <Button
-            variant="contained"
-            startIcon={<AddIcon />}
-            onClick={() => setShowCreateModal(true)}
-            sx={{
-              textTransform: 'none',
+      </Box>
+
+      {/* Pipeline Tabs */}
+      <Box sx={{ mb: 2, borderBottom: '1px solid rgba(0, 212, 255, 0.2)' }}>
+        <Tabs
+          value={activeTab}
+          onChange={(e, newValue) => setActiveTab(newValue)}
+          sx={{
+            '& .MuiTabs-indicator': {
               backgroundColor: '#00d4ff',
-              color: '#000',
-              fontWeight: 600,
-              '&:hover': {
-                backgroundColor: '#00f0ff',
-              },
+              height: 3,
+            },
+          }}
+        >
+          <Tab
+            label={
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                👤 Manual Pipeline
+                <Chip
+                  label={
+                    tasks.filter(
+                      (t) => !t.pipeline_type || t.pipeline_type === 'manual'
+                    ).length
+                  }
+                  size="small"
+                  sx={{
+                    backgroundColor:
+                      activeTab === 0
+                        ? 'rgba(0, 212, 255, 0.3)'
+                        : 'rgba(255, 255, 255, 0.1)',
+                    color: activeTab === 0 ? '#00d4ff' : '#888',
+                    height: 20,
+                    minWidth: 30,
+                    fontSize: '0.75rem',
+                  }}
+                />
+              </Box>
+            }
+            sx={{
+              textTransform: 'none',
+              color: activeTab === 0 ? '#00d4ff' : '#888',
+              fontWeight: activeTab === 0 ? 700 : 600,
+              fontSize: '1rem',
+              '&:hover': { color: '#00d4ff' },
             }}
-          >
-            + Create Task
-          </Button>
-        </Box>
+          />
+          <Tab
+            label={
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                🤖 Poindexter Pipeline
+                <Chip
+                  label={
+                    tasks.filter((t) => t.pipeline_type === 'poindexter').length
+                  }
+                  size="small"
+                  sx={{
+                    backgroundColor:
+                      activeTab === 1
+                        ? 'rgba(0, 212, 255, 0.3)'
+                        : 'rgba(255, 255, 255, 0.1)',
+                    color: activeTab === 1 ? '#00d4ff' : '#888',
+                    height: 20,
+                    minWidth: 30,
+                    fontSize: '0.75rem',
+                  }}
+                />
+              </Box>
+            }
+            sx={{
+              textTransform: 'none',
+              color: activeTab === 1 ? '#00d4ff' : '#888',
+              fontWeight: activeTab === 1 ? 700 : 600,
+              fontSize: '1rem',
+              '&:hover': { color: '#00d4ff' },
+            }}
+          />
+        </Tabs>
       </Box>
 
       {/* Error Alert */}
@@ -346,255 +601,274 @@ const TaskManagement = () => {
         </Alert>
       )}
 
-      {/* Bulk Actions */}
-      {selectedTasks.length > 0 && (
-        <Alert
-          severity="info"
+      {/* Summary Stats - Compact */}
+      <Box
+        sx={{
+          display: 'grid',
+          gridTemplateColumns: {
+            xs: '1fr',
+            sm: '1fr 1fr',
+            md: '1fr 1fr 1fr 1fr',
+          },
+          gap: 1,
+          mb: 1.5,
+        }}
+      >
+        <Box
           sx={{
-            mb: 3,
             backgroundColor: 'rgba(0, 212, 255, 0.1)',
             border: '1px solid rgba(0, 212, 255, 0.3)',
-            borderRadius: 1.5,
-            color: '#00d4ff',
-            '& .MuiAlert-icon': {
-              color: '#00d4ff',
-            },
+            borderRadius: 1,
+            p: 1,
+            textAlign: 'center',
+            backdropFilter: 'blur(10px)',
           }}
         >
-          <Box
-            display="flex"
-            alignItems="center"
-            justifyContent="space-between"
-            gap={2}
+          <Typography
+            variant="body2"
+            sx={{ color: '#00d4ff', fontWeight: 700 }}
           >
-            <Typography sx={{ fontWeight: 600 }}>
-              {selectedTasks.length} task{selectedTasks.length > 1 ? 's' : ''}{' '}
-              selected
-            </Typography>
-            <Box display="flex" gap={1}>
-              <Button
-                size="small"
-                startIcon={<PlayIcon />}
-                onClick={() => handleBulkAction('resume')}
-                sx={{
-                  textTransform: 'none',
-                  color: '#00d4ff',
-                  borderColor: '#00d4ff',
-                  '&:hover': {
-                    backgroundColor: 'rgba(0, 212, 255, 0.1)',
-                  },
-                }}
-                variant="outlined"
-              >
-                Resume
-              </Button>
-              <Button
-                size="small"
-                startIcon={<PauseIcon />}
-                onClick={() => handleBulkAction('pause')}
-                sx={{
-                  textTransform: 'none',
-                  color: '#ffaa00',
-                  borderColor: '#ffaa00',
-                  '&:hover': {
-                    backgroundColor: 'rgba(255, 170, 0, 0.1)',
-                  },
-                }}
-                variant="outlined"
-              >
-                Pause
-              </Button>
-              <Button
-                size="small"
-                startIcon={<StopIcon />}
-                onClick={() => handleBulkAction('cancel')}
-                sx={{
-                  textTransform: 'none',
-                  color: '#ff6b6b',
-                  borderColor: '#ff6b6b',
-                  '&:hover': {
-                    backgroundColor: 'rgba(255, 107, 107, 0.1)',
-                  },
-                }}
-                variant="outlined"
-              >
-                Cancel
-              </Button>
-              <Button
-                size="small"
-                startIcon={<DeleteIcon />}
-                onClick={() => handleBulkAction('delete')}
-                sx={{
-                  textTransform: 'none',
-                  color: '#ff6b6b',
-                  borderColor: '#ff6b6b',
-                  '&:hover': {
-                    backgroundColor: 'rgba(255, 107, 107, 0.1)',
-                  },
-                }}
-                variant="outlined"
-                color="error"
-              >
-                Delete
-              </Button>
-            </Box>
-          </Box>
-        </Alert>
-      )}
-
-      {/* Tabs */}
-      <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 3 }}>
-        <Tabs
-          value={currentTab}
-          onChange={(e, v) => setCurrentTab(v)}
+            {getTaskStats().total}
+          </Typography>
+          <Typography
+            variant="caption"
+            sx={{ color: '#888', fontSize: '0.7rem' }}
+          >
+            Total Tasks
+          </Typography>
+        </Box>
+        <Box
           sx={{
-            '& .MuiTab-root': {
-              textTransform: 'none',
-              fontWeight: 600,
-              fontSize: '0.95rem',
-              color: 'rgba(255, 255, 255, 0.6)',
-              '&.Mui-selected': {
-                color: '#00d4ff',
-              },
-            },
-            '& .MuiTabs-indicator': {
-              backgroundColor: '#00d4ff',
-            },
+            backgroundColor: 'rgba(76, 175, 80, 0.1)',
+            border: '1px solid rgba(76, 175, 80, 0.3)',
+            borderRadius: 1,
+            p: 1,
+            textAlign: 'center',
+            backdropFilter: 'blur(10px)',
           }}
         >
-          <Tab
-            label="Active Tasks"
-            icon={<AssignmentIcon />}
-            iconPosition="start"
-          />
-          <Tab
-            label="Completed"
-            icon={<CheckCircleIcon />}
-            iconPosition="start"
-          />
-          <Tab label="Failed" icon={<StopIcon />} iconPosition="start" />
-        </Tabs>
+          <Typography
+            variant="body2"
+            sx={{ color: '#4CAF50', fontWeight: 700 }}
+          >
+            {getTaskStats().completed}
+          </Typography>
+          <Typography
+            variant="caption"
+            sx={{ color: '#888', fontSize: '0.7rem' }}
+          >
+            Completed
+          </Typography>
+        </Box>
+        <Box
+          sx={{
+            backgroundColor: 'rgba(33, 150, 243, 0.1)',
+            border: '1px solid rgba(33, 150, 243, 0.3)',
+            borderRadius: 1,
+            p: 1,
+            textAlign: 'center',
+            backdropFilter: 'blur(10px)',
+          }}
+        >
+          <Typography
+            variant="body2"
+            sx={{ color: '#2196F3', fontWeight: 700 }}
+          >
+            {getTaskStats().inProgress}
+          </Typography>
+          <Typography
+            variant="caption"
+            sx={{ color: '#888', fontSize: '0.7rem' }}
+          >
+            In Progress
+          </Typography>
+        </Box>
+        <Box
+          sx={{
+            backgroundColor: 'rgba(244, 67, 54, 0.1)',
+            border: '1px solid rgba(244, 67, 54, 0.3)',
+            borderRadius: 1,
+            p: 1,
+            textAlign: 'center',
+            backdropFilter: 'blur(10px)',
+          }}
+        >
+          <Typography
+            variant="body2"
+            sx={{ color: '#F44336', fontWeight: 700 }}
+          >
+            {getTaskStats().failed}
+          </Typography>
+          <Typography
+            variant="caption"
+            sx={{ color: '#888', fontSize: '0.7rem' }}
+          >
+            Failed
+          </Typography>
+        </Box>
       </Box>
 
-      {/* Filters */}
-      <Grid container spacing={2} mb={3}>
-        <Grid item xs={12} sm={4} md={3}>
-          <FormControl fullWidth size="small">
-            <InputLabel
+      {/* Create Task and Refresh Buttons - Positioned above table */}
+      <Box
+        sx={{ mb: 3, display: 'flex', gap: 2, justifyContent: 'flex-start' }}
+      >
+        <Button
+          variant="contained"
+          startIcon={<AddIcon />}
+          onClick={() => setShowCreateModal(true)}
+          sx={{
+            textTransform: 'none',
+            backgroundColor: '#00d4ff',
+            color: '#000',
+            fontWeight: 600,
+            '&:hover': {
+              backgroundColor: '#00f0ff',
+            },
+          }}
+        >
+          Create Task
+        </Button>
+        <Button
+          variant="outlined"
+          startIcon={<RefreshIcon />}
+          onClick={fetchTasks}
+          sx={{
+            textTransform: 'none',
+            color: '#00d4ff',
+            borderColor: '#00d4ff',
+            fontWeight: 600,
+            '&:hover': {
+              borderColor: '#00f0ff',
+              color: '#00f0ff',
+            },
+          }}
+        >
+          Refresh
+        </Button>
+      </Box>
+
+      {/* Bulk Operations Toolbar - Shows when tasks are selected */}
+      {selectedTasks.length > 0 && (
+        <Box
+          sx={{
+            mb: 3,
+            p: 2,
+            backgroundColor: 'rgba(0, 212, 255, 0.1)',
+            border: '1px solid rgba(0, 212, 255, 0.3)',
+            borderRadius: 1,
+            display: 'flex',
+            gap: 2,
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            flexWrap: 'wrap',
+          }}
+        >
+          <Typography sx={{ fontWeight: 600, color: '#00d4ff' }}>
+            {selectedTasks.length} task{selectedTasks.length !== 1 ? 's' : ''}{' '}
+            selected
+          </Typography>
+          <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+            <Button
+              size="small"
+              startIcon={<PlayIcon />}
+              onClick={() => handleBulkAction('resume')}
               sx={{
-                color: 'rgba(255, 255, 255, 0.6) !important',
-                '&.Mui-focused': {
-                  color: '#00d4ff !important',
-                },
+                textTransform: 'none',
+                backgroundColor: '#4CAF50',
+                color: '#fff',
+                '&:hover': { backgroundColor: '#66BB6A' },
               }}
             >
-              Status
-            </InputLabel>
-            <Select
-              value={filterStatus}
-              label="Status"
-              onChange={(e) => setFilterStatus(e.target.value)}
+              Resume
+            </Button>
+            <Button
+              size="small"
+              startIcon={<PauseIcon />}
+              onClick={() => handleBulkAction('pause')}
               sx={{
-                backgroundColor: 'rgba(255, 255, 255, 0.05)',
-                borderRadius: 1,
-                '& .MuiOutlinedInput-notchedOutline': {
-                  borderColor: 'rgba(0, 212, 255, 0.2)',
-                },
-                '&:hover .MuiOutlinedInput-notchedOutline': {
-                  borderColor: 'rgba(0, 212, 255, 0.4)',
-                },
-                '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                  borderColor: '#00d4ff',
-                },
+                textTransform: 'none',
+                backgroundColor: '#FF9800',
+                color: '#fff',
+                '&:hover': { backgroundColor: '#FFB74D' },
               }}
             >
-              <MenuItem value="all">All</MenuItem>
-              <MenuItem value="queued">Queued</MenuItem>
-              <MenuItem value="in_progress">In Progress</MenuItem>
-              <MenuItem value="pending_review">Pending Review</MenuItem>
-              <MenuItem value="completed">Completed</MenuItem>
-              <MenuItem value="failed">Failed</MenuItem>
-              <MenuItem value="cancelled">Cancelled</MenuItem>
-            </Select>
-          </FormControl>
-        </Grid>
-        <Grid item xs={12} sm={4} md={3}>
-          <FormControl fullWidth size="small">
-            <InputLabel
+              Pause
+            </Button>
+            <Button
+              size="small"
+              startIcon={<StopIcon />}
+              onClick={() =>
+                window.confirm('Cancel selected tasks?') &&
+                handleBulkAction('cancel')
+              }
               sx={{
-                color: 'rgba(255, 255, 255, 0.6) !important',
-                '&.Mui-focused': {
-                  color: '#00d4ff !important',
-                },
+                textTransform: 'none',
+                backgroundColor: '#f44336',
+                color: '#fff',
+                '&:hover': { backgroundColor: '#EF5350' },
               }}
             >
-              Priority
-            </InputLabel>
-            <Select
-              value={filterPriority}
-              label="Priority"
-              onChange={(e) => setFilterPriority(e.target.value)}
+              Cancel
+            </Button>
+            <Tooltip title="Export selected tasks as JSON">
+              <Button
+                size="small"
+                onClick={() => {
+                  const tasksToExport = getSortedTasks(filteredTasks).filter(
+                    (t) => selectedTasks.includes(t.id)
+                  );
+                  const dataStr = JSON.stringify(tasksToExport, null, 2);
+                  const dataBlob = new Blob([dataStr], {
+                    type: 'application/json',
+                  });
+                  const url = URL.createObjectURL(dataBlob);
+                  const a = document.createElement('a');
+                  a.href = url;
+                  a.download = `tasks_${Date.now()}.json`;
+                  a.click();
+                  URL.revokeObjectURL(url);
+                }}
+                sx={{
+                  textTransform: 'none',
+                  backgroundColor: '#2196F3',
+                  color: '#fff',
+                  '&:hover': { backgroundColor: '#42A5F5' },
+                }}
+              >
+                Export
+              </Button>
+            </Tooltip>
+            <Button
+              size="small"
+              startIcon={<DeleteIcon />}
+              onClick={() =>
+                window.confirm('Delete selected tasks?') &&
+                handleBulkAction('delete')
+              }
               sx={{
-                backgroundColor: 'rgba(255, 255, 255, 0.05)',
-                borderRadius: 1,
-                '& .MuiOutlinedInput-notchedOutline': {
-                  borderColor: 'rgba(0, 212, 255, 0.2)',
-                },
-                '&:hover .MuiOutlinedInput-notchedOutline': {
-                  borderColor: 'rgba(0, 212, 255, 0.4)',
-                },
-                '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                  borderColor: '#00d4ff',
-                },
+                textTransform: 'none',
+                backgroundColor: '#9C27B0',
+                color: '#fff',
+                '&:hover': { backgroundColor: '#BA68C8' },
               }}
             >
-              <MenuItem value="all">All</MenuItem>
-              <MenuItem value="low">Low</MenuItem>
-              <MenuItem value="medium">Medium</MenuItem>
-              <MenuItem value="high">High</MenuItem>
-              <MenuItem value="urgent">Urgent</MenuItem>
-            </Select>
-          </FormControl>
-        </Grid>
-        <Grid item xs={12} sm={4} md={3}>
-          <FormControl fullWidth size="small">
-            <InputLabel
+              Delete
+            </Button>
+            <Button
+              size="small"
+              onClick={() => setSelectedTasks([])}
               sx={{
-                color: 'rgba(255, 255, 255, 0.6) !important',
-                '&.Mui-focused': {
-                  color: '#00d4ff !important',
-                },
+                textTransform: 'none',
+                backgroundColor: '#666',
+                color: '#fff',
+                '&:hover': { backgroundColor: '#888' },
               }}
             >
-              Agent
-            </InputLabel>
-            <Select
-              value={filterAgent}
-              label="Agent"
-              onChange={(e) => setFilterAgent(e.target.value)}
-              sx={{
-                backgroundColor: 'rgba(255, 255, 255, 0.05)',
-                borderRadius: 1,
-                '& .MuiOutlinedInput-notchedOutline': {
-                  borderColor: 'rgba(0, 212, 255, 0.2)',
-                },
-                '&:hover .MuiOutlinedInput-notchedOutline': {
-                  borderColor: 'rgba(0, 212, 255, 0.4)',
-                },
-                '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                  borderColor: '#00d4ff',
-                },
-              }}
-            >
-              <MenuItem value="all">All</MenuItem>
-              <MenuItem value="content">Content Agent</MenuItem>
-              <MenuItem value="financial">Financial Agent</MenuItem>
-              <MenuItem value="compliance">Compliance Agent</MenuItem>
-              <MenuItem value="market_insight">Market Insight Agent</MenuItem>
-            </Select>
-          </FormControl>
-        </Grid>
-      </Grid>
+              Deselect All
+            </Button>
+          </Box>
+        </Box>
+      )}
 
       {/* Task Table */}
       <TableContainer component={Paper}>
@@ -604,41 +878,113 @@ const TaskManagement = () => {
               <TableCell padding="checkbox">
                 <Checkbox
                   checked={
-                    selectedTasks.length === filteredTasks.length &&
-                    filteredTasks.length > 0
+                    selectedTasks.length ===
+                      getSortedTasks(filteredTasks).slice(
+                        (page - 1) * limit,
+                        page * limit
+                      ).length &&
+                    getSortedTasks(filteredTasks).slice(
+                      (page - 1) * limit,
+                      page * limit
+                    ).length > 0
                   }
                   indeterminate={
                     selectedTasks.length > 0 &&
-                    selectedTasks.length < filteredTasks.length
+                    selectedTasks.length <
+                      getSortedTasks(filteredTasks).slice(
+                        (page - 1) * limit,
+                        page * limit
+                      ).length
                   }
                   onChange={(e) => {
                     if (e.target.checked) {
-                      setSelectedTasks(filteredTasks.map((t) => t.id));
+                      setSelectedTasks(
+                        getSortedTasks(filteredTasks)
+                          .slice((page - 1) * limit, page * limit)
+                          .map((t) => t.id)
+                      );
                     } else {
                       setSelectedTasks([]);
                     }
                   }}
                 />
               </TableCell>
-              <TableCell>Task</TableCell>
-              <TableCell>Agent</TableCell>
-              <TableCell>Status</TableCell>
-              <TableCell>Priority</TableCell>
-              <TableCell>Created</TableCell>
+              <TableCell
+                onClick={() => handleSort('title')}
+                sx={{
+                  cursor: 'pointer',
+                  fontWeight: sortBy === 'title' ? 700 : 600,
+                  color: sortBy === 'title' ? '#00d4ff' : 'inherit',
+                  userSelect: 'none',
+                }}
+              >
+                Task{' '}
+                {sortBy === 'title' && (sortDirection === 'asc' ? '↑' : '↓')}
+              </TableCell>
+              <TableCell
+                onClick={() => handleSort('type')}
+                sx={{
+                  cursor: 'pointer',
+                  fontWeight: sortBy === 'type' ? 700 : 600,
+                  color: sortBy === 'type' ? '#00d4ff' : 'inherit',
+                  userSelect: 'none',
+                }}
+              >
+                Type{' '}
+                {sortBy === 'type' && (sortDirection === 'asc' ? '↑' : '↓')}
+              </TableCell>
+              <TableCell
+                onClick={() => handleSort('status')}
+                sx={{
+                  cursor: 'pointer',
+                  fontWeight: sortBy === 'status' ? 700 : 600,
+                  color: sortBy === 'status' ? '#00d4ff' : 'inherit',
+                  userSelect: 'none',
+                }}
+              >
+                Status{' '}
+                {sortBy === 'status' && (sortDirection === 'asc' ? '↑' : '↓')}
+              </TableCell>
+              <TableCell
+                onClick={() => handleSort('quality_score')}
+                sx={{
+                  cursor: 'pointer',
+                  fontWeight: sortBy === 'quality_score' ? 700 : 600,
+                  color: sortBy === 'quality_score' ? '#00d4ff' : 'inherit',
+                  userSelect: 'none',
+                }}
+              >
+                Quality{' '}
+                {sortBy === 'quality_score' &&
+                  (sortDirection === 'asc' ? '↑' : '↓')}
+              </TableCell>
+              <TableCell
+                onClick={() => handleSort('created_at')}
+                sx={{
+                  cursor: 'pointer',
+                  fontWeight: sortBy === 'created_at' ? 700 : 600,
+                  color: sortBy === 'created_at' ? '#00d4ff' : 'inherit',
+                  userSelect: 'none',
+                }}
+              >
+                Created{' '}
+                {sortBy === 'created_at' &&
+                  (sortDirection === 'asc' ? '↑' : '↓')}
+              </TableCell>
               <TableCell align="right">Actions</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
-            {filteredTasks.length === 0 ? (
+            {getSortedTasks(filteredTasks).length === 0 ? (
               <TableRow>
-                <TableCell colSpan={7} align="center">
+                <TableCell colSpan={6} align="center">
                   <Typography color="text.secondary" py={4}>
                     No tasks found
                   </Typography>
                 </TableCell>
               </TableRow>
             ) : (
-              filteredTasks.map((task) => (
+              getSortedTasks(filteredTasks).map((task) => (
                 <TableRow key={task.id} hover>
                   <TableCell padding="checkbox">
                     <Checkbox
@@ -656,28 +1002,48 @@ const TaskManagement = () => {
                   </TableCell>
                   <TableCell>
                     <Typography variant="body2" fontWeight="medium">
-                      {task.title}
+                      {task.title || task.task_name || 'Untitled'}
                     </Typography>
                     <Typography variant="caption" color="text.secondary">
-                      {task.description}
+                      {task.description || task.topic}
                     </Typography>
-                  </TableCell>
-                  <TableCell>
-                    <Chip label={task.agent} size="small" variant="outlined" />
                   </TableCell>
                   <TableCell>
                     <Chip
-                      label={task.status}
+                      label={task.task_type || task.type || 'general'}
+                      size="small"
+                      variant="outlined"
+                      sx={{ fontSize: '0.7rem' }}
+                    />
+                  </TableCell>
+                  <TableCell>
+                    <Chip
+                      label={task.status || 'queued'}
                       size="small"
                       color={getStatusColor(task.status)}
                     />
                   </TableCell>
                   <TableCell>
-                    <Chip
-                      label={task.priority}
-                      size="small"
-                      color={getPriorityColor(task.priority)}
-                    />
+                    {task.quality_score ? (
+                      <Typography
+                        variant="caption"
+                        sx={{
+                          fontWeight: 600,
+                          color:
+                            task.quality_score >= 85
+                              ? '#4CAF50'
+                              : task.quality_score >= 70
+                                ? '#2196F3'
+                                : '#FFC107',
+                        }}
+                      >
+                        {task.quality_score}/100
+                      </Typography>
+                    ) : (
+                      <Typography variant="caption" color="text.secondary">
+                        N/A
+                      </Typography>
+                    )}
                   </TableCell>
                   <TableCell>
                     <Typography variant="caption">
@@ -685,10 +1051,53 @@ const TaskManagement = () => {
                     </Typography>
                   </TableCell>
                   <TableCell align="right">
-                    <Tooltip title="Edit">
+                    <Tooltip title="View Details">
                       <IconButton
                         size="small"
-                        onClick={() => setSelectedTask(task)}
+                        onClick={async () => {
+                          // ✅ FIXED: Fetch full task details from /api/tasks/{id}
+                          // This endpoint includes task_metadata with content, quality_score, etc.
+                          try {
+                            const token = getAuthToken();
+                            const headers = {
+                              'Content-Type': 'application/json',
+                            };
+                            if (token) {
+                              headers['Authorization'] = `Bearer ${token}`;
+                            }
+
+                            const response = await fetch(
+                              `http://localhost:8000/api/tasks/${task.id}`,
+                              {
+                                headers,
+                                signal: AbortSignal.timeout(5000),
+                              }
+                            );
+
+                            if (response.ok) {
+                              const fullTask = await response.json();
+                              console.log(
+                                '✅ Full task data fetched:',
+                                fullTask
+                              );
+
+                              // Task response includes task_metadata from convert_db_row_to_dict()
+                              setSelectedTask(fullTask);
+                            } else {
+                              console.warn(
+                                'Failed to fetch full task, using list data'
+                              );
+                              setSelectedTask(task);
+                            }
+                          } catch (error) {
+                            console.warn(
+                              'Error fetching full task:',
+                              error,
+                              'using list data'
+                            );
+                            setSelectedTask(task);
+                          }
+                        }}
                       >
                         <EditIcon fontSize="small" />
                       </IconButton>
@@ -710,67 +1119,301 @@ const TaskManagement = () => {
         </Table>
       </TableContainer>
 
+      {/* Pagination Controls */}
+      {total > limit && (
+        <Box
+          sx={{
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 2,
+            alignItems: 'center',
+            marginTop: 3,
+            padding: 2,
+            backgroundColor: 'rgba(0, 217, 255, 0.03)',
+            borderTop: '1px solid rgba(0, 217, 255, 0.1)',
+            borderRadius: 1,
+          }}
+        >
+          <Typography variant="body2" sx={{ color: '#999' }}>
+            Showing {Math.min((page - 1) * limit + 1, getTaskStats().total)}-
+            {Math.min(page * limit, getTaskStats().total)} of{' '}
+            {getTaskStats().total} tasks
+          </Typography>
+
+          <Box
+            sx={{
+              display: 'flex',
+              gap: 1,
+              alignItems: 'center',
+              flexWrap: 'wrap',
+            }}
+          >
+            <Button
+              onClick={() => setPage(Math.max(1, page - 1))}
+              disabled={page === 1}
+              variant="outlined"
+              sx={{
+                borderColor: 'rgba(0, 217, 255, 0.3)',
+                color: '#00d4ff',
+                '&:hover': {
+                  borderColor: '#00d4ff',
+                  backgroundColor: 'rgba(0, 217, 255, 0.1)',
+                },
+                '&:disabled': {
+                  opacity: 0.4,
+                  color: '#666',
+                  borderColor: '#666',
+                },
+              }}
+            >
+              ← Previous
+            </Button>
+
+            <Box sx={{ display: 'flex', gap: 0.5 }}>
+              {Array.from(
+                {
+                  length: Math.min(Math.ceil(total / limit), 5),
+                },
+                (_, i) => {
+                  const totalPages = Math.ceil(total / limit);
+                  let pageNum;
+                  if (totalPages <= 5) {
+                    pageNum = i + 1;
+                  } else if (page <= 3) {
+                    pageNum = i + 1;
+                  } else if (page > totalPages - 3) {
+                    pageNum = totalPages - 4 + i;
+                  } else {
+                    pageNum = page - 2 + i;
+                  }
+
+                  return (
+                    <Button
+                      key={pageNum}
+                      onClick={() => setPage(pageNum)}
+                      variant={page === pageNum ? 'contained' : 'outlined'}
+                      sx={{
+                        minWidth: '36px',
+                        height: '36px',
+                        padding: 0,
+                        borderColor:
+                          page === pageNum
+                            ? '#00d4ff'
+                            : 'rgba(0, 217, 255, 0.3)',
+                        backgroundColor:
+                          page === pageNum
+                            ? 'rgba(0, 217, 255, 0.2)'
+                            : 'transparent',
+                        color: '#00d4ff',
+                        '&:hover': {
+                          backgroundColor:
+                            page === pageNum
+                              ? 'rgba(0, 217, 255, 0.3)'
+                              : 'rgba(0, 217, 255, 0.1)',
+                          borderColor: '#00d4ff',
+                        },
+                      }}
+                    >
+                      {pageNum}
+                    </Button>
+                  );
+                }
+              )}
+              {Math.ceil(getSortedTasks(filteredTasks).length / limit) > 5 &&
+                page <
+                  Math.ceil(getSortedTasks(filteredTasks).length / limit) -
+                    2 && (
+                  <Typography sx={{ padding: '0 8px', color: '#666' }}>
+                    ...
+                  </Typography>
+                )}
+            </Box>
+
+            <Button
+              onClick={() =>
+                setPage(Math.min(page + 1, Math.ceil(total / limit)))
+              }
+              disabled={page === Math.ceil(total / limit)}
+              variant="outlined"
+              sx={{
+                borderColor: 'rgba(0, 217, 255, 0.3)',
+                color: '#00d4ff',
+                '&:hover': {
+                  borderColor: '#00d4ff',
+                  backgroundColor: 'rgba(0, 217, 255, 0.1)',
+                },
+                '&:disabled': {
+                  opacity: 0.4,
+                  color: '#666',
+                  borderColor: '#666',
+                },
+              }}
+            >
+              Next →
+            </Button>
+          </Box>
+
+          <Typography variant="caption" sx={{ color: '#666' }}>
+            Page {page} of {Math.ceil(total / limit)}
+          </Typography>
+        </Box>
+      )}
+
       {/* Create Task Modal */}
       <CreateTaskModal
         isOpen={showCreateModal}
         onClose={() => setShowCreateModal(false)}
-        onTaskCreated={() => {
+        onTaskCreated={(newTaskData) => {
           setShowCreateModal(false);
-          fetchTasks();
+
+          // ✅ CRITICAL FIX: Always refresh tasks immediately after creation
+          // This ensures newly created tasks appear in the list right away
+          // Instead of waiting for auto-refresh (10 seconds)
+          // Also add optimistic UI update if data is available
+
+          if (newTaskData) {
+            // Create a task object from the response
+            const newTask = {
+              id:
+                newTaskData.task_id ||
+                newTaskData.id ||
+                'new-task-' + Date.now(),
+              title: newTaskData.topic || 'New Task',
+              description: newTaskData.description || '',
+              status: newTaskData.status || 'in_progress',
+              priority: 'normal',
+              agent: newTaskData.agent_id || 'Content Generator',
+              created_at: new Date().toISOString(),
+              ...newTaskData, // Include all returned data
+            };
+
+            // Add to beginning of tasks list (optimistic update)
+            setTasks([newTask, ...tasks]);
+
+            // Force immediate refresh from backend to ensure consistency
+            // This catches any tasks created server-side that weren't in the response
+            setTimeout(() => {
+              console.log(
+                '🔄 TaskManagement: Refreshing after task creation...'
+              );
+              fetchTasks();
+            }, 500);
+          } else {
+            // Fall back to fetching all tasks
+            console.log(
+              '🔄 TaskManagement: No data returned, fetching all tasks...'
+            );
+            fetchTasks();
+          }
         }}
       />
 
-      {/* Result Preview Panel */}
-      {selectedTask && (
-        <Box
+      {/* Result Preview Dialog Modal */}
+      <Dialog
+        open={!!selectedTask}
+        onClose={() => setSelectedTask(null)}
+        maxWidth="md"
+        fullWidth
+        sx={{
+          '& .MuiDialog-paper': {
+            backgroundColor: '#1a1a1a',
+            backgroundImage:
+              'linear-gradient(135deg, #1a1a1a 0%, #262626 100%)',
+            border: '1px solid rgba(0, 212, 255, 0.2)',
+            borderRadius: 2,
+          },
+        }}
+      >
+        <DialogTitle
           sx={{
-            mt: 4,
-            animation: 'slideIn 0.3s ease-out',
-            '@keyframes slideIn': {
-              from: { opacity: 0, transform: 'translateY(20px)' },
-              to: { opacity: 1, transform: 'translateY(0)' },
-            },
+            backgroundColor: 'rgba(26, 26, 26, 0.8)',
+            borderBottom: '1px solid rgba(0, 212, 255, 0.2)',
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            color: '#00d4ff',
+            fontWeight: 600,
           }}
         >
-          <Box sx={{ mb: 2 }}>
-            <Typography variant="h6" sx={{ color: '#00d4ff', fontWeight: 600 }}>
-              ✓ Task Result Preview
-            </Typography>
-            <Typography variant="caption" sx={{ color: '#888' }}>
-              Review and approve task result before publishing
-            </Typography>
-          </Box>
-          <Box
+          ✓ Task Result Preview
+          <IconButton
+            onClick={() => setSelectedTask(null)}
+            size="small"
             sx={{
-              backgroundColor: 'rgba(26, 26, 26, 0.8)',
-              border: '1px solid rgba(0, 212, 255, 0.2)',
-              borderRadius: 1.5,
-              overflow: 'hidden',
-              backdropFilter: 'blur(10px)',
-              boxShadow: '0 8px 32px rgba(0, 0, 0, 0.4)',
+              color: '#888',
+              '&:hover': {
+                color: '#00d4ff',
+                backgroundColor: 'rgba(0, 212, 255, 0.1)',
+              },
             }}
           >
+            <CloseIcon />
+          </IconButton>
+        </DialogTitle>
+
+        <DialogContent
+          sx={{
+            backgroundColor: 'rgba(26, 26, 26, 0.5)',
+            py: 2,
+            maxHeight: '70vh',
+            overflowY: 'auto',
+          }}
+        >
+          {selectedTask && (
             <ResultPreviewPanel
               task={selectedTask}
               onApprove={async (updatedTask) => {
                 setIsPublishing(true);
                 setError(null);
                 try {
+                  // ✅ REFACTORED: Use /api/content/tasks/{id}/approve endpoint
+                  // Replaces /api/content/blog-posts/drafts/{id}/publish
+                  // Supports all task types with type-specific routing
+                  const token = getAuthToken();
+                  const headers = {
+                    'Content-Type': 'application/json',
+                  };
+                  if (token) {
+                    headers['Authorization'] = `Bearer ${token}`;
+                  }
+
                   const response = await fetch(
-                    `http://localhost:8000/api/tasks/${selectedTask.id}/publish`,
+                    `http://localhost:8000/api/content/tasks/${selectedTask.id}/approve`,
                     {
                       method: 'POST',
-                      headers: { 'Content-Type': 'application/json' },
-                      body: JSON.stringify(updatedTask),
+                      headers,
+                      body: JSON.stringify({
+                        approved: true,
+                        human_feedback:
+                          updatedTask.feedback || 'Approved in oversight hub',
+                        reviewer_id: updatedTask.reviewer_id || 'admin',
+                        featured_image_url:
+                          updatedTask.featured_image_url || null,
+                      }),
                     }
                   );
                   if (response.ok) {
+                    // ✅ Update local task status to 'published' and approval_status to 'approved' before closing
+                    setTasks(
+                      tasks.map((t) =>
+                        t.id === selectedTask.id
+                          ? {
+                              ...t,
+                              status: 'published',
+                              approval_status: 'approved',
+                            }
+                          : t
+                      )
+                    );
+                    // ✅ Close dialog and show success
                     setSelectedTask(null);
-                    fetchTasks();
+                    setError(null);
+                    // Fetch full task list to sync with backend
+                    setTimeout(() => fetchTasks(), 500);
                   } else {
                     const errorData = await response.json().catch(() => ({}));
                     setError(
-                      `Failed to publish: ${errorData.message || response.statusText}`
+                      `Failed to publish: ${errorData.detail || errorData.message || response.statusText}`
                     );
                     console.error('Failed to publish:', response.statusText);
                   }
@@ -783,12 +1426,72 @@ const TaskManagement = () => {
                   setIsPublishing(false);
                 }
               }}
-              onReject={() => setSelectedTask(null)}
+              onReject={async (rejectedTask) => {
+                setIsPublishing(true);
+                setError(null);
+                try {
+                  // ✅ Send rejection to backend
+                  const token = getAuthToken();
+                  const headers = {
+                    'Content-Type': 'application/json',
+                  };
+                  if (token) {
+                    headers['Authorization'] = `Bearer ${token}`;
+                  }
+
+                  const response = await fetch(
+                    `http://localhost:8000/api/content/tasks/${selectedTask.id}/approve`,
+                    {
+                      method: 'POST',
+                      headers,
+                      body: JSON.stringify({
+                        approved: false,
+                        human_feedback:
+                          rejectedTask.rejection_reason ||
+                          'Rejected in oversight hub',
+                        reviewer_id: rejectedTask.reviewer_id || 'admin',
+                      }),
+                    }
+                  );
+                  if (response.ok) {
+                    // ✅ Update local task status to 'rejected' and approval_status to 'rejected' before closing
+                    setTasks(
+                      tasks.map((t) =>
+                        t.id === selectedTask.id
+                          ? {
+                              ...t,
+                              status: 'rejected',
+                              approval_status: 'rejected',
+                            }
+                          : t
+                      )
+                    );
+                    // ✅ Close dialog
+                    setSelectedTask(null);
+                    setError(null);
+                    // Fetch full task list to sync with backend
+                    setTimeout(() => fetchTasks(), 500);
+                  } else {
+                    const errorData = await response.json().catch(() => ({}));
+                    setError(
+                      `Failed to reject: ${errorData.detail || errorData.message || response.statusText}`
+                    );
+                    console.error('Failed to reject:', response.statusText);
+                  }
+                } catch (error) {
+                  const errorMessage =
+                    error instanceof Error ? error.message : 'Unknown error';
+                  setError(`Error rejecting task: ${errorMessage}`);
+                  console.error('Failed to reject:', error);
+                } finally {
+                  setIsPublishing(false);
+                }
+              }}
               isLoading={isPublishing}
             />
-          </Box>
-        </Box>
-      )}
+          )}
+        </DialogContent>
+      </Dialog>
     </Box>
   );
 };

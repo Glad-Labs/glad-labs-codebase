@@ -1,6 +1,5 @@
 import Head from 'next/head';
 import ReactMarkdown from 'react-markdown';
-import { getStrapiURL } from '../lib/api';
 
 export default function About({ about }) {
   const title = about?.title || 'About Glad Labs';
@@ -62,41 +61,11 @@ Ready to transform your business with AI? Contact us to learn more about our AI 
 }
 
 export async function getStaticProps() {
-  try {
-    const url = `${getStrapiURL('/api/about')}?populate=*`;
-    console.log('[About getStaticProps] Fetching from:', url);
-
-    const res = await fetch(url);
-    console.log(
-      '[About getStaticProps] Response status:',
-      res.status,
-      res.statusText
-    );
-
-    if (!res.ok) {
-      console.error('[About getStaticProps] Response not OK');
-      return {
-        props: { about: null },
-        revalidate: 60,
-      };
-    }
-
-    const json = await res.json();
-    console.log('[About getStaticProps] Has data:', !!json.data);
-
-    // Strapi v5: data fields are directly on json.data, not json.data.attributes
-    const about = json?.data || null;
-    console.log(
-      '[About getStaticProps] Final about object:',
-      about ? 'SET' : 'NULL'
-    );
-
-    return {
-      props: { about },
-      revalidate: 60,
-    };
-  } catch (e) {
-    console.error('[About getStaticProps] Fetch error:', e.message);
-    return { props: { about: null }, revalidate: 60 };
-  }
+  // Note: /api/about endpoint does not exist in FastAPI backend
+  // Using fallback content for now. About page content can be updated in the
+  // fallback content below or a dedicated About endpoint can be created.
+  return {
+    props: { about: null },
+    revalidate: 3600, // Revalidate every hour
+  };
 }

@@ -47,10 +47,13 @@ export default function Layout({ children }) {
 
     router.events.on('routeChangeComplete', handleRouteChange);
     return () => router.events.off('routeChangeComplete', handleRouteChange);
-  }, [router.events]);
+  }, []);
   return (
     <>
       <Head>
+        {/* PWA Manifest */}
+        <link rel="manifest" href="/manifest.json" />
+
         {/* Google Analytics 4 */}
         {process.env.NEXT_PUBLIC_GA4_ID && (
           <>

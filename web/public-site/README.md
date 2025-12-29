@@ -5,11 +5,11 @@
 ![Tailwind](https://img.shields.io/badge/Styling-Tailwind_CSS-38B2AC)
 ![SSG](https://img.shields.io/badge/Rendering-Static_Generation-green)
 
-High-performance public website built with Next.js 15, featuring static site generation, SEO optimization, and seamless Strapi v5 integration.
+High-performance public website built with Next.js 15, featuring static site generation, SEO optimization, and seamless postgres DB integration.
 
 ## Overview
 
-The Glad Labs public site serves as the primary content distribution platform, consuming content from the Strapi v5 CMS and presenting it through a fast, SEO-optimized interface.
+The Glad Labs public site serves as the primary content distribution platform, consuming content from the postgres database and presenting it through a fast, SEO-optimized interface.
 
 **Status:** ✅ Production Ready  
 **Version:** 3.0  
@@ -23,7 +23,7 @@ The Glad Labs public site serves as the primary content distribution platform, c
 ### **Prerequisites**
 
 - Node.js 20.11.1+
-- Running Strapi v5 backend on localhost:1337
+- Running FastAPI backend on localhost:8000
 - Configured environment variables
 
 ### **Development Setup**
@@ -37,7 +37,7 @@ npm install
 
 # Configure environment
 cp .env.example .env.local
-# Edit .env.local with your Strapi API URL and token
+# Edit .env.local with your FastAPI URL
 
 # Start development server
 npm run dev
@@ -49,11 +49,11 @@ npm run dev
 
 ### **Technology Stack**
 
-- **Framework**: Next.js 14 with App Router
+- **Framework**: Next.js 15 with App Router
 - **Rendering**: Static Site Generation (SSG) with Incremental Static Regeneration
 - **Styling**: Tailwind CSS with Typography plugin
 - **Content**: React Markdown for content rendering
-- **API**: REST API integration with Strapi v5
+- **API**: REST API integration with FastAPI backend
 - **SEO**: Next.js Head component with Open Graph support
 
 ### **Project Structure**
@@ -66,7 +66,7 @@ web/public-site/
 │   ├── PostCard.js      # Individual post card
 │   └── PostList.js      # Post grid/list container
 ├── lib/                 # Utility functions and API helpers
-│   └── api.js          # Strapi API integration functions
+│   └── api-fastapi.js  # FastAPI CMS integration functions
 ├── pages/              # Next.js pages (file-based routing)
 │   ├── index.js        # Homepage with featured posts
 │   ├── about.js        # About page
@@ -105,31 +105,29 @@ web/public-site/
 
 - **Static Generation**: Pages pre-built at build time
 - **Image Optimization**: Next.js automatic image optimization
-- **API Caching**: Strapi content caching with revalidation
+- **API Caching**: FastAPI content caching with revalidation
 - **Code Splitting**: Automatic code splitting and lazy loading
 
 ---
 
 ## **🔌 API Integration**
 
-### **Strapi v5 Integration**
+### **FastAPI Integration**
 
-The site integrates with Strapi v5 through REST API endpoints defined in `lib/api.js`:
+The site integrates with FastAPI CMS endpoints defined in `lib/api-fastapi.js`:
 
 ```javascript
 // Key API functions
 getFeaturedPost(); // Get featured post for homepage
 getPaginatedPosts(); // Get paginated posts with filtering
 getPostBySlug(slug); // Get individual post by slug
-getCategoryBySlug(slug); // Get category information
-getTagBySlug(slug); // Get tag information
-getPostsByCategory(slug); // Get posts in category
-getPostsByTag(slug); // Get posts with tag
+getCategories(); // Get all categories
+getTags(); // Get all tags
 ```
 
 ### **Data Flow**
 
-1. **Build Time**: Next.js calls Strapi API to generate static pages
+1. **Build Time**: Next.js calls FastAPI to generate static pages
 2. **Runtime**: ISR (Incremental Static Regeneration) updates content
 3. **Client Side**: No client-side API calls, all content server-rendered
 
@@ -137,8 +135,7 @@ getPostsByTag(slug); // Get posts with tag
 
 ```env
 # .env.local
-NEXT_PUBLIC_STRAPI_API_URL=http://localhost:1337
-STRAPI_API_TOKEN=your-strapi-api-token
+NEXT_PUBLIC_FASTAPI_URL=http://localhost:8000
 ```
 
 ---
@@ -162,8 +159,8 @@ STRAPI_API_TOKEN=your-strapi-api-token
 
 ### **Utilities**
 
-- **API Helpers** (`lib/api.js`): Centralized Strapi API communication
-- **URL Helpers**: getStrapiURL for asset URL construction
+- **API Helpers** (`lib/api-fastapi.js`): Centralized FastAPI CMS communication
+- **URL Helpers**: getStrapiURL for asset URL construction (handles both relative and absolute URLs)
 
 ---
 
@@ -201,7 +198,7 @@ npm run test        # Run Jest tests
 
 - **Static Hosting**: Deploy to Vercel, Netlify, or similar
 - **Environment Variables**: Secure API tokens and URLs
-- **Database**: Point to production Strapi instance
+- **Database**: Point to production FastAPI instance
 - **CDN**: Global content delivery for optimal performance
 - **Analytics**: Google Analytics or similar tracking
 
@@ -218,7 +215,7 @@ npm run test        # Run Jest tests
 
 ### **Common Issues**
 
-1. **Content Not Displaying**: Check Strapi API connection and data structure
+1. **Content Not Displaying**: Check FastAPI API connection and data structure
 2. **Build Failures**: Verify all environment variables are set
 3. **Image Loading Issues**: Confirm image URLs and Next.js config
 4. **SEO Problems**: Validate meta tags and sitemap generation

@@ -1,13 +1,17 @@
 /**
  * Dashboard.jsx
  *
- * Main dashboard component with neon lo-fi sci-fi design
- * Renders the new OversightHub component with:
- * - Metrics dashboard (4 cards)
- * - Task queue (card grid)
- * - Chat panel (bottom)
+ * Main dashboard - displays task management interface
+ * Now wrapped by LayoutWrapper which provides:
+ * - Navigation header and menu
+ * - Chat panel at bottom
  */
 
-import OversightHub from '../OversightHub';
+import React from 'react';
+import TaskManagement from '../components/tasks/TaskManagement';
 
-export default OversightHub;
+const Dashboard = () => {
+  return <TaskManagement />;
+};
+
+export default Dashboard;

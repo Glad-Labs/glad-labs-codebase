@@ -1,7 +1,6 @@
 import Link from 'next/link';
 import OptimizedImage from './OptimizedImage';
 import { formatDate } from '../lib/content-utils';
-import { getStrapiURL } from '../lib/api';
 
 /**
  * Related Posts Component
@@ -56,9 +55,7 @@ function RelatedPostCard({ post, onPostClick = null }) {
   const { title, excerpt, slug, publishedAt, coverImage, category, tags } =
     post;
 
-  const imageUrl = coverImage?.data?.attributes?.url
-    ? getStrapiURL(coverImage.data.attributes.url)
-    : null;
+  const imageUrl = coverImage?.data?.attributes?.url || null;
 
   const displayDate = publishedAt ? formatDate(publishedAt) : null;
 

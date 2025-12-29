@@ -1,8 +1,8 @@
 const fs = require('fs');
 const qs = require('qs');
 
-const STRAPI_API_URL =
-  process.env.NEXT_PUBLIC_STRAPI_API_URL || 'http://localhost:1337';
+const FASTAPI_URL =
+  process.env.NEXT_PUBLIC_FASTAPI_URL || 'http://localhost:8000';
 const SITE_URL = 'https://www.glad-labs.com'; // Replace with your actual site URL
 
 async function fetchAPI(path, urlParamsObject = {}, options = {}) {
@@ -11,13 +11,13 @@ async function fetchAPI(path, urlParamsObject = {}, options = {}) {
     ...options,
   };
   const queryString = qs.stringify(urlParamsObject);
-  const requestUrl = `${STRAPI_API_URL}${path}${
+  const requestUrl = `${FASTAPI_URL}${path}${
     queryString ? `?${queryString}` : ''
   }`;
   const response = await fetch(requestUrl, mergedOptions);
   if (!response.ok) {
     console.error(response.statusText);
-    throw new Error(`An error occurred please try again`);
+    throw new Error('An error occurred please try again');
   }
   const data = await response.json();
   return data;
@@ -98,9 +98,9 @@ function generateSitemap(content) {
     generateSitemap(content);
     console.log('Sitemap generated successfully!');
   } catch (error) {
-    console.warn('Warning: Could not fetch content from Strapi during build.');
+    console.warn('Warning: Could not fetch content from FastAPI during build.');
     console.warn(
-      'This is normal during deployment when Strapi is not running.'
+      'This is normal during deployment when FastAPI is not running.'
     );
     console.warn('Generating minimal fallback sitemap...');
 

@@ -3,7 +3,6 @@ import {
   MainContainer,
   ChatContainer,
   MessageList,
-  Message,
   MessageInput,
   TypingIndicator,
 } from '@chatscope/chat-ui-kit-react';
@@ -11,6 +10,12 @@ import '@chatscope/chat-ui-kit-styles/dist/default/styles.min.css';
 import '../CommandPane.css';
 
 import useStore from '../../store/useStore';
+import { MESSAGE_TYPES } from '../../lib/messageTypes';
+import OrchestratorCommandMessage from '../OrchestratorCommandMessage';
+import OrchestratorStatusMessage from '../OrchestratorStatusMessage';
+import OrchestratorResultMessage from '../OrchestratorResultMessage';
+import OrchestratorErrorMessage from '../OrchestratorErrorMessage';
+import { Message } from '@chatscope/chat-ui-kit-react';
 
 const COFOUNDER_API_URL = 'http://localhost:8000/command';
 
@@ -22,29 +27,375 @@ const AI_MODELS = [
   { id: 'local', name: 'Local Model' },
 ];
 
+// Available Agents for delegation
+const AVAILABLE_AGENTS = [
+  {
+    id: 'content',
+    name: '📝 Content Agent',
+    description: 'Generate and manage content',
+  },
+  {
+    id: 'financial',
+    name: '📊 Financial Agent',
+    description: 'Business metrics & analysis',
+  },
+  {
+    id: 'market',
+    name: '🔍 Market Insight Agent',
+    description: 'Market analysis & trends',
+  },
+  {
+    id: 'compliance',
+    name: '✓ Compliance Agent',
+    description: 'Legal & regulatory checks',
+  },
+  {
+    id: 'orchestrator',
+    name: '🧠 Co-Founder Orchestrator',
+    description: 'Multi-agent orchestration',
+  },
+];
+
+// Command type configurations
+const COMMAND_CONFIGS = {
+  content_generation: {
+    name: 'Content Generation',
+    emoji: '📝',
+    type: 'content_generation',
+    phases: ['Research', 'Planning', 'Writing', 'Review', 'Publishing'],
+  },
+  financial_analysis: {
+    name: 'Financial Analysis',
+    emoji: '📊',
+    type: 'financial_analysis',
+    phases: ['Data Collection', 'Analysis', 'Modeling', 'Reporting'],
+  },
+  market_research: {
+    name: 'Market Research',
+    emoji: '🔍',
+    type: 'market_research',
+    phases: ['Gathering', 'Analysis', 'Insights', 'Reporting'],
+  },
+  compliance_check: {
+    name: 'Compliance Check',
+    emoji: '✓',
+    type: 'compliance_check',
+    phases: ['Scanning', 'Analysis', 'Risk Assessment', 'Report'],
+  },
+};
+
 const CommandPane = () => {
-  const { selectedTask, tasks } = useStore();
+  const {
+    selectedTask,
+    tasks,
+    messages,
+    addMessage,
+    updateMessage,
+    startExecution,
+    completeExecution,
+    failExecution,
+    removeMessage,
+  } = useStore();
   const isResizing = useRef(false);
-  const [messages, setMessages] = useState([
-    {
-      message:
-        "Hello! I'm Poindexter, the Glad Labs AI Assistant. How can I assist you today? I can help you delegate tasks, analyze data, or provide strategic insights.",
-      sentTime: 'just now',
-      sender: 'AI',
-      direction: 'incoming',
-    },
-  ]);
   const [isTyping, setIsTyping] = useState(false);
-  const [selectedModel, setSelectedModel] = useState('gpt-4');
+  const [selectedModel, setSelectedModel] = useState('ollama-mistral');
+  const [selectedAgent, setSelectedAgent] = useState('orchestrator');
   const [showContext, setShowContext] = useState(false);
   const [delegateMode, setDelegateMode] = useState(false);
+
+  /**
+   * Parse user input and create command message
+   */
+  const parseUserCommand = useCallback(
+    (input) => {
+      // Simple command detection (can be enhanced with AI parsing)
+      const lowerInput = input.toLowerCase();
+      let commandType = 'content_generation'; // default
+
+      if (lowerInput.includes('financial') || lowerInput.includes('cost')) {
+        commandType = 'financial_analysis';
+      } else if (
+        lowerInput.includes('market') ||
+        lowerInput.includes('research')
+      ) {
+        commandType = 'market_research';
+      } else if (
+        lowerInput.includes('compliance') ||
+        lowerInput.includes('legal')
+      ) {
+        commandType = 'compliance_check';
+      }
+
+      const config = COMMAND_CONFIGS[commandType];
+      return {
+        name: input.substring(0, 50), // First 50 chars as command name
+        type: commandType,
+        description: input,
+        parameters: {
+          userInput: input,
+          model: selectedModel,
+          agent: selectedAgent,
+          context: selectedTask ? selectedTask.title : 'No active task',
+        },
+        config,
+      };
+    },
+    [selectedModel, selectedAgent, selectedTask]
+  );
+
+  /**
+   * Handle result approval
+   */
+  const handleApproveResult = useCallback(
+    (resultMessage, feedback) => {
+      const approvalMessage = {
+        type: 'text',
+        direction: 'incoming',
+        sender: 'AI',
+        message: `✓ Result approved${feedback ? ': ' + feedback : ''}`,
+      };
+      addMessage(approvalMessage);
+    },
+    [addMessage]
+  );
+
+  /**
+   * Handle result rejection
+   */
+  const handleRejectResult = useCallback(
+    (resultMessage, feedback) => {
+      const rejectionMessage = {
+        type: 'text',
+        direction: 'incoming',
+        sender: 'AI',
+        message: `✗ Result rejected${feedback ? ': ' + feedback : ''}. Would you like me to regenerate?`,
+      };
+      addMessage(rejectionMessage);
+    },
+    [addMessage]
+  );
+
+  /**
+   * Handle retry after error
+   */
+  const handleRetryCommand = useCallback(
+    (errorMessage) => {
+      const retryMessage = {
+        type: 'text',
+        direction: 'incoming',
+        sender: 'AI',
+        message: 'Retrying command...',
+      };
+      addMessage(retryMessage);
+      // In real scenario, would re-execute the command
+    },
+    [addMessage]
+  );
+
+  /**
+   * Execute command from OrchestratorCommandMessage
+   */
+  const handleExecuteCommand = useCallback(
+    async (commandMessage, params) => {
+      const executionId = `exec-${Date.now()}`;
+      const commandType = commandMessage.commandType || 'content_generation';
+      const config =
+        COMMAND_CONFIGS[commandType] || COMMAND_CONFIGS.content_generation;
+
+      // Start execution in store
+      startExecution(executionId, commandType, config.phases);
+
+      // Add status message to stream
+      const statusMessage = {
+        type: 'status',
+        direction: 'incoming',
+        sender: 'AI',
+        executionId,
+        progress: 0,
+        phases: config.phases,
+        currentPhaseIndex: 0,
+        phaseBreakdown: config.phases.reduce((acc, phase) => {
+          acc[phase] = Math.round(100 / config.phases.length);
+          return acc;
+        }, {}),
+      };
+      addMessage(statusMessage);
+      const statusMessageIndex = messages.length; // Track for updates
+
+      setIsTyping(true);
+
+      try {
+        const response = await fetch(COFOUNDER_API_URL, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            command: commandMessage.description || 'Execute command',
+            parameters: params || commandMessage.parameters,
+            task: selectedTask || null,
+            model: selectedModel,
+            agent: selectedAgent,
+            context: {
+              currentPage: window.location.pathname,
+              selectedTaskId: selectedTask?.id || null,
+              totalTasks: tasks?.length || 0,
+            },
+          }),
+        });
+
+        if (!response.ok) {
+          throw new Error(
+            `Network response was not ok: ${response.statusText}`
+          );
+        }
+
+        const data = await response.json();
+
+        // Simulate progress updates (in real scenario, backend would stream this)
+        for (let i = 1; i < config.phases.length; i++) {
+          await new Promise((resolve) => setTimeout(resolve, 500));
+          const progress = Math.round(((i + 1) / config.phases.length) * 100);
+          updateMessage(statusMessageIndex, {
+            progress,
+            currentPhaseIndex: i,
+          });
+        }
+
+        // Add result message
+        const resultMessage = {
+          type: 'result',
+          direction: 'incoming',
+          sender: 'AI',
+          executionId,
+          result: data.response || data.result || data,
+          resultPreview: (
+            data.response ||
+            data.result ||
+            JSON.stringify(data)
+          ).substring(0, 200),
+          metadata: {
+            wordCount: (data.response || data.result || '').split(' ').length,
+            qualityScore: 8.5,
+            cost: 0.35,
+            executionTime: new Date().getTime(),
+          },
+        };
+        addMessage(resultMessage);
+        completeExecution(resultMessage);
+      } catch (error) {
+        console.error('Error executing command:', error);
+        const errorMessage = {
+          type: 'error',
+          direction: 'incoming',
+          sender: 'AI',
+          executionId,
+          error: error.message || 'Command execution failed',
+          severity: 'error',
+          details: {
+            phase: commandType,
+            timestamp: new Date().toISOString(),
+            code: error.code || 'EXECUTION_ERROR',
+            source: 'CommandPane',
+          },
+          suggestions: [
+            'Check backend connection at http://localhost:8000',
+            'Verify API configuration in settings',
+            'Try a different AI model',
+            'Retry the command',
+          ],
+        };
+        addMessage(errorMessage);
+        failExecution(error);
+      } finally {
+        setIsTyping(false);
+      }
+    },
+    [
+      addMessage,
+      updateMessage,
+      startExecution,
+      completeExecution,
+      failExecution,
+      selectedTask,
+      tasks,
+      selectedModel,
+      selectedAgent,
+      messages,
+    ]
+  );
+
+  /**
+   * Render messages with appropriate component type
+   */
+  const renderMessage = useCallback(
+    (message, index) => {
+      try {
+        switch (message.type) {
+          case MESSAGE_TYPES.ORCHESTRATOR_COMMAND:
+          case 'command':
+            return (
+              <OrchestratorCommandMessage
+                key={message.id || index}
+                message={message}
+                onExecute={(params) => handleExecuteCommand(message, params)}
+                onCancel={() => removeMessage(index)}
+              />
+            );
+          case MESSAGE_TYPES.ORCHESTRATOR_STATUS:
+          case 'status':
+            return (
+              <OrchestratorStatusMessage
+                key={message.id || index}
+                message={message}
+              />
+            );
+          case MESSAGE_TYPES.ORCHESTRATOR_RESULT:
+          case 'result':
+            return (
+              <OrchestratorResultMessage
+                key={message.id || index}
+                message={message}
+                onApprove={(feedback) => handleApproveResult(message, feedback)}
+                onReject={(feedback) => handleRejectResult(message, feedback)}
+              />
+            );
+          case MESSAGE_TYPES.ORCHESTRATOR_ERROR:
+          case 'error':
+            return (
+              <OrchestratorErrorMessage
+                key={message.id || index}
+                message={message}
+                onRetry={() => handleRetryCommand(message)}
+                onCancel={() => removeMessage(index)}
+              />
+            );
+          default:
+            // Fallback to plain chat message
+            return <Message key={message.id || index} model={message} />;
+        }
+      } catch (error) {
+        console.error('Error rendering message:', error);
+        return null;
+      }
+    },
+    [
+      handleExecuteCommand,
+      handleApproveResult,
+      handleRejectResult,
+      handleRetryCommand,
+      removeMessage,
+    ]
+  );
 
   const handleResize = useCallback((e) => {
     if (!isResizing.current) return;
 
     const containerRect = document
       .querySelector('.oversight-hub-layout')
-      .getBoundingClientRect();
+      ?.getBoundingClientRect();
+    if (!containerRect) return;
+
     const newWidth = containerRect.right - e.clientX;
 
     if (newWidth >= 300 && newWidth <= 600) {
@@ -74,70 +425,44 @@ const CommandPane = () => {
     [handleResize, stopResize]
   );
 
-  const handleSend = async (message) => {
-    const newMessage = {
-      message,
+  const handleSend = async (input) => {
+    // Add user message
+    const userMessage = {
+      type: 'text',
+      message: input,
       direction: 'outgoing',
       sender: 'user',
     };
+    addMessage(userMessage);
 
-    const newMessages = [...messages, newMessage];
-    setMessages(newMessages);
-    setIsTyping(true);
+    // Parse command
+    const command = parseUserCommand(input);
 
-    try {
-      const response = await fetch(COFOUNDER_API_URL, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          command: message,
-          task: selectedTask || null,
-          model: selectedModel,
-          context: {
-            currentPage: window.location.pathname,
-            selectedTaskId: selectedTask?.id || null,
-            totalTasks: tasks?.length || 0,
-          },
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error('Network response was not ok');
-      }
-
-      const data = await response.json();
-      const aiMessage = {
-        message: data.response,
-        direction: 'incoming',
-        sender: 'AI',
-      };
-      setMessages([...newMessages, aiMessage]);
-    } catch (error) {
-      console.error('Error sending command:', error);
-      const errorMessage = {
-        message:
-          'Sorry, I encountered an error. Please check the console for details.',
-        direction: 'incoming',
-        sender: 'AI',
-      };
-      setMessages([...newMessages, errorMessage]);
-    } finally {
-      setIsTyping(false);
-    }
+    // Create command message
+    const commandMessage = {
+      type: 'command',
+      direction: 'incoming',
+      sender: 'AI',
+      commandName: command.name,
+      commandType: command.type,
+      description: command.description,
+      parameters: command.parameters,
+      emoji: command.config.emoji,
+    };
+    addMessage(commandMessage);
   };
 
   const handleDelegateTask = () => {
     if (!delegateMode) {
       setDelegateMode(true);
       const delegateMessage = {
+        type: 'text',
         message:
           "I'm ready to help delegate tasks. What would you like me to handle?",
         direction: 'incoming',
         sender: 'AI',
       };
-      setMessages([...messages, delegateMessage]);
+      addMessage(delegateMessage);
     } else {
       setDelegateMode(false);
     }
@@ -150,10 +475,29 @@ const CommandPane = () => {
         onMouseDown={startResize}
       />
 
-      {/* Header with Model Selector and Context */}
+      {/* Header with Mode, Model Selector and Context */}
       <div className="command-pane-header">
         <div className="command-pane-top">
           <h2 className="command-pane-title">Poindexter</h2>
+
+          {/* Orchestration Mode Selector */}
+          <div className="mode-selector">
+            <button
+              className={`mode-btn ${delegateMode ? 'inactive' : 'active'}`}
+              onClick={() => setDelegateMode(false)}
+              title="Conversation Mode - Direct chat with AI"
+            >
+              💬 Conversation
+            </button>
+            <button
+              className={`mode-btn ${delegateMode ? 'active' : 'inactive'}`}
+              onClick={() => setDelegateMode(true)}
+              title="Agentic Mode - Task delegation to agents"
+            >
+              🤖 Agentic
+            </button>
+          </div>
+
           <button
             className="context-toggle-btn"
             onClick={() => setShowContext(!showContext)}
@@ -161,6 +505,25 @@ const CommandPane = () => {
           >
             {showContext ? '✕' : '⊕'} Context
           </button>
+        </div>
+
+        {/* Agent Selector */}
+        <div className="agent-selector">
+          <label htmlFor="ai-agent" className="agent-label">
+            Agent:
+          </label>
+          <select
+            id="ai-agent"
+            className="agent-dropdown"
+            value={selectedAgent}
+            onChange={(e) => setSelectedAgent(e.target.value)}
+          >
+            {AVAILABLE_AGENTS.map((agent) => (
+              <option key={agent.id} value={agent.id} title={agent.description}>
+                {agent.name}
+              </option>
+            ))}
+          </select>
         </div>
 
         {/* Model Selector */}
@@ -255,17 +618,17 @@ const CommandPane = () => {
         </div>
       )}
 
-      {/* Chat Container */}
+      {/* Chat Container with Message Stream Integration */}
       <MainContainer>
         <ChatContainer>
           <MessageList
             typingIndicator={
-              isTyping ? <TypingIndicator content="AI is thinking..." /> : null
+              isTyping ? (
+                <TypingIndicator content="AI is processing..." />
+              ) : null
             }
           >
-            {messages.map((message, i) => (
-              <Message key={i} model={message} />
-            ))}
+            {messages.map((message, i) => renderMessage(message, i))}
           </MessageList>
           <MessageInput
             placeholder="Ask for help, delegate tasks, or request analysis..."

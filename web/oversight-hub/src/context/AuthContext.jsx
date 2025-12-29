@@ -8,6 +8,9 @@ import {
   logout as authLogout,
   getStoredUser,
   getAuthToken,
+  initializeDevToken,
+  handleOAuthCallbackNew,
+  validateAndGetCurrentUser,
 } from '../services/authService';
 import useStore from '../store/useStore';
 
@@ -33,7 +36,25 @@ export const AuthProvider = ({ children }) => {
         );
         const startTime = Date.now();
 
-        // First check if user is stored in localStorage (from recent login)
+        // Initialize dev token for local development if needed
+        if (process.env.NODE_ENV === 'development') {
+          console.log('[AuthContext] 🔧 Initializing development token...');
+          try {
+            await initializeDevToken();
+            console.log(
+              '[AuthContext] ✅ Development token initialized successfully'
+            );
+          } catch (tokenError) {
+            console.error(
+              '[AuthContext] ❌ Development token initialization failed:',
+              tokenError
+            );
+          }
+          // Small delay to ensure localStorage write is complete
+          await new Promise((resolve) => setTimeout(resolve, 10));
+        }
+
+        // First check if user is stored in localStorage (from recent login OR dev init)
         const storedUser = getStoredUser();
         const token = getAuthToken();
 
@@ -57,9 +78,18 @@ export const AuthProvider = ({ children }) => {
           return;
         }
 
-        // If no stored user, don't try backend verify - just proceed as not authenticated
-        // This prevents 30-second delays on first load
-        console.log('🔍 [AuthContext] No cached session - user needs to login');
+        // No user/token found - this is normal for production (user not logged in)
+        // In development, this should NOT happen since initializeDevToken creates them
+        if (process.env.NODE_ENV === 'development') {
+          console.warn(
+            '⚠️ [AuthContext] Development token initialization may have failed, no token in localStorage'
+          );
+        } else {
+          console.log(
+            '🔍 [AuthContext] No cached session - user needs to login'
+          );
+        }
+
         setStoreIsAuthenticated(false);
         setUser(null);
         setError(null);
@@ -109,6 +139,58 @@ export const AuthProvider = ({ children }) => {
     [setStoreUser, setStoreIsAuthenticated, setStoreAccessToken]
   );
 
+  // OAuth callback handler
+  const handleOAuthCallback = useCallback(
+    async (provider, code, state) => {
+      try {
+        console.log(
+          `🔐 [AuthContext] Processing ${provider} OAuth callback...`
+        );
+        setLoading(true);
+        const result = await handleOAuthCallbackNew(provider, code, state);
+
+        if (result.user && result.token) {
+          console.log(
+            `✅ [AuthContext] OAuth login successful for ${provider}`
+          );
+          setAuthUser(result.user);
+          setStoreAccessToken(result.token);
+          setError(null);
+          return result.user;
+        } else {
+          throw new Error(`No user data returned from ${provider} OAuth`);
+        }
+      } catch (err) {
+        console.error('❌ [AuthContext] OAuth callback error:', err);
+        setError(err.message);
+        setLoading(false);
+        throw err;
+      }
+    },
+    [setStoreAccessToken, setAuthUser]
+  );
+
+  // Validate current user token
+  const validateCurrentUser = useCallback(async () => {
+    try {
+      console.log('🔐 [AuthContext] Validating current user...');
+      const user = await validateAndGetCurrentUser();
+      if (user) {
+        setAuthUser(user);
+        setError(null);
+        return user;
+      } else {
+        setUser(null);
+        storeLogout();
+        return null;
+      }
+    } catch (err) {
+      console.error('❌ [AuthContext] Validation error:', err);
+      setError(err.message);
+      return null;
+    }
+  }, [setAuthUser, storeLogout]);
+
   const value = {
     user,
     loading,
@@ -116,6 +198,8 @@ export const AuthProvider = ({ children }) => {
     isAuthenticated: !!user,
     logout,
     setAuthUser,
+    handleOAuthCallback,
+    validateCurrentUser,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

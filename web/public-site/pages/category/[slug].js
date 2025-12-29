@@ -1,86 +1,27 @@
-import Head from 'next/head';
-import {
-  getCategories,
-  getCategoryBySlug,
-  getPostsByCategory,
-} from '../../lib/api';
-import PostCard from '../../components/PostCard';
-
-export default function CategoryPage({ category, posts }) {
+export default function CategoryPage() {
   return (
-    <>
-      <Head>
-        <title>{category.name} - Glad Labs Frontier</title>
-        <meta
-          name="description"
-          content={`Posts in the category: ${category.name}`}
-        />
-      </Head>
-      <div className="container mx-auto px-4 md:px-6 py-12">
-        <div className="max-w-4xl mx-auto">
-          <h1 className="text-5xl font-bold text-cyan-400 mb-2">
-            Category: {category.name}
-          </h1>
-          <p className="text-lg text-gray-400 mb-8">{category.description}</p>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {posts
-              .filter((post) => Boolean(post.slug))
-              .map((post) => (
-                <PostCard key={post.id} post={post} />
-              ))}
-          </div>
-        </div>
-      </div>
-    </>
+    <div className="container mx-auto px-4 py-12">
+      <h1 className="text-3xl font-bold">Category Page Deprecated</h1>
+      <p>
+        This category page has been deprecated. Please visit the main{' '}
+        <a href="/blog" className="text-cyan-400 hover:underline">
+          blog
+        </a>{' '}
+        instead.
+      </p>
+    </div>
   );
 }
 
 export async function getStaticPaths() {
-  try {
-    const categories = await getCategories();
-    const paths = categories.map((category) => ({
-      params: { slug: category.slug },
-    }));
-
-    return {
-      paths,
-      fallback: 'blocking',
-    };
-  } catch (error) {
-    console.warn('Could not fetch categories during build:', error.message);
-    return {
-      paths: [],
-      fallback: 'blocking',
-    };
-  }
+  return {
+    paths: [],
+    fallback: false,
+  };
 }
 
-export async function getStaticProps({ params }) {
-  try {
-    const category = await getCategoryBySlug(params.slug);
-    const posts = await getPostsByCategory(params.slug);
-
-    if (!category) {
-      return {
-        notFound: true,
-      };
-    }
-
-    return {
-      props: {
-        category,
-        posts,
-      },
-      revalidate: 60,
-    };
-  } catch (error) {
-    console.warn(
-      `Failed to generate category page for slug ${params.slug}:`,
-      error.message
-    );
-    return {
-      notFound: true,
-      revalidate: 10,
-    };
-  }
+export async function getStaticProps() {
+  return {
+    notFound: true,
+  };
 }

@@ -1,0 +1,575 @@
+/**
+ * FastAPI CMS Client - Optimized for Performance
+ *
+ * This replaces the Strapi client with a direct FastAPI integration.
+ * - Sync endpoints (no async complications)
+ * - PostgreSQL backend (fast queries)
+ * - Built-in pagination and filtering
+ * - Minimal response size
+ * - Production-ready caching headers
+ */
+
+// API Configuration
+const FASTAPI_URL =
+  process.env.NEXT_PUBLIC_FASTAPI_URL || 'http://localhost:8000';
+const API_BASE = `${FASTAPI_URL}/api`;
+
+// Cache control for static content
+const CACHE_HEADERS = {
+  'Cache-Control': 'public, max-age=3600, stale-while-revalidate=86400',
+};
+
+/**
+ * Generic fetch wrapper with error handling
+ */
+async function fetchAPI(endpoint, options = {}) {
+  const url = `${API_BASE}${endpoint}`;
+
+  try {
+    const response = await fetch(url, {
+      ...options,
+      headers: {
+        'Content-Type': 'application/json',
+        ...CACHE_HEADERS,
+        ...options.headers,
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error(`API Error: ${response.status} ${response.statusText}`);
+    }
+
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    console.error(`[FastAPI] Error fetching ${endpoint}:`, error.message);
+    throw error;
+  }
+}
+
+/**
+ * Get paginated posts list
+ * ADAPTER: Maps old parameters to FastAPI format
+ *
+ * @param {number} page - Page number (1-indexed, default 1)
+ * @param {number} pageSize - Items per page (default 10)
+ * @param {string} excludeId - Post ID to exclude (optional)
+ * @returns {Promise<{data: Array, meta: {pagination: Object}}>}
+ */
+export async function getPaginatedPosts(
+  page = 1,
+  pageSize = 10,
+  excludeId = null
+) {
+  const skip = (page - 1) * pageSize;
+
+  // Build endpoint: FastAPI uses skip/limit
+  let endpoint = `/posts?skip=${skip}&limit=${pageSize}&published_only=true`;
+
+  const response = await fetchAPI(endpoint);
+
+  // Filter out excludeId if provided
+  let data = response.data || [];
+  if (excludeId) {
+    data = data.filter((post) => post.id !== excludeId);
+  }
+
+  // Return in format expected by pages
+  return {
+    data: data,
+    meta: {
+      pagination: {
+        page: page,
+        pageSize: pageSize,
+        total: response.meta?.pagination?.total || 0,
+        pageCount: Math.ceil(
+          (response.meta?.pagination?.total || 0) / pageSize
+        ),
+      },
+    },
+  };
+}
+
+/**
+ * Get featured post (most recent published post)
+ *
+ * @returns {Promise<Object|null>}
+ */
+export async function getFeaturedPost() {
+  try {
+    // Get the most recent post (skip=0, limit=1, published_only=true)
+    const response = await fetchAPI(
+      '/posts?skip=0&limit=1&published_only=true'
+    );
+
+    if (response.data && response.data.length > 0) {
+      return response.data[0];
+    }
+    return null;
+  } catch (error) {
+    console.error('[FastAPI] Error fetching featured post:', error);
+    return null;
+  }
+}
+
+/**
+ * Get single post by slug with full content
+ * Includes related category and tags
+ *
+ * @param {string} slug - Post slug
+ * @returns {Promise<Object|null>}
+ */
+export async function getPostBySlug(slug) {
+  try {
+    const response = await fetchAPI(`/posts/${slug}`);
+
+    if (response.data) {
+      return {
+        ...response.data,
+        // Normalize meta fields for compatibility
+        category: response.meta.category || null,
+        tags: response.meta.tags || [],
+      };
+    }
+    return null;
+  } catch (error) {
+    console.error(`[FastAPI] Error fetching post ${slug}:`, error);
+    return null;
+  }
+}
+
+/**
+ * Get all categories for navigation/filtering
+ *
+ * @returns {Promise<Array>}
+ */
+export async function getCategories() {
+  try {
+    const response = await fetchAPI('/categories');
+    return response.data || [];
+  } catch (error) {
+    console.error('[FastAPI] Error fetching categories:', error);
+    return [];
+  }
+}
+
+/**
+ * Get all tags for filtering/cloud
+ *
+ * @returns {Promise<Array>}
+ */
+export async function getTags() {
+  try {
+    const response = await fetchAPI('/tags');
+    return response.data || [];
+  } catch (error) {
+    console.error('[FastAPI] Error fetching tags:', error);
+    return [];
+  }
+}
+
+/**
+ * Get posts in specific category
+ *
+ * @param {string} slug - Category slug
+ * @param {number} page - Page number (1-indexed)
+ * @param {number} limit - Items per page
+ * @returns {Promise<{posts: Array, pagination: Object}>}
+ */
+export async function getPostsByCategory(slug, page = 1, limit = 10) {
+  return getPaginatedPosts(page, limit, slug, null);
+}
+
+/**
+ * Get posts with specific tag
+ *
+ * @param {string} slug - Tag slug
+ * @param {number} page - Page number (1-indexed)
+ * @param {number} limit - Items per page
+ * @returns {Promise<{posts: Array, pagination: Object}>}
+ */
+export async function getPostsByTag(slug, page = 1, limit = 10) {
+  return getPaginatedPosts(page, limit, null, slug);
+}
+
+/**
+ * Get ALL posts (for generating static paths)
+ * Used by [slug].js getStaticPaths for ISR
+ * Note: Fetches in batches since backend max limit is 100
+ *
+ * @returns {Promise<Array<{slug: string}>>}
+ */
+export async function getAllPosts() {
+  try {
+    const allPosts = [];
+    let skip = 0;
+    const limit = 100; // Backend max limit
+
+    // Fetch all posts in batches
+    while (true) {
+      const response = await fetchAPI(
+        `/posts?skip=${skip}&limit=${limit}&published_only=true`
+      );
+
+      if (!response.data || response.data.length === 0) {
+        break; // No more posts
+      }
+
+      allPosts.push(
+        ...response.data.map((post) => ({
+          slug: post.slug,
+        }))
+      );
+
+      // Check if we got fewer posts than requested (end of results)
+      if (response.data.length < limit) {
+        break;
+      }
+
+      skip += limit;
+    }
+
+    return allPosts;
+  } catch (error) {
+    console.error('[FastAPI] Error fetching all posts:', error);
+    return [];
+  }
+}
+
+/**
+ * Get related posts (similar by tags)
+ *
+ * @param {string} postId - Current post ID
+ * @param {Array} tagIds - Tag IDs to match
+ * @param {number} limit - Number of related posts to return
+ * @returns {Promise<Array>}
+ */
+export async function getRelatedPosts(postId, tagIds = [], limit = 3) {
+  try {
+    // Query posts with same tags, excluding current post
+    let endpoint = `/posts?limit=${limit}&published_only=true`;
+
+    if (tagIds && tagIds.length > 0) {
+      endpoint += `&related_tags=${tagIds.join(',')}`;
+    }
+
+    const response = await fetchAPI(endpoint);
+
+    // Filter out the current post
+    return (response.data || [])
+      .filter((post) => post.id !== postId)
+      .slice(0, limit);
+  } catch (error) {
+    console.error('[FastAPI] Error fetching related posts:', error);
+    return [];
+  }
+}
+
+/**
+ * Search posts by keyword
+ *
+ * @param {string} query - Search query
+ * @param {number} limit - Max results
+ * @returns {Promise<Array>}
+ */
+export async function searchPosts(query, limit = 20) {
+  try {
+    if (!query || query.trim().length === 0) {
+      return [];
+    }
+
+    const endpoint = `/posts/search?q=${encodeURIComponent(query)}&limit=${limit}`;
+    const response = await fetchAPI(endpoint);
+
+    return response.data || [];
+  } catch (error) {
+    console.error('[FastAPI] Error searching posts:', error);
+    return [];
+  }
+}
+
+/**
+ * Get CMS health status
+ * Useful for build-time validation
+ *
+ * @returns {Promise<Object>}
+ */
+export async function getCMSStatus() {
+  try {
+    const response = await fetchAPI('/cms/status');
+    return response;
+  } catch (error) {
+    console.error('[FastAPI] Error checking CMS status:', error);
+    return { status: 'error', message: error.message };
+  }
+}
+
+/**
+ * Build-time validation
+ * Checks if FastAPI is available
+ *
+ * @returns {Promise<boolean>}
+ */
+export async function validateFastAPI() {
+  try {
+    const status = await getCMSStatus();
+    return status.status === 'healthy';
+  } catch (error) {
+    return false;
+  }
+}
+
+/**
+ * Get image URL from relative path
+ * (In case we move to CloudFront/CDN later)
+ *
+ * @param {string} path - Relative image path
+ * @returns {string}
+ */
+export function getImageURL(path) {
+  if (!path) return null;
+
+  // If absolute URL, return as-is
+  if (path.startsWith('http')) {
+    return path;
+  }
+
+  // Otherwise, construct from FastAPI
+  return `${FASTAPI_URL}${path}`;
+}
+
+/**
+ * Format post data for display
+ * Normalizes field names and types
+ *
+ * @param {Object} post - Raw post from FastAPI
+ * @returns {Object}
+ */
+export function formatPost(post) {
+  if (!post) return null;
+
+  return {
+    id: post.id,
+    title: post.title,
+    slug: post.slug,
+    excerpt: post.excerpt,
+    content: post.content,
+    featured: post.featured || false,
+    publishedAt: post.published_at,
+    createdAt: post.created_at,
+    category: post.category || null,
+    tags: post.tags || [],
+    coverImage: post.cover_image || null,
+    meta: {
+      wordCount: (post.content || '').split(/\s+/).length,
+      readingTime: Math.ceil((post.content || '').split(/\s+/).length / 200), // ~200 words per minute
+    },
+  };
+}
+
+// ============================================================================
+// OAUTH & AUTHENTICATION
+// ============================================================================
+
+/**
+ * Get OAuth login URL for a provider
+ * @param {string} provider - Provider name ('github', 'google', etc.)
+ * @returns {Promise<Object>} { login_url: 'https://...' }
+ */
+export async function getOAuthLoginURL(provider) {
+  const data = await fetchAPI(`/auth/${provider}/login`);
+  return data.login_url;
+}
+
+/**
+ * Handle OAuth callback
+ * @param {string} provider - OAuth provider name
+ * @param {string} code - Authorization code from provider
+ * @param {string} state - State parameter for CSRF protection
+ * @returns {Promise<Object>} { access_token, user, ... }
+ */
+export async function handleOAuthCallback(provider, code, state) {
+  return fetchAPI(`/auth/${provider}/callback`, {
+    method: 'POST',
+    body: JSON.stringify({ code, state }),
+  });
+}
+
+/**
+ * Get current authenticated user
+ * Requires valid JWT token in Authorization header
+ * @returns {Promise<Object|null>}
+ */
+export async function getCurrentUser() {
+  try {
+    const token = localStorage.getItem('auth_token');
+    if (!token) return null;
+
+    const response = await fetchAPI('/auth/verify', {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+    return response.data || null;
+  } catch (error) {
+    console.error('[FastAPI] Error getting current user:', error);
+    return null;
+  }
+}
+
+/**
+ * Logout current user
+ * @returns {Promise<Object>}
+ */
+export async function logout() {
+  const token = localStorage.getItem('auth_token');
+  if (!token) return { success: true };
+
+  return fetchAPI('/auth/logout', {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+}
+
+// ============================================================================
+// TASK MANAGEMENT
+// ============================================================================
+
+/**
+ * Create a new task
+ * @param {Object} taskData - Task data (title, description, type, parameters)
+ * @returns {Promise<Object>}
+ */
+export async function createTask(taskData) {
+  const token = localStorage.getItem('auth_token');
+  if (!token) throw new Error('Not authenticated');
+
+  return fetchAPI('/tasks', {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify(taskData),
+  });
+}
+
+/**
+ * List all tasks with filtering
+ * @param {number} limit - Number of tasks to return
+ * @param {number} offset - Pagination offset
+ * @param {string} status - Filter by status (optional)
+ * @returns {Promise<Object>} { data: [...tasks], meta: {...} }
+ */
+export async function listTasks(limit = 20, offset = 0, status = null) {
+  const token = localStorage.getItem('auth_token');
+  if (!token) throw new Error('Not authenticated');
+
+  let endpoint = `/tasks?limit=${limit}&offset=${offset}`;
+  if (status) {
+    endpoint += `&status=${encodeURIComponent(status)}`;
+  }
+
+  return fetchAPI(endpoint, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+}
+
+/**
+ * Get single task by ID
+ * @param {string|number} taskId - Task ID
+ * @returns {Promise<Object>}
+ */
+export async function getTaskById(taskId) {
+  const token = localStorage.getItem('auth_token');
+  if (!token) throw new Error('Not authenticated');
+
+  return fetchAPI(`/tasks/${taskId}`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+}
+
+/**
+ * Get task metrics and statistics
+ * @returns {Promise<Object>}
+ */
+export async function getTaskMetrics() {
+  const token = localStorage.getItem('auth_token');
+  if (!token) throw new Error('Not authenticated');
+
+  return fetchAPI('/tasks/metrics', {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+}
+
+// ============================================================================
+// MODEL MANAGEMENT
+// ============================================================================
+
+/**
+ * Get list of available AI models
+ * @returns {Promise<Object>}
+ */
+export async function getAvailableModels() {
+  try {
+    const response = await fetchAPI('/models');
+    return response.data || [];
+  } catch (error) {
+    console.error('[FastAPI] Error fetching models:', error);
+    return [];
+  }
+}
+
+/**
+ * Test connection to specific model provider
+ * @param {string} provider - Provider name
+ * @param {string} model - Model name (optional)
+ * @returns {Promise<Object>} { status: 'connected|error', message: '...' }
+ */
+export async function testModelProvider(provider, model = null) {
+  let endpoint = `/models/test?provider=${encodeURIComponent(provider)}`;
+  if (model) {
+    endpoint += `&model=${encodeURIComponent(model)}`;
+  }
+
+  return fetchAPI(endpoint);
+}
+
+// Default export for compatibility
+export default {
+  // CMS Functions
+  getPaginatedPosts,
+  getFeaturedPost,
+  getPostBySlug,
+  getCategories,
+  getTags,
+  getPostsByCategory,
+  getPostsByTag,
+  getAllPosts,
+  getRelatedPosts,
+  searchPosts,
+  getCMSStatus,
+  validateFastAPI,
+  getImageURL,
+  formatPost,
+  // OAuth Functions
+  getOAuthLoginURL,
+  handleOAuthCallback,
+  getCurrentUser,
+  logout,
+  // Task Functions
+  createTask,
+  listTasks,
+  getTaskById,
+  getTaskMetrics,
+  // Model Functions
+  getAvailableModels,
+  testModelProvider,
+};

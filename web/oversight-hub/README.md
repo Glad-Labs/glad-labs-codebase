@@ -399,6 +399,7 @@ vercel --prod
 
 ---
 
+<<<<<<< HEAD
 - **Glad Labs Architecture:** [docs/02-ARCHITECTURE_AND_DESIGN.md](../../docs/02-ARCHITECTURE_AND_DESIGN.md)
 - **API Documentation:** [docs/reference/API_CONTRACT_CONTENT_CREATION.md](../../docs/reference/API_CONTRACT_CONTENT_CREATION.md)
 - **Components:** [docs/components/](../../docs/components/)
@@ -414,6 +415,8 @@ vercel --prod
 
 ---
 
+=======
+>>>>>>> feat/refine
 **Maintained by:** Glad Labs Development Team  
 **Last Updated:** October 26, 2025  
 **Status:** ✅ Production Ready | PostgreSQL Backend | Real-time Updates

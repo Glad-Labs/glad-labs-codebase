@@ -1,36 +1,19 @@
 import Head from 'next/head';
-import ReactMarkdown from 'react-markdown';
-import { getStrapiURL } from '../lib/api';
+import Link from 'next/link';
 
 export async function getStaticProps() {
-  try {
-    const url = `${getStrapiURL('/api/privacy-policy')}?populate=*`;
-    const res = await fetch(url);
-
-    if (!res.ok) {
-      return { props: { policy: null }, revalidate: 60 };
-    }
-
-    const json = await res.json();
-    // Strapi v5: data fields are directly on json.data, not json.data.attributes
-    const data = json?.data || null;
-
-    return { props: { policy: data }, revalidate: 60 };
-  } catch (e) {
-    // Strapi might be rebooting; do not 404 in dev
-    return { props: { policy: null }, revalidate: 60 };
-  }
+  return {
+    props: {},
+    revalidate: 3600,
+  };
 }
 
-export default function PrivacyPolicy({ policy }) {
-  const title = policy?.title || 'Privacy Policy';
-  const content = policy?.content || '';
-  const seo = policy?.seo || {};
-  const metaTitle = seo.metaTitle || `${title} | Glad Labs`;
-  const metaDescription = seo.metaDescription || 'Glad Labs Privacy Policy';
+export default function PrivacyPolicy() {
+  const title = 'Privacy Policy';
+  const metaTitle = `${title} | Glad Labs`;
+  const metaDescription = 'Glad Labs Privacy Policy';
 
-  // Fallback content if no data from Strapi
-  const fallbackContent = `
+  const content = `
 ## Privacy Policy
 
 **Last Updated:** October 14, 2025  
@@ -65,6 +48,23 @@ We implement appropriate technical and organizational security measures to prote
 
 We may use third-party service providers to help us operate our business and provide services to you. These providers have access to your information only to perform specific tasks on our behalf.
 
+## Privacy Policy
+
+**Last Updated:** October 14, 2025  
+**Effective Date:** October 1, 2025
+
+### Introduction
+
+Glad Labs, LLC ("we," "us," or "our") is committed to protecting your privacy. This Privacy Policy explains how we collect, use, disclose, and safeguard your information when you visit our website or use our services.
+
+### Information We Collect
+
+We collect information that you provide directly to us, including:
+
+- **Personal Information**: Name, email address, company information
+- **Usage Data**: How you interact with our services
+- **Technical Data**: IP address, browser type, device information
+
 ### Your Rights
 
 You have the right to:
@@ -85,9 +85,7 @@ If you have questions about this Privacy Policy, please contact us at:
 ### Changes to This Policy
 
 We may update this Privacy Policy from time to time. We will notify you of any changes by posting the new Privacy Policy on this page and updating the "Last Updated" date.
-  `.trim();
-
-  const displayContent = content || fallbackContent;
+  `;
 
   return (
     <>
@@ -99,8 +97,19 @@ We may update this Privacy Policy from time to time. We will notify you of any c
         <h1 className="text-4xl md:text-5xl font-bold text-cyan-300 mb-8">
           {title}
         </h1>
-        <div className="prose prose-invert prose-lg max-w-none">
-          <ReactMarkdown>{displayContent}</ReactMarkdown>
+        <div className="max-w-4xl prose prose-invert">
+          <div className="text-gray-300 leading-relaxed space-y-4">
+            {content.split('\n\n').map((paragraph, i) => (
+              <p key={i} className="whitespace-pre-wrap">
+                {paragraph}
+              </p>
+            ))}
+          </div>
+        </div>
+        <div className="mt-8">
+          <Link href="/" className="text-cyan-400 hover:underline">
+            ← Back to Home
+          </Link>
         </div>
       </div>
     </>

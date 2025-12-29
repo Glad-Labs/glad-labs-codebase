@@ -10,9 +10,14 @@ import {
   SocialMediaManagement,
   CostMetricsDashboard,
 } from './index';
+import ExecutionHub from '../components/pages/ExecutionHub';
+import ExecutiveDashboard from '../components/pages/ExecutiveDashboard';
+import TrainingDataDashboard from '../pages/TrainingDataDashboard';
+import LangGraphTestPage from '../pages/LangGraphTest';
 import Login from '../pages/Login';
 import AuthCallback from '../pages/AuthCallback';
 import ProtectedRoute from '../components/ProtectedRoute';
+import LayoutWrapper from '../components/LayoutWrapper';
 
 function AppRoutes() {
   return (
@@ -21,12 +26,14 @@ function AppRoutes() {
       <Route path="/login" element={<Login />} />
       <Route path="/auth/callback" element={<AuthCallback />} />
 
-      {/* Protected Routes */}
+      {/* Protected Routes with Layout */}
       <Route
         path="/"
         element={
           <ProtectedRoute>
-            <Dashboard />
+            <LayoutWrapper>
+              <ExecutiveDashboard />
+            </LayoutWrapper>
           </ProtectedRoute>
         }
       />
@@ -34,7 +41,19 @@ function AppRoutes() {
         path="/tasks"
         element={
           <ProtectedRoute>
-            <TaskManagement />
+            <LayoutWrapper>
+              <TaskManagement />
+            </LayoutWrapper>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/execution"
+        element={
+          <ProtectedRoute>
+            <LayoutWrapper>
+              <ExecutionHub />
+            </LayoutWrapper>
           </ProtectedRoute>
         }
       />
@@ -42,7 +61,9 @@ function AppRoutes() {
         path="/models"
         element={
           <ProtectedRoute>
-            <ModelManagement />
+            <LayoutWrapper>
+              <ModelManagement />
+            </LayoutWrapper>
           </ProtectedRoute>
         }
       />
@@ -50,7 +71,9 @@ function AppRoutes() {
         path="/social"
         element={
           <ProtectedRoute>
-            <SocialMediaManagement />
+            <LayoutWrapper>
+              <SocialMediaManagement />
+            </LayoutWrapper>
           </ProtectedRoute>
         }
       />
@@ -58,7 +81,9 @@ function AppRoutes() {
         path="/content"
         element={
           <ProtectedRoute>
-            <Content />
+            <LayoutWrapper>
+              <Content />
+            </LayoutWrapper>
           </ProtectedRoute>
         }
       />
@@ -66,15 +91,29 @@ function AppRoutes() {
         path="/analytics"
         element={
           <ProtectedRoute>
-            <Analytics />
+            <LayoutWrapper>
+              <Analytics />
+            </LayoutWrapper>
           </ProtectedRoute>
         }
       />
       <Route
-        path="/cost-metrics"
+        path="/training"
         element={
           <ProtectedRoute>
-            <CostMetricsDashboard />
+            <LayoutWrapper>
+              <TrainingDataDashboard />
+            </LayoutWrapper>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/langgraph-test"
+        element={
+          <ProtectedRoute>
+            <LayoutWrapper>
+              <LangGraphTestPage />
+            </LayoutWrapper>
           </ProtectedRoute>
         }
       />
@@ -82,7 +121,19 @@ function AppRoutes() {
         path="/settings"
         element={
           <ProtectedRoute>
-            <Settings />
+            <LayoutWrapper>
+              <Settings />
+            </LayoutWrapper>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/costs"
+        element={
+          <ProtectedRoute>
+            <LayoutWrapper>
+              <CostMetricsDashboard />
+            </LayoutWrapper>
           </ProtectedRoute>
         }
       />

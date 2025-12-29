@@ -1,11 +1,25 @@
 import React, { useState } from 'react';
 import { getAuthToken } from '../../services/authService';
+import { createTask } from '../../services/cofounderAgentClient';
+import ModelSelectionPanel from '../ModelSelectionPanel';
 
 const CreateTaskModal = ({ isOpen, onClose, onTaskCreated }) => {
   const [taskType, setTaskType] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState(null);
   const [formData, setFormData] = useState({});
+  const [modelSelection, setModelSelection] = useState({
+    modelSelections: {
+      research: 'auto',
+      outline: 'auto',
+      draft: 'auto',
+      assess: 'auto',
+      refine: 'auto',
+      finalize: 'auto',
+    },
+    qualityPreference: 'balanced',
+    estimatedCost: 0.015,
+  });
 
   // Task type definitions with required fields
   const taskTypes = {
@@ -13,27 +27,49 @@ const CreateTaskModal = ({ isOpen, onClose, onTaskCreated }) => {
       label: '📝 Blog Post',
       description: 'Create a comprehensive blog article',
       fields: [
-        { name: 'title', label: 'Article Title', type: 'text', required: true },
         { name: 'topic', label: 'Topic', type: 'text', required: true },
         {
-          name: 'keywords',
-          label: 'SEO Keywords (comma-separated)',
-          type: 'text',
-          required: false,
-        },
-        {
           name: 'word_count',
-          label: 'Word Count',
+          label: 'Target Word Count',
           type: 'number',
-          required: false,
+          required: true,
           defaultValue: 1500,
+          min: 300,
+          max: 5000,
+          description: 'Target word count for the article (300-5000 words)',
         },
         {
           name: 'style',
           label: 'Writing Style',
           type: 'select',
           required: true,
-          options: ['professional', 'casual', 'technical', 'creative'],
+          options: [
+            'technical',
+            'narrative',
+            'listicle',
+            'educational',
+            'thought-leadership',
+          ],
+          description: 'Choose the tone and structure for your content',
+        },
+        {
+          name: 'word_count_tolerance',
+          label: 'Word Count Tolerance',
+          type: 'range',
+          required: false,
+          defaultValue: 10,
+          min: 5,
+          max: 20,
+          step: 1,
+          description: 'Acceptable variance from target: ±5-20%',
+        },
+        {
+          name: 'strict_mode',
+          label: 'Enforce Constraints',
+          type: 'checkbox',
+          required: false,
+          defaultValue: false,
+          description: 'If enabled, task fails if constraints are violated',
         },
       ],
     },
@@ -71,6 +107,16 @@ const CreateTaskModal = ({ isOpen, onClose, onTaskCreated }) => {
           options: ['512x512', '768x768', '1024x1024'],
           defaultValue: '768x768',
         },
+        {
+          name: 'imageSource',
+          label: 'Image Source',
+          type: 'select',
+          required: true,
+          options: ['pexels', 'sdxl', 'both'],
+          defaultValue: 'pexels',
+          description:
+            'Choose "pexels" to search free stock photos (fast), "sdxl" for AI generation (slower), or "both" to try Pexels first then fall back to SDXL',
+        },
       ],
     },
     social_media_post: {
@@ -90,7 +136,7 @@ const CreateTaskModal = ({ isOpen, onClose, onTaskCreated }) => {
           label: 'Tone',
           type: 'select',
           required: true,
-          options: ['professional', 'casual', 'humorous', 'inspirational'],
+          options: ['professional', 'casual', 'academic', 'inspirational'],
         },
         {
           name: 'include_hashtags',
@@ -124,7 +170,7 @@ const CreateTaskModal = ({ isOpen, onClose, onTaskCreated }) => {
           label: 'Tone',
           type: 'select',
           required: true,
-          options: ['professional', 'friendly', 'urgent', 'casual'],
+          options: ['professional', 'casual', 'academic', 'inspirational'],
         },
       ],
     },
@@ -157,9 +203,18 @@ const CreateTaskModal = ({ isOpen, onClose, onTaskCreated }) => {
 
   const handleTaskTypeSelect = (type) => {
     setTaskType(type);
-    setFormData({});
+
+    // Initialize form with default values for fields
+    const defaultData = {};
+    const fields = taskTypes[type]?.fields || [];
+    fields.forEach((field) => {
+      if (field.defaultValue !== undefined) {
+        defaultData[field.name] = field.defaultValue;
+      }
+    });
+    setFormData(defaultData);
     setError(null);
-  };
+  };;
 
   const handleInputChange = (fieldName, value) => {
     setFormData({
@@ -181,6 +236,14 @@ const CreateTaskModal = ({ isOpen, onClose, onTaskCreated }) => {
         return false;
       }
     }
+
+    // Validate that we have at least a topic for the backend
+    const hasTopic = formData.topic || formData.description || formData.title;
+    if (!hasTopic) {
+      setError('Please provide a topic or description');
+      return false;
+    }
+
     return true;
   };
 
@@ -193,32 +256,156 @@ const CreateTaskModal = ({ isOpen, onClose, onTaskCreated }) => {
     setError(null);
 
     try {
-      const taskPayload = {
-        type: taskType,
-        title: formData.title || formData.subject || formData.topic,
-        description:
-          formData.description || formData.goal || formData.goals || '',
-        parameters: formData,
-      };
-
       const token = getAuthToken();
       const headers = { 'Content-Type': 'application/json' };
       if (token) {
         headers['Authorization'] = `Bearer ${token}`;
       }
 
-      const response = await fetch('http://localhost:8000/api/tasks', {
-        method: 'POST',
-        headers,
-        body: JSON.stringify(taskPayload),
-      });
+      // ✅ ROUTE TO CORRECT ENDPOINT BASED ON TASK TYPE
+      let taskPayload;
 
-      if (!response.ok) {
-        throw new Error(`Failed to create task: ${response.statusText}`);
+      if (taskType === 'image_generation') {
+        // 🖼️ Handle image generation task - call FastAPI endpoint directly
+        console.log('🖼️ Generating images with:', formData);
+
+        // Call the FastAPI image generation endpoint
+        // Determine which image sources to try based on user selection
+        const usePexels =
+          formData.imageSource === 'pexels' || formData.imageSource === 'both';
+        const useSDXL =
+          formData.imageSource === 'sdxl' || formData.imageSource === 'both';
+
+        const imagePayload = {
+          prompt: formData.description,
+          title: formData.description.substring(0, 50), // Use first 50 chars as title
+          use_pexels: usePexels,
+          use_generation: useSDXL,
+          count: formData.count || 1,
+          style: formData.style || 'realistic',
+          resolution: formData.resolution || '1024x1024',
+        };
+
+        const imageResponse = await fetch(
+          'http://localhost:8000/api/media/generate-image',
+          {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(imagePayload),
+          }
+        );
+
+        if (!imageResponse.ok) {
+          throw new Error(
+            `Image generation failed: ${imageResponse.status} ${imageResponse.statusText}`
+          );
+        }
+
+        const imageResult = await imageResponse.json();
+        if (!imageResult.success) {
+          throw new Error(imageResult.message || 'Image generation failed');
+        }
+
+        console.log('✅ Image generated:', imageResult);
+
+        // Create task record with image results
+        taskPayload = {
+          task_name: `Image Generation: ${formData.description.substring(0, 50)}`,
+          topic: formData.description || '',
+          primary_keyword: formData.style || 'image',
+          target_audience: 'visual-content',
+          category: 'image_generation',
+          metadata: {
+            task_type: 'image_generation',
+            style: formData.style || 'realistic',
+            resolution: formData.resolution || '1024x1024',
+            count: formData.count || 1,
+            image_url: imageResult.image_url,
+            image_source: imageResult.image?.source || 'generated',
+            generation_time: imageResult.generation_time,
+            image_metadata: imageResult.image,
+            status: 'completed',
+            result: {
+              success: true,
+              image_url: imageResult.image_url,
+              generation_time: imageResult.generation_time,
+            },
+          },
+        };
+      } else if (taskType === 'blog_post') {
+        // Create blog post task using generic endpoint with task_name mapping
+        const strictMode =
+          formData.strict_mode === true || formData.strict_mode === 'true';
+        taskPayload = {
+          task_name: `Blog: ${formData.topic}`,
+          topic: formData.topic || '',
+          primary_keyword: formData.keywords || '',
+          target_audience: formData.target_audience || '',
+          category: 'blog_post',
+          model_selections: modelSelection.modelSelections || {},
+          quality_preference: modelSelection.qualityPreference || 'balanced',
+          estimated_cost: modelSelection.estimatedCost || 0.0,
+          // NEW: Content constraints (Tier 1-3)
+          content_constraints: {
+            word_count: parseInt(formData.word_count) || 1500,
+            writing_style: formData.style || 'educational',
+            word_count_tolerance: parseInt(formData.word_count_tolerance) || 10,
+            strict_mode: strictMode,
+          },
+          metadata: {
+            task_type: 'blog_post',
+            style: formData.style || 'technical',
+            tone: formData.tone || 'professional',
+            word_count: parseInt(formData.word_count) || 1500,
+            word_count_tolerance: parseInt(formData.word_count_tolerance) || 10,
+            strict_mode: strictMode,
+            tags: formData.keywords
+              ? formData.keywords
+                  .split(',')
+                  .map((k) => k.trim())
+                  .filter((k) => k)
+              : [],
+            generate_featured_image: true,
+            publish_mode: 'draft',
+          },
+        };
+      } else {
+        // Use generic task endpoint for other types with model selections
+        taskPayload = {
+          task_name: formData.title || formData.subject || `Task: ${taskType}`,
+          topic: formData.topic || formData.description || '',
+          primary_keyword: formData.keywords || formData.primary_keyword || '',
+          target_audience: formData.target_audience || formData.audience || '',
+          category: formData.category || taskType || 'general',
+          model_selections: modelSelection.modelSelections || {},
+          quality_preference: modelSelection.qualityPreference || 'balanced',
+          estimated_cost: modelSelection.estimatedCost || 0.0,
+          metadata: {
+            task_type: taskType,
+            style: formData.style,
+            word_count: formData.word_count,
+            ...formData, // Include all original form data in metadata
+          },
+        };
       }
 
-      // Notify parent and reset
-      onTaskCreated();
+      console.log('📤 Creating task:', taskPayload);
+
+      // ✅ Use API client instead of hardcoded fetch
+      const result = await createTask(taskPayload);
+      console.log('✅ Task created successfully:', result);
+
+      // ✅ Validate response has required fields
+      if (!result || !result.id) {
+        throw new Error(
+          'Invalid response: task was created but no ID returned'
+        );
+      }
+
+      // Notify parent with the new task data and reset
+      if (onTaskCreated) {
+        onTaskCreated(result);
+      }
       setTaskType('');
       setFormData({});
     } catch (err) {
@@ -309,6 +496,11 @@ const CreateTaskModal = ({ isOpen, onClose, onTaskCreated }) => {
                         <span className="text-red-400 ml-1">*</span>
                       )}
                     </label>
+                    {field.description && field.type !== 'checkbox' && (
+                      <p className="text-xs text-gray-400 mb-2">
+                        {field.description}
+                      </p>
+                    )}
 
                     {field.type === 'text' || field.type === 'number' ? (
                       <input
@@ -326,6 +518,54 @@ const CreateTaskModal = ({ isOpen, onClose, onTaskCreated }) => {
                         max={field.max}
                         className="w-full p-3 bg-gray-700 text-white rounded-md border border-gray-600 focus:outline-none focus:ring-2 focus:ring-cyan-500 placeholder-gray-500"
                       />
+                    ) : field.type === 'range' ? (
+                      <div className="flex items-center gap-4">
+                        <input
+                          id={field.name}
+                          type="range"
+                          value={
+                            formData[field.name] ||
+                            (field.defaultValue
+                              ? field.defaultValue
+                              : field.min || 0)
+                          }
+                          onChange={(e) =>
+                            handleInputChange(field.name, e.target.value)
+                          }
+                          min={field.min || 5}
+                          max={field.max || 20}
+                          step={field.step || 1}
+                          className="flex-1 h-2 bg-gray-600 rounded-lg appearance-none cursor-pointer accent-cyan-500"
+                        />
+                        <span className="text-gray-300 font-medium min-w-[3rem] text-right">
+                          {formData[field.name] ||
+                            field.defaultValue ||
+                            field.min ||
+                            0}
+                          %
+                        </span>
+                      </div>
+                    ) : field.type === 'checkbox' ? (
+                      <div className="flex items-center gap-3">
+                        <input
+                          id={field.name}
+                          type="checkbox"
+                          checked={
+                            formData[field.name] === true ||
+                            formData[field.name] === 'true'
+                          }
+                          onChange={(e) =>
+                            handleInputChange(field.name, e.target.checked)
+                          }
+                          className="w-5 h-5 bg-gray-700 border border-gray-600 rounded cursor-pointer accent-cyan-500"
+                        />
+                        <label
+                          htmlFor={field.name}
+                          className="text-gray-300 cursor-pointer"
+                        >
+                          {field.description || 'Enable this option'}
+                        </label>
+                      </div>
                     ) : field.type === 'textarea' ? (
                       <textarea
                         id={field.name}
@@ -359,6 +599,24 @@ const CreateTaskModal = ({ isOpen, onClose, onTaskCreated }) => {
                     ) : null}
                   </div>
                 ))}
+              </div>
+
+              {/* Model Selection Panel */}
+              <div className="mt-6 p-4 bg-gray-700 rounded-lg">
+                <h3 className="text-lg font-bold text-cyan-400 mb-4">
+                  🤖 AI Model Configuration
+                </h3>
+                <div
+                  className="bg-gray-800 p-4 rounded-lg"
+                  style={{ maxHeight: '600px', overflowY: 'auto' }}
+                >
+                  <ModelSelectionPanel
+                    onSelectionChange={(selection) => {
+                      setModelSelection(selection);
+                    }}
+                    initialQuality="balanced"
+                  />
+                </div>
               </div>
 
               {/* Action Buttons */}

@@ -34,11 +34,11 @@ export default function OptimizedImage({
     );
   }
 
-  const handleLoadingComplete = () => {
+  const handleLoad = () => {
     setIsLoading(false);
   };
 
-  const handleError = (error) => {
+  const handleImageError = (error) => {
     setHasError(true);
     if (onError) {
       onError(error);
@@ -77,8 +77,8 @@ export default function OptimizedImage({
     title: title || undefined,
     priority,
     loading: priority ? 'eager' : 'lazy',
-    onLoadingComplete: handleLoadingComplete,
-    onError: handleError,
+    onLoad: handleLoad,
+    onError: handleImageError,
     className: `${className} ${isLoading ? 'blur-sm' : 'blur-0'} transition-all duration-300`,
     ...props,
   };

@@ -1,10 +1,11 @@
 import Head from 'next/head';
 import ReactMarkdown from 'react-markdown';
-import { getStrapiURL } from '../lib/api';
 
 export async function getStaticProps() {
   try {
-    const url = `${getStrapiURL('/api/terms-of-service')}?populate=*`;
+    const FASTAPI_URL =
+      process.env.NEXT_PUBLIC_FASTAPI_URL || 'http://localhost:8000';
+    const url = `${FASTAPI_URL}/api/terms-of-service?populate=*`;
     const res = await fetch(url);
 
     if (!res.ok) {
@@ -12,12 +13,12 @@ export async function getStaticProps() {
     }
 
     const json = await res.json();
-    // Strapi v5: data fields are directly on json.data, not json.data.attributes
+    // FastAPI returns data directly, not nested in attributes
     const data = json?.data || null;
 
     return { props: { terms: data }, revalidate: 60 };
   } catch (e) {
-    // Strapi might be rebooting; do not 404 in dev
+    // FastAPI might be temporarily unavailable; do not 404 in dev
     return { props: { terms: null }, revalidate: 60 };
   }
 }
@@ -29,7 +30,7 @@ export default function TermsOfService({ terms }) {
   const metaTitle = seo.metaTitle || `${title} | Glad Labs`;
   const metaDescription = seo.metaDescription || 'Glad Labs Terms of Service';
 
-  // Fallback content if no data from Strapi
+  // Fallback content if no data from FastAPI
   const fallbackContent = `
 ## Terms of Service
 

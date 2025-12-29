@@ -10,6 +10,13 @@ import {
   Alert,
   IconButton,
   Tooltip,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Paper,
 } from '@mui/material';
 import {
   TrendingDown as SavingsIcon,
@@ -17,7 +24,15 @@ import {
   Refresh as RefreshIcon,
   CheckCircle as CheckCircleIcon,
   Error as ErrorIcon,
+  TrendingUp as TrendingUpIcon,
 } from '@mui/icons-material';
+import {
+  getCostMetrics,
+  getCostsByPhase,
+  getCostsByModel,
+  getCostHistory,
+  getBudgetStatus,
+} from '../services/cofounderAgentClient';
 
 /**
  * Cost Metrics Dashboard Component
@@ -32,24 +47,37 @@ import {
 
 const CostMetricsDashboard = () => {
   const [metrics, setMetrics] = useState(null);
+  const [costsByPhase, setCostsByPhase] = useState(null);
+  const [costsByModel, setCostsByModel] = useState(null);
+  const [costHistory, setCostHistory] = useState(null);
+  const [budgetStatus, setBudgetStatus] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [lastUpdated, setLastUpdated] = useState(null);
 
-  // Fetch cost metrics from API
+  // Fetch all cost metrics from APIs
   const fetchMetrics = async () => {
     try {
       setLoading(true);
       setError(null);
 
-      const response = await fetch('http://localhost:8000/api/metrics/costs');
+      // Fetch all data in parallel
+      const [mainMetrics, phaseData, modelData, historyData, budgetData] =
+        await Promise.all([
+          getCostMetrics(),
+          getCostsByPhase('month'),
+          getCostsByModel('month'),
+          getCostHistory('week'),
+          getBudgetStatus(150.0),
+        ]);
 
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      const data = await response.json();
-      setMetrics(data.costs);
+      // Validate and set main metrics
+      const metricsData = mainMetrics?.costs || mainMetrics;
+      setMetrics(metricsData);
+      setCostsByPhase(phaseData?.phases || []);
+      setCostsByModel(modelData?.models || []);
+      setCostHistory(historyData?.daily_data || []);
+      setBudgetStatus(budgetData);
       setLastUpdated(new Date());
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to fetch metrics');
@@ -59,17 +87,19 @@ const CostMetricsDashboard = () => {
     }
   };
 
-  // Fetch on mount and set up auto-refresh every 30 seconds
+  // Fetch on mount and set up auto-refresh every 60 seconds
   useEffect(() => {
     fetchMetrics();
-    const interval = setInterval(fetchMetrics, 30000);
+    const interval = setInterval(fetchMetrics, 60000);
     return () => clearInterval(interval);
   }, []);
 
-  // Calculate budget usage percentage
-  const budgetUsagePercent = metrics
-    ? (metrics.budget.current_spent / metrics.budget.monthly_limit) * 100
-    : 0;
+  // Calculate budget usage percentage from budgetStatus if available
+  const budgetUsagePercent = budgetStatus
+    ? budgetStatus.percent_used
+    : metrics?.budget?.current_spent
+      ? (metrics.budget.current_spent / metrics.budget.monthly_limit) * 100
+      : 0;
 
   // Determine budget status color
   const getBudgetStatusColor = () => {
@@ -77,6 +107,13 @@ const CostMetricsDashboard = () => {
     if (budgetUsagePercent >= 75) return 'warning';
     return 'success';
   };
+
+  // Get actual budget data from budgetStatus or metrics
+  const budgetData = budgetStatus || metrics?.budget || {};
+  const monthlyBudget = budgetData.monthly_budget || 150.0;
+  const amountSpent = budgetData.amount_spent || budgetData.current_spent || 0;
+  const amountRemaining =
+    budgetData.amount_remaining || budgetData.remaining || 0;
 
   if (loading && !metrics) {
     return (
@@ -143,8 +180,7 @@ const CostMetricsDashboard = () => {
                 Budget Used
               </Typography>
               <Typography variant="h5">
-                ${metrics.budget.current_spent.toFixed(2)} / $
-                {metrics.budget.monthly_limit.toFixed(2)}
+                ${amountSpent.toFixed(2)} / ${monthlyBudget.toFixed(2)}
               </Typography>
             </Grid>
             <Grid item xs={12} md={6}>
@@ -152,14 +188,14 @@ const CostMetricsDashboard = () => {
                 Remaining
               </Typography>
               <Typography variant="h5" color={getBudgetStatusColor()}>
-                ${metrics.budget.remaining.toFixed(2)}
+                ${amountRemaining.toFixed(2)}
               </Typography>
             </Grid>
             <Grid item xs={12}>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                 <LinearProgress
                   variant="determinate"
-                  value={budgetUsagePercent}
+                  value={Math.min(budgetUsagePercent, 100)}
                   color={getBudgetStatusColor()}
                   sx={{ flexGrow: 1, height: 10, borderRadius: 5 }}
                 />
@@ -170,32 +206,184 @@ const CostMetricsDashboard = () => {
             </Grid>
           </Grid>
 
-          {/* Budget Alerts */}
-          {metrics.budget.alerts && metrics.budget.alerts.length > 0 && (
+          {/* Budget Alerts from new API */}
+          {budgetStatus?.alerts && budgetStatus.alerts.length > 0 && (
             <Box sx={{ mt: 2 }}>
-              {metrics.budget.alerts.map((alert, index) => (
+              {budgetStatus.alerts.map((alert, index) => (
                 <Alert
                   key={index}
                   severity={
-                    alert.includes('CRITICAL')
+                    alert.level === 'critical'
                       ? 'error'
-                      : alert.includes('WARNING')
+                      : alert.level === 'warning'
                         ? 'warning'
                         : 'info'
                   }
                   icon={<WarningIcon />}
                   sx={{ mb: 1 }}
                 >
-                  {alert}
+                  {alert.message}
                 </Alert>
               ))}
+            </Box>
+          )}
+
+          {/* Projected costs */}
+          {budgetStatus?.projected_final_cost && (
+            <Box sx={{ mt: 2, p: 2, bgcolor: 'info.light', borderRadius: 1 }}>
+              <Typography variant="body2" color="text.secondary">
+                Projected Monthly Cost
+              </Typography>
+              <Typography variant="h6">
+                ${budgetStatus.projected_final_cost.toFixed(2)}
+              </Typography>
+              <Typography variant="caption" color="text.secondary">
+                Based on current daily burn rate: $
+                {budgetStatus.daily_burn_rate.toFixed(4)}/day
+              </Typography>
             </Box>
           )}
         </CardContent>
       </Card>
 
-      {/* AI Cache Performance */}
-      {metrics.ai_cache && (
+      {/* Cost Breakdown by Phase */}
+      {costsByPhase && costsByPhase.length > 0 && (
+        <Card sx={{ mb: 3 }}>
+          <CardContent>
+            <Typography variant="h6" gutterBottom>
+              📈 Costs by Pipeline Phase
+            </Typography>
+            <TableContainer component={Paper} variant="outlined">
+              <Table size="small">
+                <TableHead>
+                  <TableRow sx={{ bgcolor: 'action.hover' }}>
+                    <TableCell>Phase</TableCell>
+                    <TableCell align="right">Cost</TableCell>
+                    <TableCell align="right">Tasks</TableCell>
+                    <TableCell align="right">Avg Cost/Task</TableCell>
+                    <TableCell align="right">% of Total</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {costsByPhase.map((phase, idx) => (
+                    <TableRow key={idx}>
+                      <TableCell>
+                        <Chip
+                          label={phase.phase}
+                          size="small"
+                          variant="outlined"
+                        />
+                      </TableCell>
+                      <TableCell align="right">
+                        ${phase.total_cost.toFixed(4)}
+                      </TableCell>
+                      <TableCell align="right">{phase.task_count}</TableCell>
+                      <TableCell align="right">
+                        ${phase.avg_cost.toFixed(4)}
+                      </TableCell>
+                      <TableCell align="right">
+                        {phase.percent_of_total.toFixed(1)}%
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </TableContainer>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Cost Breakdown by Model */}
+      {costsByModel && costsByModel.length > 0 && (
+        <Card sx={{ mb: 3 }}>
+          <CardContent>
+            <Typography variant="h6" gutterBottom>
+              🤖 Costs by AI Model
+            </Typography>
+            <TableContainer component={Paper} variant="outlined">
+              <Table size="small">
+                <TableHead>
+                  <TableRow sx={{ bgcolor: 'action.hover' }}>
+                    <TableCell>Model</TableCell>
+                    <TableCell align="right">Provider</TableCell>
+                    <TableCell align="right">Cost</TableCell>
+                    <TableCell align="right">Tasks</TableCell>
+                    <TableCell align="right">Avg Cost/Task</TableCell>
+                    <TableCell align="right">% of Total</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {costsByModel.map((model, idx) => (
+                    <TableRow key={idx}>
+                      <TableCell>{model.model}</TableCell>
+                      <TableCell align="right">
+                        <Chip
+                          label={model.provider}
+                          size="small"
+                          color={
+                            model.provider === 'ollama' ? 'success' : 'primary'
+                          }
+                          variant="outlined"
+                        />
+                      </TableCell>
+                      <TableCell align="right">
+                        ${model.total_cost.toFixed(4)}
+                      </TableCell>
+                      <TableCell align="right">{model.task_count}</TableCell>
+                      <TableCell align="right">
+                        ${model.avg_cost_per_task.toFixed(4)}
+                      </TableCell>
+                      <TableCell align="right">
+                        {model.percent_of_total.toFixed(1)}%
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </TableContainer>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Cost Trend */}
+      {costHistory && costHistory.length > 0 && (
+        <Card sx={{ mb: 3 }}>
+          <CardContent>
+            <Typography variant="h6" gutterBottom>
+              📉 Cost History (Last 7 Days)
+            </Typography>
+            <TableContainer component={Paper} variant="outlined">
+              <Table size="small">
+                <TableHead>
+                  <TableRow sx={{ bgcolor: 'action.hover' }}>
+                    <TableCell>Date</TableCell>
+                    <TableCell align="right">Cost</TableCell>
+                    <TableCell align="right">Tasks</TableCell>
+                    <TableCell align="right">Avg Cost/Task</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {costHistory.map((day, idx) => (
+                    <TableRow key={idx}>
+                      <TableCell>{day.date}</TableCell>
+                      <TableCell align="right">
+                        ${day.cost.toFixed(4)}
+                      </TableCell>
+                      <TableCell align="right">{day.tasks}</TableCell>
+                      <TableCell align="right">
+                        ${day.avg_cost.toFixed(4)}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </TableContainer>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* AI Cache Performance - Optional if available */}
+      {metrics?.ai_cache && (
         <Card sx={{ mb: 3 }}>
           <CardContent>
             <Typography variant="h6" gutterBottom>
@@ -249,8 +437,8 @@ const CostMetricsDashboard = () => {
         </Card>
       )}
 
-      {/* Model Router Performance */}
-      {metrics.model_router && (
+      {/* Model Router Performance - Optional if available */}
+      {metrics?.model_router && (
         <Card sx={{ mb: 3 }}>
           <CardContent>
             <Typography variant="h6" gutterBottom>
@@ -303,8 +491,8 @@ const CostMetricsDashboard = () => {
         </Card>
       )}
 
-      {/* Intervention Alerts */}
-      {metrics.interventions && metrics.interventions.pending_count > 0 && (
+      {/* Intervention Alerts - Optional if available */}
+      {metrics?.interventions && metrics.interventions.pending_count > 0 && (
         <Card sx={{ mb: 3 }}>
           <CardContent>
             <Typography variant="h6" gutterBottom>
@@ -335,48 +523,53 @@ const CostMetricsDashboard = () => {
       >
         <CardContent>
           <Typography variant="h6" gutterBottom sx={{ color: 'white' }}>
-            💡 Total Optimization Impact
+            💡 Monthly Cost Summary
           </Typography>
           <Grid container spacing={2}>
-            <Grid item xs={12} md={6}>
+            <Grid item xs={12} md={4}>
               <Typography
                 variant="body2"
                 sx={{ color: 'rgba(255,255,255,0.8)' }}
               >
-                Total Estimated Savings
+                Total Spent This Month
               </Typography>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                 <Typography variant="h4" sx={{ color: 'white' }}>
-                  ${metrics.summary.total_estimated_savings_usd.toFixed(2)}
+                  ${budgetStatus?.amount_spent.toFixed(2) || '0.00'}
                 </Typography>
-                <SavingsIcon sx={{ fontSize: 32 }} />
               </Box>
             </Grid>
-            <Grid item xs={12} md={6}>
+            <Grid item xs={12} md={4}>
               <Typography
                 variant="body2"
                 sx={{ color: 'rgba(255,255,255,0.8)' }}
               >
-                Optimization Status
+                Remaining Budget
               </Typography>
               <Typography variant="h4" sx={{ color: 'white' }}>
-                {metrics.summary.optimization_status}
+                $
+                {budgetStatus?.amount_remaining.toFixed(2) ||
+                  monthlyBudget.toFixed(2)}
               </Typography>
+            </Grid>
+            <Grid item xs={12} md={4}>
               <Typography
-                variant="caption"
+                variant="body2"
                 sx={{ color: 'rgba(255,255,255,0.8)' }}
               >
-                {metrics.ai_cache &&
-                  `Cache hit rate: ${metrics.ai_cache.hit_rate_percentage.toFixed(
-                    1
-                  )}%`}
-                {metrics.model_router &&
-                  `, Router efficiency: ${metrics.model_router.savings_percentage.toFixed(
-                    1
-                  )}%`}
+                Projected Final
+              </Typography>
+              <Typography variant="h4" sx={{ color: 'white' }}>
+                ${budgetStatus?.projected_final_cost.toFixed(2) || '0.00'}
               </Typography>
             </Grid>
           </Grid>
+          <Typography
+            variant="caption"
+            sx={{ color: 'rgba(255,255,255,0.8)', display: 'block', mt: 2 }}
+          >
+            Based on current spending patterns and analysis
+          </Typography>
         </CardContent>
       </Card>
 
@@ -386,7 +579,7 @@ const CostMetricsDashboard = () => {
         color="text.secondary"
         sx={{ display: 'block', mt: 2, textAlign: 'center' }}
       >
-        Metrics generated: {new Date(metrics.timestamp).toLocaleString()}
+        Metrics generated: {lastUpdated?.toLocaleString() || 'Loading...'}
       </Typography>
     </Box>
   );

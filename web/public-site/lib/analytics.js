@@ -484,7 +484,6 @@ export const calculateReadingSpeed = (text, readingTimeMinutes) => {
   return Math.round(wordCount / readingTimeMinutes);
 };
 
-// eslint-disable-next-line import/no-anonymous-default-export
 export default {
   // Core tracking functions
   trackPageView,

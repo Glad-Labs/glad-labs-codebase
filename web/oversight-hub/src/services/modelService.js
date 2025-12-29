@@ -16,7 +16,9 @@ class ModelService {
    */
   async getAvailableModels() {
     try {
-      const response = await fetch('http://localhost:8000/api/models', {
+      const API_BASE_URL =
+        process.env.REACT_APP_API_URL || 'http://localhost:8000';
+      const response = await fetch(`${API_BASE_URL}/api/models`, {
         headers: {
           Accept: 'application/json',
         },
@@ -52,12 +54,16 @@ class ModelService {
       // Local (Ollama) first
       const aLocal = a.provider === 'ollama' ? 0 : 1;
       const bLocal = b.provider === 'ollama' ? 0 : 1;
-      if (aLocal !== bLocal) return aLocal - bLocal;
+      if (aLocal !== bLocal) {
+        return aLocal - bLocal;
+      }
 
       // Free models first
       const aFree = a.isFree ? 0 : 1;
       const bFree = b.isFree ? 0 : 1;
-      if (aFree !== bFree) return aFree - bFree;
+      if (aFree !== bFree) {
+        return aFree - bFree;
+      }
 
       // Prefer medium models
       const sizeOrder = { small: 1, medium: 0, large: 2 };
@@ -105,7 +111,9 @@ class ModelService {
    */
   estimateCost(modelName, tokenCount = 1000000) {
     const model = this.getModel(modelName);
-    if (!model) return 0;
+    if (!model) {
+      return 0;
+    }
 
     // Based on typical pricing
     const pricePerMillionTokens = {

@@ -1,78 +1,27 @@
-import Head from 'next/head';
-import { getTags, getTagBySlug, getPostsByTag } from '../../lib/api';
-import PostCard from '../../components/PostCard';
-
-export default function TagPage({ tag, posts }) {
+export default function TagPage() {
   return (
-    <>
-      <Head>
-        <title>{tag.name} - Glad Labs Frontier</title>
-        <meta name="description" content={`Posts tagged with: ${tag.name}`} />
-      </Head>
-      <div className="container mx-auto px-4 md:px-6 py-12">
-        <div className="max-w-4xl mx-auto">
-          <h1 className="text-5xl font-bold text-cyan-400 mb-8">
-            Tag: {tag.name}
-          </h1>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {posts
-              .filter((post) => Boolean(post.slug))
-              .map((post) => (
-                <PostCard key={post.id} post={post} />
-              ))}
-          </div>
-        </div>
-      </div>
-    </>
+    <div className="container mx-auto px-4 py-12">
+      <h1 className="text-3xl font-bold">Tag Page Deprecated</h1>
+      <p>
+        This tag page has been deprecated. Please visit the main{' '}
+        <a href="/blog" className="text-cyan-400 hover:underline">
+          blog
+        </a>{' '}
+        instead.
+      </p>
+    </div>
   );
 }
 
 export async function getStaticPaths() {
-  try {
-    const tags = await getTags();
-    const paths = tags.map((tag) => ({
-      params: { slug: tag.slug },
-    }));
-
-    return {
-      paths,
-      fallback: 'blocking',
-    };
-  } catch (error) {
-    console.warn('Could not fetch tags during build:', error.message);
-    return {
-      paths: [],
-      fallback: 'blocking',
-    };
-  }
+  return {
+    paths: [],
+    fallback: false,
+  };
 }
 
-export async function getStaticProps({ params }) {
-  try {
-    const tag = await getTagBySlug(params.slug);
-    const posts = await getPostsByTag(params.slug);
-
-    if (!tag) {
-      return {
-        notFound: true,
-      };
-    }
-
-    return {
-      props: {
-        tag,
-        posts,
-      },
-      revalidate: 60,
-    };
-  } catch (error) {
-    console.warn(
-      `Failed to generate tag page for slug ${params.slug}:`,
-      error.message
-    );
-    return {
-      notFound: true,
-      revalidate: 10,
-    };
-  }
+export async function getStaticProps() {
+  return {
+    notFound: true,
+  };
 }

@@ -12,6 +12,21 @@ import { getAuthToken } from './authService';
 
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:8000';
 
+/**
+ * Capitalize each word in a string
+ * @param {string} str - The string to capitalize
+ * @returns {string} - The capitalized string
+ */
+function capitalizeWords(str) {
+  if (!str) {
+    return '';
+  }
+  return str
+    .split(' ')
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+    .join(' ');
+}
+
 // Log API configuration for debugging (remove in production if verbose)
 if (!process.env.REACT_APP_API_URL) {
   console.warn(
@@ -29,7 +44,7 @@ function getAuthHeaders() {
   return headers;
 }
 
-async function makeRequest(
+export async function makeRequest(
   endpoint,
   method = 'GET',
   data = null,
@@ -39,8 +54,11 @@ async function makeRequest(
 ) {
   try {
     const url = `${API_BASE_URL}${endpoint}`;
+    console.log(`🔵 makeRequest: ${method} ${url}`);
     const config = { method, headers: getAuthHeaders() };
-    if (data) config.body = JSON.stringify(data);
+    if (data) {
+      config.body = JSON.stringify(data);
+    }
 
     // Use AbortController to implement timeout
     const controller = new AbortController();
@@ -50,8 +68,34 @@ async function makeRequest(
     try {
       const response = await fetch(url, config);
       clearTimeout(timeoutId);
+      console.log(
+        `🟡 makeRequest: Response status: ${response.status} ${response.statusText}`
+      );
 
       if (response.status === 401 && !retry) {
+        // Try to refresh token in development
+        if (process.env.NODE_ENV === 'development') {
+          console.log(
+            '🔄 Token expired, attempting to refresh development token...'
+          );
+          try {
+            const { initializeDevToken } = await import('./authService');
+            await initializeDevToken();
+            console.log('✅ Token refreshed, retrying request...');
+            // Retry the request with new token
+            return makeRequest(
+              endpoint,
+              method,
+              data,
+              true,
+              onUnauthorized,
+              timeout
+            );
+          } catch (refreshError) {
+            console.error('❌ Failed to refresh token:', refreshError);
+          }
+        }
+
         // Call the onUnauthorized callback if provided
         if (onUnauthorized) {
           onUnauthorized();
@@ -60,11 +104,22 @@ async function makeRequest(
       }
 
       const result = await response.json().catch(() => response.text());
+      console.log('🟢 makeRequest: Response parsed:', result);
       if (!response.ok) {
-        const error = new Error(result?.message || `HTTP ${response.status}`);
+        // Extract error message from response
+        let errorMessage = `HTTP ${response.status}`;
+        if (typeof result === 'string') {
+          errorMessage = result || errorMessage;
+        } else if (typeof result === 'object' && result !== null) {
+          errorMessage =
+            result.message || result.detail || JSON.stringify(result);
+        }
+        const error = new Error(errorMessage);
         error.status = response.status;
+        error.response = result; // Include full response for debugging
         throw error;
       }
+      console.log('✅ makeRequest: Returning result');
       return result;
     } catch (fetchError) {
       clearTimeout(timeoutId);
@@ -77,7 +132,7 @@ async function makeRequest(
       throw fetchError;
     }
   } catch (error) {
-    console.error(`API request failed: ${endpoint}`, error);
+    console.error(`❌ API request failed: ${endpoint}`, error);
     throw error;
   }
 }
@@ -120,11 +175,11 @@ export async function getTasks(limit = 50, offset = 0) {
 }
 
 export async function getTaskStatus(taskId) {
-  // Try new endpoint first, fall back to old endpoint
+  // Use the correct backend endpoint: /api/tasks/{taskId}
   // Use 180 second timeout for task status (allows for long-running operations)
   try {
     return await makeRequest(
-      `/api/content/blog-posts/tasks/${taskId}`,
+      `/api/tasks/${taskId}`,
       'GET',
       null,
       false,
@@ -132,16 +187,10 @@ export async function getTaskStatus(taskId) {
       180000
     );
   } catch (error) {
+    // If 404, the task ID doesn't exist
     if (error.status === 404) {
-      // Fall back to old endpoint with 180 second timeout
-      return await makeRequest(
-        `/api/tasks/${taskId}`,
-        'GET',
-        null,
-        false,
-        null,
-        180000
-      );
+      console.warn(`Task ${taskId} not found`);
+      return null;
     }
     throw error;
   }
@@ -154,7 +203,9 @@ export async function pollTaskStatus(taskId, onProgress, maxWait = 3600000) {
     const interval = setInterval(async () => {
       try {
         const task = await getTaskStatus(taskId);
-        if (onProgress) onProgress(task);
+        if (onProgress) {
+          onProgress(task);
+        }
         if (task.status === 'completed' || task.status === 'failed') {
           clearInterval(interval);
           resolve(task);
@@ -175,49 +226,94 @@ export async function createBlogPost(
   topicOrOptions,
   primaryKeyword,
   targetAudience,
-  category
+  category,
+  modelSelections,
+  qualityPreference,
+  estimatedCost
 ) {
   // Support both old and new API formats for backwards compatibility
 
-  // Old format: createBlogPost(topic, primaryKeyword, targetAudience, category)
+  // Old format: createBlogPost(topic, primaryKeyword, targetAudience, category, modelSelections, qualityPreference, estimatedCost)
   if (typeof topicOrOptions === 'string') {
-    console.log('Creating blog post with old format:', {
-      topicOrOptions,
-      primaryKeyword,
-      targetAudience,
-      category,
+    // Validate required fields
+    if (!topicOrOptions?.trim()) {
+      throw new Error('Topic is required and cannot be empty');
+    }
+
+    const payload = {
+      task_name: `Blog Post: ${capitalizeWords(topicOrOptions.trim())}`,
+      topic: topicOrOptions.trim(),
+      primary_keyword: (primaryKeyword || '').trim(),
+      target_audience: (targetAudience || '').trim(),
+      category: (category || 'general').trim(),
+      model_selections: modelSelections || {},
+      quality_preference: qualityPreference || 'balanced',
+      estimated_cost: estimatedCost || 0.0,
+      metadata: {},
+    };
+
+    console.log('📤 Sending task payload:', JSON.stringify(payload, null, 2));
+    console.log('✅ Validation - Required Fields:', {
+      topic_valid: Boolean(payload.topic),
+      task_name_valid: Boolean(payload.task_name),
+      model_selections: payload.model_selections,
+      quality_preference: payload.quality_preference,
+      estimated_cost: payload.estimated_cost,
     });
+
     return makeRequest(
       '/api/tasks',
       'POST',
-      {
-        task_name: `Blog Post: ${topicOrOptions}`,
-        topic: topicOrOptions,
-        primary_keyword: primaryKeyword || '',
-        target_audience: targetAudience || '',
-        category: category || 'general',
-        metadata: {},
-      },
+      payload,
       false,
       null,
       60000 // 60 seconds for content generation
     );
   }
 
-  // New format: createBlogPost({ topic, style, tone, ... })
+  // New format: createBlogPost({ topic, style, tone, modelSelections, qualityPreference, estimatedCost, ... })
   // Use 60 second timeout for content generation with Ollama
   const options = topicOrOptions;
+
+  // Validate required fields
+  if (!options.topic?.trim()) {
+    throw new Error('Topic is required and cannot be empty');
+  }
+
+  const payload = {
+    task_name: `Blog Post: ${options.topic.trim()}`,
+    topic: options.topic.trim(),
+    primary_keyword: (
+      options.primaryKeyword ||
+      options.primary_keyword ||
+      ''
+    ).trim(),
+    target_audience: (
+      options.targetAudience ||
+      options.target_audience ||
+      ''
+    ).trim(),
+    category: (options.category || 'general').trim(),
+    model_selections: options.model_selections || options.modelSelections || {},
+    quality_preference:
+      options.quality_preference || options.qualityPreference || 'balanced',
+    estimated_cost: options.estimated_cost || options.estimatedCost || 0.0,
+    metadata: options.metadata || {},
+  };
+
+  console.log('📤 Sending task payload:', JSON.stringify(payload, null, 2));
+  console.log('✅ Validation - Required Fields:', {
+    topic_valid: Boolean(payload.topic),
+    task_name_valid: Boolean(payload.task_name),
+    model_selections: payload.model_selections,
+    quality_preference: payload.quality_preference,
+    estimated_cost: payload.estimated_cost,
+  });
+
   return makeRequest(
     '/api/tasks',
     'POST',
-    {
-      task_name: `Blog Post: ${options.topic}`,
-      topic: options.topic,
-      primary_keyword: options.primaryKeyword || options.primary_keyword || '',
-      target_audience: options.targetAudience || options.target_audience || '',
-      category: options.category || 'general',
-      metadata: options.metadata || {},
-    },
+    payload,
     false,
     null,
     60000 // 60 seconds for content generation
@@ -235,6 +331,691 @@ export async function publishBlogDraft(postId, environment = 'production') {
   });
 }
 
+// ============================================================================
+// OAuth Provider Functions
+// ============================================================================
+
+/**
+ * Get available OAuth providers
+ * @returns {Promise} List of available OAuth providers
+ */
+export async function getOAuthProviders() {
+  return makeRequest('/api/auth/providers', 'GET');
+}
+
+/**
+ * Get OAuth login URL for a specific provider
+ * @param {string} provider - Provider name (e.g., 'github')
+ * @returns {Promise} Login URL redirect
+ */
+export async function getOAuthLoginURL(provider) {
+  const data = await makeRequest(`/api/auth/${provider}/login`, 'GET');
+  return data.login_url;
+}
+
+/**
+ * Handle OAuth callback after user authorization
+ * @param {string} provider - OAuth provider (e.g., 'github')
+ * @param {string} code - Authorization code from provider
+ * @param {string} state - State parameter for CSRF protection
+ * @returns {Promise} User data and tokens
+ */
+export async function handleOAuthCallback(provider, code, state) {
+  return makeRequest(
+    `/api/auth/${provider}/callback`,
+    'GET',
+    null,
+    true,
+    null,
+    15000
+  );
+}
+
+/**
+ * Get current user data
+ * @returns {Promise} Current user data
+ */
+export async function getCurrentUser() {
+  return makeRequest('/api/auth/me', 'GET');
+}
+
+// ============================================================================
+// CMS Operations - Posts
+// ============================================================================
+
+/**
+ * Get paginated posts
+ * @param {number} skip - Number of posts to skip
+ * @param {number} limit - Number of posts to return
+ * @param {boolean} publishedOnly - Only return published posts
+ * @returns {Promise} Paginated posts with metadata
+ */
+export async function getPosts(skip = 0, limit = 10, publishedOnly = true) {
+  const query = new URLSearchParams({
+    skip,
+    limit,
+    published_only: publishedOnly,
+  }).toString();
+  return makeRequest(`/api/posts?${query}`, 'GET');
+}
+
+/**
+ * Get post by slug
+ * @param {string} slug - Post slug
+ * @returns {Promise} Post data
+ */
+export async function getPostBySlug(slug) {
+  return makeRequest(`/api/posts/${slug}`, 'GET');
+}
+
+/**
+ * Create new post
+ * @param {object} postData - Post data {title, slug, content, excerpt, category_id, tags}
+ * @returns {Promise} Created post
+ */
+export async function createPost(postData) {
+  return makeRequest('/api/posts', 'POST', postData);
+}
+
+/**
+ * Update existing post
+ * @param {number} postId - Post ID
+ * @param {object} postData - Post updates
+ * @returns {Promise} Updated post
+ */
+export async function updatePost(postId, postData) {
+  return makeRequest(`/api/posts/${postId}`, 'PUT', postData);
+}
+
+/**
+ * Delete post
+ * @param {number} postId - Post ID
+ * @returns {Promise} Deletion confirmation
+ */
+export async function deletePost(postId) {
+  return makeRequest(`/api/posts/${postId}`, 'DELETE');
+}
+
+// ============================================================================
+// CMS Operations - Categories
+// ============================================================================
+
+/**
+ * Get all categories
+ * @returns {Promise} List of categories
+ */
+export async function getCategories() {
+  return makeRequest('/api/categories', 'GET');
+}
+
+/**
+ * Get category by slug
+ * @param {string} slug - Category slug
+ * @returns {Promise} Category data
+ */
+export async function getCategoryBySlug(slug) {
+  return makeRequest(`/api/categories/${slug}`, 'GET');
+}
+
+/**
+ * Create new category
+ * @param {object} categoryData - Category data {name, slug, description}
+ * @returns {Promise} Created category
+ */
+export async function createCategory(categoryData) {
+  return makeRequest('/api/categories', 'POST', categoryData);
+}
+
+// ============================================================================
+// CMS Operations - Tags
+// ============================================================================
+
+/**
+ * Get all tags
+ * @returns {Promise} List of tags
+ */
+export async function getTags() {
+  return makeRequest('/api/tags', 'GET');
+}
+
+/**
+ * Get tag by slug
+ * @param {string} slug - Tag slug
+ * @returns {Promise} Tag data
+ */
+export async function getTagBySlug(slug) {
+  return makeRequest(`/api/tags/${slug}`, 'GET');
+}
+
+/**
+ * Create new tag
+ * @param {object} tagData - Tag data {name, slug, color}
+ * @returns {Promise} Created tag
+ */
+export async function createTag(tagData) {
+  return makeRequest('/api/tags', 'POST', tagData);
+}
+
+// ============================================================================
+// Task Management
+// ============================================================================
+
+/**
+ * Create new task
+ * @param {object} taskData - Task data {title, description, type, parameters}
+ * @returns {Promise} Created task with ID
+ */
+export async function createTask(taskData) {
+  return makeRequest('/api/tasks', 'POST', taskData, false, null, 60000); // 60s for task creation
+}
+
+/**
+ * List tasks with optional filtering
+ * @param {number} limit - Number of tasks to return
+ * @param {number} offset - Offset for pagination
+ * @param {string} status - Filter by status (pending, in_progress, completed, failed)
+ * @returns {Promise} List of tasks
+ */
+export async function listTasks(limit = 20, offset = 0, status = null) {
+  const query = new URLSearchParams({ limit, offset });
+  if (status) {
+    query.append('status', status);
+  }
+  return makeRequest(`/api/tasks?${query.toString()}`, 'GET');
+}
+
+/**
+ * Get task details by ID
+ * @param {string} taskId - Task ID
+ * @returns {Promise} Task data with status and results
+ */
+export async function getTaskById(taskId) {
+  return makeRequest(`/api/tasks/${taskId}`, 'GET');
+}
+
+/**
+ * Get task metrics summary
+ * @returns {Promise} Task statistics and metrics
+ */
+export async function getTaskMetrics() {
+  return makeRequest('/api/tasks/metrics/summary', 'GET');
+}
+
+// ============================================================================
+// Intelligent Orchestrator
+// ============================================================================
+
+export async function processOrchestratorRequest(
+  request,
+  businessMetrics,
+  preferences
+) {
+  return makeRequest('/api/orchestrator/process', 'POST', {
+    request,
+    business_metrics: businessMetrics,
+    preferences,
+  });
+}
+
+export async function getOrchestratorStatus(taskId) {
+  return makeRequest(`/api/orchestrator/status/${taskId}`, 'GET');
+}
+
+export async function getOrchestratorApproval(taskId) {
+  return makeRequest(`/api/orchestrator/approval/${taskId}`, 'GET');
+}
+
+export async function approveOrchestratorResult(taskId, action) {
+  return makeRequest(`/api/orchestrator/approve/${taskId}`, 'POST', action);
+}
+
+export async function getOrchestratorTools() {
+  return makeRequest('/api/orchestrator/tools', 'GET');
+}
+
+/**
+ * Chat API Methods
+ * Endpoints for conversation-based AI interactions
+ */
+
+export async function sendChatMessage(
+  message,
+  model = 'openai-gpt4',
+  conversationId = 'default'
+) {
+  /**
+   * Send a chat message and get AI response
+   *
+   * @param {string} message - The user's message/prompt
+   * @param {string} model - The model to use (openai-gpt4, claude-opus, gemini-pro, ollama-mistral, etc.)
+   * @param {string} conversationId - Conversation ID to maintain context (default: 'default')
+   * @returns {Promise<object>} - Response with message and conversation_id
+   */
+  const payload = {
+    message,
+    model,
+    conversation_id: conversationId,
+  };
+  return makeRequest('/api/chat', 'POST', payload, false, null, 60000); // 60s timeout for chat
+}
+
+export async function getChatHistory(conversationId = 'default') {
+  /**
+   * Get conversation history
+   *
+   * @param {string} conversationId - The conversation ID to retrieve
+   * @returns {Promise<object>} - Conversation history with messages
+   */
+  return makeRequest(
+    `/api/chat/history/${conversationId}`,
+    'GET',
+    null,
+    false,
+    null,
+    30000
+  );
+}
+
+export async function clearChatHistory(conversationId = 'default') {
+  /**
+   * Clear a conversation's history
+   *
+   * @param {string} conversationId - The conversation to clear
+   * @returns {Promise<object>} - Confirmation response
+   */
+  return makeRequest(
+    `/api/chat/history/${conversationId}`,
+    'DELETE',
+    null,
+    false,
+    null,
+    10000
+  );
+}
+
+export async function getAvailableModels() {
+  /**
+   * Get list of available AI models
+   *
+   * @returns {Promise<object>} - List of available models with info
+   */
+  return makeRequest('/api/chat/models', 'GET', null, false, null, 10000);
+}
+
+/**
+ * Agent API Methods
+ * Endpoints for multi-agent orchestration and management
+ */
+
+export async function getAgentStatus(agentId) {
+  /**
+   * Get real-time status of a specific agent
+   *
+   * @param {string} agentId - The agent ID
+   * @returns {Promise<object>} - Agent status info (status, tasks_completed, current_task, etc.)
+   */
+  return makeRequest(
+    `/api/agents/${agentId}/status`,
+    'GET',
+    null,
+    false,
+    null,
+    10000
+  );
+}
+
+export async function getAgentLogs(agentId, limit = 100) {
+  /**
+   * Get logs for a specific agent
+   *
+   * @param {string} agentId - The agent ID
+   * @param {number} limit - Maximum number of log entries to retrieve
+   * @returns {Promise<Array>} - Array of log entries
+   */
+  return makeRequest(
+    `/api/agents/${agentId}/logs?limit=${limit}`,
+    'GET',
+    null,
+    false,
+    null,
+    10000
+  );
+}
+
+export async function sendAgentCommand(agentId, command) {
+  /**
+   * Send a command/task to a specific agent
+   *
+   * @param {string} agentId - The agent ID
+   * @param {string} command - The command or task description
+   * @returns {Promise<object>} - Command execution result
+   */
+  const payload = { command };
+  return makeRequest(
+    `/api/agents/${agentId}/command`,
+    'POST',
+    payload,
+    false,
+    null,
+    30000
+  );
+}
+
+export async function getAgentMetrics(agentId) {
+  /**
+   * Get performance metrics for a specific agent
+   *
+   * @param {string} agentId - The agent ID
+   * @returns {Promise<object>} - Agent metrics (success rate, avg response time, etc.)
+   */
+  return makeRequest(
+    `/api/agents/${agentId}/metrics`,
+    'GET',
+    null,
+    false,
+    null,
+    10000
+  );
+}
+
+/**
+ * Workflow API Methods
+ * Endpoints for workflow execution history and management
+ */
+
+export async function getWorkflowHistory(limit = 50, offset = 0) {
+  /**
+   * Get workflow execution history
+   *
+   * @param {number} limit - Maximum number of executions to retrieve
+   * @param {number} offset - Pagination offset
+   * @returns {Promise<Array|object>} - List of workflow executions
+   */
+  return makeRequest(
+    `/api/workflow/history?limit=${limit}&offset=${offset}`,
+    'GET',
+    null,
+    false,
+    null,
+    15000
+  );
+}
+
+export async function getExecutionDetails(executionId) {
+  /**
+   * Get detailed information about a specific execution
+   *
+   * @param {string} executionId - The execution ID
+   * @returns {Promise<object>} - Detailed execution information
+   */
+  return makeRequest(
+    `/api/workflow/execution/${executionId}`,
+    'GET',
+    null,
+    false,
+    null,
+    10000
+  );
+}
+
+export async function retryExecution(executionId) {
+  /**
+   * Retry a failed execution
+   *
+   * @param {string} executionId - The execution ID to retry
+   * @returns {Promise<object>} - New execution result
+   */
+  return makeRequest(
+    `/api/workflow/execution/${executionId}/retry`,
+    'POST',
+    null,
+    false,
+    null,
+    30000
+  );
+}
+
+export async function getDetailedMetrics(timeRange = '24h') {
+  /**
+   * Get detailed performance metrics across all workflows and agents
+   *
+   * @param {string} timeRange - Time range for metrics ('1h', '24h', '7d', '30d')
+   * @returns {Promise<object>} - Detailed metrics data
+   */
+  return makeRequest(
+    `/api/metrics/detailed?range=${timeRange}`,
+    'GET',
+    null,
+    false,
+    null,
+    15000
+  );
+}
+
+export async function exportMetrics(format = 'csv', timeRange = '24h') {
+  /**
+   * Export metrics in specified format
+   *
+   * @param {string} format - Export format ('csv', 'json', 'pdf')
+   * @param {string} timeRange - Time range for export
+   * @returns {Promise<Blob>} - Exported data as file
+   */
+  return makeRequest(
+    `/api/metrics/export?format=${format}&range=${timeRange}`,
+    'GET',
+    null,
+    false,
+    null,
+    30000
+  );
+}
+
+/**
+ * Cost Metrics - Get cost breakdown and usage statistics
+ */
+
+export async function getCostMetrics() {
+  /**
+   * Get AI model usage and cost metrics
+   *
+   * @returns {Promise<object>} - Cost breakdown by model and provider, token usage
+   */
+  return makeRequest('/api/metrics/costs', 'GET', null, true, null, 15000);
+}
+
+export async function getUsageMetrics(period = 'last_24h') {
+  /**
+   * Get comprehensive usage metrics
+   *
+   * @param {string} period - Time period: last_1h, last_24h, last_7d, all
+   * @returns {Promise<object>} - Usage stats, token counts, cost analysis
+   */
+  return makeRequest(
+    `/api/metrics/usage?period=${period}`,
+    'GET',
+    null,
+    true,
+    null,
+    15000
+  );
+}
+
+// ============================================================================
+// NEW Week 2 Cost Analytics Methods (Database-Backed)
+// ============================================================================
+
+export async function getCostsByPhase(period = 'week') {
+  /**
+   * Get cost breakdown by pipeline phase
+   *
+   * @param {string} period - Time period: today, week, month
+   * @returns {Promise<object>} - Costs per phase with task counts and percentages
+   */
+  return makeRequest(
+    `/api/metrics/costs/breakdown/phase?period=${period}`,
+    'GET',
+    null,
+    true,
+    null,
+    10000
+  );
+}
+
+export async function getCostsByModel(period = 'week') {
+  /**
+   * Get cost breakdown by AI model
+   *
+   * @param {string} period - Time period: today, week, month
+   * @returns {Promise<object>} - Costs per model with provider and percentages
+   */
+  return makeRequest(
+    `/api/metrics/costs/breakdown/model?period=${period}`,
+    'GET',
+    null,
+    true,
+    null,
+    10000
+  );
+}
+
+export async function getCostHistory(period = 'week') {
+  /**
+   * Get cost history and trends
+   *
+   * @param {string} period - Time period: week, month
+   * @returns {Promise<object>} - Daily costs, trend direction, weekly average
+   */
+  return makeRequest(
+    `/api/metrics/costs/history?period=${period}`,
+    'GET',
+    null,
+    true,
+    null,
+    10000
+  );
+}
+
+export async function getBudgetStatus(monthlyBudget = 150.0) {
+  /**
+   * Get budget status and alerts
+   *
+   * @param {number} monthlyBudget - Monthly budget limit in USD (default $150)
+   * @returns {Promise<object>} - Budget metrics, burn rate, projections, alerts
+   */
+  return makeRequest(
+    `/api/metrics/costs/budget?monthly_budget=${monthlyBudget}`,
+    'GET',
+    null,
+    true,
+    null,
+    10000
+  );
+}
+
+/**
+ * Bulk Task Operations - Perform actions on multiple tasks at once
+ */
+
+export async function bulkUpdateTasks(taskIds, action) {
+  /**
+   * Perform bulk operations on multiple tasks
+   *
+   * @param {Array<string>} taskIds - List of task IDs to update
+   * @param {string} action - Action to perform: pause, resume, cancel, delete
+   * @returns {Promise<object>} - Result with updated count, failed count, errors
+   */
+  const payload = {
+    task_ids: taskIds,
+    action,
+  };
+  return makeRequest('/api/tasks/bulk', 'POST', payload, true, null, 30000);
+}
+
+/**
+ * Orchestrator Routes - Get orchestration status and analytics
+ */
+
+export async function getOrchestratorOverallStatus() {
+  /**
+   * Get overall orchestrator status
+   *
+   * @returns {Promise<object>} - Status of orchestrator, active agents, pending tasks
+   */
+  return makeRequest(
+    '/api/orchestrator/status',
+    'GET',
+    null,
+    true,
+    null,
+    15000
+  );
+}
+
+export async function getActiveAgents() {
+  /**
+   * Get list of currently active agents
+   *
+   * @returns {Promise<Array>} - List of active agents with status
+   */
+  return makeRequest(
+    '/api/orchestrator/active-agents',
+    'GET',
+    null,
+    true,
+    null,
+    10000
+  );
+}
+
+export async function getTaskQueue() {
+  /**
+   * Get current task queue pending execution
+   *
+   * @returns {Promise<Array>} - List of pending tasks
+   */
+  return makeRequest(
+    '/api/orchestrator/task-queue',
+    'GET',
+    null,
+    true,
+    null,
+    10000
+  );
+}
+
+export async function getLearningPatterns() {
+  /**
+   * Get patterns learned from execution history
+   *
+   * @returns {Promise<object>} - Learning patterns and insights
+   */
+  return makeRequest(
+    '/api/orchestrator/learning-patterns',
+    'GET',
+    null,
+    true,
+    null,
+    15000
+  );
+}
+
+export async function getBusinessMetricsAnalysis() {
+  /**
+   * Get business metrics analysis and trends
+   *
+   * @returns {Promise<object>} - Business metrics analysis
+   */
+  return makeRequest(
+    '/api/orchestrator/business-metrics-analysis',
+    'GET',
+    null,
+    true,
+    null,
+    15000
+  );
+}
+
+// eslint-disable-next-line no-unused-vars
 const cofounderAgentClient = {
   logout,
   refreshAccessToken,
@@ -244,6 +1025,64 @@ const cofounderAgentClient = {
   createBlogPost,
   publishBlogDraft,
   getMetrics,
+  // OAuth functions
+  getOAuthProviders,
+  getOAuthLoginURL,
+  handleOAuthCallback,
+  getCurrentUser,
+  // CMS functions
+  getPosts,
+  getPostBySlug,
+  createPost,
+  updatePost,
+  deletePost,
+  getCategories,
+  getCategoryBySlug,
+  createCategory,
+  getTags,
+  getTagBySlug,
+  createTag,
+  // Task management
+  createTask,
+  listTasks,
+  getTaskById,
+  getTaskMetrics,
+  // Bulk operations
+  bulkUpdateTasks,
+  // Metrics & Analytics
+  getCostMetrics,
+  getUsageMetrics,
+  // Week 2 Cost Analytics
+  getCostsByPhase,
+  getCostsByModel,
+  getCostHistory,
+  getBudgetStatus,
+  // Orchestrator
+  getOrchestratorOverallStatus,
+  getActiveAgents,
+  getTaskQueue,
+  getLearningPatterns,
+  getBusinessMetricsAnalysis,
+  // Intelligent Orchestrator
+  processOrchestratorRequest,
+  getOrchestratorStatus,
+  getOrchestratorApproval,
+  approveOrchestratorResult,
+  getOrchestratorTools,
+  // Chat
+  sendChatMessage,
+  getChatHistory,
+  clearChatHistory,
+  getAvailableModels,
+  // Agents
+  getAgentStatus,
+  getAgentLogs,
+  sendAgentCommand,
+  getAgentMetrics,
+  // Workflow
+  getWorkflowHistory,
+  getExecutionDetails,
+  retryExecution,
+  getDetailedMetrics,
+  exportMetrics,
 };
-
-export default cofounderAgentClient;
