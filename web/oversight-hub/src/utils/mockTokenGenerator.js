@@ -27,7 +27,7 @@ export const createMockJWTToken = async (userData = {}) => {
 
   // Token payload - matches what backend expects
   const now = Math.floor(Date.now() / 1000);
-  const expiry = now + 15 * 60; // 15 minutes (matches ACCESS_TOKEN_EXPIRE_MINUTES)
+  const expiry = now + 24 * 60 * 60; // 24 hours for development (prevents token expiry during testing)
 
   const payload = {
     sub: userData.login || 'dev-user',
