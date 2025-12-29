@@ -203,9 +203,18 @@ const CreateTaskModal = ({ isOpen, onClose, onTaskCreated }) => {
 
   const handleTaskTypeSelect = (type) => {
     setTaskType(type);
-    setFormData({});
+
+    // Initialize form with default values for fields
+    const defaultData = {};
+    const fields = taskTypes[type]?.fields || [];
+    fields.forEach((field) => {
+      if (field.defaultValue !== undefined) {
+        defaultData[field.name] = field.defaultValue;
+      }
+    });
+    setFormData(defaultData);
     setError(null);
-  };
+  };;
 
   const handleInputChange = (fieldName, value) => {
     setFormData({
