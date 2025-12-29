@@ -458,7 +458,7 @@ const CommandPane = () => {
       const delegateMessage = {
         type: 'text',
         message:
-          'I\'m ready to help delegate tasks. What would you like me to handle?',
+          "I'm ready to help delegate tasks. What would you like me to handle?",
         direction: 'incoming',
         sender: 'AI',
       };

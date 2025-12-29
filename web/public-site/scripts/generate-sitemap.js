@@ -17,7 +17,7 @@ async function fetchAPI(path, urlParamsObject = {}, options = {}) {
   const response = await fetch(requestUrl, mergedOptions);
   if (!response.ok) {
     console.error(response.statusText);
-    throw new Error(`An error occurred please try again`);
+    throw new Error('An error occurred please try again');
   }
   const data = await response.json();
   return data;

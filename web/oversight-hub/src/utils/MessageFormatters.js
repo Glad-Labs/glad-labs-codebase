@@ -21,7 +21,9 @@
  * @returns {string} Truncated text with ellipsis if needed
  */
 export const truncateText = (text, length = 500) => {
-  if (!text || typeof text !== 'string') {return '';}
+  if (!text || typeof text !== 'string') {
+    return '';
+  }
   return text.length > length ? text.substring(0, length) + '...' : text;
 };
 
@@ -33,7 +35,9 @@ export const truncateText = (text, length = 500) => {
  * @returns {string} Truncated text
  */
 export const truncateTextCustom = (text, length = 500, suffix = '...') => {
-  if (!text || typeof text !== 'string') {return '';}
+  if (!text || typeof text !== 'string') {
+    return '';
+  }
   return text.length > length ? text.substring(0, length) + suffix : text;
 };
 
@@ -43,7 +47,9 @@ export const truncateTextCustom = (text, length = 500, suffix = '...') => {
  * @returns {string} Capitalized text
  */
 export const capitalizeFirst = (text) => {
-  if (!text) {return '';}
+  if (!text) {
+    return '';
+  }
   return text.charAt(0).toUpperCase() + text.slice(1);
 };
 
@@ -55,8 +61,12 @@ export const capitalizeFirst = (text) => {
  * @returns {string} Formatted count (e.g., "2.5K", "500")
  */
 export const formatWordCount = (count) => {
-  if (typeof count !== 'number' || count < 0) {return '0';}
-  if (count >= 1000) {return `${(count / 1000).toFixed(1)}K`;}
+  if (typeof count !== 'number' || count < 0) {
+    return '0';
+  }
+  if (count >= 1000) {
+    return `${(count / 1000).toFixed(1)}K`;
+  }
   return count.toString();
 };
 
@@ -66,7 +76,9 @@ export const formatWordCount = (count) => {
  * @returns {string} Formatted cost (e.g., "$0.025")
  */
 export const formatCost = (cost) => {
-  if (typeof cost !== 'number' || cost < 0) {return '$0.00';}
+  if (typeof cost !== 'number' || cost < 0) {
+    return '$0.00';
+  }
   return `$${cost.toFixed(3)}`;
 };
 
@@ -76,7 +88,9 @@ export const formatCost = (cost) => {
  * @returns {string} Formatted score (e.g., "8/10")
  */
 export const formatQualityScore = (score) => {
-  if (typeof score !== 'number') {return 'N/A';}
+  if (typeof score !== 'number') {
+    return 'N/A';
+  }
   // Handle both 0-1 and 0-100 scales
   const normalized = score > 1 ? score : score * 100;
   return `${Math.round(normalized / 10)}/10`;
@@ -88,7 +102,9 @@ export const formatQualityScore = (score) => {
  * @returns {string} Formatted percentage (e.g., "85%")
  */
 export const formatPercentage = (value) => {
-  if (typeof value !== 'number') {return '0%';}
+  if (typeof value !== 'number') {
+    return '0%';
+  }
   return `${Math.round(value * 100)}%`;
 };
 
@@ -100,7 +116,9 @@ export const formatPercentage = (value) => {
  * @returns {string} Formatted duration (e.g., "2m 30s", "5s")
  */
 export const formatExecutionTime = (seconds) => {
-  if (typeof seconds !== 'number' || seconds < 0) {return '0s';}
+  if (typeof seconds !== 'number' || seconds < 0) {
+    return '0s';
+  }
 
   if (seconds < 60) {
     return `${Math.round(seconds)}s`;
@@ -123,7 +141,9 @@ export const formatExecutionTime = (seconds) => {
  * @returns {string} Formatted date/time
  */
 export const formatTimestamp = (timestamp) => {
-  if (!timestamp) {return 'N/A';}
+  if (!timestamp) {
+    return 'N/A';
+  }
   try {
     return new Date(timestamp).toLocaleString();
   } catch {
@@ -137,7 +157,9 @@ export const formatTimestamp = (timestamp) => {
  * @returns {string} Relative time string
  */
 export const formatRelativeTime = (timestamp) => {
-  if (!timestamp) {return 'N/A';}
+  if (!timestamp) {
+    return 'N/A';
+  }
 
   try {
     const date = new Date(timestamp);
@@ -148,10 +170,18 @@ export const formatRelativeTime = (timestamp) => {
     const diffHours = Math.floor(diffMins / 60);
     const diffDays = Math.floor(diffHours / 24);
 
-    if (diffSecs < 60) {return 'just now';}
-    if (diffMins < 60) {return `${diffMins}m ago`;}
-    if (diffHours < 24) {return `${diffHours}h ago`;}
-    if (diffDays < 7) {return `${diffDays}d ago`;}
+    if (diffSecs < 60) {
+      return 'just now';
+    }
+    if (diffMins < 60) {
+      return `${diffMins}m ago`;
+    }
+    if (diffHours < 24) {
+      return `${diffHours}h ago`;
+    }
+    if (diffDays < 7) {
+      return `${diffDays}d ago`;
+    }
 
     return date.toLocaleDateString();
   } catch {
@@ -166,8 +196,9 @@ export const formatRelativeTime = (timestamp) => {
  * @returns {string} Estimated time (e.g., "~10 min")
  */
 export const formatEstimatedTime = (phasesRemaining, avgPerPhase = 2) => {
-  if (typeof phasesRemaining !== 'number' || phasesRemaining < 0)
-  {return '0 min';}
+  if (typeof phasesRemaining !== 'number' || phasesRemaining < 0) {
+    return '0 min';
+  }
   const totalMinutes = phasesRemaining * avgPerPhase;
   return `~${totalMinutes} min`;
 };
@@ -194,13 +225,16 @@ export const formatPhaseStatus = (status) => {
  * @returns {string} Formatted parameters (e.g., "topic: AI trends • style: professional")
  */
 export const formatCommandParameters = (params) => {
-  if (!params || typeof params !== 'object') {return '';}
+  if (!params || typeof params !== 'object') {
+    return '';
+  }
 
   return Object.entries(params)
     .filter(([key, value]) => {
       // Skip internal fields
-      if (['commandType', 'rawInput', 'additionalInstructions'].includes(key))
-      {return false;}
+      if (['commandType', 'rawInput', 'additionalInstructions'].includes(key)) {
+        return false;
+      }
       return value && value !== '';
     })
     .map(([key, value]) => {
@@ -245,8 +279,9 @@ export const formatPhaseLabel = (phaseName, phaseEmojis) => {
  * @returns {string} Formatted progress (e.g., "45%")
  */
 export const formatProgress = (progress) => {
-  if (typeof progress !== 'number' || progress < 0 || progress > 100)
-  {return '0%';}
+  if (typeof progress !== 'number' || progress < 0 || progress > 100) {
+    return '0%';
+  }
   return `${Math.round(progress)}%`;
 };
 
@@ -258,7 +293,9 @@ export const formatProgress = (progress) => {
  * @returns {string} Summary text
  */
 export const formatExecutionSummary = (execution) => {
-  if (!execution) {return 'No execution data';}
+  if (!execution) {
+    return 'No execution data';
+  }
 
   const duration = formatExecutionTime(execution.totalDuration || 0);
   const status = execution.status || 'unknown';
@@ -273,7 +310,9 @@ export const formatExecutionSummary = (execution) => {
  * @returns {object} Formatted metadata
  */
 export const formatResultMetadata = (metadata) => {
-  if (!metadata) {return {};}
+  if (!metadata) {
+    return {};
+  }
 
   return {
     words: formatWordCount(metadata.wordCount),

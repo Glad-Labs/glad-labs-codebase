@@ -57,23 +57,23 @@ const MODEL_POWER_CONSUMPTION = {
   'llama2:latest': 30,
   'qwen2:7b': 30,
   'gemma3:12b': 40,
-  
+
   // Medium models (14B parameters) - ~50W average
   'qwen2.5:14b': 50,
   'qwen3:14b': 50,
-  
+
   // Large models (30B+ parameters) - ~80W+ average
   'qwen3-coder:30b': 80,
   'qwen3-vl:30b': 80,
   'mixtral:latest': 90, // 8x7B - higher power due to MoE
   'deepseek-coder:33b': 85,
-  
+
   // Very Large models (70B parameters) - ~120W+ average
   'llama3:70b-instruct': 120,
   'gpt-oss:120b': 150,
-  
+
   // Default for unknown models
-  'default': 50,
+  default: 50,
 };
 
 // Average US electricity price: $0.12 per kWh

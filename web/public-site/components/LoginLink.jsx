@@ -50,7 +50,7 @@ export function OAuthLoginButton({
       // Redirect to OAuth provider
       window.location.href = loginUrl;
     } catch (err) {
-      console.error(`[OAuth] Error getting login URL:`, err);
+      console.error('[OAuth] Error getting login URL:', err);
       setError(err.message || `Failed to start ${provider} login`);
       setLoading(false);
     }

@@ -18,7 +18,9 @@ const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:8000';
  * @returns {string} - The capitalized string
  */
 function capitalizeWords(str) {
-  if (!str) {return '';}
+  if (!str) {
+    return '';
+  }
   return str
     .split(' ')
     .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
@@ -54,7 +56,9 @@ export async function makeRequest(
     const url = `${API_BASE_URL}${endpoint}`;
     console.log(`🔵 makeRequest: ${method} ${url}`);
     const config = { method, headers: getAuthHeaders() };
-    if (data) {config.body = JSON.stringify(data);}
+    if (data) {
+      config.body = JSON.stringify(data);
+    }
 
     // Use AbortController to implement timeout
     const controller = new AbortController();
@@ -199,7 +203,9 @@ export async function pollTaskStatus(taskId, onProgress, maxWait = 3600000) {
     const interval = setInterval(async () => {
       try {
         const task = await getTaskStatus(taskId);
-        if (onProgress) {onProgress(task);}
+        if (onProgress) {
+          onProgress(task);
+        }
         if (task.status === 'completed' || task.status === 'failed') {
           clearInterval(interval);
           resolve(task);
@@ -512,7 +518,9 @@ export async function createTask(taskData) {
  */
 export async function listTasks(limit = 20, offset = 0, status = null) {
   const query = new URLSearchParams({ limit, offset });
-  if (status) {query.append('status', status);}
+  if (status) {
+    query.append('status', status);
+  }
   return makeRequest(`/api/tasks?${query.toString()}`, 'GET');
 }
 

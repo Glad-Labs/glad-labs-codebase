@@ -43,7 +43,9 @@ const INTENT_KEYWORDS = {
  * Returns null if no orchestrator command detected
  */
 export const detectIntentFromMessage = (message) => {
-  if (!message || typeof message !== 'string') {return null;}
+  if (!message || typeof message !== 'string') {
+    return null;
+  }
 
   const lowerMessage = message.toLowerCase();
 
@@ -107,7 +109,9 @@ const extractStyle = (message) => {
 
   for (const pattern of stylePatterns) {
     const match = message.match(pattern);
-    if (match) {return match[1].toLowerCase();}
+    if (match) {
+      return match[1].toLowerCase();
+    }
   }
 
   return 'professional'; // Default
@@ -145,7 +149,9 @@ const extractFormat = (message) => {
 
   for (const pattern of formatPatterns) {
     const match = message.match(pattern);
-    if (match) {return match[1].toLowerCase();}
+    if (match) {
+      return match[1].toLowerCase();
+    }
   }
 
   return 'markdown'; // Default
@@ -163,7 +169,9 @@ const extractContext = (message) => {
 
   for (const pattern of contextPatterns) {
     const match = message.match(pattern);
-    if (match) {return match[1].trim();}
+    if (match) {
+      return match[1].trim();
+    }
   }
 
   return '';

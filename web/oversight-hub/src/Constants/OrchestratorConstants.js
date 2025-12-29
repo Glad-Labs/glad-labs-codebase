@@ -242,7 +242,9 @@ export const getTotalEstimatedTime = () =>
  * @returns {number} Remaining minutes
  */
 export const estimateRemainingTime = (currentPhaseIndex) => {
-  if (currentPhaseIndex >= EXECUTION_PHASES.length) {return 0;}
+  if (currentPhaseIndex >= EXECUTION_PHASES.length) {
+    return 0;
+  }
   const remainingPhases = EXECUTION_PHASES.slice(currentPhaseIndex);
   return remainingPhases.reduce(
     (total, phase) => total + phase.estimatedDuration,

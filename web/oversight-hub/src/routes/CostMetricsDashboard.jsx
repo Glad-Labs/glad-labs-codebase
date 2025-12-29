@@ -25,7 +25,7 @@ function CostMetricsDashboard() {
         setLoading(true);
         setError(null);
 
-        const [metrics, phaseData, modelData, historyData, budgetData] = 
+        const [metrics, phaseData, modelData, historyData, budgetData] =
           await Promise.all([
             getCostMetrics(),
             getCostsByPhase(timeRange),
@@ -36,7 +36,7 @@ function CostMetricsDashboard() {
             // Return mock data if API calls fail (during development)
             return [
               {
-                total_cost: 127.50,
+                total_cost: 127.5,
                 avg_cost_per_task: 0.0087,
                 total_tasks: 15000,
               },
@@ -45,8 +45,8 @@ function CostMetricsDashboard() {
               { daily_data: [] },
               {
                 monthly_budget: 150.0,
-                amount_spent: 127.50,
-                amount_remaining: 22.50,
+                amount_spent: 127.5,
+                amount_remaining: 22.5,
                 percent_used: 85,
               },
             ];
@@ -79,7 +79,7 @@ function CostMetricsDashboard() {
           {
             label: 'Monthly Budget',
             value: '$150.00',
-            change: `${(budgetData?.percent_used || 0)}% used`,
+            change: `${budgetData?.percent_used || 0}% used`,
             positive: (budgetData?.percent_used || 0) < 80,
           },
         ]);
@@ -90,7 +90,9 @@ function CostMetricsDashboard() {
         setBudgetStatus(budgetData);
       } catch (err) {
         console.error('Error fetching cost data:', err);
-        setError(err instanceof Error ? err.message : 'Failed to fetch cost data');
+        setError(
+          err instanceof Error ? err.message : 'Failed to fetch cost data'
+        );
       } finally {
         setLoading(false);
       }
@@ -104,16 +106,20 @@ function CostMetricsDashboard() {
     .map(([phase, cost]) => ({
       service: phase.charAt(0).toUpperCase() + phase.slice(1),
       cost: Math.round((cost || 0) * 100),
-      percentage: Math.round((cost || 0) * 100 / 100),
+      percentage: Math.round(((cost || 0) * 100) / 100),
     }))
-    .filter(item => item.cost > 0)
+    .filter((item) => item.cost > 0)
     .sort((a, b) => b.cost - a.cost);
 
   // Format cost history into monthly trend data
-  const costTrend = (costHistory || []).map((item, idx) => ({
-    month: item.date ? new Date(item.date).toLocaleDateString('en-US', { month: 'short' }) : `Month ${idx + 1}`,
-    cost: item.cost || 0,
-  })).slice(-4); // Last 4 months
+  const costTrend = (costHistory || [])
+    .map((item, idx) => ({
+      month: item.date
+        ? new Date(item.date).toLocaleDateString('en-US', { month: 'short' })
+        : `Month ${idx + 1}`,
+      cost: item.cost || 0,
+    }))
+    .slice(-4); // Last 4 months
 
   return (
     <div className="cost-metrics-container">
@@ -125,7 +131,10 @@ function CostMetricsDashboard() {
           </p>
         </div>
         <div className="time-range-selector">
-          <select value={timeRange} onChange={(e) => setTimeRange(e.target.value)}>
+          <select
+            value={timeRange}
+            onChange={(e) => setTimeRange(e.target.value)}
+          >
             <option value="today">Today</option>
             <option value="week">Last 7 Days</option>
             <option value="month">This Month</option>
@@ -193,9 +202,13 @@ function CostMetricsDashboard() {
                 </div>
                 <div className="budget-info">
                   <span className="budget-remaining">
-                    💵 ${budgetStatus.amount_remaining?.toFixed(2) || '0.00'} remaining
+                    💵 ${budgetStatus.amount_remaining?.toFixed(2) || '0.00'}{' '}
+                    remaining
                   </span>
-                  <span className="budget-days">📅 Projected daily: ${((budgetStatus.amount_spent || 0) / 30).toFixed(2)}</span>
+                  <span className="budget-days">
+                    📅 Projected daily: $
+                    {((budgetStatus.amount_spent || 0) / 30).toFixed(2)}
+                  </span>
                 </div>
               </div>
             </div>
@@ -241,79 +254,81 @@ function CostMetricsDashboard() {
 
           {/* Cost Breakdown Grid */}
           <div className="breakdown-grid">
-          <div className="breakdown-chart">
-            <div className="pie-chart">
-              <svg
-                viewBox="0 0 100 100"
-                style={{ width: '200px', height: '200px' }}
-              >
-                <circle
-                  cx="50"
-                  cy="50"
-                  r="45"
-                  fill="none"
-                  stroke="var(--accent-primary)"
-                  strokeWidth="30"
-                  strokeDasharray={`${42 * 2.83} 283`}
-                  style={{
-                    transform: 'rotate(-90deg)',
-                    transformOrigin: '50px 50px',
-                  }}
-                />
-                <circle
-                  cx="50"
-                  cy="50"
-                  r="45"
-                  fill="none"
-                  stroke="#2196f3"
-                  strokeWidth="30"
-                  strokeDasharray={`${25 * 2.83} 283`}
-                  strokeDashoffset={`-${42 * 2.83}`}
-                  style={{
-                    transform: 'rotate(-90deg)',
-                    transformOrigin: '50px 50px',
-                  }}
-                />
-                <text
-                  x="50"
-                  y="55"
-                  textAnchor="middle"
-                  fill="var(--text-primary)"
-                  fontSize="16"
+            <div className="breakdown-chart">
+              <div className="pie-chart">
+                <svg
+                  viewBox="0 0 100 100"
+                  style={{ width: '200px', height: '200px' }}
                 >
-                  100%
-                </text>
-              </svg>
+                  <circle
+                    cx="50"
+                    cy="50"
+                    r="45"
+                    fill="none"
+                    stroke="var(--accent-primary)"
+                    strokeWidth="30"
+                    strokeDasharray={`${42 * 2.83} 283`}
+                    style={{
+                      transform: 'rotate(-90deg)',
+                      transformOrigin: '50px 50px',
+                    }}
+                  />
+                  <circle
+                    cx="50"
+                    cy="50"
+                    r="45"
+                    fill="none"
+                    stroke="#2196f3"
+                    strokeWidth="30"
+                    strokeDasharray={`${25 * 2.83} 283`}
+                    strokeDashoffset={`-${42 * 2.83}`}
+                    style={{
+                      transform: 'rotate(-90deg)',
+                      transformOrigin: '50px 50px',
+                    }}
+                  />
+                  <text
+                    x="50"
+                    y="55"
+                    textAnchor="middle"
+                    fill="var(--text-primary)"
+                    fontSize="16"
+                  >
+                    100%
+                  </text>
+                </svg>
+              </div>
+            </div>
+
+            <div className="breakdown-list">
+              {costBreakdown.map((item, idx) => (
+                <div key={idx} className="breakdown-item">
+                  <div className="item-header">
+                    <span className="item-name">{item.service}</span>
+                    <span className="item-percentage">{item.percentage}%</span>
+                  </div>
+                  <div className="item-bar">
+                    <div
+                      className="item-fill"
+                      style={{
+                        width: `${item.percentage}%`,
+                        backgroundColor: [
+                          'var(--accent-primary)',
+                          '#2196f3',
+                          '#9c27b0',
+                          '#ff9800',
+                          '#4caf50',
+                        ][idx],
+                      }}
+                    ></div>
+                  </div>
+                  <span className="item-cost">
+                    ${item.cost.toLocaleString()}
+                  </span>
+                </div>
+              ))}
             </div>
           </div>
-
-          <div className="breakdown-list">
-            {costBreakdown.map((item, idx) => (
-              <div key={idx} className="breakdown-item">
-                <div className="item-header">
-                  <span className="item-name">{item.service}</span>
-                  <span className="item-percentage">{item.percentage}%</span>
-                </div>
-                <div className="item-bar">
-                  <div
-                    className="item-fill"
-                    style={{
-                      width: `${item.percentage}%`,
-                      backgroundColor: [
-                        'var(--accent-primary)',
-                        '#2196f3',
-                        '#9c27b0',
-                        '#ff9800',
-                        '#4caf50',
-                      ][idx],
-                    }}
-                  ></div>
-                </div>
-                <span className="item-cost">${item.cost.toLocaleString()}</span>
-              </div>
-            ))}
-          </div>
-        </div>
         </>
       )}
 

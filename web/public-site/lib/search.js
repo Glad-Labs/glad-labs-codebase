@@ -87,7 +87,7 @@ export async function getTrendingPosts(limit = 5) {
       `${baseUrl}/api/posts?` +
         'populate=category,tags,coverImage&' +
         'filters[publishedAt][$notNull]=true&' +
-        `sort=-publishedAt&` +
+        'sort=-publishedAt&' +
         `pagination[limit]=${limit}`,
       {
         headers: {

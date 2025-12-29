@@ -144,7 +144,7 @@ export default function SEOHead({
       <link rel="manifest" href="/manifest.json" />
 
       {/* Preconnect and DNS Prefetch for external resources - Improves load time accessibility */}
-      {/* eslint-disable-next-line @next/next/google-font-preconnect */}
+      {}
       <link rel="preconnect" href="https://fonts.googleapis.com" />
       <link
         rel="preconnect"

@@ -88,7 +88,9 @@ apiClient.interceptors.response.use(
 export const listTasks = async (skip = 0, limit = 20, status = null) => {
   try {
     const params = new URLSearchParams({ skip, limit });
-    if (status) {params.append('status', status);}
+    if (status) {
+      params.append('status', status);
+    }
 
     const response = await apiClient.get(`/api/tasks?${params.toString()}`);
     return response.data;
