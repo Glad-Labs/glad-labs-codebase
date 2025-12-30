@@ -154,7 +154,9 @@ export async function streamOllamaGeneration(
     clearTimeout(timeoutId);
 
     if (!response.ok) {
-      throw new Error(`Stream generation failed with status ${response.status}`);
+      throw new Error(
+        `Stream generation failed with status ${response.status}`
+      );
     }
 
     const reader = response.body.getReader();
