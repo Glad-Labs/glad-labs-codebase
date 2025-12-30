@@ -29,19 +29,38 @@ module.exports = {
    * to find class names. This is crucial for tree-shaking unused styles in production.
    */
   content: [
-    './pages/**/*.{js,ts,jsx,tsx,mdx}',
+    './app/**/*.{js,ts,jsx,tsx,mdx}',
     './components/**/*.{js,ts,jsx,tsx,mdx}',
+    './lib/**/*.{js,ts,jsx,tsx,mdx}',
   ],
   /**
    * @property {Object} theme - The theme object where you can customize Tailwind's
    * default design system.
    */
   theme: {
+    fontFamily: {
+      sans: ['Inter', 'system-ui', 'sans-serif'],
+      sora: ['Sora', 'system-ui', 'sans-serif'],
+    },
     /**
      * @property {Object} extend - Use this to add new values to the theme without
      * overriding the defaults.
      */
-    extend: {},
+    extend: {
+      animation: {
+        gradient: 'gradient 3s ease infinite',
+        pulse: 'pulse 4s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+      },
+      keyframes: {
+        gradient: {
+          '0%, 100%': { backgroundPosition: '0% 50%' },
+          '50%': { backgroundPosition: '100% 50%' },
+        },
+      },
+      backgroundSize: {
+        gradient: '200% 200%',
+      },
+    },
   },
   /**
    * @property {Array} plugins - An array of plugins to extend Tailwind's functionality.

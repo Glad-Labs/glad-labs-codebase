@@ -1,53 +1,69 @@
+'use client';
+
 import Link from 'next/link';
-import { useRouter } from 'next/router';
 import { useState, useEffect } from 'react';
-import SearchBar from './SearchBar';
-import { OAuthLoginButton, UserMenu } from './LoginLink';
-import { logout } from '../lib/api';
 
-const Header = () => {
-  const router = useRouter();
-  const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true);
+export default function Header() {
+  const [isScrolled, setIsScrolled] = useState(false);
 
-  // Check authentication status on mount and when tab becomes visible
   useEffect(() => {
-    const checkAuth = () => {
-      try {
-        const token = localStorage.getItem('auth_token');
-        const userData = localStorage.getItem('auth_user');
-
-        if (token && userData) {
-          setUser(JSON.parse(userData));
-        } else {
-          setUser(null);
-        }
-      } catch (error) {
-        console.error('[Auth] Error checking authentication:', error);
-        setUser(null);
-      } finally {
-        setLoading(false);
-      }
+    const handleScroll = () => {
+      setIsScrolled(window.scrollY > 20);
     };
 
-    checkAuth();
-
-    // Listen for storage changes (logout from other tabs)
-    window.addEventListener('storage', checkAuth);
-    // Listen for visibility changes
-    document.addEventListener('visibilitychange', () => {
-      if (document.visibilityState === 'visible') {
-        checkAuth();
-      }
-    });
-
-    return () => {
-      window.removeEventListener('storage', checkAuth);
-      document.removeEventListener('visibilitychange', checkAuth);
-    };
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  const handleLogout = async () => {
+  return (
+    <header
+      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
+        isScrolled
+          ? 'bg-slate-950/80 backdrop-blur-md border-b border-slate-800/50'
+          : 'bg-transparent'
+      }`}
+    >
+      <nav className="container mx-auto px-4 md:px-6 py-4 flex items-center justify-between">
+        {/* Logo */}
+        <Link href="/" className="group flex items-center space-x-2">
+          <div className="text-2xl md:text-3xl font-black bg-gradient-to-r from-cyan-400 to-blue-500 bg-clip-text text-transparent group-hover:from-cyan-300 group-hover:to-blue-400 transition-all">
+            GL
+          </div>
+          <span className="hidden sm:inline text-sm font-semibold text-slate-300 group-hover:text-white transition-colors">
+            Glad Labs
+          </span>
+        </Link>
+
+        {/* Navigation Links */}
+        <div className="hidden md:flex items-center space-x-8">
+          <Link
+            href="/archive/1"
+            className="text-slate-300 hover:text-white font-medium transition-colors relative group"
+          >
+            Articles
+            <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-gradient-to-r from-cyan-400 to-blue-500 group-hover:w-full transition-all duration-300" />
+          </Link>
+          <Link
+            href="/legal/privacy"
+            className="text-slate-300 hover:text-white font-medium transition-colors relative group"
+          >
+            About
+            <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-gradient-to-r from-cyan-400 to-blue-500 group-hover:w-full transition-all duration-300" />
+          </Link>
+        </div>
+
+        {/* CTA Button */}
+        <Link
+          href="/archive/1"
+          className="px-6 py-2 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white font-semibold rounded-lg transition-all duration-300 shadow-lg shadow-cyan-500/20 hover:shadow-cyan-500/40 hover:scale-105"
+        >
+          <span className="hidden sm:inline">Explore</span>
+          <span className="sm:hidden">Read</span>
+        </Link>
+      </nav>
+    </header>
+  );
+}
     try {
       await logout();
     } catch (error) {
