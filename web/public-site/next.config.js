@@ -172,7 +172,7 @@ const nextConfig = {
 
   // ESLint configuration
   eslint: {
-    dirs: ['pages', 'components', 'lib', 'styles'],
+    dirs: ['app', 'components', 'lib', 'styles'],
   },
 
   // TypeScript configuration
