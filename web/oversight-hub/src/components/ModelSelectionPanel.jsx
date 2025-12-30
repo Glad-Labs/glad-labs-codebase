@@ -23,10 +23,6 @@ import {
   Paper,
   Tabs,
   Tab,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
 } from '@mui/material';
 import {
   AttachMoney as CostIcon,
@@ -110,20 +106,6 @@ const AVAILABLE_MODELS = {
 };
 
 // Recommended Ollama models for content generation (for reference/documentation)
-const RECOMMENDED_OLLAMA_MODELS = {
-  'mistral:latest': 'Mistral 7B - Fast, good for general tasks',
-  'neural-chat:latest': 'Neural Chat - Optimized for conversations',
-  'qwen2:7b': 'Qwen 2 7B - Multilingual support',
-  'qwen2.5:14b': 'Qwen 2.5 14B - Better reasoning',
-  'llama2:latest': 'Llama 2 7B - Strong general model',
-  'mixtral:latest': 'Mixtral 8x7B - MoE architecture, better quality',
-  'deepseek-coder:33b': 'DeepSeek Coder 33B - Code generation',
-  'qwen3-coder:30b': 'Qwen 3 Coder 30B - Advanced code generation',
-  'llama3:70b-instruct': 'Llama 3 70B - High-quality long-form content',
-  'gemma3:12b': 'Gemma 3 12B - Lightweight but capable',
-  'gemma3:27b': 'Gemma 3 27B - Better quality outputs',
-};
-
 const QUALITY_PRESETS = {
   fast: {
     label: 'Fast (Cheapest)',
@@ -182,7 +164,6 @@ export function ModelSelectionPanel({
   const [error, setError] = useState(null);
   const [phaseModels, setPhaseModels] = useState({});
   const [activeTab, setActiveTab] = useState(0); // Tab state
-  const [showModelInfoDialog, setShowModelInfoDialog] = useState(false);
 
   // Load available models on mount
   useEffect(() => {
@@ -433,17 +414,6 @@ export function ModelSelectionPanel({
       refine: 'auto',
       finalize: 'auto',
     });
-  };
-
-  const getModelLabel = (modelId) => {
-    if (modelId === 'auto') return 'Auto-Select';
-
-    // Search through AVAILABLE_MODELS to find the matching model label
-    for (const provider of Object.values(AVAILABLE_MODELS)) {
-      const model = provider.models.find((m) => m.id === modelId);
-      if (model) return model.name;
-    }
-    return modelId; // Fallback to ID if not found
   };
 
   const getPhaseIcon = (phase) => {

@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react';
 import { BrowserRouter as Router, useLocation } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
+import ErrorBoundary from './components/ErrorBoundary';
 import AppRoutes from './routes/AppRoutes';
 import useStore from './store/useStore';
 import useAuth from './hooks/useAuth';
@@ -53,16 +54,18 @@ const AppContent = () => {
 
 const App = () => {
   return (
-    <AuthProvider>
-      <Router
-        future={{
-          v7_startTransition: true,
-          v7_relativeSplatPath: true,
-        }}
-      >
-        <AppContent />
-      </Router>
-    </AuthProvider>
+    <ErrorBoundary>
+      <AuthProvider>
+        <Router
+          future={{
+            v7_startTransition: true,
+            v7_relativeSplatPath: true,
+          }}
+        >
+          <AppContent />
+        </Router>
+      </AuthProvider>
+    </ErrorBoundary>
   );
 };
 

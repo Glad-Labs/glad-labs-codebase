@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
-import { getAuthToken } from '../../services/authService';
-import { createTask } from '../../services/cofounderAgentClient';
+import { createTask, makeRequest } from '../../services/cofounderAgentClient';
 import ModelSelectionPanel from '../ModelSelectionPanel';
 
 const CreateTaskModal = ({ isOpen, onClose, onTaskCreated }) => {
@@ -214,7 +213,7 @@ const CreateTaskModal = ({ isOpen, onClose, onTaskCreated }) => {
     });
     setFormData(defaultData);
     setError(null);
-  };;
+  };
 
   const handleInputChange = (fieldName, value) => {
     setFormData({
@@ -256,26 +255,20 @@ const CreateTaskModal = ({ isOpen, onClose, onTaskCreated }) => {
     setError(null);
 
     try {
-      const token = getAuthToken();
-      const headers = { 'Content-Type': 'application/json' };
-      if (token) {
-        headers['Authorization'] = `Bearer ${token}`;
-      }
-
       // ✅ ROUTE TO CORRECT ENDPOINT BASED ON TASK TYPE
       let taskPayload;
 
       if (taskType === 'image_generation') {
-        // 🖼️ Handle image generation task - call FastAPI endpoint directly
+        // 🖼️ Handle image generation task
         console.log('🖼️ Generating images with:', formData);
 
-        // Call the FastAPI image generation endpoint
         // Determine which image sources to try based on user selection
         const usePexels =
           formData.imageSource === 'pexels' || formData.imageSource === 'both';
         const useSDXL =
           formData.imageSource === 'sdxl' || formData.imageSource === 'both';
 
+        // ✅ Use API client with environment variable support
         const imagePayload = {
           prompt: formData.description,
           title: formData.description.substring(0, 50), // Use first 50 chars as title
@@ -286,22 +279,24 @@ const CreateTaskModal = ({ isOpen, onClose, onTaskCreated }) => {
           resolution: formData.resolution || '1024x1024',
         };
 
-        const imageResponse = await fetch(
-          'http://localhost:8000/api/media/generate-image',
-          {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(imagePayload),
-          }
+        // ✅ Call through makeRequest with proper auth and config
+        const imageResult = await makeRequest(
+          '/api/media/generate-image',
+          'POST',
+          imagePayload,
+          false,
+          null,
+          120000 // 2 min timeout for image generation
         );
 
-        if (!imageResponse.ok) {
-          throw new Error(
-            `Image generation failed: ${imageResponse.status} ${imageResponse.statusText}`
-          );
+        if (!imageResult) {
+          throw new Error('Image generation failed: No response from server');
         }
 
-        const imageResult = await imageResponse.json();
+        if (!imageResult) {
+          throw new Error('Image generation failed: No response from server');
+        }
+
         if (!imageResult.success) {
           throw new Error(imageResult.message || 'Image generation failed');
         }

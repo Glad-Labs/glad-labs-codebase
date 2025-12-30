@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
   title: 'Terms of Service - Glad Labs',
-  description: 'Terms of Service for Glad Labs Blog',
+  description: 'Terms of Service for Glad Labs',
 };
 
 export default function TermsOfService() {

@@ -1,9 +1,11 @@
 import AdSenseScript from '../components/AdSenseScript.jsx';
 import CookieConsentBanner from '../components/CookieConsentBanner.tsx';
+import Header from '../components/Header';
+import Footer from '../components/Footer';
 import '../styles/globals.css';
 
 export const metadata = {
-  title: 'Glad Labs Blog - Technology & Innovation',
+  title: 'Glad Labs - Technology & Innovation',
   description:
     'Exploring the future of technology, AI, and digital innovation at Glad Labs',
   metadataBase: new URL(
@@ -13,7 +15,7 @@ export const metadata = {
     type: 'website',
     locale: 'en_US',
     url: process.env.NEXT_PUBLIC_SITE_URL || 'https://yourdomain.com',
-    title: 'Glad Labs Blog',
+    title: 'Glad Labs',
     description:
       'Exploring the future of technology, AI, and digital innovation',
     images: [
@@ -63,7 +65,9 @@ export default function RootLayout({ children }) {
         )}
       </head>
       <body>
+        <Header />
         {children}
+        <Footer />
         {/* Cookie Consent Banner */}
         <CookieConsentBanner />
       </body>

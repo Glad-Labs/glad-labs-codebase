@@ -1,5 +1,5 @@
-# Robots.txt for Glad Labs Blog
-# This file tells search engines which pages to crawl and index
+# Robots.txt for Glad Labs
+# Comprehensive crawler configuration for search engines and AdSense
 
 # Allow all crawlers to index everything by default
 User-agent: *
@@ -31,3 +31,11 @@ Disallow: /
 
 User-agent: DotBot
 Disallow: /
+
+# Google AdSense crawler - must allow
+User-agent: Googlebot-Image
+Allow: /
+
+# AdSense crawler rules
+User-agent: AdsBot-Google
+Allow: /

@@ -1,0 +1,48 @@
+/**
+ * Single Post API Route Handler
+ * Provides access to a specific post by slug
+ */
+
+import { NextRequest, NextResponse } from 'next/server';
+
+const API_BASE = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8000';
+
+// GET /api/posts/[slug]
+export async function GET(
+  request: NextRequest,
+  { params }: { params: Promise<{ slug: string }> }
+) {
+  try {
+    // Unwrap the params promise (Next.js 15+)
+    const { slug } = await params;
+
+    // Fetch all posts and filter by slug since by-slug endpoint doesn't exist
+    const response = await fetch(`${API_BASE}/api/posts?populate=*`, {
+      next: { revalidate: 3600 }, // ISR: revalidate every hour
+    });
+
+    if (!response.ok) {
+      return NextResponse.json(
+        { error: 'Failed to fetch posts' },
+        { status: 500 }
+      );
+    }
+
+    const data = await response.json();
+    const posts = data.data || data || [];
+    const post = posts.find((p: any) => p.slug === slug);
+
+    if (!post) {
+      return NextResponse.json({ error: 'Post not found' }, { status: 404 });
+    }
+
+    return NextResponse.json(post);
+  } catch (error) {
+    const slug = (params as any).slug || 'unknown';
+    console.error(`Error fetching post ${slug}:`, error);
+    return NextResponse.json(
+      { error: 'Failed to fetch post' },
+      { status: 500 }
+    );
+  }
+}

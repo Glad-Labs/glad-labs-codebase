@@ -195,18 +195,6 @@ const ExecutiveDashboard = () => {
     },
   });
 
-  const getTrendChart = (data, max = null) => {
-    const maxValue = max || Math.max(...data);
-    const height = 60;
-    const width = 100 / data.length;
-
-    return data.map((value, index) => ({
-      height: (value / maxValue) * height,
-      value,
-      x: width * index,
-    }));
-  };
-
   const formatCurrency = (value) => `$${(value / 1000).toFixed(1)}K`;
   const formatNumber = (value) => {
     if (value >= 1000) return (value / 1000).toFixed(1) + 'K';

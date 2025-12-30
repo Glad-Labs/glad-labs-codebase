@@ -1,6 +1,14 @@
 /** @type {import('next').NextConfig} */
 
 const nextConfig = {
+  // Webpack cache configuration to prevent build issues
+  webpack: (config, { isServer }) => {
+    config.cache = {
+      type: 'memory',
+    };
+    return config;
+  },
+
   // Image Optimization Configuration
   images: {
     // Supported image formats with automatic optimization
@@ -84,7 +92,7 @@ const nextConfig = {
           {
             key: 'Content-Security-Policy',
             value:
-              "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.googletagmanager.com https://pagead2.googlesyndication.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self' https://www.google-analytics.com https://localhost:8000; frame-src 'self' https://pagead2.googlesyndication.com;",
+              "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.googletagmanager.com https://pagead2.googlesyndication.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data: https:; font-src 'self' data: https://fonts.gstatic.com; connect-src 'self' http://localhost:8000 https://www.google-analytics.com; frame-src 'self' https://pagead2.googlesyndication.com;",
           },
           // Control referrer information
           {

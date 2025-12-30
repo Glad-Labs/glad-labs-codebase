@@ -3,7 +3,7 @@ import Link from 'next/link';
 
 export const metadata: Metadata = {
   title: 'Legal Documents - Glad Labs',
-  description: 'Privacy Policy and Terms of Service for Glad Labs Blog',
+  description: 'Privacy Policy and Terms of Service for Glad Labs',
 };
 
 export default function LegalLayout({

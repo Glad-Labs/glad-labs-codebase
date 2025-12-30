@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
   title: 'Privacy Policy - Glad Labs',
-  description: 'Privacy Policy for Glad Labs Blog',
+  description: 'Privacy Policy for Glad Labs',
 };
 
 export default function PrivacyPolicy() {

@@ -54,10 +54,6 @@ const ConstraintComplianceDisplay = ({
     );
   };
 
-  const getStatusColor = (isCompliant) => {
-    return isCompliant ? 'success' : 'error';
-  };
-
   const getProgressColor = (percentage) => {
     if (percentage >= -10 && percentage <= 10) return 'success';
     if (percentage >= -20 && percentage <= 20) return 'warning';

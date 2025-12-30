@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
   title: 'Cookie Policy - Glad Labs',
-  description: 'Cookie Policy for Glad Labs Blog',
+  description: 'Cookie Policy for Glad Labs',
 };
 
 export default function CookiePolicy() {

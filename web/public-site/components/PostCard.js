@@ -1,90 +1,52 @@
 import Link from 'next/link';
-import { getStrapiURL } from '../lib/api';
-import OptimizedImage from './OptimizedImage';
+import Image from 'next/image';
 
 const safeFormatDate = (value) => {
   if (!value) return '';
   const d = new Date(value);
-  return isNaN(d.getTime()) ? '' : d.toLocaleDateString();
+  return isNaN(d.getTime())
+    ? ''
+    : d.toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+      });
 };
 
 const PostCard = ({ post }) => {
-  const {
-    title,
-    excerpt,
-    slug,
-    publishedAt,
-    date,
-    coverImage,
-    category,
-    tags,
-  } = post;
-  const imageUrl = coverImage?.data?.attributes?.url
-    ? getStrapiURL(coverImage.data.attributes.url)
-    : null;
+  const { title, excerpt, slug, published_at, cover_image_url } = post;
 
   const href = slug ? `/posts/${slug}` : '#';
   const isClickable = Boolean(slug);
-  const displayDate = safeFormatDate(date || publishedAt);
-  const dateISO =
-    date || publishedAt
-      ? new Date(date || publishedAt).toISOString().split('T')[0]
-      : new Date().toISOString().split('T')[0];
+  const displayDate = safeFormatDate(published_at);
+  const dateISO = published_at
+    ? new Date(published_at).toISOString().split('T')[0]
+    : new Date().toISOString().split('T')[0];
 
   return (
     <article
-      className="bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow overflow-hidden focus-within:ring-2 focus-within:ring-cyan-500"
+      className="group relative card-glass hover:card-gradient transition-all duration-300 overflow-hidden h-full flex flex-col focus-within:ring-2 focus-within:ring-cyan-400"
       aria-labelledby={`post-title-${slug}`}
     >
-      {/* Cover Image */}
-      {imageUrl && (
-        <div className="relative h-48 w-full">
-          <OptimizedImage
-            src={imageUrl}
-            alt={
-              coverImage?.data?.attributes?.alternativeText ||
-              `Cover image for ${title}`
-            }
+      {/* Cover Image with overlay effect */}
+      {cover_image_url && (
+        <div className="relative h-56 w-full overflow-hidden bg-gradient-to-br from-slate-800 to-slate-900">
+          <Image
+            src={cover_image_url}
+            alt={`Cover image for ${title}`}
             fill
-            className="object-cover"
+            className="object-cover transition-transform duration-500 group-hover:scale-110"
             sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
           />
+          {/* Gradient overlay */}
+          <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-transparent to-transparent opacity-40" />
         </div>
       )}
 
       {/* Card Content */}
-      <div className="p-6 flex flex-col h-full">
-        {/* Category - with appropriate semantic structure */}
-        {category?.data?.attributes?.slug && (
-          <div className="mb-3 flex items-center gap-1">
-            <span className="sr-only">Category:</span>
-            <Link
-              href={`/category/${category.data.attributes.slug}`}
-              className="text-xs px-2 py-1 rounded bg-cyan-100 text-cyan-700 hover:bg-cyan-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500 focus-visible:ring-offset-2 transition-all"
-              aria-label={`View articles in category: ${category.data.attributes.name}`}
-            >
-              {category.data.attributes.name}
-            </Link>
-          </div>
-        )}
-
-        {/* Post Title - Proper heading hierarchy */}
-        <h3
-          id={`post-title-${slug}`}
-          className="text-xl font-bold mb-2 text-gray-800 leading-tight line-clamp-2"
-        >
-          <Link
-            href={href}
-            className="hover:text-cyan-600 focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500 focus-visible:rounded"
-            tabIndex={isClickable ? 0 : -1}
-            aria-disabled={!isClickable}
-          >
-            {title}
-          </Link>
-        </h3>
-
+      <div className="p-6 flex flex-col h-full relative z-10">
         {/* Published Date - Semantic time element */}
-        <div className="mb-3 flex items-center gap-2 text-sm text-gray-500">
+        <div className="mb-4 flex items-center gap-2 text-xs text-slate-400 group-hover:text-cyan-300 transition-colors">
           <svg
             className="w-4 h-4"
             fill="none"
@@ -104,44 +66,36 @@ const PostCard = ({ post }) => {
           </time>
         </div>
 
-        {/* Excerpt */}
-        <p className="text-gray-700 mb-4 flex-grow line-clamp-3">{excerpt}</p>
-
-        {/* Tags */}
-        {Array.isArray(tags?.data) && tags.data.length > 0 && (
-          <div className="flex flex-wrap items-center gap-2 pt-3 border-t border-gray-200">
-            <span className="sr-only">Tags:</span>
-            {tags.data.slice(0, 3).map((tag) => (
-              <Link
-                key={tag.id}
-                href={`/tag/${tag.attributes.slug}`}
-                className="text-xs px-2 py-1 rounded bg-gray-100 text-gray-700 hover:bg-gray-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500 focus-visible:ring-offset-2 transition-all"
-                aria-label={`View articles tagged with: ${tag.attributes.name}`}
-              >
-                {tag.attributes.name}
-              </Link>
-            ))}
-            {tags.data.length > 3 && (
-              <span
-                className="text-xs text-gray-500"
-                aria-label={`and ${tags.data.length - 3} more tags`}
-              >
-                +{tags.data.length - 3}
-              </span>
-            )}
-          </div>
-        )}
-
-        {/* Read More Link - Semantic and accessible */}
-        <div className="mt-4 pt-3 border-t border-gray-100">
+        {/* Post Title - Professional heading hierarchy */}
+        <h3
+          id={`post-title-${slug}`}
+          className="text-xl md:text-2xl font-bold mb-3 text-slate-100 leading-tight line-clamp-2 group-hover:text-transparent group-hover:bg-gradient-to-r group-hover:from-cyan-400 group-hover:to-blue-500 group-hover:bg-clip-text transition-all duration-300"
+        >
           <Link
             href={href}
-            className="inline-flex items-center gap-2 text-sm font-semibold text-cyan-600 hover:text-cyan-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500 focus-visible:rounded transition-all"
+            className="focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400 focus-visible:rounded-lg px-1 py-0.5"
+            tabIndex={isClickable ? 0 : -1}
+            aria-disabled={!isClickable}
+          >
+            {title}
+          </Link>
+        </h3>
+
+        {/* Excerpt - Premium typography */}
+        <p className="text-slate-300 mb-6 flex-grow line-clamp-3 text-sm leading-relaxed">
+          {excerpt}
+        </p>
+
+        {/* Read More Link - Premium style */}
+        <div className="inline-flex">
+          <Link
+            href={href}
+            className="inline-flex items-center gap-2 text-sm font-semibold text-cyan-400 hover:text-cyan-300 group/link focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400 focus-visible:rounded-lg px-2 py-1 transition-all duration-300"
             aria-label={`Read full article: ${title}`}
           >
             Read Article
             <svg
-              className="w-4 h-4 group-hover:translate-x-1 transition-transform"
+              className="w-4 h-4 group-hover/link:translate-x-1 transition-transform duration-300"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -157,6 +111,9 @@ const PostCard = ({ post }) => {
           </Link>
         </div>
       </div>
+
+      {/* Subtle gradient border on hover */}
+      <div className="absolute inset-0 rounded-2xl bg-gradient-to-r from-cyan-500/0 via-transparent to-blue-500/0 group-hover:from-cyan-500/10 group-hover:to-blue-500/10 pointer-events-none transition-all duration-300" />
     </article>
   );
 };

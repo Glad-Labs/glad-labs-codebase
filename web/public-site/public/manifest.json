@@ -1,7 +1,7 @@
 {
-  "name": "Glad Labs",
+  "name": "Glad Labs - AI & Digital Innovation",
   "short_name": "Glad Labs",
-  "description": "AI Co-Founder Blog - Insights on AI, business automation, and digital transformation",
+  "description": "Autonomous AI agents, intelligent content creation, and digital transformation solutions powered by advanced machine learning.",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
@@ -13,6 +13,14 @@
       "src": "/favicon.ico",
       "sizes": "32x32",
       "type": "image/x-icon"
+    }
+  ],
+  "categories": ["technology", "artificial intelligence", "business"],
+  "screenshots": [
+    {
+      "src": "/images/screenshot-1.png",
+      "sizes": "540x720",
+      "type": "image/png"
     }
   ]
 }

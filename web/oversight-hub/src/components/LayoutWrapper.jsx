@@ -24,7 +24,7 @@ const LayoutWrapper = ({ children }) => {
   const [chatMode, setChatMode] = useState('conversation');
   const [selectedModel, setSelectedModel] = useState('ollama-mistral');
   const [selectedAgent, setSelectedAgent] = useState('orchestrator');
-  const [chatHeight, setChatHeight] = useState(
+  const [chatHeight] = useState(
     parseInt(localStorage.getItem('chatHeight') || '300', 10)
   );
   const [ollamaConnected, setOllamaConnected] = useState(false);
@@ -195,14 +195,6 @@ const LayoutWrapper = ({ children }) => {
     setChatMessages([
       { id: 1, sender: 'system', text: 'Poindexter ready. How can I help?' },
     ]);
-  };
-
-  const handleChatHeightChange = (e) => {
-    const newHeight = parseInt(e.clientY, 10);
-    if (newHeight > 100 && newHeight < window.innerHeight - 200) {
-      setChatHeight(newHeight);
-      localStorage.setItem('chatHeight', newHeight.toString());
-    }
   };
 
   return (

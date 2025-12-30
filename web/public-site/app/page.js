@@ -1,12 +1,55 @@
-import Link from 'next/link';
+'use client';
 
-export const metadata = {
-  title: 'Home - Glad Labs | AI-Powered Digital Innovation',
-  description:
-    'Discover cutting-edge insights on AI, technology, and digital transformation. Glad Labs delivers forward-thinking analysis for the modern enterprise.',
-};
+import Link from 'next/link';
+import Image from 'next/image';
+import { useState, useEffect } from 'react';
 
 export default function HomePage() {
+  const [posts, setPosts] = useState([]);
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    const fetchPosts = async () => {
+      try {
+        setLoading(true);
+        const response = await fetch(
+          'http://localhost:8000/api/posts?populate=*&status=published&limit=20'
+        );
+
+        if (!response.ok) {
+          throw new Error('Failed to fetch posts');
+        }
+
+        const data = await response.json();
+        const posts = data.data || data || [];
+        setPosts(posts);
+        setError(null);
+      } catch (err) {
+        console.error('[Home Page] Error fetching posts:', err);
+        setError(err instanceof Error ? err.message : 'Failed to load posts');
+        setPosts([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchPosts();
+  }, []);
+
+  const handlePrevious = () => {
+    setCurrentIndex((prev) => (prev === 0 ? posts.length - 1 : prev - 1));
+  };
+
+  const handleNext = () => {
+    setCurrentIndex((prev) => (prev === posts.length - 1 ? 0 : prev + 1));
+  };
+
+  const currentPost = posts[currentIndex];
+  const nextPost = posts[(currentIndex + 1) % posts.length];
+  const prevPost = posts[(currentIndex - 1 + posts.length) % posts.length];
+
   return (
     <main className="min-h-screen bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950">
       {/* Animated Background Elements */}
@@ -15,216 +58,211 @@ export default function HomePage() {
         <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-blue-500/10 rounded-full blur-3xl animate-pulse delay-1000" />
       </div>
 
-      {/* Hero Section - Premium Typography & Layout */}
-      <section className="relative pt-32 pb-20 md:pt-48 md:pb-32 px-4 md:px-0">
-        <div className="container mx-auto max-w-5xl">
-          {/* Premium Badge */}
-          <div className="flex justify-center mb-8">
-            <div className="px-4 py-2 bg-cyan-500/10 border border-cyan-500/30 rounded-full backdrop-blur-sm">
-              <p className="text-sm font-medium text-cyan-300">
-                ✨ Transforming Digital Innovation
-              </p>
-            </div>
-          </div>
-
-          {/* Main Headline */}
-          <h1 className="text-center mb-8">
-            <span className="block text-5xl md:text-7xl lg:text-8xl font-black mb-4 leading-tight">
-              <span className="bg-gradient-to-r from-cyan-300 via-blue-300 to-violet-300 bg-clip-text text-transparent animate-gradient">
-                Shape the Future
-              </span>
-            </span>
-            <span className="block text-2xl md:text-4xl text-slate-300 font-light tracking-wide">
-              With AI-Powered Insights
-            </span>
+      {/* Simplified Hero Section */}
+      <section className="relative pt-20 pb-12 md:pt-32 md:pb-20 px-4 md:px-0">
+        <div className="container mx-auto max-w-5xl text-center">
+          <h1 className="text-4xl md:text-6xl font-bold mb-4 bg-gradient-to-r from-cyan-400 via-blue-400 to-violet-400 bg-clip-text text-transparent">
+            Explore Our Latest Insights
           </h1>
-
-          {/* Subheadline */}
-          <p className="text-center text-lg md:text-xl text-slate-400 max-w-3xl mx-auto mb-12 leading-relaxed">
-            Explore cutting-edge analysis on artificial intelligence, emerging
-            technologies, and digital transformation. Insights from industry
-            leaders shaping tomorrow's innovation landscape.
+          <p className="text-xl text-slate-300 max-w-2xl mx-auto">
+            Deep dives into AI, technology, and digital transformation
           </p>
-
-          {/* Premium CTA Buttons */}
-          <div className="flex flex-col sm:flex-row justify-center gap-4 mb-16">
-            <Link
-              href="/archive/1"
-              className="group px-8 md:px-10 py-4 md:py-4 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white font-semibold rounded-xl transition-all duration-300 shadow-lg shadow-cyan-500/30 hover:shadow-xl hover:shadow-cyan-500/50 hover:scale-105 text-center"
-            >
-              <span>Explore Articles</span>
-              <span className="ml-2 inline-block group-hover:translate-x-1 transition-transform">
-                →
-              </span>
-            </Link>
-            <Link
-              href="/legal/privacy"
-              className="px-8 md:px-10 py-4 md:py-4 bg-slate-800/50 border border-slate-700 hover:border-slate-600 text-slate-200 hover:text-white font-semibold rounded-xl transition-all duration-300 backdrop-blur-sm hover:bg-slate-800 text-center"
-            >
-              Learn Our Philosophy
-            </Link>
-          </div>
-
-          {/* Stats Row */}
-          <div className="grid grid-cols-3 gap-4 md:gap-8 pt-12 border-t border-slate-800">
-            <div className="text-center">
-              <p className="text-3xl md:text-4xl font-bold text-cyan-300">
-                50+
-              </p>
-              <p className="text-sm md:text-base text-slate-400 mt-2">
-                Articles Published
-              </p>
-            </div>
-            <div className="text-center">
-              <p className="text-3xl md:text-4xl font-bold text-blue-300">
-                100K+
-              </p>
-              <p className="text-sm md:text-base text-slate-400 mt-2">
-                Monthly Readers
-              </p>
-            </div>
-            <div className="text-center">
-              <p className="text-3xl md:text-4xl font-bold text-violet-300">
-                3M+
-              </p>
-              <p className="text-sm md:text-base text-slate-400 mt-2">
-                Insights Delivered
-              </p>
-            </div>
-          </div>
         </div>
       </section>
 
-      {/* Feature Sections - Premium Cards */}
-      <section className="relative py-20 md:py-32 px-4 md:px-0">
-        <div className="container mx-auto max-w-6xl">
-          {/* Section Title */}
-          <div className="text-center mb-16 md:mb-24">
-            <h2 className="text-4xl md:text-5xl font-bold text-white mb-4">
-              Explore Our Expertise
-            </h2>
-            <p className="text-lg text-slate-400">
-              Deep dives into the topics shaping modern innovation
-            </p>
-          </div>
-
-          {/* Premium Feature Cards */}
-          <div className="grid md:grid-cols-3 gap-6 md:gap-8">
-            {/* Card 1: Latest Articles */}
-            <div className="group relative overflow-hidden rounded-2xl bg-gradient-to-br from-slate-800/50 to-slate-900/50 border border-slate-700/50 p-8 hover:border-cyan-500/50 transition-all duration-300 backdrop-blur-sm hover:shadow-2xl hover:shadow-cyan-500/20">
-              {/* Gradient overlay on hover */}
-              <div className="absolute inset-0 bg-gradient-to-br from-cyan-500/0 to-blue-600/0 group-hover:from-cyan-500/10 group-hover:to-blue-600/10 transition-all duration-300" />
-
-              {/* Icon */}
-              <div className="relative mb-6 w-12 h-12 rounded-lg bg-gradient-to-br from-cyan-500/20 to-blue-600/20 flex items-center justify-center text-2xl group-hover:scale-110 transition-transform duration-300">
-                📰
-              </div>
-
-              {/* Content */}
-              <div className="relative">
-                <h3 className="text-2xl md:text-3xl font-bold text-white mb-3">
-                  Latest Articles
-                </h3>
-                <p className="text-slate-400 mb-6 leading-relaxed">
-                  Discover our most recent insights and deep analysis on AI,
-                  technology, and business innovation. Stay ahead of industry
-                  trends.
-                </p>
-                <Link
-                  href="/archive/1"
-                  className="inline-flex items-center text-cyan-400 hover:text-cyan-300 font-semibold transition-colors"
-                >
-                  Read more{' '}
-                  <span className="ml-2 group-hover:translate-x-1 transition-transform">
-                    →
-                  </span>
-                </Link>
-              </div>
-            </div>
-
-            {/* Card 2: Technology */}
-            <div className="group relative overflow-hidden rounded-2xl bg-gradient-to-br from-slate-800/50 to-slate-900/50 border border-slate-700/50 p-8 hover:border-blue-500/50 transition-all duration-300 backdrop-blur-sm hover:shadow-2xl hover:shadow-blue-500/20">
-              <div className="absolute inset-0 bg-gradient-to-br from-blue-500/0 to-violet-600/0 group-hover:from-blue-500/10 group-hover:to-violet-600/10 transition-all duration-300" />
-
-              <div className="relative mb-6 w-12 h-12 rounded-lg bg-gradient-to-br from-blue-500/20 to-violet-600/20 flex items-center justify-center text-2xl group-hover:scale-110 transition-transform duration-300">
-                ⚙️
-              </div>
-
-              <div className="relative">
-                <h3 className="text-2xl md:text-3xl font-bold text-white mb-3">
-                  Technology Stack
-                </h3>
-                <p className="text-slate-400 mb-6 leading-relaxed">
-                  Deep dives into emerging technologies, frameworks, and tools
-                  shaping the future of software development and AI.
-                </p>
-                <Link
-                  href="/archive/1"
-                  className="inline-flex items-center text-blue-400 hover:text-blue-300 font-semibold transition-colors"
-                >
-                  Explore{' '}
-                  <span className="ml-2 group-hover:translate-x-1 transition-transform">
-                    →
-                  </span>
-                </Link>
-              </div>
-            </div>
-
-            {/* Card 3: Insights */}
-            <div className="group relative overflow-hidden rounded-2xl bg-gradient-to-br from-slate-800/50 to-slate-900/50 border border-slate-700/50 p-8 hover:border-violet-500/50 transition-all duration-300 backdrop-blur-sm hover:shadow-2xl hover:shadow-violet-500/20">
-              <div className="absolute inset-0 bg-gradient-to-br from-violet-500/0 to-pink-600/0 group-hover:from-violet-500/10 group-hover:to-pink-600/10 transition-all duration-300" />
-
-              <div className="relative mb-6 w-12 h-12 rounded-lg bg-gradient-to-br from-violet-500/20 to-pink-600/20 flex items-center justify-center text-2xl group-hover:scale-110 transition-transform duration-300">
-                💡
-              </div>
-
-              <div className="relative">
-                <h3 className="text-2xl md:text-3xl font-bold text-white mb-3">
-                  Strategic Insights
-                </h3>
-                <p className="text-slate-400 mb-6 leading-relaxed">
-                  Strategic analysis and business intelligence from our team of
-                  domain experts and industry leaders.
-                </p>
-                <Link
-                  href="/archive/1"
-                  className="inline-flex items-center text-violet-400 hover:text-violet-300 font-semibold transition-colors"
-                >
-                  Discover{' '}
-                  <span className="ml-2 group-hover:translate-x-1 transition-transform">
-                    →
-                  </span>
-                </Link>
-              </div>
+      {/* Featured Post Carousel */}
+      {loading && (
+        <section className="py-12 px-4 md:px-0">
+          <div className="container mx-auto max-w-6xl">
+            <div className="h-96 bg-slate-800 rounded-xl flex items-center justify-center">
+              <p className="text-slate-400">Loading posts...</p>
             </div>
           </div>
-        </div>
-      </section>
+        </section>
+      )}
 
-      {/* CTA Section */}
-      <section className="relative py-20 md:py-32 px-4 md:px-0">
-        <div className="container mx-auto max-w-4xl">
-          <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-slate-800/50 via-slate-900/50 to-slate-800/50 border border-slate-700/50 p-12 md:p-16 backdrop-blur-sm">
-            {/* Gradient background */}
-            <div className="absolute inset-0 bg-gradient-to-r from-cyan-500/5 to-blue-500/5" />
-
-            <div className="relative text-center">
-              <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
-                Join Our Community
-              </h2>
-              <p className="text-lg text-slate-400 mb-8 max-w-2xl mx-auto">
-                Get exclusive insights delivered to your inbox. Stay informed
-                about the latest trends in AI, technology, and digital
-                innovation.
+      {error && (
+        <section className="py-12 px-4 md:px-0">
+          <div className="container mx-auto max-w-6xl">
+            <div className="h-96 bg-slate-800 rounded-xl flex items-center justify-center border border-red-500/30">
+              <p className="text-red-400">
+                Unable to load posts. Please try again later.
               </p>
-              <Link
-                href="/archive/1"
-                className="inline-block px-10 py-4 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white font-semibold rounded-xl transition-all duration-300 shadow-lg shadow-cyan-500/30 hover:shadow-xl hover:shadow-cyan-500/50 hover:scale-105"
-              >
-                Start Reading Today
-              </Link>
             </div>
           </div>
+        </section>
+      )}
+
+      {!loading && !error && posts.length > 0 && currentPost && (
+        <section className="py-12 px-4 md:px-0">
+          <div className="container mx-auto max-w-6xl">
+            {/* Main Featured Post Card */}
+            <div className="bg-gradient-to-b from-slate-800/50 to-slate-900/50 rounded-2xl overflow-hidden border border-cyan-500/20 hover:border-cyan-400/40 transition-colors">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 p-8">
+                {/* Featured Image */}
+                <div className="relative aspect-video lg:aspect-auto h-full min-h-96 bg-slate-700 rounded-xl overflow-hidden">
+                  {currentPost.featured_image_url ? (
+                    <Image
+                      src={currentPost.featured_image_url}
+                      alt={currentPost.title}
+                      fill
+                      sizes="(min-width: 1024px) 50vw, 100vw"
+                      className="object-cover"
+                      priority
+                    />
+                  ) : (
+                    <div className="w-full h-full bg-gradient-to-br from-cyan-500/20 to-violet-500/20 flex items-center justify-center">
+                      <span className="text-slate-400">No image available</span>
+                    </div>
+                  )}
+                </div>
+
+                {/* Post Content */}
+                <div className="flex flex-col justify-between">
+                  {/* Category & Meta */}
+                  <div>
+                    {currentPost.category && (
+                      <div className="inline-block mb-4">
+                        <span className="px-3 py-1 bg-cyan-500/20 text-cyan-300 rounded-full text-sm font-medium border border-cyan-500/30">
+                          {currentPost.category.name || 'Featured'}
+                        </span>
+                      </div>
+                    )}
+
+                    {/* Title */}
+                    <h2 className="text-3xl sm:text-4xl font-bold text-white mb-4 leading-tight">
+                      {currentPost.title}
+                    </h2>
+
+                    {/* Excerpt */}
+                    <p className="text-lg text-slate-300 mb-6 leading-relaxed">
+                      {currentPost.excerpt ||
+                        (currentPost.content
+                          ? currentPost.content.substring(0, 200) + '...'
+                          : 'Read this insightful article')}
+                    </p>
+                  </div>
+
+                  {/* Meta Information & CTA */}
+                  <div className="flex items-center justify-between pt-6 border-t border-slate-700/50">
+                    <div className="text-sm text-slate-400">
+                      {currentPost.published_at && (
+                        <time dateTime={currentPost.published_at}>
+                          {new Date(
+                            currentPost.published_at
+                          ).toLocaleDateString('en-US', {
+                            year: 'numeric',
+                            month: 'long',
+                            day: 'numeric',
+                          })}
+                        </time>
+                      )}
+                    </div>
+
+                    <Link
+                      href={`/posts/${currentPost.slug}`}
+                      className="inline-flex items-center gap-2 px-6 py-2 bg-gradient-to-r from-cyan-500 to-blue-500 text-white rounded-lg font-semibold hover:shadow-lg hover:shadow-cyan-500/50 transition-all"
+                    >
+                      Read Article
+                      <span className="text-xl">→</span>
+                    </Link>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Navigation Controls */}
+            <div className="flex items-center justify-between mt-8">
+              {/* Previous/Next Buttons */}
+              <div className="flex gap-4">
+                <button
+                  onClick={handlePrevious}
+                  className="px-6 py-3 bg-slate-800 hover:bg-slate-700 text-white rounded-lg font-semibold transition-colors border border-slate-700 hover:border-cyan-500/50"
+                  aria-label="Previous post"
+                >
+                  ← Previous
+                </button>
+                <button
+                  onClick={handleNext}
+                  className="px-6 py-3 bg-slate-800 hover:bg-slate-700 text-white rounded-lg font-semibold transition-colors border border-slate-700 hover:border-cyan-500/50"
+                  aria-label="Next post"
+                >
+                  Next →
+                </button>
+              </div>
+
+              {/* Post Counter */}
+              <div className="text-slate-400 font-medium">
+                {currentIndex + 1} / {posts.length}
+              </div>
+            </div>
+
+            {/* Dot Indicators for first 5 posts */}
+            <div className="flex gap-2 mt-6 justify-center flex-wrap">
+              {posts.slice(0, 5).map((post, index) => (
+                <button
+                  key={post.id || index}
+                  onClick={() => setCurrentIndex(index)}
+                  className={`h-2 rounded-full transition-all ${
+                    index === currentIndex
+                      ? 'w-8 bg-cyan-400'
+                      : 'w-2 bg-slate-700 hover:bg-slate-600'
+                  }`}
+                  aria-label={`Go to post ${index + 1}`}
+                />
+              ))}
+            </div>
+
+            {/* Preview Cards - Hidden on Mobile */}
+            {posts.length > 1 && (
+              <div className="hidden lg:grid grid-cols-2 gap-6 mt-12">
+                {/* Previous Post Preview */}
+                {prevPost && (
+                  <div
+                    className="p-6 bg-slate-800/50 rounded-lg border border-slate-700 hover:border-slate-600 transition-colors cursor-pointer"
+                    onClick={handlePrevious}
+                  >
+                    <p className="text-sm text-slate-400 mb-2">← Previous</p>
+                    <h3 className="text-lg font-semibold text-white truncate hover:text-cyan-400 transition-colors">
+                      {prevPost.title}
+                    </h3>
+                  </div>
+                )}
+
+                {/* Next Post Preview */}
+                {nextPost && (
+                  <div
+                    className="p-6 bg-slate-800/50 rounded-lg border border-slate-700 hover:border-slate-600 transition-colors cursor-pointer text-right"
+                    onClick={handleNext}
+                  >
+                    <p className="text-sm text-slate-400 mb-2">Next →</p>
+                    <h3 className="text-lg font-semibold text-white truncate hover:text-cyan-400 transition-colors">
+                      {nextPost.title}
+                    </h3>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        </section>
+      )}
+
+      {/* Browse All Articles CTA */}
+      <section className="py-16 px-4 md:px-0">
+        <div className="container mx-auto max-w-6xl text-center">
+          <h2 className="text-3xl font-bold text-white mb-4">
+            Browse All Articles
+          </h2>
+          <p className="text-lg text-slate-400 mb-8">
+            Explore our complete collection of insights and analyses
+          </p>
+          <Link
+            href="/archive/1"
+            className="inline-flex items-center gap-2 px-8 py-4 bg-gradient-to-r from-cyan-500 via-blue-500 to-violet-500 text-white rounded-lg font-semibold hover:shadow-lg hover:shadow-cyan-500/50 transition-all text-lg"
+          >
+            View All Articles
+            <span className="text-2xl">→</span>
+          </Link>
         </div>
       </section>
     </main>

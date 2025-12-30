@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import {
   AlertCircle,
   Download,
-  Trash2,
   Filter,
   Plus,
   PlayCircle,

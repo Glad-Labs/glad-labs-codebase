@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
-import { getPaginatedPosts } from '../lib/api';
+import { getPaginatedPosts } from '../lib/api-fastapi';
 
 /**
  * 404 Not Found Page
@@ -40,7 +40,7 @@ export default function NotFound() {
               404
             </h1>
             <p className="text-gray-400 text-lg mt-4">
-              Oops! The page you're looking for doesn't exist.
+              Oops! The page you&apos;re looking for doesn&apos;t exist.
             </p>
           </div>
 
@@ -51,7 +51,7 @@ export default function NotFound() {
               may have been moved or deleted.
             </p>
             <p className="text-gray-400">
-              Don't worry, here are some ways you can get back on track:
+              Don&apos;t worry, here are some ways you can get back on track:
             </p>
           </div>
 

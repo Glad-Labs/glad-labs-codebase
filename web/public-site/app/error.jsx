@@ -55,7 +55,8 @@ export default function Error({ error, reset }) {
             {isNetworkError ? (
               <div>
                 <p className="text-gray-300 text-lg mb-3">
-                  We're unable to load content right now. This could be due to:
+                  We&apos;re unable to load content right now. This could be due
+                  to:
                 </p>
                 <ul className="text-gray-400 text-left max-w-md mx-auto space-y-2">
                   <li>• Your internet connection is unstable</li>
@@ -65,7 +66,7 @@ export default function Error({ error, reset }) {
               </div>
             ) : isNotFoundError ? (
               <p className="text-gray-300 text-lg">
-                The resource you're looking for couldn't be found.
+                The resource you&apos;re looking for couldn&apos;t be found.
               </p>
             ) : (
               <div>
