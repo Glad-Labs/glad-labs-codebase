@@ -50,7 +50,7 @@ const nextConfig = {
     deviceSizes: [640, 750, 828, 1080, 1200, 1920, 2048, 3840],
     imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],
 
-    // Disable Static Imports since using dynamic images from Strapi
+    // Optimize static image imports
     disableStaticImages: false,
   },
 
@@ -60,6 +60,11 @@ const nextConfig = {
       {
         source: '/:path*',
         headers: [
+          // HSTS - Enforce HTTPS
+          {
+            key: 'Strict-Transport-Security',
+            value: 'max-age=31536000; includeSubDomains; preload',
+          },
           // Prevent content-type sniffing
           {
             key: 'X-Content-Type-Options',
@@ -75,6 +80,12 @@ const nextConfig = {
             key: 'X-XSS-Protection',
             value: '1; mode=block',
           },
+          // Content Security Policy - Prevent XSS and injection attacks
+          {
+            key: 'Content-Security-Policy',
+            value:
+              "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.googletagmanager.com https://pagead2.googlesyndication.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self' https://www.google-analytics.com https://localhost:8000; frame-src 'self' https://pagead2.googlesyndication.com;",
+          },
           // Control referrer information
           {
             key: 'Referrer-Policy',
@@ -83,7 +94,13 @@ const nextConfig = {
           // Feature Policy / Permissions-Policy
           {
             key: 'Permissions-Policy',
-            value: 'camera=(), microphone=(), geolocation=()',
+            value:
+              'camera=(), microphone=(), geolocation=(), payment=(), usb=(), magnetometer=(), gyroscope=(), accelerometer=()',
+          },
+          // Enable DNS prefetch for performance
+          {
+            key: 'X-DNS-Prefetch-Control',
+            value: 'on',
           },
         ],
       },
@@ -164,8 +181,7 @@ const nextConfig = {
 
   // Environment variables exposed to browser
   env: {
-    NEXT_PUBLIC_STRAPI_API_URL: process.env.NEXT_PUBLIC_STRAPI_API_URL,
-    NEXT_PUBLIC_STRAPI_API_TOKEN: process.env.NEXT_PUBLIC_STRAPI_API_TOKEN,
+    NEXT_PUBLIC_FASTAPI_URL: process.env.NEXT_PUBLIC_FASTAPI_URL,
     // Disable Next.js telemetry to prevent trace file generation
     NEXT_TELEMETRY_DISABLED: '1',
   },

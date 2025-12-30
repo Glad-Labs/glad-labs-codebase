@@ -1,5 +1,6 @@
 import { formatDateISO, formatDate } from './content-utils';
-import { getStrapiURL } from './api';
+// Image URL utilities for structured data
+import { getImageURL } from './api-fastapi';
 
 /**
  * Generate JSON-LD structured data for a blog post
@@ -24,7 +25,7 @@ export function generateBlogPostingSchema(
 
   const publishDate = date || publishedAt;
   const imageUrl = coverImage?.url
-    ? getStrapiURL(coverImage.url)
+    ? getImageURL(coverImage.url)
     : `${siteUrl}/og-image.png`;
 
   return {
@@ -79,7 +80,7 @@ export function generateNewsArticleSchema(
 
   const publishDate = date || publishedAt;
   const imageUrl = coverImage?.url
-    ? getStrapiURL(coverImage.url)
+    ? getImageURL(coverImage.url)
     : `${siteUrl}/og-image.png`;
 
   return {
@@ -113,7 +114,7 @@ export function generateArticleSchema(post, siteUrl = 'https://glad-labs.com') {
 
   const publishDate = date || publishedAt;
   const imageUrl = coverImage?.url
-    ? getStrapiURL(coverImage.url)
+    ? getImageURL(coverImage.url)
     : `${siteUrl}/og-image.png`;
 
   return {

@@ -1,7 +1,8 @@
 {
   "name": "glad-labs-public-site",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "private": true,
+  "type": "module",
   "description": "Next.js 15 public website for Glad Labs - features SSG optimization, FastAPI integration, and markdown content rendering",
   "license": "MIT",
   "author": "Matthew M. Gladding (Glad Labs, LLC)",
