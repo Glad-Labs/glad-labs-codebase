@@ -1,4 +1,4 @@
-import AdSenseScript from '../components/AdSenseScript';
+import AdSenseScript from '../components/AdSenseScript.jsx';
 import CookieConsentBanner from '../components/CookieConsentBanner.tsx';
 import '../styles/globals.css';
 
