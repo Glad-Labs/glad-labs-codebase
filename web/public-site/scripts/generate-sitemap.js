@@ -1,5 +1,5 @@
-const fs = require('fs');
-const qs = require('qs');
+import fs from 'fs';
+import qs from 'qs';
 
 const FASTAPI_URL =
   process.env.NEXT_PUBLIC_FASTAPI_URL || 'http://localhost:8000';

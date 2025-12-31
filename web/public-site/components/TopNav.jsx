@@ -1,30 +1,9 @@
-'use client';
-
 import Link from 'next/link';
-import { useState, useEffect } from 'react';
 
-export default function Header() {
-  const [isScrolled, setIsScrolled] = useState(false);
-
-  useEffect(() => {
-    const handleScroll = () => {
-      setIsScrolled(window.scrollY > 20);
-    };
-
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
-
+export function TopNavigation() {
   return (
-    <header
-      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${
-        isScrolled
-          ? 'bg-slate-950/60 backdrop-blur-xl border-b border-slate-800/50 shadow-lg shadow-black/20'
-          : 'bg-transparent'
-      }`}
-    >
+    <header className="fixed top-0 left-0 right-0 z-50 bg-slate-950/80 border-b border-slate-800/50 backdrop-blur-xl">
       <nav className="container mx-auto px-4 md:px-6 py-4 md:py-5 flex items-center justify-between">
-        {/* Logo with enhanced animation */}
         <Link
           href="/"
           className="group flex items-center space-x-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400 rounded-lg px-2 py-1 transition-all"
@@ -37,7 +16,6 @@ export default function Header() {
           </span>
         </Link>
 
-        {/* Navigation Links with premium hover effect */}
         <div className="hidden md:flex items-center space-x-12">
           <Link
             href="/archive/1"
@@ -55,18 +33,12 @@ export default function Header() {
           </Link>
         </div>
 
-        {/* Premium CTA Button */}
         <Link
           href="/archive/1"
           className="relative group px-6 py-2.5 font-semibold rounded-xl transition-all duration-300 overflow-hidden focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400"
         >
-          {/* Button background with gradient */}
           <div className="absolute inset-0 bg-gradient-to-r from-cyan-500 to-blue-600 transition-all duration-300 group-hover:shadow-lg group-hover:shadow-cyan-500/50" />
-
-          {/* Hover glow effect */}
           <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 bg-gradient-to-r from-cyan-400/20 to-blue-500/20 blur-md" />
-
-          {/* Button text */}
           <span className="relative text-white flex items-center gap-2">
             <span className="hidden sm:inline">Explore</span>
             <span className="sm:hidden">Read</span>
@@ -76,11 +48,7 @@ export default function Header() {
           </span>
         </Link>
       </nav>
-
-      {/* Subtle animated line at bottom when scrolled */}
-      {isScrolled && (
-        <div className="absolute bottom-0 left-0 h-px w-full bg-gradient-to-r from-transparent via-cyan-500/30 to-transparent" />
-      )}
     </header>
   );
 }
+

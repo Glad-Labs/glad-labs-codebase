@@ -1,7 +1,7 @@
-import AdSenseScript from '../components/AdSenseScript.jsx';
-import CookieConsentBanner from '../components/CookieConsentBanner.tsx';
-import Header from '../components/Header';
+import AdSenseScript from '../components/AdSenseScript';
+import CookieConsentBanner from '../components/CookieConsentBanner';
 import Footer from '../components/Footer';
+import { TopNavigation } from '../components/TopNav';
 import '../styles/globals.css';
 
 export const metadata = {
@@ -37,9 +37,6 @@ export default function RootLayout({ children }) {
   return (
     <html lang="en">
       <head>
-        {/* AdSense Script - Loaded with afterInteractive strategy */}
-        <AdSenseScript />
-
         {/* Analytics - If using Google Analytics */}
         {process.env.NEXT_PUBLIC_GA_ID && (
           <>
@@ -65,10 +62,11 @@ export default function RootLayout({ children }) {
         )}
       </head>
       <body>
-        <Header />
+        <TopNavigation />
         {children}
         <Footer />
-        {/* Cookie Consent Banner */}
+        {/* Client-side components that need hydration */}
+        <AdSenseScript />
         <CookieConsentBanner />
       </body>
     </html>

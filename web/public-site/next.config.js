@@ -1,14 +1,6 @@
 /** @type {import('next').NextConfig} */
 
 const nextConfig = {
-  // Webpack cache configuration to prevent build issues
-  webpack: (config, { isServer }) => {
-    config.cache = {
-      type: 'memory',
-    };
-    return config;
-  },
-
   // Image Optimization Configuration
   images: {
     // Supported image formats with automatic optimization
@@ -170,9 +162,10 @@ const nextConfig = {
     };
   },
 
+  /*
   // Webpack configuration for additional optimizations
   webpack(config, { isServer }) {
-    config.optimization.minimize = true;
+    // config.optimization.minimize = true;
     config.watchOptions = {
       ignored:
         /node_modules|\.next|\.swc|\.git|dist|build|trace|\.vercel|coverage/,
@@ -181,6 +174,7 @@ const nextConfig = {
     };
     return config;
   },
+  */
 
   // Disable Fast Refresh rebuild detection for .next folder changes
   onDemandEntries: {
@@ -206,7 +200,7 @@ const nextConfig = {
 
   // Experimental: Optimize package imports
   experimental: {
-    optimizePackageImports: ['components', 'lib'],
+    // optimizePackageImports: ['components', 'lib'],
   },
 
   // Compression configuration

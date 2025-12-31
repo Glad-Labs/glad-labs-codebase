@@ -13,7 +13,7 @@ jest.mock('@/components/Carousel', () => {
 jest.mock('next/image', () => ({
   __esModule: true,
   default: (props) => {
-    // eslint-disable-next-line jsx-a11y/alt-text
+    // eslint-disable-next-line react/no-unknown-property
     return <img {...props} />;
   },
 }));
