@@ -88,54 +88,42 @@ const TaskManagement = () => {
       // ✅ UPDATED ENDPOINT: /api/content/tasks/{taskId}
       // Returns: { task_id, status, progress, result, error, created_at, task_type }
       // Content is nested in result.content, result.article_title, etc.
-      const response = await fetch(
-        `http://localhost:8000/api/content/tasks/${taskId}`,
-        {
-          headers,
-          signal: AbortSignal.timeout(5000),
-        }
-      );
+      const { getContentTask } = await import('../../services/taskService');
+      const data = await getContentTask(taskId);
+      const result = data.result || {};
 
-      if (response.ok) {
-        const data = await response.json();
-        const result = data.result || {};
+      console.log('✅ Content task status fetched:', {
+        taskId: data.task_id || taskId,
+        status: data.status,
+        hasResult: !!result,
+        hasContent: !!result.content,
+        contentLength: result.content?.length || 0,
+      });
 
-        console.log('✅ Content task status fetched:', {
-          taskId: data.task_id || taskId,
-          status: data.status,
-          hasResult: !!result,
-          hasContent: !!result.content,
-          contentLength: result.content?.length || 0,
-        });
-
-        return {
-          status: data.status || 'completed',
-          task_id: data.task_id || taskId,
-          // Extract from result object (nested structure from backend)
-          title: result.title || result.article_title || result.topic || '',
-          content:
-            result.content || result.generated_content || result.article || '',
-          excerpt: result.excerpt || result.summary || '',
-          featured_image_url: result.featured_image_url || null,
-          featured_image_data: result.featured_image_data || null,
-          // Config fields
-          style: result.style || '',
-          tone: result.tone || '',
-          target_length: result.target_length || 0,
-          // Metadata
-          tags: result.tags || [],
-          task_metadata: result.task_metadata || data.progress || {},
-          strapi_id: result.strapi_id || result.strapi_post_id || null,
-          strapi_url: result.strapi_url || result.published_url || null,
-          // Error handling
-          error_message: data.error || result.error || '',
-          // Additional data
-          progress: data.progress || {},
-        };
-      } else {
-        console.warn(`Failed to fetch content task: ${response.statusText}`);
-        return null;
-      }
+      return {
+        status: data.status || 'completed',
+        task_id: data.task_id || taskId,
+        // Extract from result object (nested structure from backend)
+        title: result.title || result.article_title || result.topic || '',
+        content:
+          result.content || result.generated_content || result.article || '',
+        excerpt: result.excerpt || result.summary || '',
+        featured_image_url: result.featured_image_url || null,
+        featured_image_data: result.featured_image_data || null,
+        // Config fields
+        style: result.style || '',
+        tone: result.tone || '',
+        target_length: result.target_length || 0,
+        // Metadata
+        tags: result.tags || [],
+        task_metadata: result.task_metadata || data.progress || {},
+        strapi_id: result.strapi_id || result.strapi_post_id || null,
+        strapi_url: result.strapi_url || result.published_url || null,
+        // Error handling
+        error_message: data.error || result.error || '',
+        // Additional data
+        progress: data.progress || {},
+      };
     } catch (error) {
       console.error('Failed to fetch content task:', error);
       return null;
@@ -166,45 +154,33 @@ const TaskManagement = () => {
       // ✅ FIXED: Fetch with a reasonable high limit (100) to get more tasks in one request for KPI
       // This way KPI stats are more representative, while still paginating for display
       // Request all available tasks to calculate stats correctly
-      const response = await fetch(
-        'http://localhost:8000/api/tasks?limit=100&offset=0',
-        {
-          headers,
-          signal: AbortSignal.timeout(15000),
-        }
+      const { getTasks: getTasksFromAPI } = await import('../../services/taskService');
+      const data = await getTasksFromAPI(0, 100);
+      console.log('✅ TaskManagement: API Response received:', data);
+
+      // The response has 'tasks' array and total count
+      let apiTasks = data || [];
+      let totalCount = apiTasks.length;
+      console.log(
+        '✅ TaskManagement: Tasks from API:',
+        apiTasks.length,
+        'items, Total:',
+        totalCount
       );
 
-      if (response.ok) {
-        let data = await response.json();
-        console.log('✅ TaskManagement: API Response received:', data);
-
-        // The response has 'tasks' array and total count
-        let apiTasks = data.tasks || [];
-        let totalCount = data.total || apiTasks.length;
-        console.log(
-          '✅ TaskManagement: Tasks from API:',
-          apiTasks.length,
-          'items, Total:',
-          totalCount
-        );
-
-        // Store ALL tasks for KPI calculation (this is the full dataset from first request)
-        setAllTasks(apiTasks);
-        // For pagination display, show the first page
-        const paginatedTasks = apiTasks.slice(0, limit);
-        setTasks(paginatedTasks);
-        setTotal(totalCount);
-        console.log(
-          '✅ TaskManagement: Stored',
-          apiTasks.length,
-          'total tasks, displaying first page with',
-          paginatedTasks.length,
-          'tasks'
-        );
-      } else {
-        setError(`Failed to fetch tasks: ${response.statusText}`);
-        console.error('Failed to fetch tasks:', response.statusText);
-      }
+      // Store ALL tasks for KPI calculation (this is the full dataset from first request)
+      setAllTasks(apiTasks);
+      // For pagination display, show the first page
+      const paginatedTasks = apiTasks.slice(0, limit);
+      setTasks(paginatedTasks);
+      setTotal(totalCount);
+      console.log(
+        '✅ TaskManagement: Stored',
+        apiTasks.length,
+        'total tasks, displaying first page with',
+        paginatedTasks.length,
+        'tasks'
+      );
     } catch (error) {
       const errorMessage =
         error instanceof Error ? error.message : 'Unknown error';
@@ -232,20 +208,9 @@ const TaskManagement = () => {
       }
 
       // ✅ REFACTORED: Use /api/content/tasks/{id} endpoint (replaces /api/content/blog-posts/drafts/{id})
-      const response = await fetch(
-        `http://localhost:8000/api/content/tasks/${taskId}`,
-        {
-          method: 'DELETE',
-          headers,
-        }
-      );
-
-      if (response.ok) {
-        fetchTasks();
-      } else {
-        setError(`Failed to delete task: ${response.statusText}`);
-        console.error('Failed to delete task:', response.statusText);
-      }
+      const { deleteContentTask } = await import('../../services/taskService');
+      await deleteContentTask(taskId);
+      fetchTasks();
     } catch (error) {
       const errorMessage =
         error instanceof Error ? error.message : 'Unknown error';
@@ -1066,29 +1031,17 @@ const TaskManagement = () => {
                               headers['Authorization'] = `Bearer ${token}`;
                             }
 
-                            const response = await fetch(
-                              `http://localhost:8000/api/tasks/${task.id}`,
-                              {
-                                headers,
-                                signal: AbortSignal.timeout(5000),
-                              }
+                            const { getTask: getTaskById } = await import(
+                              '../../services/taskService'
+                            );
+                            const fullTask = await getTaskById(task.id);
+                            console.log(
+                              '✅ Full task data fetched:',
+                              fullTask
                             );
 
-                            if (response.ok) {
-                              const fullTask = await response.json();
-                              console.log(
-                                '✅ Full task data fetched:',
-                                fullTask
-                              );
-
-                              // Task response includes task_metadata from convert_db_row_to_dict()
-                              setSelectedTask(fullTask);
-                            } else {
-                              console.warn(
-                                'Failed to fetch full task, using list data'
-                              );
-                              setSelectedTask(task);
-                            }
+                            // Task response includes task_metadata from convert_db_row_to_dict()
+                            setSelectedTask(fullTask);
                           } catch (error) {
                             console.warn(
                               'Error fetching full task:',
@@ -1377,46 +1330,27 @@ const TaskManagement = () => {
                     headers['Authorization'] = `Bearer ${token}`;
                   }
 
-                  const response = await fetch(
-                    `http://localhost:8000/api/content/tasks/${selectedTask.id}/approve`,
-                    {
-                      method: 'POST',
-                      headers,
-                      body: JSON.stringify({
-                        approved: true,
-                        human_feedback:
-                          updatedTask.feedback || 'Approved in oversight hub',
-                        reviewer_id: updatedTask.reviewer_id || 'admin',
-                        featured_image_url:
-                          updatedTask.featured_image_url || null,
-                      }),
-                    }
+                  const { approveTask: approveContentTask } = await import(
+                    '../../services/taskService'
                   );
-                  if (response.ok) {
-                    // ✅ Update local task status to 'published' and approval_status to 'approved' before closing
-                    setTasks(
-                      tasks.map((t) =>
-                        t.id === selectedTask.id
-                          ? {
-                              ...t,
-                              status: 'published',
-                              approval_status: 'approved',
-                            }
-                          : t
-                      )
-                    );
-                    // ✅ Close dialog and show success
-                    setSelectedTask(null);
-                    setError(null);
-                    // Fetch full task list to sync with backend
-                    setTimeout(() => fetchTasks(), 500);
-                  } else {
-                    const errorData = await response.json().catch(() => ({}));
-                    setError(
-                      `Failed to publish: ${errorData.detail || errorData.message || response.statusText}`
-                    );
-                    console.error('Failed to publish:', response.statusText);
-                  }
+                  await approveContentTask(selectedTask.id, updatedTask.feedback || 'Approved in oversight hub');
+                  // ✅ Update local task status to 'published' and approval_status to 'approved' before closing
+                  setTasks(
+                    tasks.map((t) =>
+                      t.id === selectedTask.id
+                        ? {
+                            ...t,
+                            status: 'published',
+                            approval_status: 'approved',
+                          }
+                        : t
+                    )
+                  );
+                  // ✅ Close dialog and show success
+                  setSelectedTask(null);
+                  setError(null);
+                  // Fetch full task list to sync with backend
+                  setTimeout(() => fetchTasks(), 500);
                 } catch (error) {
                   const errorMessage =
                     error instanceof Error ? error.message : 'Unknown error';
@@ -1431,53 +1365,30 @@ const TaskManagement = () => {
                 setError(null);
                 try {
                   // ✅ Send rejection to backend
-                  const token = getAuthToken();
-                  const headers = {
-                    'Content-Type': 'application/json',
-                  };
-                  if (token) {
-                    headers['Authorization'] = `Bearer ${token}`;
-                  }
-
-                  const response = await fetch(
-                    `http://localhost:8000/api/content/tasks/${selectedTask.id}/approve`,
-                    {
-                      method: 'POST',
-                      headers,
-                      body: JSON.stringify({
-                        approved: false,
-                        human_feedback:
-                          rejectedTask.rejection_reason ||
-                          'Rejected in oversight hub',
-                        reviewer_id: rejectedTask.reviewer_id || 'admin',
-                      }),
-                    }
+                  const { rejectTask: rejectContentTask } = await import(
+                    '../../services/taskService'
                   );
-                  if (response.ok) {
-                    // ✅ Update local task status to 'rejected' and approval_status to 'rejected' before closing
-                    setTasks(
-                      tasks.map((t) =>
-                        t.id === selectedTask.id
-                          ? {
-                              ...t,
-                              status: 'rejected',
-                              approval_status: 'rejected',
-                            }
-                          : t
-                      )
-                    );
-                    // ✅ Close dialog
-                    setSelectedTask(null);
-                    setError(null);
-                    // Fetch full task list to sync with backend
-                    setTimeout(() => fetchTasks(), 500);
-                  } else {
-                    const errorData = await response.json().catch(() => ({}));
-                    setError(
-                      `Failed to reject: ${errorData.detail || errorData.message || response.statusText}`
-                    );
-                    console.error('Failed to reject:', response.statusText);
-                  }
+                  await rejectContentTask(
+                    selectedTask.id,
+                    rejectedTask.rejection_reason || 'Rejected in oversight hub'
+                  );
+                  // ✅ Update local task status to 'rejected' and approval_status to 'rejected' before closing
+                  setTasks(
+                    tasks.map((t) =>
+                      t.id === selectedTask.id
+                        ? {
+                            ...t,
+                            status: 'rejected',
+                            approval_status: 'rejected',
+                          }
+                        : t
+                    )
+                  );
+                  // ✅ Close dialog
+                  setSelectedTask(null);
+                  setError(null);
+                  // Fetch full task list to sync with backend
+                  setTimeout(() => fetchTasks(), 500);
                 } catch (error) {
                   const errorMessage =
                     error instanceof Error ? error.message : 'Unknown error';

@@ -225,12 +225,11 @@ const CommandPane = () => {
       setIsTyping(true);
 
       try {
-        const response = await fetch(COFOUNDER_API_URL, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
+        const { makeRequest } = await import('../../services/cofounderAgentClient');
+        const result = await makeRequest(
+          '/api/command/execute',
+          'POST',
+          {
             command: commandMessage.description || 'Execute command',
             parameters: params || commandMessage.parameters,
             task: selectedTask || null,
@@ -241,16 +240,17 @@ const CommandPane = () => {
               selectedTaskId: selectedTask?.id || null,
               totalTasks: tasks?.length || 0,
             },
-          }),
-        });
+          },
+          false,
+          null,
+          30000  // 30 second timeout for command execution
+        );
 
-        if (!response.ok) {
+        if (result.error) {
           throw new Error(
-            `Network response was not ok: ${response.statusText}`
+            result.error || 'Command execution failed'
           );
         }
-
-        const data = await response.json();
 
         // Simulate progress updates (in real scenario, backend would stream this)
         for (let i = 1; i < config.phases.length; i++) {
@@ -268,14 +268,14 @@ const CommandPane = () => {
           direction: 'incoming',
           sender: 'AI',
           executionId,
-          result: data.response || data.result || data,
+          result: result.response || result.result || result,
           resultPreview: (
-            data.response ||
-            data.result ||
-            JSON.stringify(data)
+            result.response ||
+            result.result ||
+            JSON.stringify(result)
           ).substring(0, 200),
           metadata: {
-            wordCount: (data.response || data.result || '').split(' ').length,
+            wordCount: (result.response || result.result || '').split(' ').length,
             qualityScore: 8.5,
             cost: 0.35,
             executionTime: new Date().getTime(),

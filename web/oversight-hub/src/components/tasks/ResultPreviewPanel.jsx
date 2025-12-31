@@ -201,30 +201,21 @@ const ResultPreviewPanel = ({
 
       console.log('📸 Generating image with:', requestPayload);
 
-      const response = await fetch(
-        'http://localhost:8000/api/media/generate-image',
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify(requestPayload),
-        }
+      const { makeRequest } = await import('../../services/cofounderAgentClient');
+      const result = await makeRequest(
+        '/api/media/generate-image',
+        'POST',
+        requestPayload,
+        false,
+        null,
+        60000  // 60 second timeout for image generation
       );
 
-      if (!response.ok) {
-        let errorMsg = 'Image generation failed';
-        try {
-          const errorData = await response.json();
-          errorMsg = errorData.message || errorData.detail || errorMsg;
-        } catch (e) {
-          errorMsg = `HTTP ${response.status}: ${response.statusText}`;
-        }
+      if (result.error) {
+        let errorMsg = result.error || 'Image generation failed';
         throw new Error(errorMsg);
       }
 
-      const result = await response.json();
       console.log('📸 Image generation result:', result);
 
       if (result.success && result.image_url) {
@@ -477,26 +468,22 @@ const ResultPreviewPanel = ({
         ...approvalPayload,
       });
 
-      const response = await fetch(
-        `http://localhost:8000/api/content/tasks/${taskId}/approve`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify(approvalPayload),
-        }
+      const { makeRequest } = await import('../../services/cofounderAgentClient');
+      const result = await makeRequest(
+        `/api/content/tasks/${taskId}/approve`,
+        'POST',
+        approvalPayload,
+        false,
+        null,
+        30000  // 30 second timeout
       );
 
-      if (!response.ok) {
-        const errorData = await response.json();
+      if (result.error) {
         throw new Error(
-          errorData.detail || `HTTP ${response.status}: Approval failed`
+          result.error || 'Approval failed'
         );
       }
 
-      const result = await response.json();
       console.log('✅ Approval submitted:', result);
 
       // Call the callback

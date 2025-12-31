@@ -193,18 +193,17 @@ export function ModelSelectionPanel({
   const fetchAvailableModels = async () => {
     try {
       // Fetch actual Ollama models from the local Ollama instance
-      const ollamaResponse = await fetch('http://localhost:11434/api/tags');
+      const { getOllamaModels } = await import('../services/ollamaService');
+      const ollamaData = await getOllamaModels();
 
-      if (!ollamaResponse.ok) {
+      if (!ollamaData || ollamaData.length === 0) {
         console.warn('Ollama API not available, using default models');
         setPhaseModels(getDefaultPhaseModels());
         return;
       }
 
-      const ollamaData = await ollamaResponse.json();
-
       // Process Ollama models
-      const ollamaModels = (ollamaData.models || []).map((model) => ({
+      const ollamaModels = (ollamaData || []).map((model) => ({
         id: model.name, // Use the full model name including tag (e.g., "mistral:latest")
         name: formatOllamaModelName(model.name),
         cost: 0, // Ollama models running locally are free

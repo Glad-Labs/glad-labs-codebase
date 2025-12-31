@@ -33,21 +33,22 @@ const ExecutiveDashboard = () => {
     const fetchDashboardData = async () => {
       try {
         setLoading(true);
-        const token = localStorage.getItem('access_token');
 
-        const response = await fetch(
-          `http://localhost:8000/api/analytics/kpis?range=${timeRange}`,
-          {
-            headers: { Authorization: `Bearer ${token}` },
-          }
+        const { makeRequest } = await import('../../services/cofounderAgentClient');
+        const result = await makeRequest(
+          `/api/analytics/kpis?range=${timeRange}`,
+          'GET',
+          null,
+          false,
+          null,
+          15000  // 15 second timeout for analytics
         );
 
-        if (!response.ok) {
-          throw new Error('Failed to fetch dashboard data');
+        if (result.error) {
+          throw new Error(result.error || 'Failed to fetch dashboard data');
         }
 
-        const data = await response.json();
-        setDashboardData(data);
+        setDashboardData(result);
         setError(null);
       } catch (err) {
         console.error('Dashboard data fetch error:', err);

@@ -100,17 +100,19 @@ const LayoutWrapper = ({ children }) => {
   useEffect(() => {
     const initializeModels = async () => {
       try {
-        const response = await fetch(
-          'http://localhost:8000/api/ollama/models',
-          {
-            signal: AbortSignal.timeout(3000),
-          }
+        const { getOllamaModels, isOllamaAvailable } = await import(
+          '../services/ollamaService'
         );
-        if (response.ok) {
-          const data = await response.json();
-          const models = data.models || ['llama2', 'mistral'];
-          setAvailableOllamaModels(models);
-          setOllamaConnected(data.connected ?? true);
+        const models = await getOllamaModels();
+        const available = await isOllamaAvailable();
+
+        if (models && models.length > 0) {
+          const modelNames = models.map((m) => m.name);
+          setAvailableOllamaModels(modelNames);
+          setOllamaConnected(available);
+        } else {
+          setAvailableOllamaModels(['llama2', 'mistral']);
+          setOllamaConnected(false);
         }
       } catch (error) {
         setAvailableOllamaModels(['llama2', 'mistral']);

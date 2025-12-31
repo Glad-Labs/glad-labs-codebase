@@ -39,15 +39,12 @@ const ExecutionHub = () => {
             getActiveAgents().catch(() => null),
             getTaskQueue().catch(() => null),
             getOrchestratorOverallStatus().catch(() => null),
-            // 🆕 Fetch workflow history from backend
-            fetch('http://localhost:8000/api/workflow/history', {
-              headers: {
-                Authorization: `Bearer ${localStorage.getItem('auth_token') || ''}`,
-                'Content-Type': 'application/json',
-              },
-            })
-              .then((r) => (r.ok ? r.json() : null))
-              .catch(() => null),
+            // 🆕 Fetch workflow history from backend using makeRequest
+            (async () => {
+              const { makeRequest } = await import('../../services/cofounderAgentClient');
+              const result = await makeRequest('/api/workflow/history', 'GET', null, false, null, 10000);
+              return result.error ? null : result;
+            })(),
           ]);
 
         // ✅ Validate responses
