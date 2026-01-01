@@ -42,6 +42,21 @@ const TaskDetailModal = ({ onClose }) => {
           <p>
             <strong>Target Audience:</strong> {selectedTask.target_audience}
           </p>
+          <p>
+            <strong>Style:</strong>{' '}
+            {selectedTask.style || selectedTask.metadata?.style || 'N/A'}
+          </p>
+          <p>
+            <strong>Tone:</strong>{' '}
+            {selectedTask.tone || selectedTask.metadata?.tone || 'N/A'}
+          </p>
+          <p>
+            <strong>Target Length:</strong>{' '}
+            {selectedTask.target_length ||
+              selectedTask.metadata?.word_count ||
+              'N/A'}{' '}
+            words
+          </p>
           {selectedTask.publishedUrl && (
             <p>
               <strong>Published URL:</strong>{' '}

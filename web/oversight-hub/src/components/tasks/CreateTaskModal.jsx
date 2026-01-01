@@ -49,7 +49,22 @@ const CreateTaskModal = ({ isOpen, onClose, onTaskCreated }) => {
             'educational',
             'thought-leadership',
           ],
-          description: 'Choose the tone and structure for your content',
+          description: 'Choose the structure for your content',
+        },
+        {
+          name: 'tone',
+          label: 'Tone',
+          type: 'select',
+          required: true,
+          options: [
+            'professional',
+            'casual',
+            'academic',
+            'inspirational',
+            'authoritative',
+            'friendly',
+          ],
+          description: 'Choose the voice/tone for your content',
         },
         {
           name: 'word_count_tolerance',
