@@ -1,0 +1,203 @@
+/**
+ * TaskTable - Task list table with selection and actions
+ *
+ * Displays:
+ * - Task name, status, type, created date
+ * - Checkbox selection for bulk actions
+ * - Action buttons (view, edit, delete)
+ * - Pagination controls
+ */
+
+import React from 'react';
+import PropTypes from 'prop-types';
+import {
+  Box,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Paper,
+  Checkbox,
+  IconButton,
+  Tooltip,
+  TablePagination,
+  CircularProgress,
+  Chip,
+} from '@mui/material';
+import {
+  Edit as EditIcon,
+  Delete as DeleteIcon,
+  Visibility as ViewIcon,
+} from '@mui/icons-material';
+
+const getStatusColor = (status) => {
+  const colors = {
+    pending: 'warning',
+    in_progress: 'info',
+    completed: 'success',
+    failed: 'error',
+    published: 'success',
+    rejected: 'error',
+  };
+  return colors[status] || 'default';
+};
+
+const TaskTable = ({
+  tasks = [],
+  loading = false,
+  page = 1,
+  limit = 10,
+  total = 0,
+  selectedTasks = [],
+  onSelectTask,
+  onSelectAll,
+  onSelectOne,
+  onPageChange,
+  onRowsPerPageChange,
+  onEditTask,
+  onDeleteTask,
+}) => {
+  if (loading && tasks.length === 0) {
+    return (
+      <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}>
+        <CircularProgress />
+      </Box>
+    );
+  }
+
+  const isAllSelected =
+    tasks.length > 0 && selectedTasks.length === tasks.length;
+  const isIndeterminate =
+    selectedTasks.length > 0 && selectedTasks.length < tasks.length;
+
+  return (
+    <Box>
+      <TableContainer component={Paper} sx={{ mb: 2 }}>
+        <Table>
+          <TableHead>
+            <TableRow sx={{ backgroundColor: 'rgba(0, 217, 255, 0.1)' }}>
+              <TableCell padding="checkbox">
+                <Checkbox
+                  indeterminate={isIndeterminate}
+                  checked={isAllSelected}
+                  onChange={(e) => onSelectAll(e.target.checked)}
+                />
+              </TableCell>
+              <TableCell>Name</TableCell>
+              <TableCell>Type</TableCell>
+              <TableCell>Status</TableCell>
+              <TableCell>Created</TableCell>
+              <TableCell align="right">Actions</TableCell>
+            </TableRow>
+          </TableHead>
+          <TableBody>
+            {tasks.map((task) => (
+              <TableRow
+                key={task.id}
+                selected={selectedTasks.includes(task.id)}
+                hover
+              >
+                <TableCell padding="checkbox">
+                  <Checkbox
+                    checked={selectedTasks.includes(task.id)}
+                    onChange={(e) => onSelectOne(task.id, e.target.checked)}
+                  />
+                </TableCell>
+                <TableCell>
+                  <Tooltip title={task.name || 'Untitled'}>
+                    <span>{(task.name || 'Untitled').substring(0, 40)}</span>
+                  </Tooltip>
+                </TableCell>
+                <TableCell>
+                  <Chip
+                    label={task.task_type || 'unknown'}
+                    size="small"
+                    variant="outlined"
+                  />
+                </TableCell>
+                <TableCell>
+                  <Chip
+                    label={task.status || 'unknown'}
+                    size="small"
+                    color={getStatusColor(task.status)}
+                    variant="filled"
+                  />
+                </TableCell>
+                <TableCell>
+                  {new Date(task.created_at).toLocaleDateString()} at{' '}
+                  {new Date(task.created_at).toLocaleTimeString()}
+                </TableCell>
+                <TableCell align="right">
+                  <Tooltip title="View Details">
+                    <IconButton size="small" onClick={() => onSelectTask(task)}>
+                      <ViewIcon fontSize="small" />
+                    </IconButton>
+                  </Tooltip>
+                  <Tooltip title="Edit">
+                    <IconButton size="small" onClick={() => onEditTask(task)}>
+                      <EditIcon fontSize="small" />
+                    </IconButton>
+                  </Tooltip>
+                  <Tooltip title="Delete">
+                    <IconButton
+                      size="small"
+                      color="error"
+                      onClick={() => onDeleteTask(task.id)}
+                    >
+                      <DeleteIcon fontSize="small" />
+                    </IconButton>
+                  </Tooltip>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </TableContainer>
+
+      {/* Pagination Controls */}
+      {total > limit && (
+        <Box sx={{ display: 'flex', justifyContent: 'center' }}>
+          <TablePagination
+            component="div"
+            count={total}
+            page={page - 1}
+            onPageChange={(e, newPage) => onPageChange(newPage + 1)}
+            rowsPerPage={limit}
+            onRowsPerPageChange={(e) =>
+              onRowsPerPageChange(parseInt(e.target.value, 10))
+            }
+            rowsPerPageOptions={[10, 25, 50]}
+          />
+        </Box>
+      )}
+    </Box>
+  );
+};
+
+TaskTable.propTypes = {
+  tasks: PropTypes.arrayOf(
+    PropTypes.shape({
+      id: PropTypes.string.isRequired,
+      name: PropTypes.string,
+      task_type: PropTypes.string,
+      status: PropTypes.string,
+      created_at: PropTypes.string,
+    })
+  ),
+  loading: PropTypes.bool,
+  page: PropTypes.number,
+  limit: PropTypes.number,
+  total: PropTypes.number,
+  selectedTasks: PropTypes.arrayOf(PropTypes.string),
+  onSelectTask: PropTypes.func.isRequired,
+  onSelectAll: PropTypes.func.isRequired,
+  onSelectOne: PropTypes.func.isRequired,
+  onPageChange: PropTypes.func.isRequired,
+  onRowsPerPageChange: PropTypes.func.isRequired,
+  onEditTask: PropTypes.func.isRequired,
+  onDeleteTask: PropTypes.func.isRequired,
+};
+
+export default TaskTable;
