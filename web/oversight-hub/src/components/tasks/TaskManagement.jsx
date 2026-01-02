@@ -401,7 +401,7 @@ const TaskManagement = () => {
       {/* Create Task Modal */}
       {showCreateModal && (
         <CreateTaskModal
-          open={showCreateModal}
+          isOpen={showCreateModal}
           onClose={() => {
             setShowCreateModal(false);
             fetchTasks();

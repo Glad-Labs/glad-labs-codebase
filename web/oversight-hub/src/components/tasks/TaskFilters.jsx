@@ -72,13 +72,16 @@ const TaskFilters = ({
               ? 'All Statuses'
               : value.charAt(0).toUpperCase() + value.slice(1).replace('_', ' ')
           }
-          sx={{
-            ...compactSelect,
-            '& .MuiOutlinedInput-input:not(:placeholder-shown) ~ .MuiOutlinedInput-notchedOutline':
-              {
-                top: 0,
+          MenuProps={{
+            disableScrollLock: true,
+            PaperProps: {
+              sx: {
+                maxHeight: 300,
+                marginTop: '4px',
               },
+            },
           }}
+          sx={compactSelect}
         >
           <MenuItem value="">All Statuses</MenuItem>
           <MenuItem value="pending">Pending</MenuItem>
