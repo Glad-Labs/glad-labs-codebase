@@ -88,9 +88,10 @@ async function hmacSha256Sign(message, secret) {
       binaryString += String.fromCharCode(signatureArray[i]);
     }
     return base64UrlEncode(binaryString);
-  } catch (error) {
-    console.error('Error signing JWT:', error);
-    throw error;
+  } catch (_error) {
+    // eslint-disable-next-line no-console
+    console.error('Error signing JWT:', _error);
+    throw _error;
   }
 }
 
@@ -113,6 +114,7 @@ export const decodeJWTToken = (token) => {
     // JWT format: header.payload.signature
     const parts = token.split('.');
     if (parts.length !== 3) {
+      // eslint-disable-next-line no-console
       console.warn('Invalid JWT format: expected 3 parts');
       return null;
     }
@@ -124,8 +126,9 @@ export const decodeJWTToken = (token) => {
     );
 
     return JSON.parse(payloadDecoded);
-  } catch (error) {
-    console.error('Error decoding JWT token:', error);
+  } catch (_error) {
+    // eslint-disable-next-line no-console
+    console.error('Error decoding JWT token:', _error);
     return null;
   }
 };
@@ -144,7 +147,7 @@ export const isTokenExpired = (token) => {
 
     const now = Math.floor(Date.now() / 1000);
     return payload.exp < now;
-  } catch (error) {
+  } catch {
     return true;
   }
 };
@@ -164,7 +167,7 @@ export const getTokenTimeRemaining = (token) => {
     const now = Math.floor(Date.now() / 1000);
     const remaining = payload.exp - now;
     return Math.max(0, remaining);
-  } catch (error) {
+  } catch {
     return 0;
   }
 };

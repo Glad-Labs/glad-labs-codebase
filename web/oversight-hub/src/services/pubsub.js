@@ -1,4 +1,5 @@
 export const sendIntervention = async () => {
+  // eslint-disable-next-line no-console
   console.log('Intervention button clicked...');
   try {
     // Re-implementing the fetch call to the Strapi backend.
@@ -21,7 +22,8 @@ export const sendIntervention = async () => {
       );
     }
   } catch (error) {
+    // eslint-disable-next-line no-console
     console.error('Failed to send intervention signal:', error);
     alert(`Failed to send intervention signal: ${error.message}`);
   }
-};
+};;

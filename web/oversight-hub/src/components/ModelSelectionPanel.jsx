@@ -32,6 +32,7 @@ import {
   Star as QualityIcon,
   Info as InfoIcon,
 } from '@mui/icons-material';
+import { modelService } from '../services/modelService';
 
 const PHASES = ['research', 'outline', 'draft', 'assess', 'refine', 'finalize'];
 const PHASE_NAMES = {
@@ -168,12 +169,14 @@ export function ModelSelectionPanel({
   // Load available models on mount
   useEffect(() => {
     fetchAvailableModels();
+    // fetchAvailableModels is defined in the component, so it's stable
+     
   }, []);
 
   // Update cost estimates when selections change
   useEffect(() => {
     estimateCosts();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+     
   }, [modelSelections, qualityPreference]);
 
   // Notify parent of changes
@@ -187,56 +190,99 @@ export function ModelSelectionPanel({
         combinedCost: totalCost + totalElectricityCost,
       });
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+     
   }, [modelSelections, qualityPreference, totalCost, totalElectricityCost]);
 
   const fetchAvailableModels = async () => {
     try {
-      // Fetch actual Ollama models from the local Ollama instance
-      const { getOllamaModels } = await import('../services/ollamaService');
-      const ollamaData = await getOllamaModels();
+      // First, try to fetch from unified API (includes all providers)
+      const models = await modelService.getAvailableModels(true); // Force refresh
 
-      if (!ollamaData || ollamaData.length === 0) {
-        console.warn('Ollama API not available, using default models');
-        setPhaseModels(getDefaultPhaseModels());
+      if (!models || models.length === 0) {
+        // Fall back to Ollama-only if API returns nothing
+        const { getOllamaModels } = await import('../services/ollamaService');
+        const ollamaData = await getOllamaModels();
+
+        if (!ollamaData || ollamaData.length === 0) {
+          console.warn('No models available, using defaults');
+          setPhaseModels(getDefaultPhaseModels());
+          setError('No models available - using defaults');
+          return;
+        }
+
+        const ollamaModels = (ollamaData || []).map((model) => ({
+          id: model.name,
+          name: formatOllamaModelName(model.name),
+          cost: 0,
+        }));
+
+        const updatedModels = { ...AVAILABLE_MODELS };
+        updatedModels.ollama.models = ollamaModels;
+
+        const modelsForAllPhases = {
+          research: updatedModels,
+          outline: updatedModels,
+          draft: updatedModels,
+          assess: updatedModels,
+          refine: updatedModels,
+          finalize: updatedModels,
+        };
+
+        setPhaseModels(modelsForAllPhases);
+        setError(null);
         return;
       }
 
-      // Process Ollama models
-      const ollamaModels = (ollamaData || []).map((model) => ({
-        id: model.name, // Use the full model name including tag (e.g., "mistral:latest")
-        name: formatOllamaModelName(model.name),
-        cost: 0, // Ollama models running locally are free
-      }));
+      // Group models by provider
+      const grouped = modelService.groupModelsByProvider(models);
 
-      // Update AVAILABLE_MODELS with actual Ollama models
-      const updatedModels = { ...AVAILABLE_MODELS };
-      updatedModels.ollama.models = ollamaModels;
+      // Convert grouped models to phase models format
+      const formattedModels = {
+        ollama: { name: 'Ollama (Local)', models: [] },
+        gpt: { name: 'OpenAI', models: [] },
+        claude: { name: 'Anthropic', models: [] },
+        google: { name: 'Google', models: [] },
+      };
 
-      // Build phaseModels from updated AVAILABLE_MODELS - all providers available for all phases
+      // Map grouped models to formatted structure
+      Object.entries(grouped).forEach(([provider, providerModels]) => {
+        let targetKey = provider;
+        if (provider === 'openai') targetKey = 'gpt';
+        if (provider === 'anthropic') targetKey = 'claude';
+
+        formattedModels[targetKey].models = providerModels.map((model) => ({
+          id: modelService.getModelValue(model),
+          name:
+            model.displayName ||
+            modelService.formatModelDisplayName(model.name),
+          cost: model.isFree ? 0 : 0.01, // Rough estimate for paid models
+        }));
+      });
+
+      // Build phase models with all providers available for all phases
       const modelsForAllPhases = {
-        research: updatedModels,
-        outline: updatedModels,
-        draft: updatedModels,
-        assess: updatedModels,
-        refine: updatedModels,
-        finalize: updatedModels,
+        research: formattedModels,
+        outline: formattedModels,
+        draft: formattedModels,
+        assess: formattedModels,
+        refine: formattedModels,
+        finalize: formattedModels,
       };
 
       setPhaseModels(modelsForAllPhases);
       setError(null);
 
-      console.log(
-        '✅ Loaded Ollama models:',
-        ollamaModels.map((m) => m.name)
-      );
+      console.log('✅ Loaded models from unified API:', {
+        total: models.length,
+        grouped,
+      });
     } catch (err) {
-      console.error('Error fetching Ollama models:', err);
+      console.error('Error fetching models:', err);
       console.warn('Falling back to default models');
 
-      // Fall back to default models if Ollama is not available
+      // Fall back to default models
       setPhaseModels(getDefaultPhaseModels());
-      setError('Ollama not available - using default model list');
+      setError('Using default models - API unavailable');
     }
   };
 

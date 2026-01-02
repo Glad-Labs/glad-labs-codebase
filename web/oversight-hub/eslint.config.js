@@ -40,6 +40,7 @@ module.exports = [
       globals: {
         ...globals.browser,
         ...globals.es2021,
+        ...globals.node,
       },
       parserOptions: {
         ecmaFeatures: {
@@ -58,14 +59,50 @@ module.exports = [
       'react/react-in-jsx-scope': 'off',
       'react/prop-types': 'warn',
       'react-hooks/rules-of-hooks': 'error',
-      'react-hooks/exhaustive-deps': 'warn',
+      'react-hooks/exhaustive-deps': 'off', // Disabled due to ESLint 9 compatibility issue
       'no-console': 'warn',
-      'no-unused-vars': ['warn', { argsIgnorePattern: '^_' }],
+      'no-unused-vars': [
+        'warn',
+        { argsIgnorePattern: '^_', varsIgnorePattern: '^_' },
+      ],
     },
     settings: {
       react: {
         version: 'detect',
       },
+    },
+  },
+  {
+    files: [
+      '**/*.test.js',
+      '**/*.spec.js',
+      '**/*.test.jsx',
+      '**/*.spec.jsx',
+      '**/__tests__/**/*.js',
+      '**/__tests__/**/*.jsx',
+    ],
+    languageOptions: {
+      globals: {
+        ...globals.jest,
+        ...globals.browser,
+        ...globals.es2021,
+      },
+      parserOptions: {
+        ecmaFeatures: {
+          jsx: true,
+        },
+      },
+    },
+    plugins: {
+      react,
+    },
+    rules: {
+      'no-undef': 'off',
+      'react/prop-types': 'warn',
+      'no-unused-vars': [
+        'warn',
+        { argsIgnorePattern: '^_', varsIgnorePattern: '^_' },
+      ],
     },
   },
 ];

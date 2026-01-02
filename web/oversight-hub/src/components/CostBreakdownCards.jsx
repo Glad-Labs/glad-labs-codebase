@@ -10,12 +10,28 @@
  *
  * Used in: ExecutiveDashboard, CostMetricsDashboard
  * Data source: analytics/kpis endpoint or dedicated cost endpoints
+ * 
+ * Props:
+ *  - costByPhase (object): { phase: cost }
+ *  - costByModel (object): { model: cost }
  */
 
 import React from 'react';
-import './CostBreakdownCards.css';
+import PropTypes from 'prop-types';
+import {
+  Box,
+  Card,
+  CardContent,
+  Typography,
+  Grid,
+  LinearProgress,
+  useTheme,
+} from '@mui/material';
+import { getPhaseColor, getModelColor } from '../lib/muiStyles';
 
 const CostBreakdownCards = ({ costByPhase = {}, costByModel = {} }) => {
+  const theme = useTheme();
+
   // Calculate totals and percentages for phases
   const totalPhase = Object.values(costByPhase).reduce(
     (sum, val) => sum + (val || 0),
@@ -24,6 +40,7 @@ const CostBreakdownCards = ({ costByPhase = {}, costByModel = {} }) => {
   const phaseItems = Object.entries(costByPhase)
     .map(([phase, cost]) => ({
       phase: phase.charAt(0).toUpperCase() + phase.slice(1),
+      lowerPhase: phase.toLowerCase(),
       cost,
       percentage: totalPhase > 0 ? ((cost / totalPhase) * 100).toFixed(1) : 0,
     }))
@@ -38,158 +55,372 @@ const CostBreakdownCards = ({ costByPhase = {}, costByModel = {} }) => {
   const modelItems = Object.entries(costByModel)
     .map(([model, cost]) => ({
       model: model.charAt(0).toUpperCase() + model.slice(1),
+      lowerModel: model.toLowerCase(),
       cost,
       percentage: totalModel > 0 ? ((cost / totalModel) * 100).toFixed(1) : 0,
     }))
     .filter((item) => item.cost > 0)
     .sort((a, b) => b.cost - a.cost);
 
-  // Color mapping for phases
-  const phaseColors = {
-    research: '#3498db',
-    draft: '#e74c3c',
-    assess: '#f39c12',
-    refine: '#27ae60',
-    finalize: '#9b59b6',
-    other: '#95a5a6',
-  };
-
-  // Color mapping for models
-  const modelColors = {
-    ollama: '#27ae60',
-    'gpt-3.5': '#3498db',
-    'gpt-4': '#e74c3c',
-    claude: '#f39c12',
-  };
-
-  const getPhaseColor = (phase) =>
-    phaseColors[phase.toLowerCase()] || '#95a5a6';
-  const getModelColor = (model) =>
-    modelColors[model.toLowerCase()] || '#95a5a6';
-
   if (
     Object.keys(costByPhase).length === 0 &&
     Object.keys(costByModel).length === 0
   ) {
     return (
-      <div className="cost-breakdown-empty">
-        <p>No cost data available</p>
-      </div>
+      <Box
+        sx={{
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          py: 5,
+          px: 2,
+          color: theme.palette.text.secondary,
+        }}
+      >
+        <Typography variant="body1">No cost data available</Typography>
+      </Box>
     );
   }
 
   return (
-    <div className="cost-breakdown-section">
-      <h2>Cost Breakdown Analysis</h2>
+    <Box sx={{ width: '100%' }}>
+      <Typography
+        variant="h5"
+        sx={{
+          mb: 3,
+          fontWeight: 'bold',
+          color: theme.palette.text.primary,
+        }}
+      >
+        💰 Cost Breakdown Analysis
+      </Typography>
 
-      <div className="breakdown-grid">
+      <Grid
+        container
+        spacing={3}
+        sx={{
+          mb: 3,
+        }}
+      >
         {/* Cost by Phase */}
         {phaseItems.length > 0 && (
-          <div className="breakdown-card phase-card">
-            <div className="card-header">
-              <h3>💰 By Pipeline Phase</h3>
-              <div className="card-total">${totalPhase.toFixed(6)}</div>
-            </div>
+          <Grid item xs={12} sm={6}>
+            <Card
+              sx={{
+                backgroundColor: theme.palette.background.paper,
+                height: '100%',
+                display: 'flex',
+                flexDirection: 'column',
+              }}
+            >
+              <CardContent sx={{ flexGrow: 1 }}>
+                <Box
+                  sx={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    mb: 2,
+                  }}
+                >
+                  <Typography variant="h6" sx={{ fontWeight: 'bold' }}>
+                    By Pipeline Phase
+                  </Typography>
+                  <Typography
+                    variant="h6"
+                    sx={{
+                      color: getPhaseColor('research'),
+                      fontWeight: 'bold',
+                    }}
+                  >
+                    ${totalPhase.toFixed(6)}
+                  </Typography>
+                </Box>
 
-            <div className="breakdown-list">
-              {phaseItems.map((item) => (
-                <div key={item.phase} className="breakdown-item">
-                  <div className="item-header">
-                    <div className="item-label">
-                      <div
-                        className="color-indicator"
-                        style={{ backgroundColor: getPhaseColor(item.phase) }}
+                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                  {phaseItems.map((item) => (
+                    <Box key={item.lowerPhase}>
+                      <Box
+                        sx={{
+                          display: 'flex',
+                          justifyContent: 'space-between',
+                          alignItems: 'center',
+                          mb: 0.5,
+                        }}
+                      >
+                        <Box
+                          sx={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: 1,
+                          }}
+                        >
+                          <Box
+                            sx={{
+                              width: 8,
+                              height: 8,
+                              borderRadius: '50%',
+                              backgroundColor: getPhaseColor(item.lowerPhase),
+                            }}
+                          />
+                          <Typography variant="body2">{item.phase}</Typography>
+                        </Box>
+                        <Box
+                          sx={{
+                            display: 'flex',
+                            gap: 1,
+                            alignItems: 'center',
+                          }}
+                        >
+                          <Typography
+                            variant="body2"
+                            sx={{
+                              color: theme.palette.text.secondary,
+                              minWidth: '40px',
+                              textAlign: 'right',
+                            }}
+                          >
+                            {item.percentage}%
+                          </Typography>
+                          <Typography
+                            variant="body2"
+                            sx={{
+                              fontWeight: 'bold',
+                              minWidth: '80px',
+                              textAlign: 'right',
+                            }}
+                          >
+                            ${item.cost.toFixed(6)}
+                          </Typography>
+                        </Box>
+                      </Box>
+                      <LinearProgress
+                        variant="determinate"
+                        value={item.percentage}
+                        sx={{
+                          backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                          '& .MuiLinearProgress-bar': {
+                            backgroundColor: getPhaseColor(item.lowerPhase),
+                          },
+                        }}
                       />
-                      <span className="label-text">{item.phase}</span>
-                    </div>
-                    <div className="item-value">
-                      <span className="percentage">{item.percentage}%</span>
-                      <span className="cost">${item.cost.toFixed(6)}</span>
-                    </div>
-                  </div>
-                  <div className="progress-bar">
-                    <div
-                      className="progress-fill"
-                      style={{
-                        width: `${item.percentage}%`,
-                        backgroundColor: getPhaseColor(item.phase),
-                      }}
-                    />
-                  </div>
-                </div>
-              ))}
-            </div>
+                    </Box>
+                  ))}
+                </Box>
 
-            <div className="breakdown-note">
-              Cost calculation based on phase token estimates and model pricing
-            </div>
-          </div>
+                <Typography
+                  variant="caption"
+                  sx={{
+                    display: 'block',
+                    mt: 2,
+                    color: theme.palette.text.secondary,
+                  }}
+                >
+                  Cost calculation based on phase token estimates and model
+                  pricing
+                </Typography>
+              </CardContent>
+            </Card>
+          </Grid>
         )}
 
         {/* Cost by Model */}
         {modelItems.length > 0 && (
-          <div className="breakdown-card model-card">
-            <div className="card-header">
-              <h3>🤖 By AI Model</h3>
-              <div className="card-total">${totalModel.toFixed(6)}</div>
-            </div>
+          <Grid item xs={12} sm={6}>
+            <Card
+              sx={{
+                backgroundColor: theme.palette.background.paper,
+                height: '100%',
+                display: 'flex',
+                flexDirection: 'column',
+              }}
+            >
+              <CardContent sx={{ flexGrow: 1 }}>
+                <Box
+                  sx={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    mb: 2,
+                  }}
+                >
+                  <Typography variant="h6" sx={{ fontWeight: 'bold' }}>
+                    By AI Model
+                  </Typography>
+                  <Typography
+                    variant="h6"
+                    sx={{
+                      color: getModelColor('ollama'),
+                      fontWeight: 'bold',
+                    }}
+                  >
+                    ${totalModel.toFixed(6)}
+                  </Typography>
+                </Box>
 
-            <div className="breakdown-list">
-              {modelItems.map((item) => (
-                <div key={item.model} className="breakdown-item">
-                  <div className="item-header">
-                    <div className="item-label">
-                      <div
-                        className="color-indicator"
-                        style={{ backgroundColor: getModelColor(item.model) }}
+                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                  {modelItems.map((item) => (
+                    <Box key={item.lowerModel}>
+                      <Box
+                        sx={{
+                          display: 'flex',
+                          justifyContent: 'space-between',
+                          alignItems: 'center',
+                          mb: 0.5,
+                        }}
+                      >
+                        <Box
+                          sx={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: 1,
+                          }}
+                        >
+                          <Box
+                            sx={{
+                              width: 8,
+                              height: 8,
+                              borderRadius: '50%',
+                              backgroundColor: getModelColor(item.lowerModel),
+                            }}
+                          />
+                          <Typography variant="body2">{item.model}</Typography>
+                        </Box>
+                        <Box
+                          sx={{
+                            display: 'flex',
+                            gap: 1,
+                            alignItems: 'center',
+                          }}
+                        >
+                          <Typography
+                            variant="body2"
+                            sx={{
+                              color: theme.palette.text.secondary,
+                              minWidth: '40px',
+                              textAlign: 'right',
+                            }}
+                          >
+                            {item.percentage}%
+                          </Typography>
+                          <Typography
+                            variant="body2"
+                            sx={{
+                              fontWeight: 'bold',
+                              minWidth: '80px',
+                              textAlign: 'right',
+                            }}
+                          >
+                            ${item.cost.toFixed(6)}
+                          </Typography>
+                        </Box>
+                      </Box>
+                      <LinearProgress
+                        variant="determinate"
+                        value={item.percentage}
+                        sx={{
+                          backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                          '& .MuiLinearProgress-bar': {
+                            backgroundColor: getModelColor(item.lowerModel),
+                          },
+                        }}
                       />
-                      <span className="label-text">{item.model}</span>
-                    </div>
-                    <div className="item-value">
-                      <span className="percentage">{item.percentage}%</span>
-                      <span className="cost">${item.cost.toFixed(6)}</span>
-                    </div>
-                  </div>
-                  <div className="progress-bar">
-                    <div
-                      className="progress-fill"
-                      style={{
-                        width: `${item.percentage}%`,
-                        backgroundColor: getModelColor(item.model),
-                      }}
-                    />
-                  </div>
-                </div>
-              ))}
-            </div>
+                    </Box>
+                  ))}
+                </Box>
 
-            <div className="breakdown-note">
-              Pricing: Ollama free | GPT-3.5 $0.00175/1K | GPT-4 $0.045/1K |
-              Claude $0.015-$0.045/1K
-            </div>
-          </div>
+                <Typography
+                  variant="caption"
+                  sx={{
+                    display: 'block',
+                    mt: 2,
+                    color: theme.palette.text.secondary,
+                  }}
+                >
+                  Pricing: Ollama free | GPT-3.5 $0.00175/1K | GPT-4
+                  $0.045/1K | Claude $0.015-$0.045/1K
+                </Typography>
+              </CardContent>
+            </Card>
+          </Grid>
         )}
-      </div>
+      </Grid>
 
       {/* Cost Summary Stats */}
-      <div className="cost-summary">
-        <div className="summary-stat">
-          <span className="stat-label">Total Phase Cost:</span>
-          <span className="stat-value">${totalPhase.toFixed(6)}</span>
-        </div>
-        <div className="summary-stat">
-          <span className="stat-label">Total Model Cost:</span>
-          <span className="stat-value">${totalModel.toFixed(6)}</span>
-        </div>
-        <div className="summary-stat">
-          <span className="stat-label">Combined Cost:</span>
-          <span className="stat-value">
-            ${(totalPhase + totalModel).toFixed(6)}
-          </span>
-        </div>
-      </div>
-    </div>
+      <Grid container spacing={2}>
+        <Grid item xs={12} sm={4}>
+          <Card sx={{ backgroundColor: theme.palette.background.paper }}>
+            <CardContent>
+              <Typography
+                variant="body2"
+                sx={{ color: theme.palette.text.secondary }}
+              >
+                Total Phase Cost
+              </Typography>
+              <Typography
+                variant="h6"
+                sx={{
+                  fontWeight: 'bold',
+                  color: getPhaseColor('research'),
+                  mt: 1,
+                }}
+              >
+                ${totalPhase.toFixed(6)}
+              </Typography>
+            </CardContent>
+          </Card>
+        </Grid>
+        <Grid item xs={12} sm={4}>
+          <Card sx={{ backgroundColor: theme.palette.background.paper }}>
+            <CardContent>
+              <Typography
+                variant="body2"
+                sx={{ color: theme.palette.text.secondary }}
+              >
+                Total Model Cost
+              </Typography>
+              <Typography
+                variant="h6"
+                sx={{
+                  fontWeight: 'bold',
+                  color: getModelColor('ollama'),
+                  mt: 1,
+                }}
+              >
+                ${totalModel.toFixed(6)}
+              </Typography>
+            </CardContent>
+          </Card>
+        </Grid>
+        <Grid item xs={12} sm={4}>
+          <Card sx={{ backgroundColor: theme.palette.background.paper }}>
+            <CardContent>
+              <Typography
+                variant="body2"
+                sx={{ color: theme.palette.text.secondary }}
+              >
+                Combined Cost
+              </Typography>
+              <Typography
+                variant="h6"
+                sx={{
+                  fontWeight: 'bold',
+                  color: theme.palette.primary.main,
+                  mt: 1,
+                }}
+              >
+                ${(totalPhase + totalModel).toFixed(6)}
+              </Typography>
+            </CardContent>
+          </Card>
+        </Grid>
+      </Grid>
+    </Box>
   );
+};
+
+CostBreakdownCards.propTypes = {
+  costByPhase: PropTypes.objectOf(PropTypes.number),
+  costByModel: PropTypes.objectOf(PropTypes.number),
 };
 
 export default CostBreakdownCards;

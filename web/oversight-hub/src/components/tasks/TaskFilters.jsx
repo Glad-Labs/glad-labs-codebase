@@ -19,6 +19,7 @@ import {
   InputLabel,
 } from '@mui/material';
 import { Clear as ClearIcon } from '@mui/icons-material';
+import { filterBox, button, compactSelect } from '../../lib/muiStyles';
 
 const TaskFilters = ({
   sortBy = 'created_at',
@@ -30,24 +31,14 @@ const TaskFilters = ({
   onResetFilters,
 }) => {
   return (
-    <Box
-      sx={{
-        display: 'flex',
-        gap: 2,
-        mb: 2,
-        p: 2,
-        backgroundColor: 'rgba(0, 217, 255, 0.03)',
-        borderRadius: 1,
-        flexWrap: 'wrap',
-        alignItems: 'center',
-      }}
-    >
+    <Box sx={filterBox}>
       <FormControl size="small" sx={{ minWidth: 150 }}>
         <InputLabel>Sort By</InputLabel>
         <Select
           value={sortBy}
           onChange={(e) => onSortChange(e.target.value)}
           label="Sort By"
+          sx={compactSelect}
         >
           <MenuItem value="created_at">Created Date</MenuItem>
           <MenuItem value="status">Status</MenuItem>
@@ -62,6 +53,7 @@ const TaskFilters = ({
           value={sortDirection}
           onChange={(e) => onDirectionChange(e.target.value)}
           label="Direction"
+          sx={compactSelect}
         >
           <MenuItem value="asc">Ascending</MenuItem>
           <MenuItem value="desc">Descending</MenuItem>
@@ -74,6 +66,19 @@ const TaskFilters = ({
           value={statusFilter}
           onChange={(e) => onStatusChange(e.target.value)}
           label="Status"
+          displayEmpty
+          renderValue={(value) =>
+            value === ''
+              ? 'All Statuses'
+              : value.charAt(0).toUpperCase() + value.slice(1).replace('_', ' ')
+          }
+          sx={{
+            ...compactSelect,
+            '& .MuiOutlinedInput-input:not(:placeholder-shown) ~ .MuiOutlinedInput-notchedOutline':
+              {
+                top: 0,
+              },
+          }}
         >
           <MenuItem value="">All Statuses</MenuItem>
           <MenuItem value="pending">Pending</MenuItem>
@@ -89,7 +94,7 @@ const TaskFilters = ({
         size="small"
         startIcon={<ClearIcon />}
         onClick={onResetFilters}
-        sx={{ ml: 'auto' }}
+        sx={button.reset}
       >
         Reset
       </Button>

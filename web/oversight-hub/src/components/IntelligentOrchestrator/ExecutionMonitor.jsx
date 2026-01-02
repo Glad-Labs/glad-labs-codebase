@@ -11,6 +11,7 @@
  */
 
 import React, { useEffect, useState } from 'react';
+import PropTypes from 'prop-types';
 
 function ExecutionMonitor({ taskId, phase, progress, status, request }) {
   const [phaseHistory, setPhaseHistory] = useState([]);
@@ -20,8 +21,7 @@ function ExecutionMonitor({ taskId, phase, progress, status, request }) {
     if (phase && !phaseHistory.includes(phase)) {
       setPhaseHistory((prev) => [...prev, phase]);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [phase]);
+  }, [phase, phaseHistory]);
 
   const phases = [
     { id: 'planning', name: 'Planning', icon: '📋' },
@@ -182,5 +182,27 @@ function ExecutionMonitor({ taskId, phase, progress, status, request }) {
     </div>
   );
 }
+
+ExecutionMonitor.propTypes = {
+  taskId: PropTypes.string.isRequired,
+  phase: PropTypes.oneOf(['planning', 'execution', 'evaluation', 'refinement']),
+  progress: PropTypes.number,
+  status: PropTypes.oneOf([
+    'processing',
+    'pending_approval',
+    'approved',
+    'publishing',
+    'completed',
+    'failed',
+  ]),
+  request: PropTypes.string,
+};
+
+ExecutionMonitor.defaultProps = {
+  phase: 'planning',
+  progress: 0,
+  status: 'processing',
+  request: '',
+};
 
 export default ExecutionMonitor;

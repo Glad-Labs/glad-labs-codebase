@@ -179,7 +179,7 @@ const useStore = create(
           };
         }),
 
-      completeExecution: (result) =>
+      completeExecution: (_result) =>
         set((state) => {
           const completedExecution = {
             ...state.orchestrator.currentExecution,

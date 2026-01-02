@@ -206,6 +206,129 @@ class ModelService {
       },
     };
   }
+
+  /**
+   * Group models by provider for UI display
+   * @param {Array} models - Array of model objects
+   * @returns {Object} Grouped models {ollama: [...], openai: [...], anthropic: [...], google: [...]}
+   */
+  groupModelsByProvider(models = null) {
+    const modelsToGroup = models || this.models;
+    const grouped = {
+      ollama: [],
+      openai: [],
+      anthropic: [],
+      google: [],
+      huggingface: [],
+      gemini: [],
+    };
+
+    modelsToGroup.forEach((model) => {
+      const provider = (model.provider || 'ollama').toLowerCase();
+
+      // Map common provider names to our keys
+      const providerMap = {
+        openai: 'openai',
+        gpt: 'openai',
+        anthropic: 'anthropic',
+        claude: 'anthropic',
+        google: 'google',
+        gemini: 'google',
+        ollama: 'ollama',
+        huggingface: 'huggingface',
+      };
+
+      const mappedProvider = providerMap[provider] || provider;
+
+      if (Object.prototype.hasOwnProperty.call(grouped, mappedProvider)) {
+        grouped[mappedProvider].push(model);
+      }
+    });
+
+    return grouped;
+  }
+
+  /**
+   * Get display name for a provider
+   * @param {string} provider - Provider identifier
+   * @returns {string} Display name with icon
+   */
+  getProviderDisplayName(provider) {
+    const names = {
+      ollama: '🖥️ Ollama (Local)',
+      openai: '⚡ OpenAI',
+      anthropic: '🧠 Anthropic',
+      google: '☁️ Google',
+      huggingface: '🌐 Hugging Face',
+      gemini: '☁️ Google Gemini',
+    };
+    return names[provider.toLowerCase()] || provider;
+  }
+
+  /**
+   * Get provider icon emoji
+   * @param {string} provider - Provider identifier
+   * @returns {string} Emoji icon
+   */
+  getProviderIcon(provider) {
+    const icons = {
+      ollama: '🖥️',
+      openai: '⚡',
+      anthropic: '🧠',
+      google: '☁️',
+      gemini: '☁️',
+      huggingface: '🌐',
+    };
+    return icons[provider.toLowerCase()] || '🤖';
+  }
+
+  /**
+   * Format model name for display
+   * @param {string} modelName - Model name from API
+   * @returns {string} Formatted display name
+   */
+  formatModelDisplayName(modelName) {
+    if (!modelName) return 'Unknown';
+
+    // Remove version tags like ":latest", ":7b", etc.
+    let cleaned = modelName.split(':')[0];
+
+    // Capitalize first letter of each word
+    cleaned = cleaned
+      .split(/[-_]/)
+      .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(' ');
+
+    return cleaned;
+  }
+
+  /**
+   * Get model value in "provider-model" format
+   * @param {Object} model - Model object or string
+   * @returns {string} Value (e.g., "ollama-mistral")
+   */
+  getModelValue(model) {
+    if (typeof model === 'string') return model;
+    const provider = (model.provider || 'ollama').toLowerCase();
+    const name = model.name || model.id || 'default';
+    return `${provider}-${name}`;
+  }
+
+  /**
+   * Parse model value to extract provider and model name
+   * @param {string} value - Value (e.g., "ollama-mistral" or "mistral")
+   * @returns {Object} {provider: string, model: string}
+   */
+  parseModelValue(value) {
+    if (!value) return { provider: 'ollama', model: 'default' };
+
+    const parts = value.split('-');
+    if (parts.length === 1) {
+      return { provider: 'ollama', model: parts[0] };
+    }
+
+    return { provider: parts[0], model: parts.slice(1).join('-') };
+  }
 }
 
 // Export as singleton

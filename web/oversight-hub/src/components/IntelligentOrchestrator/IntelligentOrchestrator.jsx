@@ -52,7 +52,7 @@ function IntelligentOrchestratorPanel() {
     }, 2000); // Poll every 2 seconds
 
     return () => clearInterval(interval);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+     
   }, [orchestrator.taskId, orchestrator.status]);
 
   const fetchTools = async () => {

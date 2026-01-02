@@ -24,7 +24,7 @@ const ResultPreviewPanel = ({
   const [imageSource, setImageSource] = useState('pexels');
   const [imageGenerationMessage, setImageGenerationMessage] = useState('');
   const [hasGeneratedImage, setHasGeneratedImage] = useState(false);
-  const [isRetrying, setIsRetrying] = useState(false);
+  // const [isRetrying, setIsRetrying] = useState(false);
 
   // Helper function to extract full title from content (e.g., "Title: Best Eats in the Northeast USA: A Culinary Guide")
   const extractTitleFromContent = (content, fallbackTitle) => {
@@ -130,7 +130,7 @@ const ResultPreviewPanel = ({
       return;
     }
 
-    setIsRetrying(isRetry);
+    // setIsRetrying(isRetry);
     setIsGeneratingImage(true);
     setImageGenerationProgress(0);
     setImageGenerationMessage('');
@@ -141,7 +141,7 @@ const ResultPreviewPanel = ({
     let progressInterval = null;
 
     try {
-      const token = getAuthToken();
+      // const token = getAuthToken(); // Token kept for auth if needed later
 
       // Simulate progress updates (faster for Pexels retries)
       progressInterval = setInterval(
@@ -201,14 +201,15 @@ const ResultPreviewPanel = ({
 
       console.log('📸 Generating image with:', requestPayload);
 
-      const { makeRequest } = await import('../../services/cofounderAgentClient');
+      const { makeRequest } =
+        await import('../../services/cofounderAgentClient');
       const result = await makeRequest(
         '/api/media/generate-image',
         'POST',
         requestPayload,
         false,
         null,
-        60000  // 60 second timeout for image generation
+        60000 // 60 second timeout for image generation
       );
 
       if (result.error) {
@@ -226,7 +227,7 @@ const ResultPreviewPanel = ({
         );
         setHasGeneratedImage(true);
         setImageGenerationProgress(100);
-        setIsRetrying(false);
+        // setIsRetrying(false);
         console.log(
           `✅ Featured image ${isRetry ? 'refetched' : 'generated'}:`,
           result
@@ -236,7 +237,7 @@ const ResultPreviewPanel = ({
       }
     } catch (error) {
       console.error('❌ Image generation error:', error);
-      setIsRetrying(false);
+      // setIsRetrying(false);
       setImageGenerationMessage(
         `❌ Failed: ${error.message || 'Unknown error'}`
       );
@@ -454,7 +455,7 @@ const ResultPreviewPanel = ({
 
     try {
       const taskId = task.id || task.task_id;
-      const token = getAuthToken();
+      // const token = getAuthToken(); // Token available if needed for auth
 
       const approvalPayload = {
         approved,
@@ -468,20 +469,19 @@ const ResultPreviewPanel = ({
         ...approvalPayload,
       });
 
-      const { makeRequest } = await import('../../services/cofounderAgentClient');
+      const { makeRequest } =
+        await import('../../services/cofounderAgentClient');
       const result = await makeRequest(
         `/api/content/tasks/${taskId}/approve`,
         'POST',
         approvalPayload,
         false,
         null,
-        30000  // 30 second timeout
+        30000 // 30 second timeout
       );
 
       if (result.error) {
-        throw new Error(
-          result.error || 'Approval failed'
-        );
+        throw new Error(result.error || 'Approval failed');
       }
 
       console.log('✅ Approval submitted:', result);
@@ -1019,6 +1019,6 @@ const ResultPreviewPanel = ({
       </div>
     </div>
   );
-};
+};;
 
 export default ResultPreviewPanel;

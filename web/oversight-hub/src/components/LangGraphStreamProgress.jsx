@@ -1,4 +1,5 @@
 import React from 'react';
+import PropTypes from 'prop-types';
 import {
   Stepper,
   Step,
@@ -171,5 +172,16 @@ function LangGraphStreamProgress({ requestId, onComplete, onError }) {
     </Box>
   );
 }
+
+LangGraphStreamProgress.propTypes = {
+  requestId: PropTypes.string.isRequired,
+  onComplete: PropTypes.func,
+  onError: PropTypes.func,
+};
+
+LangGraphStreamProgress.defaultProps = {
+  onComplete: null,
+  onError: null,
+};
 
 export default LangGraphStreamProgress;

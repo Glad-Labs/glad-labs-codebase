@@ -57,20 +57,44 @@ export const getTask = async (taskId) => {
 };
 
 /**
- * Creates a new task via the backend API
+ * Creates a new task via the Service Layer API
+ *
+ * Routes through unified service backend:
+ * POST /api/services/tasks/actions/create_task
+ *
+ * Supports both:
+ * - Manual creation (CreateTaskModal) → taskService.js → Service Layer
+ * - NLP creation (Agent) → nlp_intent_recognizer → Service Layer
  *
  * @param {object} taskData - Task data to create
  * @returns {Promise<string>} Created task ID
  * @throws {Error} If creation fails
  */
 export const createTask = async (taskData) => {
-  const result = await makeRequest('/api/tasks', 'POST', taskData, false, null, API_TIMEOUT);
+  // Service layer expects action request format: {params, context}
+  const serviceRequest = {
+    params: taskData,
+    context: {
+      source: 'manual_form',
+      timestamp: new Date().toISOString(),
+    },
+  };
+
+  const result = await makeRequest(
+    '/api/services/tasks/actions/create_task',
+    'POST',
+    serviceRequest,
+    false,
+    null,
+    API_TIMEOUT
+  );
 
   if (result.error) {
     throw new Error(`Could not create task: ${result.error}`);
   }
 
-  return result.id || result;
+  // Service layer returns ActionResult with .data property
+  return result.data?.id || result.id || result;
 };
 
 /**

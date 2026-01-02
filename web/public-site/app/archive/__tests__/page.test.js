@@ -11,7 +11,7 @@ jest.mock('next/link', () => {
 jest.mock('next/image', () => ({
   __esModule: true,
   default: (props) => {
-    // eslint-disable-next-line react/no-unknown-property
+     
     return <img {...props} />;
   },
 }));

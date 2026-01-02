@@ -10,6 +10,7 @@
  */
 
 import React, { useState, useEffect } from 'react';
+import PropTypes from 'prop-types';
 import { exportOrchestratorTrainingData } from '../../services/cofounderAgentClient';
 
 function TrainingDataManager({ taskId, onReset }) {
@@ -24,7 +25,6 @@ function TrainingDataManager({ taskId, onReset }) {
     if (taskId) {
       fetchStats();
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [taskId]);
 
   const fetchStats = async () => {
@@ -267,13 +267,18 @@ print(df.describe())`}
         <h4>🔒 Privacy & Security</h4>
         <p>
           Training data is encrypted at rest and can be deleted at any time.
-          This data helps improve the orchestrator's performance for all users.
-          No personally identifiable information is retained unless explicitly
-          provided in your request.
+          This data helps improve the orchestrator&apos;s performance for all
+          users. No personally identifiable information is retained unless
+          explicitly provided in your request.
         </p>
       </div>
     </div>
   );
 }
+
+TrainingDataManager.propTypes = {
+  taskId: PropTypes.string.isRequired,
+  onReset: PropTypes.func.isRequired,
+};
 
 export default TrainingDataManager;

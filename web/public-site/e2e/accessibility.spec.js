@@ -154,39 +154,39 @@ test.describe('Performance & Load Time', () => {
   });
 
   test('should not have console errors', async ({ page }) => {
-    const errors: string[] = [];
-    
+    const errors = [];
+
     page.on('console', (msg) => {
       if (msg.type() === 'error') {
         errors.push(msg.text());
       }
     });
-    
+
     await page.goto('/');
-    
+
     // Should not have critical errors (some warnings ok)
     const criticalErrors = errors.filter(
       (e) => !e.includes('404') && !e.includes('warn')
     );
-    
+
     expect(criticalErrors.length).toBe(0);
   });
 
   test('images should be optimized', async ({ page }) => {
     await page.goto('/');
-    
+
     // Get all image requests
-    const imageRequests: string[] = [];
-    
+    const imageRequests = [];
+
     page.on('request', (request) => {
       if (request.resourceType() === 'image') {
         imageRequests.push(request.url());
       }
     });
-    
+
     // Wait for page to fully load
     await page.waitForLoadState('networkidle');
-    
+
     // Should have images
     expect(imageRequests.length).toBeGreaterThanOrEqual(0);
   });

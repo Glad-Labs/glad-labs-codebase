@@ -31,6 +31,7 @@ import {
   Delete as DeleteIcon,
   Visibility as ViewIcon,
 } from '@mui/icons-material';
+import { tableHeaderRow, loadingContainer } from '../../lib/muiStyles';
 
 const getStatusColor = (status) => {
   const colors = {
@@ -61,7 +62,7 @@ const TaskTable = ({
 }) => {
   if (loading && tasks.length === 0) {
     return (
-      <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}>
+      <Box sx={loadingContainer}>
         <CircularProgress />
       </Box>
     );
@@ -77,7 +78,7 @@ const TaskTable = ({
       <TableContainer component={Paper} sx={{ mb: 2 }}>
         <Table>
           <TableHead>
-            <TableRow sx={{ backgroundColor: 'rgba(0, 217, 255, 0.1)' }}>
+            <TableRow sx={tableHeaderRow}>
               <TableCell padding="checkbox">
                 <Checkbox
                   indeterminate={isIndeterminate}

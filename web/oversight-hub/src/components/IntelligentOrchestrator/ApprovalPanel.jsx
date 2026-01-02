@@ -11,6 +11,7 @@
  */
 
 import React, { useState } from 'react';
+import PropTypes from 'prop-types';
 
 function ApprovalPanel({ taskId, outputs, qualityScore, onApprove, loading }) {
   const [feedback, setFeedback] = useState('');
@@ -204,5 +205,23 @@ function ApprovalPanel({ taskId, outputs, qualityScore, onApprove, loading }) {
     </div>
   );
 }
+
+ApprovalPanel.propTypes = {
+  taskId: PropTypes.string.isRequired,
+  outputs: PropTypes.shape({
+    content: PropTypes.string,
+    images: PropTypes.arrayOf(PropTypes.string),
+    metadata: PropTypes.object,
+  }),
+  qualityScore: PropTypes.number,
+  onApprove: PropTypes.func.isRequired,
+  loading: PropTypes.bool,
+};
+
+ApprovalPanel.defaultProps = {
+  outputs: null,
+  qualityScore: 0,
+  loading: false,
+};
 
 export default ApprovalPanel;

@@ -11,6 +11,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import * as cofounderAgentClient from '../services/cofounderAgentClient';
+import { modelService } from '../services/modelService';
 import '../OversightHub.css';
 
 const LayoutWrapper = ({ children }) => {
@@ -28,9 +29,16 @@ const LayoutWrapper = ({ children }) => {
     parseInt(localStorage.getItem('chatHeight') || '300', 10)
   );
   const [ollamaConnected, setOllamaConnected] = useState(false);
-  const [availableOllamaModels, setAvailableOllamaModels] = useState([]);
-  const [selectedOllamaModel, setSelectedOllamaModel] = useState(null);
+  // const [availableOllamaModels, setAvailableOllamaModels] = useState([]);
+  // const [selectedOllamaModel, setSelectedOllamaModel] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [availableModels, setAvailableModels] = useState([]); // Used in loadModels
+  const [modelsByProvider, setModelsByProvider] = useState({
+    ollama: [],
+    openai: [],
+    anthropic: [],
+    google: [],
+  });
 
   const navigationItems = [
     { label: 'Dashboard', icon: '📊', path: 'dashboard' },
@@ -44,22 +52,23 @@ const LayoutWrapper = ({ children }) => {
     { label: 'Settings', icon: '⚙️', path: 'settings' },
   ];
 
-  const models = [
-    {
-      id: 'ollama-mistral',
-      name: 'Ollama Mistral',
-      icon: '🏠',
-      provider: 'ollama',
-    },
-    { id: 'openai-gpt4', name: 'OpenAI GPT-4', icon: '🔴', provider: 'openai' },
-    {
-      id: 'claude-opus',
-      name: 'Claude Opus',
-      icon: '⭐',
-      provider: 'anthropic',
-    },
-    { id: 'gemini-pro', name: 'Google Gemini', icon: '✨', provider: 'google' },
-  ];
+  // Models list - kept for reference, actual models loaded from API
+  // const models = [
+  //   {
+  //     id: 'ollama-mistral',
+  //     name: 'Ollama Mistral',
+  //     icon: '🏠',
+  //     provider: 'ollama',
+  //   },
+  //   { id: 'openai-gpt4', name: 'OpenAI GPT-4', icon: '🔴', provider: 'openai' },
+  //   {
+  //     id: 'claude-opus',
+  //     name: 'Claude Opus',
+  //     icon: '⭐',
+  //     provider: 'anthropic',
+  //   },
+  //   { id: 'gemini-pro', name: 'Google Gemini', icon: '✨', provider: 'google' },
+  // ];
 
   const agents = [
     {
@@ -89,6 +98,26 @@ const LayoutWrapper = ({ children }) => {
     },
   ];
 
+  // Check Ollama availability on mount
+  useEffect(() => {
+    const checkOllama = async () => {
+      try {
+        const { isOllamaAvailable } = await import('../services/ollamaService');
+        const available = await isOllamaAvailable();
+        setOllamaConnected(available);
+      } catch (error) {
+        console.debug('Error checking Ollama:', error.message);
+        setOllamaConnected(false);
+      }
+    };
+
+    checkOllama();
+
+    // Check every 10 seconds
+    const interval = setInterval(checkOllama, 10000);
+    return () => clearInterval(interval);
+  }, []);
+
   // Auto-scroll chat to bottom
   useEffect(() => {
     if (chatEndRef.current) {
@@ -96,33 +125,32 @@ const LayoutWrapper = ({ children }) => {
     }
   }, [chatMessages]);
 
-  // Initialize Ollama models
+  // Initialize available models from API
   useEffect(() => {
-    const initializeModels = async () => {
+    const loadModels = async () => {
       try {
-        const { getOllamaModels, isOllamaAvailable } = await import(
-          '../services/ollamaService'
-        );
-        const models = await getOllamaModels();
-        const available = await isOllamaAvailable();
+        const models = await modelService.getAvailableModels(true); // Force refresh
+        setAvailableModels(models);
 
-        if (models && models.length > 0) {
-          const modelNames = models.map((m) => m.name);
-          setAvailableOllamaModels(modelNames);
-          setOllamaConnected(available);
-        } else {
-          setAvailableOllamaModels(['llama2', 'mistral']);
-          setOllamaConnected(false);
-        }
+        // Group models by provider
+        const grouped = modelService.groupModelsByProvider(models);
+        setModelsByProvider(grouped);
+
+        console.log('✅ Loaded models from API:', {
+          total: models.length,
+          grouped,
+        });
       } catch (error) {
-        setAvailableOllamaModels(['llama2', 'mistral']);
-        setOllamaConnected(false);
+        console.warn('Error loading models from API:', error);
+        // Fall back to default models
+        const defaults = modelService.getDefaultModels();
+        setAvailableModels(defaults);
+        const grouped = modelService.groupModelsByProvider(defaults);
+        setModelsByProvider(grouped);
       }
-      const savedModel =
-        localStorage.getItem('selectedOllamaModel') || 'mistral';
-      setSelectedOllamaModel(savedModel);
     };
-    initializeModels();
+
+    loadModels();
   }, []);
 
   const handleNavigate = (page) => {
@@ -277,12 +305,75 @@ const LayoutWrapper = ({ children }) => {
             <select
               value={selectedModel}
               onChange={(e) => setSelectedModel(e.target.value)}
+              className="model-selector"
+              title="Select AI Model - Groups: Ollama (Local), OpenAI, Anthropic, Google"
             >
-              {models.map((m) => (
-                <option key={m.id} value={m.id}>
-                  {m.icon} {m.name}
-                </option>
-              ))}
+              <option value="">-- Select Model --</option>
+
+              {/* Ollama Models Group */}
+              {modelsByProvider.ollama &&
+                modelsByProvider.ollama.length > 0 && (
+                  <optgroup label="🖥️  Ollama (Local)">
+                    {modelsByProvider.ollama.map((m) => (
+                      <option
+                        key={modelService.getModelValue(m)}
+                        value={modelService.getModelValue(m)}
+                      >
+                        {modelService.formatModelDisplayName(
+                          m.name || m.displayName
+                        )}
+                      </option>
+                    ))}
+                  </optgroup>
+                )}
+
+              {/* OpenAI Models Group */}
+              {modelsByProvider.openai &&
+                modelsByProvider.openai.length > 0 && (
+                  <optgroup label="⚡ OpenAI">
+                    {modelsByProvider.openai.map((m) => (
+                      <option
+                        key={modelService.getModelValue(m)}
+                        value={modelService.getModelValue(m)}
+                      >
+                        {m.displayName ||
+                          modelService.formatModelDisplayName(m.name)}
+                      </option>
+                    ))}
+                  </optgroup>
+                )}
+
+              {/* Anthropic Models Group */}
+              {modelsByProvider.anthropic &&
+                modelsByProvider.anthropic.length > 0 && (
+                  <optgroup label="🧠 Anthropic">
+                    {modelsByProvider.anthropic.map((m) => (
+                      <option
+                        key={modelService.getModelValue(m)}
+                        value={modelService.getModelValue(m)}
+                      >
+                        {m.displayName ||
+                          modelService.formatModelDisplayName(m.name)}
+                      </option>
+                    ))}
+                  </optgroup>
+                )}
+
+              {/* Google Models Group */}
+              {modelsByProvider.google &&
+                modelsByProvider.google.length > 0 && (
+                  <optgroup label="☁️ Google">
+                    {modelsByProvider.google.map((m) => (
+                      <option
+                        key={modelService.getModelValue(m)}
+                        value={modelService.getModelValue(m)}
+                      >
+                        {m.displayName ||
+                          modelService.formatModelDisplayName(m.name)}
+                      </option>
+                    ))}
+                  </optgroup>
+                )}
             </select>
             {chatMode === 'agent' && (
               <select

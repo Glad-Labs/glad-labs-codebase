@@ -19,6 +19,7 @@ import { Box, Typography, Button, Alert, Tabs, Tab } from '@mui/material';
 import { Add as AddIcon, Refresh as RefreshIcon } from '@mui/icons-material';
 import useAuth from '../../hooks/useAuth';
 import { useTaskData } from '../../hooks/useTaskData';
+import { getStatusColor, hexToRgb } from '../../lib/muiStyles';
 import TaskFilters from './TaskFilters';
 import TaskTable from './TaskTable';
 import TaskActions from './TaskActions';
@@ -235,8 +236,8 @@ const TaskManagement = () => {
           onClose={() => setError(null)}
           sx={{
             mb: 3,
-            backgroundColor: 'rgba(255, 107, 107, 0.1)',
-            border: '1px solid rgba(255, 107, 107, 0.3)',
+            backgroundColor: `rgba(${hexToRgb('#ff6b6b')}, 0.1)`,
+            border: `1px solid rgba(${hexToRgb('#ff6b6b')}, 0.3)`,
             borderRadius: 1.5,
             color: '#ff6b6b',
           }}
@@ -277,24 +278,8 @@ const TaskManagement = () => {
           <Box
             key={stat.label}
             sx={{
-              backgroundColor: `rgba(${
-                stat.color === '#00d4ff'
-                  ? '0, 212, 255'
-                  : stat.color === '#4CAF50'
-                    ? '76, 175, 80'
-                    : stat.color === '#2196F3'
-                      ? '33, 150, 243'
-                      : '244, 67, 54'
-              }, 0.1)`,
-              border: `1px solid rgba(${
-                stat.color === '#00d4ff'
-                  ? '0, 212, 255'
-                  : stat.color === '#4CAF50'
-                    ? '76, 175, 80'
-                    : stat.color === '#2196F3'
-                      ? '33, 150, 243'
-                      : '244, 67, 54'
-              }, 0.3)`,
+              backgroundColor: `rgba(${hexToRgb(stat.color)}, 0.1)`,
+              border: `1px solid rgba(${hexToRgb(stat.color)}, 0.3)`,
               borderRadius: 1,
               p: 2,
               textAlign: 'center',
@@ -320,7 +305,7 @@ const TaskManagement = () => {
           onClick={() => setShowCreateModal(true)}
           sx={{
             textTransform: 'none',
-            backgroundColor: '#00d4ff',
+            backgroundColor: getStatusColor('pending'),
             color: '#000',
             fontWeight: 600,
           }}
@@ -334,8 +319,8 @@ const TaskManagement = () => {
           disabled={isFetching}
           sx={{
             textTransform: 'none',
-            color: '#00d4ff',
-            borderColor: '#00d4ff',
+            color: getStatusColor('pending'),
+            borderColor: getStatusColor('pending'),
             fontWeight: 600,
           }}
         >
