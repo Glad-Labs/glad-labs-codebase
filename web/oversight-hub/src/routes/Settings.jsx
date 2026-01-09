@@ -1,5 +1,7 @@
 import React from 'react';
+import { Container, Stack } from '@mui/material';
 import useStore from '../store/useStore';
+import WritingStyleManager from '../components/WritingStyleManager';
 import './Settings.css';
 
 function Settings() {
@@ -25,6 +27,11 @@ function Settings() {
         <h1 className="dashboard-title">Settings</h1>
         <p className="dashboard-subtitle">Customize your experience</p>
       </div>
+
+      {/* Writing Style Manager */}
+      <Container maxWidth="md" sx={{ py: 3 }}>
+        <WritingStyleManager />
+      </Container>
 
       <div className="settings-section">
         <h2>Appearance</h2>
