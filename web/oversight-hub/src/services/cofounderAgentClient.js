@@ -155,12 +155,32 @@ export async function logout() {
 }
 
 export async function refreshAccessToken() {
-  // Token refresh logic would go here
-  // For now, if token is invalid, let 401 handler in component deal with it
-  console.warn(
-    '⚠️ Token refresh not implemented - auth flow should prevent 401s'
-  );
-  return false;
+  // Token refresh endpoint - requests a new token using refresh token
+  // The backend will validate the refresh token and issue a new access token
+  try {
+    const refreshToken = localStorage.getItem('refresh_token');
+    if (!refreshToken) {
+      console.warn(
+        '⚠️ No refresh token available - user needs to re-authenticate'
+      );
+      return false;
+    }
+
+    const response = await makeRequest('/api/auth/refresh', 'POST', {
+      refresh_token: refreshToken,
+    });
+
+    if (response.access_token) {
+      // Update stored access token
+      localStorage.setItem('auth_token', response.access_token);
+      return true;
+    }
+
+    return false;
+  } catch (error) {
+    console.error('Token refresh failed:', error);
+    return false;
+  }
 }
 
 export async function getTasks(limit = 50, offset = 0) {
@@ -361,10 +381,17 @@ export async function getOAuthLoginURL(provider) {
  * @returns {Promise} User data and tokens
  */
 export async function handleOAuthCallback(provider, code, state) {
+  if (!code) {
+    throw new Error('Authorization code missing from OAuth callback');
+  }
+
   return makeRequest(
     `/api/auth/${provider}/callback`,
-    'GET',
-    null,
+    'POST',
+    {
+      code,
+      state,
+    },
     true,
     null,
     15000
@@ -384,6 +411,19 @@ export async function getCurrentUser() {
 // ============================================================================
 
 /**
+ * ⚠️ DEPRECATED: CMS endpoints (/api/posts, /api/categories, /api/tags) are not implemented in backend
+ *
+ * For content management, use the Unified Content Task API instead:
+ * - POST   /api/content/tasks              Create content task
+ * - GET    /api/content/tasks/{id}         Get task status
+ * - GET    /api/content/tasks              List tasks with filters
+ *
+ * The following functions are kept for backwards compatibility but will throw errors
+ * if called. Update to use the content task API above.
+ */
+
+/**
+ * ⚠️ DEPRECATED - Use createTask() with type='blog_post' instead
  * Get paginated posts
  * @param {number} skip - Number of posts to skip
  * @param {number} limit - Number of posts to return
@@ -391,6 +431,10 @@ export async function getCurrentUser() {
  * @returns {Promise} Paginated posts with metadata
  */
 export async function getPosts(skip = 0, limit = 10, publishedOnly = true) {
+  console.warn(
+    '⚠️ getPosts() is deprecated - /api/posts endpoint not implemented in backend. ' +
+      'Use createTask() with type="blog_post" or content API instead.'
+  );
   const query = new URLSearchParams({
     skip,
     limit,
@@ -400,99 +444,140 @@ export async function getPosts(skip = 0, limit = 10, publishedOnly = true) {
 }
 
 /**
+ * ⚠️ DEPRECATED - /api/posts endpoint not implemented
  * Get post by slug
  * @param {string} slug - Post slug
  * @returns {Promise} Post data
  */
 export async function getPostBySlug(slug) {
+  console.warn(
+    '⚠️ getPostBySlug() is deprecated - /api/posts endpoint not implemented in backend.'
+  );
   return makeRequest(`/api/posts/${slug}`, 'GET');
 }
 
 /**
+ * ⚠️ DEPRECATED - Use createTask() with type='blog_post' instead
  * Create new post
  * @param {object} postData - Post data {title, slug, content, excerpt, category_id, tags}
  * @returns {Promise} Created post
  */
 export async function createPost(postData) {
+  console.warn(
+    '⚠️ createPost() is deprecated - /api/posts endpoint not implemented in backend. ' +
+      'Use createTask() with type="blog_post" instead.'
+  );
   return makeRequest('/api/posts', 'POST', postData);
 }
 
 /**
+ * ⚠️ DEPRECATED - /api/posts endpoint not implemented
  * Update existing post
  * @param {number} postId - Post ID
  * @param {object} postData - Post updates
  * @returns {Promise} Updated post
  */
 export async function updatePost(postId, postData) {
+  console.warn(
+    '⚠️ updatePost() is deprecated - /api/posts endpoint not implemented in backend.'
+  );
   return makeRequest(`/api/posts/${postId}`, 'PUT', postData);
 }
 
 /**
+ * ⚠️ DEPRECATED - /api/posts endpoint not implemented
  * Delete post
  * @param {number} postId - Post ID
  * @returns {Promise} Deletion confirmation
  */
 export async function deletePost(postId) {
+  console.warn(
+    '⚠️ deletePost() is deprecated - /api/posts endpoint not implemented in backend.'
+  );
   return makeRequest(`/api/posts/${postId}`, 'DELETE');
 }
 
 // ============================================================================
-// CMS Operations - Categories
+// CMS Operations - Categories (DEPRECATED)
 // ============================================================================
 
 /**
+ * ⚠️ DEPRECATED - /api/categories endpoint not implemented in backend
  * Get all categories
  * @returns {Promise} List of categories
  */
 export async function getCategories() {
+  console.warn(
+    '⚠️ getCategories() is deprecated - /api/categories endpoint not implemented in backend.'
+  );
   return makeRequest('/api/categories', 'GET');
 }
 
 /**
+ * ⚠️ DEPRECATED - /api/categories endpoint not implemented
  * Get category by slug
  * @param {string} slug - Category slug
  * @returns {Promise} Category data
  */
 export async function getCategoryBySlug(slug) {
+  console.warn(
+    '⚠️ getCategoryBySlug() is deprecated - /api/categories endpoint not implemented in backend.'
+  );
   return makeRequest(`/api/categories/${slug}`, 'GET');
 }
 
 /**
+ * ⚠️ DEPRECATED - /api/categories endpoint not implemented
  * Create new category
  * @param {object} categoryData - Category data {name, slug, description}
  * @returns {Promise} Created category
  */
 export async function createCategory(categoryData) {
+  console.warn(
+    '⚠️ createCategory() is deprecated - /api/categories endpoint not implemented in backend.'
+  );
   return makeRequest('/api/categories', 'POST', categoryData);
 }
 
 // ============================================================================
-// CMS Operations - Tags
+// CMS Operations - Tags (DEPRECATED)
 // ============================================================================
 
 /**
+ * ⚠️ DEPRECATED - /api/tags endpoint not implemented in backend
  * Get all tags
  * @returns {Promise} List of tags
  */
 export async function getTags() {
+  console.warn(
+    '⚠️ getTags() is deprecated - /api/tags endpoint not implemented in backend.'
+  );
   return makeRequest('/api/tags', 'GET');
 }
 
 /**
+ * ⚠️ DEPRECATED - /api/tags endpoint not implemented
  * Get tag by slug
  * @param {string} slug - Tag slug
  * @returns {Promise} Tag data
  */
 export async function getTagBySlug(slug) {
+  console.warn(
+    '⚠️ getTagBySlug() is deprecated - /api/tags endpoint not implemented in backend.'
+  );
   return makeRequest(`/api/tags/${slug}`, 'GET');
 }
 
 /**
+ * ⚠️ DEPRECATED - /api/tags endpoint not implemented
  * Create new tag
  * @param {object} tagData - Tag data {name, slug, color}
  * @returns {Promise} Created tag
  */
 export async function createTag(tagData) {
+  console.warn(
+    '⚠️ createTag() is deprecated - /api/tags endpoint not implemented in backend.'
+  );
   return makeRequest('/api/tags', 'POST', tagData);
 }
 

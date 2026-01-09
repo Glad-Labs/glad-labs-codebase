@@ -116,9 +116,3 @@ TaskFilters.propTypes = {
   onStatusChange: PropTypes.func.isRequired,
   onResetFilters: PropTypes.func.isRequired,
 };
-
-TaskFilters.defaultProps = {
-  sortBy: 'created_at',
-  sortDirection: 'desc',
-  statusFilter: '',
-};

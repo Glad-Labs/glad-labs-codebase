@@ -1,16 +1,39 @@
 /**
  * Mock GitHub OAuth Authentication Service
- * For local development - simulates GitHub OAuth flow without needing real credentials
+ * ⚠️ DEVELOPMENT ONLY - For local testing without GitHub credentials
+ *
+ * ⚠️ WARNING: This service must ONLY be used in development mode (NODE_ENV === 'development')
+ * The mock tokens generated here are NOT valid and should NEVER be used in production.
  *
  * To use: Set REACT_APP_USE_MOCK_AUTH=true in .env.local
+ * To disable: Remove the environment variable or set to 'false'
+ *
+ * In production:
+ * - This file should be excluded from the build
+ * - REACT_APP_USE_MOCK_AUTH should never be set
+ * - authService.js handles real GitHub OAuth flow
  */
+
+// Safety check - warn if accidentally enabled in non-dev
+if (process.env.NODE_ENV !== 'development') {
+  console.error(
+    '❌ SECURITY WARNING: Mock auth service is being used in non-development mode! ' +
+      'This is a security risk. Ensure REACT_APP_USE_MOCK_AUTH is not set in production.'
+  );
+}
 
 /**
  * Mock GitHub OAuth - simulates authorization redirect
  * In production, this would redirect to github.com
  * In development, we skip GitHub and go straight to callback
+ *
+ * ⚠️ These mock tokens are NOT valid and NOT secure
  */
 export const generateMockGitHubAuthURL = (clientId) => {
+  if (process.env.NODE_ENV !== 'development') {
+    throw new Error('Mock auth is disabled in non-development environments');
+  }
+
   // Simulate what GitHub would do - generate a mock authorization code
   const mockCode = 'mock_auth_code_' + Math.random().toString(36).substring(7);
 
@@ -26,9 +49,15 @@ export const generateMockGitHubAuthURL = (clientId) => {
 /**
  * Mock token exchange - simulates GitHub's token endpoint
  * Returns a fake user and token
+ *
+ * ⚠️ DEVELOPMENT ONLY - These tokens are NOT valid for production
  */
 export const exchangeCodeForToken = async (code) => {
   try {
+    if (process.env.NODE_ENV !== 'development') {
+      throw new Error('Mock auth is disabled in non-development environments');
+    }
+
     // Simulate network delay
     await new Promise((resolve) => setTimeout(resolve, 800));
 
@@ -46,8 +75,9 @@ export const exchangeCodeForToken = async (code) => {
       avatar_url: 'https://avatars.githubusercontent.com/u/1?v=4',
     };
 
+    // Generate a temporary mock token (NEVER use in production)
     const mockToken =
-      'mock_jwt_token_' + Math.random().toString(36).substring(2, 15);
+      'mock_jwt_token_dev_' + Math.random().toString(36).substring(2, 15);
 
     // Store token and user data
     localStorage.setItem('auth_token', mockToken);

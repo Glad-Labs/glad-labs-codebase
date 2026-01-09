@@ -50,7 +50,7 @@ const TaskManagement = () => {
   const [selectedTask, setSelectedTask] = useState(null);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [error, setError] = useState(null);
-  const [activeTab, setActiveTab] = useState(0); // 0 = Manual, 1 = Poindexter
+  // Tab removed - using Manual Pipeline only as single source of truth
   const [selectedTasks, setSelectedTasks] = useState([]);
 
   // Filters and sorting
@@ -98,14 +98,10 @@ const TaskManagement = () => {
       filtered = filtered.filter((t) => t.status === statusFilter);
     }
 
-    // Filter by pipeline (manual vs poindexter)
-    if (activeTab === 0) {
-      filtered = filtered.filter(
-        (t) => !t.pipeline_type || t.pipeline_type === 'manual'
-      );
-    } else {
-      filtered = filtered.filter((t) => t.pipeline_type === 'poindexter');
-    }
+    // Always show manual pipeline tasks (poindexter pipeline removed)
+    filtered = filtered.filter(
+      (t) => !t.pipeline_type || t.pipeline_type === 'manual'
+    );
 
     return filtered;
   };
@@ -118,16 +114,10 @@ const TaskManagement = () => {
       return { total: 0, completed: 0, inProgress: 0, failed: 0 };
     }
 
-    let pipelineTasks = allTasks;
-    if (activeTab === 0) {
-      pipelineTasks = pipelineTasks.filter(
-        (t) => !t.pipeline_type || t.pipeline_type === 'manual'
-      );
-    } else {
-      pipelineTasks = pipelineTasks.filter(
-        (t) => t.pipeline_type === 'poindexter'
-      );
-    }
+    // Always calculate stats for manual pipeline only
+    let pipelineTasks = allTasks.filter(
+      (t) => !t.pipeline_type || t.pipeline_type === 'manual'
+    );
 
     return {
       total: pipelineTasks.length,
@@ -247,18 +237,7 @@ const TaskManagement = () => {
       )}
 
       {/* Pipeline Tabs */}
-      <Tabs
-        value={activeTab}
-        onChange={(e, value) => {
-          setActiveTab(value);
-          setPage(1);
-          setSelectedTasks([]);
-        }}
-        sx={{ mb: 3, borderBottom: '1px solid rgba(0, 217, 255, 0.2)' }}
-      >
-        <Tab label="Manual Pipeline" />
-        <Tab label="Poindexter Pipeline" />
-      </Tabs>
+      {/* Manual Pipeline only - removed Poindexter Pipeline tab */}
 
       {/* Summary Stats */}
       <Box
@@ -410,6 +389,6 @@ const TaskManagement = () => {
       )}
     </Box>
   );
-};
+};;
 
 export default TaskManagement;

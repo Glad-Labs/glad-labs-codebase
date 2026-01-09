@@ -9,7 +9,6 @@ import {
   SocialMediaManagement,
   CostMetricsDashboard,
 } from './index';
-import ExecutionHub from '../components/pages/ExecutionHub';
 import ExecutiveDashboard from '../components/pages/ExecutiveDashboard';
 import TrainingDataDashboard from '../pages/TrainingDataDashboard';
 import LangGraphTestPage from '../pages/LangGraphTest';
@@ -42,16 +41,6 @@ function AppRoutes() {
           <ProtectedRoute>
             <LayoutWrapper>
               <TaskManagement />
-            </LayoutWrapper>
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/execution"
-        element={
-          <ProtectedRoute>
-            <LayoutWrapper>
-              <ExecutionHub />
             </LayoutWrapper>
           </ProtectedRoute>
         }

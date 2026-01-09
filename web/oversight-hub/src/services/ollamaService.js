@@ -1,12 +1,22 @@
 /**
  * Ollama Service - Specialized functions for Ollama local model interactions
  *
- * This service handles communication with local Ollama instance running on
- * localhost:11434. Falls back gracefully if Ollama is not available.
+ * This service handles communication with the Ollama API endpoint.
+ * Falls back gracefully if Ollama is not available.
+ *
+ * Uses API proxy at /api/ollama/* to maintain security and centralized authentication.
  */
 
-const OLLAMA_BASE_URL = 'http://localhost:11434';
+const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:8000';
 const OLLAMA_TIMEOUT = 10000; // 10 second timeout for Ollama operations
+
+/**
+ * Get Ollama endpoint - through API proxy for security
+ * @returns {string} Base URL for Ollama API proxy
+ */
+function getOllamaEndpoint() {
+  return `${API_BASE_URL}/api/ollama`;
+}
 
 /**
  * Get list of available Ollama models (pulls)
@@ -17,7 +27,7 @@ export async function getOllamaModels() {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), OLLAMA_TIMEOUT);
 
-    const response = await fetch(`${OLLAMA_BASE_URL}/api/tags`, {
+    const response = await fetch(`${getOllamaEndpoint()}/tags`, {
       method: 'GET',
       signal: controller.signal,
       headers: {
@@ -40,7 +50,7 @@ export async function getOllamaModels() {
   } catch (error) {
     if (error.name === 'AbortError') {
       // eslint-disable-next-line no-console
-      console.warn('⚠️ Ollama timeout - may not be running on localhost:11434');
+      console.warn('⚠️ Ollama timeout - backend Ollama endpoint may be unavailable');
     } else {
       // eslint-disable-next-line no-console
       console.warn('⚠️ Ollama not available:', error.message);
@@ -58,7 +68,7 @@ export async function isOllamaAvailable() {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 3000);
 
-    const response = await fetch(`${OLLAMA_BASE_URL}/api/version`, {
+    const response = await fetch(`${getOllamaEndpoint()}/health`, {
       method: 'GET',
       signal: controller.signal,
     });
@@ -71,8 +81,8 @@ export async function isOllamaAvailable() {
 
     const data = await response.json();
     // eslint-disable-next-line no-console
-    console.log(`✅ Ollama available, version: ${data.version}`);
-    return true;
+    console.log(`✅ Ollama available with ${data.models?.length || 0} models`);
+    return data.connected === true;
   } catch (error) {
     // eslint-disable-next-line no-console
     console.debug('Ollama not available:', error.message);
@@ -92,7 +102,7 @@ export async function generateWithOllamaModel(modelId, prompt, options = {}) {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 60000); // 1 minute for generation
 
-    const response = await fetch(`${OLLAMA_BASE_URL}/api/generate`, {
+    const response = await fetch(`${getOllamaEndpoint()}/generate`, {
       method: 'POST',
       signal: controller.signal,
       headers: {
@@ -142,7 +152,7 @@ export async function streamOllamaGeneration(
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 120000); // 2 minutes for streaming
 
-    const response = await fetch(`${OLLAMA_BASE_URL}/api/generate`, {
+    const response = await fetch(`${getOllamaEndpoint()}/generate`, {
       method: 'POST',
       signal: controller.signal,
       headers: {
@@ -210,7 +220,7 @@ export async function getOllamaModelInfo(modelId) {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 5000);
 
-    const response = await fetch(`${OLLAMA_BASE_URL}/api/show`, {
+    const response = await fetch(`${getOllamaEndpoint()}/show`, {
       method: 'POST',
       signal: controller.signal,
       headers: {

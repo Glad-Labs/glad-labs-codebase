@@ -37,64 +37,38 @@ export function useTaskData(
       setIsFetching(true);
       isFetchingRef.current = true;
 
-      // Calculate offset for pagination
+      // Fetch ALL tasks first (with high limit) for accurate KPI stats
+      // Then use pagination for display
+      const allTasksData = await getTasks(0, 1000, {
+        sortBy,
+        sortDirection,
+      });
+
+      console.log('✅ useTaskData: Fetched all tasks:', {
+        length: allTasksData?.length || 0,
+        sortBy,
+        sortDirection,
+      });
+
+      // Store all tasks for KPI calculation
+      let fetchedAllTasks = allTasksData || [];
+      setAllTasks(fetchedAllTasks);
+      setTotal(fetchedAllTasks.length);
+
+      // For display, use the current page
       const offset = (page - 1) * limit;
-
-      // Fetch the current page from the backend with proper pagination
-      const data = await getTasks(offset, limit, {
-        sortBy,
-        sortDirection,
-      });
-
-      console.log('✅ useTaskData: API Response received:', {
-        length: data?.length || 0,
-        offset,
-        limit,
-        sortBy,
-        sortDirection,
-      });
-
-      // The response is an array of task objects
-      let apiTasks = data || [];
-      let totalCount = apiTasks.length;
-
-      // If we got fewer tasks than requested, we're on the last page
-      // To get accurate total count, we need to query the backend for it
-      // For now, estimate based on fetched tasks
-      if (apiTasks.length > 0) {
-        // If we got the full limit, there might be more pages
-        // If we got less, this is the last page
-        console.log(
-          '✅ useTaskData: Loaded',
-          apiTasks.length,
-          'tasks for page',
-          page
-        );
-      }
-
-      // Set tasks directly (already paginated from backend)
-      setTasks(apiTasks);
-
-      // Set total - if this fetch returned fewer items than limit,
-      // we can calculate approximate total
-      if (apiTasks.length < limit) {
-        totalCount = offset + apiTasks.length;
-      } else {
-        // If we got exactly limit items, there might be more
-        // We'll use limit as minimum total and let pagination handle discovery
-        totalCount = Math.max(offset + limit + 1, limit);
-      }
-
-      setTotal(totalCount);
+      const paginatedTasks = fetchedAllTasks.slice(offset, offset + limit);
 
       console.log(
         '✅ useTaskData: Displaying page',
         page,
         'with',
-        apiTasks.length,
-        'tasks, estimated total:',
-        totalCount
+        paginatedTasks.length,
+        'tasks, total:',
+        fetchedAllTasks.length
       );
+
+      setTasks(paginatedTasks);
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Unknown error';
       setError(`Unable to load tasks: ${errorMessage}`);

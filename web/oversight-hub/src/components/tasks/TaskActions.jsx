@@ -222,9 +222,4 @@ TaskActions.propTypes = {
   onClose: PropTypes.func.isRequired,
 };
 
-TaskActions.defaultProps = {
-  selectedTask: null,
-  isLoading: false,
-};
-
 export default TaskActions;

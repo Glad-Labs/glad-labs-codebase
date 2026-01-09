@@ -142,11 +142,14 @@ const QUALITY_PRESETS = {
  * 4. Save preferences for future tasks
  *
  * Integration: Use in TaskCreationModal or as standalone dashboard
+ *
+ * Props:
+ * - onSelectionChange: Callback function when model selections change
+ * - initialQuality: Initial quality preference ('fast', 'balanced', 'quality')
  */
 export function ModelSelectionPanel({
   onSelectionChange,
   initialQuality = 'balanced',
-  availableModels = null,
 }) {
   // State
   const [qualityPreference, setQualityPreference] = useState(initialQuality);
@@ -246,17 +249,23 @@ export function ModelSelectionPanel({
 
       // Map grouped models to formatted structure
       Object.entries(grouped).forEach(([provider, providerModels]) => {
+        if (!Array.isArray(providerModels) || providerModels.length === 0) {
+          return; // Skip if no models for this provider
+        }
+
         let targetKey = provider;
         if (provider === 'openai') targetKey = 'gpt';
         if (provider === 'anthropic') targetKey = 'claude';
 
-        formattedModels[targetKey].models = providerModels.map((model) => ({
-          id: modelService.getModelValue(model),
-          name:
-            model.displayName ||
-            modelService.formatModelDisplayName(model.name),
-          cost: model.isFree ? 0 : 0.01, // Rough estimate for paid models
-        }));
+        if (formattedModels[targetKey]) {
+          formattedModels[targetKey].models = providerModels.map((model) => ({
+            id: modelService.getModelValue(model),
+            name:
+              model.displayName ||
+              modelService.formatModelDisplayName(model.name),
+            cost: model.isFree ? 0 : 0.01, // Rough estimate for paid models
+          }));
+        }
       });
 
       // Build phase models with all providers available for all phases
