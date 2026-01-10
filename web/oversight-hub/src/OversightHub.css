@@ -807,11 +807,12 @@ header h1 {
   flex: 1;
   background: var(--bg-tertiary);
   border: 1px solid var(--border-secondary);
-  color: #ffffff;
+  color: #000000;
   padding: 0.75rem 1rem;
   border-radius: 4px;
   font-size: 0.9rem;
   font-family: inherit;
+  font-weight: 500;
 }
 
 .chat-input:focus {
