@@ -89,7 +89,9 @@ class ModelService {
    */
   async getProviderStatus() {
     try {
-      const response = await fetch('http://localhost:8000/api/models/status', {
+      const API_BASE_URL =
+        process.env.REACT_APP_API_URL || 'http://localhost:8000';
+      const response = await fetch(`${API_BASE_URL}/api/models/status`, {
         headers: {
           Accept: 'application/json',
         },

@@ -2,14 +2,19 @@ export const sendIntervention = async () => {
   // eslint-disable-next-line no-console
   console.log('Intervention button clicked...');
   try {
-    // Re-implementing the fetch call to the Strapi backend.
-    const response = await fetch('http://localhost:1337/api/intervention', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      // No body is needed as the backend is pre-configured to send the PAUSE signal.
-    });
+    // Use the backend API base URL from environment or config
+    const API_BASE_URL =
+      process.env.REACT_APP_API_URL || 'http://localhost:8000';
+    const response = await fetch(
+      `${API_BASE_URL}/api/orchestrator/intervention`,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        // No body is needed as the backend is pre-configured to send the PAUSE signal.
+      }
+    );
 
     if (response.ok) {
       const result = await response.json();

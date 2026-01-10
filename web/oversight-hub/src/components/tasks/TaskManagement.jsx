@@ -374,6 +374,7 @@ const TaskManagement = () => {
           onClose={() => setSelectedTask(null)}
           onApprove={(feedback) => handleApprove(selectedTask.id, feedback)}
           onReject={(reason) => handleReject(selectedTask.id, reason)}
+          onDelete={(task) => handleDeleteTask(task.id)}
         />
       )}
 

@@ -107,8 +107,13 @@ const TaskTable = ({
                   />
                 </TableCell>
                 <TableCell>
-                  <Tooltip title={task.name || 'Untitled'}>
-                    <span>{(task.name || 'Untitled').substring(0, 40)}</span>
+                  <Tooltip title={task.task_name || task.topic || 'Untitled'}>
+                    <span>
+                      {(task.task_name || task.topic || 'Untitled').substring(
+                        0,
+                        40
+                      )}
+                    </span>
                   </Tooltip>
                 </TableCell>
                 <TableCell>

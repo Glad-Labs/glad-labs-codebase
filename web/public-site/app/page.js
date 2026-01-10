@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { useState, useEffect } from 'react';
+import { getFastAPIURL } from '@/lib/url';
 
 export default function HomePage() {
   const [posts, setPosts] = useState([]);
@@ -14,8 +15,9 @@ export default function HomePage() {
     const fetchPosts = async () => {
       try {
         setLoading(true);
+        const fastApiUrl = getFastAPIURL();
         const response = await fetch(
-          'http://localhost:8000/api/posts?populate=*&status=published&limit=20'
+          `${fastApiUrl}/api/posts?populate=*&status=published&limit=20`
         );
 
         if (!response.ok) {

@@ -8,6 +8,7 @@ const ResultPreviewPanel = ({
   task = null,
   onApprove = () => {},
   onReject = () => {},
+  onDelete = () => {},
   isLoading = false,
 }) => {
   const [isEditing, setIsEditing] = useState(false);
@@ -422,8 +423,9 @@ const ResultPreviewPanel = ({
         {/* Action Buttons */}
         <div className="border-t border-red-500/30 bg-gray-800 p-4 flex gap-3 justify-end">
           <button
-            onClick={() => onReject(task)}
+            onClick={() => onDelete(task)}
             className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded font-medium transition"
+            title="Delete this failed task"
           >
             ✕ Discard
           </button>
@@ -486,7 +488,9 @@ const ResultPreviewPanel = ({
 
       console.log('✅ Approval submitted:', result);
 
-      // Call the callback
+      // Call the appropriate callback based on approval decision
+      // Note: The /api/content/tasks/{id}/approve endpoint handles BOTH approve AND reject
+      // so we don't need to make a separate API call - just update local state
       if (approved) {
         onApprove({
           ...task,
@@ -499,7 +503,10 @@ const ResultPreviewPanel = ({
           featured_image_url: featuredImageUrl,
         });
       } else {
-        onReject({
+        // When rejecting through the approval modal, the approval endpoint already updated
+        // the task status to 'rejected'. We just need to update local state.
+        // DO NOT call onReject() which would try to call /api/tasks/{id}/reject API
+        onApprove({
           ...task,
           status: 'rejected',
           approval_status: 'rejected',
@@ -981,39 +988,57 @@ const ResultPreviewPanel = ({
           </>
         ) : (
           <>
-            <button
-              onClick={() => onReject(task)}
-              disabled={isLoading}
-              className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded font-medium transition disabled:opacity-50"
-            >
-              ✕ Reject
-            </button>
-            <button
-              onClick={() => {
-                const updatedTask = {
-                  ...task,
-                  title: editedTitle,
-                  featured_image_url: featuredImageUrl,
-                  result: {
-                    ...task.result,
-                    content: editedContent,
-                    seo: editedSEO,
-                  },
-                  publish_destination: publishDestination,
-                };
-                onApprove(updatedTask);
-              }}
-              disabled={isLoading || !publishDestination}
-              className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded font-medium transition disabled:opacity-50 flex items-center gap-2"
-            >
-              {isLoading ? (
-                <>
-                  <span className="animate-spin">⟳</span> Publishing...
-                </>
-              ) : (
-                '✓ Approve & Publish'
-              )}
-            </button>
+            {/* Only allow rejecting tasks that are in terminal rejection-eligible states */}
+            {['completed', 'approved'].includes(task.status) && (
+              <button
+                onClick={() => onReject(task)}
+                disabled={isLoading}
+                className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded font-medium transition disabled:opacity-50 disabled:cursor-not-allowed"
+                title={`Reject ${task.status} task for revision`}
+              >
+                ✕ Reject
+              </button>
+            )}
+            {/* Show status message if task is in a terminal state */}
+            {['rejected', 'published', 'archived', 'failed'].includes(
+              task.status
+            ) && (
+              <div className="text-sm font-medium px-4 py-2 bg-gray-700 rounded text-gray-300">
+                ℹ️ Task is {task.status} - no further actions available
+              </div>
+            )}
+            {/* Show approve button only for actionable statuses */}
+            {!['rejected', 'published', 'archived', 'failed'].includes(
+              task.status
+            ) && (
+              <button
+                onClick={() => {
+                  const updatedTask = {
+                    ...task,
+                    title: editedTitle,
+                    featured_image_url: featuredImageUrl,
+                    result: {
+                      ...task.result,
+                      content: editedContent,
+                      seo: editedSEO,
+                    },
+                    publish_destination: publishDestination,
+                  };
+                  onApprove(updatedTask);
+                }}
+                disabled={isLoading || !publishDestination}
+                className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded font-medium transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                title="Approve and publish this task"
+              >
+                {isLoading ? (
+                  <>
+                    <span className="animate-spin">⟳</span> Publishing...
+                  </>
+                ) : (
+                  '✓ Approve & Publish'
+                )}
+              </button>
+            )}
           </>
         )}
       </div>
