@@ -319,6 +319,7 @@ export async function validateFastAPI() {
     const status = await getCMSStatus();
     return status.status === 'healthy';
   } catch (error) {
+    console.error('[FastAPI] CMS health check failed:', error);
     return false;
   }
 }

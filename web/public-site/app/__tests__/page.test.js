@@ -13,7 +13,6 @@ jest.mock('@/components/Carousel', () => {
 jest.mock('next/image', () => ({
   __esModule: true,
   default: (props) => {
-     
     return <img {...props} />;
   },
 }));

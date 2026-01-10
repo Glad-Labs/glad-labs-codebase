@@ -100,6 +100,7 @@ export function getPostDate(post) {
       day: 'numeric',
     });
   } catch (e) {
+    console.error('[Post Mapper] Error formatting date:', dateString, e);
     return 'Invalid date';
   }
 }
@@ -116,6 +117,7 @@ export function getPostDateISO(post) {
   try {
     return new Date(dateString).toISOString().split('T')[0];
   } catch (e) {
+    console.error('[Post Mapper] Error formatting ISO date:', dateString, e);
     return new Date().toISOString().split('T')[0];
   }
 }

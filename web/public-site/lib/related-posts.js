@@ -1,4 +1,4 @@
-import { searchPosts, getPostsByCategory, getPostsByTag } from './search';
+import { getPostsByCategory, getPostsByTag } from './search';
 
 /**
  * Get related posts based on category and tags
@@ -51,11 +51,12 @@ export async function getRelatedPosts(currentPost, limit = 3) {
     const relatedPosts = Array.from(relatedPostsMap.values())
       .sort((a, b) => b.relevanceScore - a.relevanceScore)
       .slice(0, limit)
-      .map(({ relevanceScore, ...post }) => post); // Remove score from output
+      // eslint-disable-next-line no-unused-vars
+      .map(({ relevanceScore, ...post }) => post); // Extract and remove score from output
 
     return relatedPosts;
-  } catch (error) {
-    console.error('Error getting related posts:', error);
+  } catch (_error) {
+    console.error('Error getting related posts:', _error);
     return [];
   }
 }
@@ -67,7 +68,7 @@ export async function getRelatedPosts(currentPost, limit = 3) {
 export async function getPostsByMultipleCriteria(
   categories = [],
   tags = [],
-  limit = 5
+  _limit = 5
 ) {
   try {
     const postsMap = new Map();
@@ -95,7 +96,7 @@ export async function getPostsByMultipleCriteria(
     // Remove duplicates and return top N
     return Array.from(postsMap.values())
       .sort((a, b) => new Date(b.publishedAt) - new Date(a.publishedAt))
-      .slice(0, limit);
+      .slice(0, _limit);
   } catch (error) {
     console.error('Error getting posts by multiple criteria:', error);
     return [];
@@ -106,15 +107,12 @@ export async function getPostsByMultipleCriteria(
  * Get posts grouped by category
  * Useful for sidebar widgets or category collections
  */
-export async function getPostsGroupedByCategory(limit = 3) {
-  try {
-    // This would require fetching all categories first
-    // For now, return empty - would need Strapi categories endpoint
-    return {};
-  } catch (error) {
-    console.error('Error getting posts by category:', error);
-    return {};
-  }
+export async function getPostsGroupedByCategory(_limit = 3) {
+  // TODO: Implement category grouping
+  // Would require fetching all categories first, then posts per category
+  // Current limitation: Strapi doesn't have categories endpoint
+
+  return {};
 }
 
 /**
@@ -151,22 +149,19 @@ export function calculateRelevanceScore(post, query) {
  * Get "More from Author" posts
  * (Requires author field in Strapi)
  */
-export async function getMoreFromAuthor(authorId, limit = 3) {
-  try {
-    // This would require authorId in Strapi posts
-    // Placeholder for future implementation
-    return [];
-  } catch (error) {
-    console.error('Error getting more from author:', error);
-    return [];
-  }
+export async function getMoreFromAuthor(authorId, _limit = 3) {
+  // TODO: Implement author-based recommendations
+  // Requires author field in backend posts
+  // Current limitation: authorId not tracked in Strapi
+
+  return [];
 }
 
 /**
  * Get posts published around the same time
  * Useful for "you might have missed" sections
  */
-export async function getPostsAroundDate(date, daysRange = 30, limit = 5) {
+export async function getPostsAroundDate(date, daysRange = 30, _limit = 5) {
   if (!date) {
     return [];
   }
@@ -192,7 +187,7 @@ export async function getPostsAroundDate(date, daysRange = 30, limit = 5) {
  * Get recommended posts for user based on reading history
  * (Would require tracking and user data)
  */
-export async function getRecommendedPosts(userReadingHistory = [], limit = 5) {
+export async function getRecommendedPosts(userReadingHistory = [], _limit = 5) {
   try {
     if (!Array.isArray(userReadingHistory) || userReadingHistory.length === 0) {
       return [];
@@ -201,13 +196,10 @@ export async function getRecommendedPosts(userReadingHistory = [], limit = 5) {
     const recommendedMap = new Map();
 
     // For each post read, find related posts
-    for (const postId of userReadingHistory) {
-      // This would require getting post by ID first
-      // Then using getRelatedPosts
-      // Placeholder for future implementation
-    }
+    // Placeholder for future implementation
+    // TODO: Implement post retrieval and recommendation logic
 
-    return Array.from(recommendedMap.values()).slice(0, limit);
+    return Array.from(recommendedMap.values()).slice(0, _limit);
   } catch (error) {
     console.error('Error getting recommended posts:', error);
     return [];

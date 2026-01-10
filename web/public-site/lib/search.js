@@ -1,5 +1,3 @@
-import { searchPosts as fastAPISearch } from './api-fastapi';
-
 /**
  * Search posts using FastAPI full-text search
  * Filters by title, excerpt, and content
@@ -10,6 +8,9 @@ export async function searchPosts(query, filters = {}) {
   }
 
   try {
+    const baseUrl = process.env.NEXT_PUBLIC_STRAPI_API_URL;
+    const token = process.env.NEXT_PUBLIC_STRAPI_API_TOKEN;
+
     // Use FastAPI endpoint for post search
     const filterParams = new URLSearchParams();
 

@@ -1,4 +1,4 @@
-import { formatDateISO, formatDate } from './content-utils';
+import { formatDateISO } from './content-utils';
 // Image URL utilities for structured data
 import { getImageURL } from './api-fastapi';
 
@@ -76,7 +76,7 @@ export function generateNewsArticleSchema(
 ) {
   if (!post) return null;
 
-  const { title, excerpt, content, slug, publishedAt, date, coverImage } = post;
+  const { title, excerpt, publishedAt, date, coverImage } = post;
 
   const publishDate = date || publishedAt;
   const imageUrl = coverImage?.url
@@ -110,7 +110,7 @@ export function generateNewsArticleSchema(
 export function generateArticleSchema(post, siteUrl = 'https://glad-labs.com') {
   if (!post) return null;
 
-  const { title, excerpt, slug, publishedAt, date, coverImage } = post;
+  const { title, excerpt, publishedAt, date, coverImage } = post;
 
   const publishDate = date || publishedAt;
   const imageUrl = coverImage?.url

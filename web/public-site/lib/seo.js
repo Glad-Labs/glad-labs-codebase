@@ -82,7 +82,7 @@ export function generateTwitterTags(
 ) {
   if (!post) return {};
 
-  const { title, excerpt, slug, coverImage } = post;
+  const { title, excerpt, coverImage } = post;
 
   const imageUrl = coverImage?.url || `${baseURL}/og-image.png`;
 
@@ -264,6 +264,7 @@ export function isValidURL(url) {
     new URL(url);
     return true;
   } catch (error) {
+    console.error('Invalid URL:', url, error);
     return false;
   }
 }
