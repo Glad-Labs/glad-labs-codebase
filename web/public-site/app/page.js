@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { useState, useEffect } from 'react';
-import { getAbsoluteURL } from '@/lib/url';
+import { getAbsoluteURL } from '../lib/url';
 
 export default function HomePage() {
   const [posts, setPosts] = useState([]);
