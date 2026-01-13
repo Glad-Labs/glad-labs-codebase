@@ -8,7 +8,7 @@ import './Login.css';
 const Login = () => {
   const navigate = useNavigate();
   const { isAuthenticated } = useAuth();
-  const clientId = process.env.REACT_APP_GITHUB_CLIENT_ID;
+  const clientId = process.env.REACT_APP_GH_OAUTH_CLIENT_ID;
   const useMockAuth = process.env.REACT_APP_USE_MOCK_AUTH === 'true';
   const [debugInfo, setDebugInfo] = useState('');
 
