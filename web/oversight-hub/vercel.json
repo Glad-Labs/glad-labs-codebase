@@ -3,5 +3,17 @@
   "buildCommand": "npm run build",
   "outputDirectory": "build",
   "framework": "create-react-app",
-  "cleanUrls": true
+  "cleanUrls": true,
+  "rewrites": [
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
+    }
+  ],
+  "env": [
+    "REACT_APP_API_URL",
+    "REACT_APP_GH_OAUTH_CLIENT_ID",
+    "REACT_APP_LOG_LEVEL",
+    "REACT_APP_USE_MOCK_AUTH"
+  ]
 }
