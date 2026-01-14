@@ -16,7 +16,7 @@ import useAuth from '../hooks/useAuth';
 const AuthCallback = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const { setAuthUser } = useAuth();
+  const { setUser, setAccessToken } = useAuth();
   const [error, setError] = useState(null);
 
   useEffect(() => {
@@ -72,7 +72,12 @@ const AuthCallback = () => {
 
         // Update auth context with user data
         const userToSet = userData.user || userData;
-        setAuthUser(userToSet);
+        setUser(userToSet);
+
+        // Store the token
+        if (userData.token) {
+          setAccessToken(userData.token);
+        }
 
         // Clear CSRF state
         sessionStorage.removeItem('oauth_state');
