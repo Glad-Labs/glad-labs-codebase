@@ -16,7 +16,7 @@ import useAuth from '../hooks/useAuth';
 const AuthCallback = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const { setUser, setAccessToken } = useAuth();
+  const { setUser, setAccessToken, setIsAuthenticated } = useAuth();
   const [error, setError] = useState(null);
 
   useEffect(() => {
@@ -79,6 +79,9 @@ const AuthCallback = () => {
           setAccessToken(userData.token);
         }
 
+        // Mark user as authenticated
+        setIsAuthenticated(true);
+
         // Clear CSRF state
         sessionStorage.removeItem('oauth_state');
         sessionStorage.removeItem('oauth_provider');
@@ -93,7 +96,7 @@ const AuthCallback = () => {
     };
 
     handleCallback();
-  }, [searchParams, navigate, setUser, setAccessToken]);
+  }, [searchParams, navigate, setUser, setAccessToken, setIsAuthenticated]);
 
   // Render loading state
   if (!error) {
