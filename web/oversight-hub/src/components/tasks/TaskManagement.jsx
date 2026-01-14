@@ -386,6 +386,10 @@ const TaskManagement = () => {
             setShowCreateModal(false);
             fetchTasks();
           }}
+          onTaskCreated={() => {
+            setShowCreateModal(false);
+            fetchTasks();
+          }}
         />
       )}
     </Box>

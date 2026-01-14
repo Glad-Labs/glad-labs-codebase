@@ -372,6 +372,10 @@ function TaskManagement() {
             setShowCreateModal(false);
             fetchTasks();
           }}
+          onTaskCreated={() => {
+            setShowCreateModal(false);
+            fetchTasks();
+          }}
         />
       )}
     </div>
