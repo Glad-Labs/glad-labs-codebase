@@ -245,14 +245,36 @@ export const isTokenExpired = (token) => {
  * @returns {string|null} - Auth token or null if expired
  */
 export const getAuthToken = () => {
-  const token = localStorage.getItem('auth_token');
+  let token = null;
+
+  // Try to get token from Zustand persist storage first
+  const persistedData = localStorage.getItem('oversight-hub-storage');
+  if (persistedData) {
+    try {
+      const parsed = JSON.parse(persistedData);
+      token = parsed.state?.accessToken || parsed.state?.auth_token;
+    } catch (e) {
+      console.warn(
+        '[authService.getAuthToken] Failed to parse Zustand persist storage:',
+        e
+      );
+    }
+  }
+
+  // Fallback to direct localStorage key if not found in Zustand
+  if (!token) {
+    token = localStorage.getItem('auth_token');
+  }
+
   console.log(
     '[authService.getAuthToken] Looking for token...',
     token ? 'FOUND' : 'NOT FOUND'
   );
 
   if (!token) {
-    console.log('[authService.getAuthToken] No token in localStorage');
+    console.log(
+      '[authService.getAuthToken] No token in localStorage or Zustand'
+    );
     return null;
   }
 
