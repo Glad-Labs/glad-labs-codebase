@@ -93,7 +93,7 @@ const AuthCallback = () => {
     };
 
     handleCallback();
-  }, [searchParams, navigate, setAuthUser]);
+  }, [searchParams, navigate, setUser, setAccessToken]);
 
   // Render loading state
   if (!error) {
