@@ -13,6 +13,26 @@ import type { MetadataRoute } from 'next';
 async function fetchPublishedContent() {
   const FASTAPI_URL =
     process.env.NEXT_PUBLIC_FASTAPI_URL || 'http://localhost:8000';
+
+  // Validate that FASTAPI_URL is a valid absolute URL
+  let isValidUrl = false;
+  try {
+    new URL(FASTAPI_URL);
+    isValidUrl = true;
+  } catch {
+    console.warn(
+      'Invalid NEXT_PUBLIC_FASTAPI_URL during build. Using static fallback.'
+    );
+  }
+
+  // If URL is invalid or not set, return empty results (use static pages only)
+  if (!isValidUrl || FASTAPI_URL === 'http://localhost:8000') {
+    console.log(
+      'NEXT_PUBLIC_FASTAPI_URL not properly configured for Vercel build. Skipping dynamic content fetch.'
+    );
+    return { allPosts: [], allCategories: [], allTags: [] };
+  }
+
   const API_BASE = `${FASTAPI_URL}/api`;
 
   try {

@@ -3,7 +3,6 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { useState, useEffect } from 'react';
-import { getAbsoluteURL } from '../lib/url';
 
 export default function HomePage() {
   const [posts, setPosts] = useState([]);
@@ -15,16 +14,15 @@ export default function HomePage() {
     const fetchPosts = async () => {
       try {
         setLoading(true);
-        const response = await fetch(
-          getAbsoluteURL('/api/posts?populate=*&status=published&limit=20')
-        );
+        // Use local Next.js API route, not FastAPI directly
+        const response = await fetch('/api/posts?status=published&limit=20');
 
         if (!response.ok) {
           throw new Error('Failed to fetch posts');
         }
 
         const data = await response.json();
-        const posts = data.data || data || [];
+        const posts = data.items || data.data || data || [];
         setPosts(posts);
         setError(null);
       } catch (err) {
