@@ -165,7 +165,9 @@ export default async function HomePage() {
             {/* Recent Posts Grid */}
             {posts.length > 1 && (
               <div className="mt-12">
-                <h2 className="text-2xl font-bold text-white mb-6">Recent Posts</h2>
+                <h2 className="text-2xl font-bold text-white mb-6">
+                  Recent Posts
+                </h2>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                   {posts.slice(1, 7).map((post) => (
                     <Link
@@ -213,125 +215,6 @@ export default async function HomePage() {
                     </Link>
                   ))}
                 </div>
-              </div>
-            )}
-          </div>
-        </section>
-      )}
-
-      {/* Browse All Articles CTA */}
-      <section className="py-16 px-4 md:px-0">
-        <div className="container mx-auto max-w-6xl text-center">
-          <h2 className="text-3xl font-bold text-white mb-4">
-            Browse All Articles
-          </h2>
-          <p className="text-lg text-slate-400 mb-8">
-            Explore our complete collection of insights and analyses
-          </p>
-          <Link
-            href="/archive/1"
-            className="inline-flex items-center gap-2 px-8 py-4 bg-gradient-to-r from-cyan-500 via-blue-500 to-violet-500 text-white rounded-lg font-semibold hover:shadow-lg hover:shadow-cyan-500/50 transition-all text-lg"
-          >
-            View All Articles
-            <span className="text-2xl">→</span>
-          </Link>
-        </div>
-      </section>
-    </main>
-  );
-}
-                            currentPost.published_at
-                          ).toLocaleDateString('en-US', {
-                            year: 'numeric',
-                            month: 'long',
-                            day: 'numeric',
-                          })}
-                        </time>
-                      )}
-                    </div>
-
-                    <Link
-                      href={`/posts/${currentPost.slug}`}
-                      className="inline-flex items-center gap-2 px-6 py-2 bg-gradient-to-r from-cyan-500 to-blue-500 text-white rounded-lg font-semibold hover:shadow-lg hover:shadow-cyan-500/50 transition-all"
-                    >
-                      Read Article
-                      <span className="text-xl">→</span>
-                    </Link>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Navigation Controls */}
-            <div className="flex items-center justify-between mt-8">
-              {/* Previous/Next Buttons */}
-              <div className="flex gap-4">
-                <button
-                  onClick={handlePrevious}
-                  className="px-6 py-3 bg-slate-800 hover:bg-slate-700 text-white rounded-lg font-semibold transition-colors border border-slate-700 hover:border-cyan-500/50"
-                  aria-label="Previous post"
-                >
-                  ← Previous
-                </button>
-                <button
-                  onClick={handleNext}
-                  className="px-6 py-3 bg-slate-800 hover:bg-slate-700 text-white rounded-lg font-semibold transition-colors border border-slate-700 hover:border-cyan-500/50"
-                  aria-label="Next post"
-                >
-                  Next →
-                </button>
-              </div>
-
-              {/* Post Counter */}
-              <div className="text-slate-400 font-medium">
-                {currentIndex + 1} / {posts.length}
-              </div>
-            </div>
-
-            {/* Dot Indicators for first 5 posts */}
-            <div className="flex gap-2 mt-6 justify-center flex-wrap">
-              {posts.slice(0, 5).map((post, index) => (
-                <button
-                  key={post.id || index}
-                  onClick={() => setCurrentIndex(index)}
-                  className={`h-2 rounded-full transition-all ${
-                    index === currentIndex
-                      ? 'w-8 bg-cyan-400'
-                      : 'w-2 bg-slate-700 hover:bg-slate-600'
-                  }`}
-                  aria-label={`Go to post ${index + 1}`}
-                />
-              ))}
-            </div>
-
-            {/* Preview Cards - Hidden on Mobile */}
-            {posts.length > 1 && (
-              <div className="hidden lg:grid grid-cols-2 gap-6 mt-12">
-                {/* Previous Post Preview */}
-                {prevPost && (
-                  <div
-                    className="p-6 bg-slate-800/50 rounded-lg border border-slate-700 hover:border-slate-600 transition-colors cursor-pointer"
-                    onClick={handlePrevious}
-                  >
-                    <p className="text-sm text-slate-400 mb-2">← Previous</p>
-                    <h3 className="text-lg font-semibold text-white truncate hover:text-cyan-400 transition-colors">
-                      {prevPost.title}
-                    </h3>
-                  </div>
-                )}
-
-                {/* Next Post Preview */}
-                {nextPost && (
-                  <div
-                    className="p-6 bg-slate-800/50 rounded-lg border border-slate-700 hover:border-slate-600 transition-colors cursor-pointer text-right"
-                    onClick={handleNext}
-                  >
-                    <p className="text-sm text-slate-400 mb-2">Next →</p>
-                    <h3 className="text-lg font-semibold text-white truncate hover:text-cyan-400 transition-colors">
-                      {nextPost.title}
-                    </h3>
-                  </div>
-                )}
               </div>
             )}
           </div>
