@@ -85,14 +85,14 @@ export function useTaskData(
     fetchTasks();
   }, [fetchTasks, page, limit, sortBy, sortDirection]);
 
-  // Auto-refresh every 30 seconds
-  useEffect(() => {
-    const interval = setInterval(() => {
-      fetchTasks();
-    }, 30000);
-
-    return () => clearInterval(interval);
-  }, [fetchTasks]);
+  // Note: Auto-refresh disabled (was causing modal scrolling)
+  // Users can manually refresh with the Refresh button
+  // useEffect(() => {
+  //   const interval = setInterval(() => {
+  //     fetchTasks();
+  //   }, 30000);
+  //   return () => clearInterval(interval);
+  // }, [fetchTasks]);
 
   return {
     tasks,
