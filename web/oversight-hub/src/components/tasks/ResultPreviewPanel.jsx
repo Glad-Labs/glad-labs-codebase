@@ -25,6 +25,9 @@ const ResultPreviewPanel = ({
   const [imageSource, setImageSource] = useState('pexels');
   const [imageGenerationMessage, setImageGenerationMessage] = useState('');
   const [hasGeneratedImage, setHasGeneratedImage] = useState(false);
+  // APPROVAL MODAL STATES
+  const [showApprovalModal, setShowApprovalModal] = useState(false);
+  const [approvalDecision, setApprovalDecision] = useState(null); // 'approve' or 'reject'
   // const [isRetrying, setIsRetrying] = useState(false);
 
   // Helper function to extract full title from content (e.g., "Title: Best Eats in the Northeast USA: A Culinary Guide")
@@ -912,44 +915,51 @@ const ResultPreviewPanel = ({
           </div>
         )}
 
-        {/* Approval Section */}
+        {/* Approval Section - Now Opens Modal */}
         {task.status === 'awaiting_approval' && (
           <div className="border-t border-yellow-700/50 pt-4 bg-yellow-900/20 p-4 rounded">
             <h4 className="text-sm font-semibold text-yellow-400 mb-3">
               ⏳ Human Approval Required
             </h4>
-            <div className="space-y-3">
-              <div>
-                <label className="block text-xs font-medium text-gray-400 mb-1">
-                  Reviewer ID *
-                </label>
-                <input
-                  type="text"
-                  value={reviewerId}
-                  onChange={(e) => setReviewerId(e.target.value)}
-                  placeholder="your.username"
-                  className="w-full p-2 bg-gray-700 text-white rounded border border-gray-600 focus:outline-none focus:ring-2 focus:ring-yellow-500 text-sm"
-                />
-                <p className="text-xs text-gray-500 mt-1">
-                  Alphanumeric, dots, dashes, underscores
-                </p>
-              </div>
-
-              <div>
-                <label className="block text-xs font-medium text-gray-400 mb-1">
-                  Approval Feedback * (10-1000 characters)
-                </label>
-                <textarea
-                  value={approvalFeedback}
-                  onChange={(e) => setApprovalFeedback(e.target.value)}
-                  placeholder="Provide your review feedback, reason for decision..."
-                  className="w-full p-2 bg-gray-700 text-white rounded border border-gray-600 focus:outline-none focus:ring-2 focus:ring-yellow-500 text-sm"
-                  rows={3}
-                />
-                <p className="text-xs text-gray-500 mt-1">
-                  {approvalFeedback.length}/1000 characters
-                </p>
-              </div>
+            <p className="text-xs text-yellow-300 mb-4">
+              This task is awaiting your review and approval. Click below to
+              open the approval dialog.
+            </p>
+            <div className="flex gap-3">
+              <button
+                onClick={() => {
+                  setApprovalDecision('approve');
+                  setShowApprovalModal(true);
+                  setApprovalFeedback('');
+                }}
+                disabled={approvalLoading}
+                className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded font-medium transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+              >
+                {approvalLoading ? (
+                  <>
+                    <span className="animate-spin">⟳</span> Processing...
+                  </>
+                ) : (
+                  '✓ Approve'
+                )}
+              </button>
+              <button
+                onClick={() => {
+                  setApprovalDecision('reject');
+                  setShowApprovalModal(true);
+                  setApprovalFeedback('');
+                }}
+                disabled={approvalLoading}
+                className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded font-medium transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+              >
+                {approvalLoading ? (
+                  <>
+                    <span className="animate-spin">⟳</span> Processing...
+                  </>
+                ) : (
+                  '✕ Reject'
+                )}
+              </button>
             </div>
           </div>
         )}
@@ -957,36 +967,8 @@ const ResultPreviewPanel = ({
 
       {/* Action Buttons */}
       <div className="border-t border-cyan-500/30 bg-gray-800 p-4 flex gap-3 justify-end">
-        {task.status === 'awaiting_approval' ? (
-          <>
-            <button
-              onClick={() => handleApprovalSubmit(false)}
-              disabled={approvalLoading || !approvalFeedback || !reviewerId}
-              className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded font-medium transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
-            >
-              {approvalLoading ? (
-                <>
-                  <span className="animate-spin">⟳</span> Rejecting...
-                </>
-              ) : (
-                '✕ Reject'
-              )}
-            </button>
-            <button
-              onClick={() => handleApprovalSubmit(true)}
-              disabled={approvalLoading || !approvalFeedback || !reviewerId}
-              className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded font-medium transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
-            >
-              {approvalLoading ? (
-                <>
-                  <span className="animate-spin">⟳</span> Approving...
-                </>
-              ) : (
-                '✓ Approve'
-              )}
-            </button>
-          </>
-        ) : (
+        {/* Only show action buttons if NOT awaiting approval (modal handles that case) */}
+        {task.status !== 'awaiting_approval' ? (
           <>
             {/* Only allow rejecting tasks that are in terminal rejection-eligible states */}
             {['completed', 'approved'].includes(task.status) && (
@@ -1040,10 +1022,177 @@ const ResultPreviewPanel = ({
               </button>
             )}
           </>
+        ) : (
+          /* Approval modal is shown above in the approval section */
+          <p className="text-xs text-gray-400">Use the approval dialog above</p>
         )}
       </div>
+
+      {/* APPROVAL MODAL DIALOG */}
+      {showApprovalModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          {/* Backdrop */}
+          <div
+            className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+            onClick={() => !approvalLoading && setShowApprovalModal(false)}
+          />
+
+          {/* Modal */}
+          <div className="relative bg-gray-900 border-2 border-cyan-500/50 rounded-lg shadow-2xl max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+            {/* Modal Header */}
+            <div className="border-b border-cyan-500/30 bg-gray-800 sticky top-0 p-6">
+              <h2 className="text-2xl font-bold text-cyan-400">
+                {approvalDecision === 'approve'
+                  ? '✅ Approve Task'
+                  : '❌ Reject Task'}
+              </h2>
+              <p className="text-sm text-gray-400 mt-2">
+                {approvalDecision === 'approve'
+                  ? 'Review the content and approve for publishing to the posts database.'
+                  : 'Provide feedback for why you are rejecting this task.'}
+              </p>
+            </div>
+
+            {/* Modal Content */}
+            <div className="p-6 space-y-6">
+              {/* Content Preview */}
+              <div>
+                <h3 className="text-sm font-semibold text-gray-300 mb-3">
+                  📄 Content Preview
+                </h3>
+                <div className="bg-gray-800 border border-gray-700 rounded p-4 max-h-64 overflow-y-auto">
+                  <div className="prose prose-invert text-sm max-w-none">
+                    <h4 className="text-cyan-400 font-semibold mb-2">
+                      {task?.task_metadata?.title || 'Untitled'}
+                    </h4>
+                    <ReactMarkdown>
+                      {(
+                        task?.result?.content ||
+                        task?.content ||
+                        'No content available'
+                      ).substring(0, 500)}
+                      ...
+                    </ReactMarkdown>
+                  </div>
+                </div>
+              </div>
+
+              {/* Reviewer ID Input */}
+              <div>
+                <label className="block text-sm font-semibold text-gray-300 mb-2">
+                  Reviewer ID *
+                </label>
+                <input
+                  type="text"
+                  value={reviewerId}
+                  onChange={(e) => setReviewerId(e.target.value)}
+                  placeholder="your.username or your.name"
+                  disabled={approvalLoading}
+                  className="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-cyan-500"
+                />
+                <p className="text-xs text-gray-500 mt-1">
+                  Used to track who approved/rejected this task
+                </p>
+              </div>
+
+              {/* Feedback Textarea */}
+              <div>
+                <label className="block text-sm font-semibold text-gray-300 mb-2">
+                  {approvalDecision === 'approve'
+                    ? 'Approval Notes'
+                    : 'Rejection Reason'}{' '}
+                  * (10-1000 characters)
+                </label>
+                <textarea
+                  value={approvalFeedback}
+                  onChange={(e) => setApprovalFeedback(e.target.value)}
+                  placeholder={
+                    approvalDecision === 'approve'
+                      ? 'e.g., Content is well-written, SEO optimized, and ready for publishing.'
+                      : 'e.g., Needs more examples, citations, or clarity in the main points.'
+                  }
+                  disabled={approvalLoading}
+                  rows={6}
+                  className="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-cyan-500 resize-none"
+                />
+                <p className="text-xs text-gray-500 mt-1">
+                  {approvalFeedback.length}/1000 characters
+                  {approvalFeedback.length < 10 && (
+                    <span className="text-red-400 ml-2">
+                      • Minimum 10 characters required
+                    </span>
+                  )}
+                </p>
+              </div>
+
+              {/* Info Box */}
+              {approvalDecision === 'approve' && (
+                <div className="bg-green-900/20 border border-green-500/30 rounded p-4">
+                  <p className="text-sm text-green-300">
+                    ✓ This task will be published to the PostgreSQL posts table
+                    and appear on the public website.
+                  </p>
+                </div>
+              )}
+
+              {approvalDecision === 'reject' && (
+                <div className="bg-red-900/20 border border-red-500/30 rounded p-4">
+                  <p className="text-sm text-red-300">
+                    ✕ This task will be marked as rejected and returned for
+                    revision.
+                  </p>
+                </div>
+              )}
+            </div>
+
+            {/* Modal Footer */}
+            <div className="border-t border-gray-700 bg-gray-800 p-6 flex gap-3 justify-end">
+              <button
+                onClick={() => setShowApprovalModal(false)}
+                disabled={approvalLoading}
+                className="px-6 py-2 bg-gray-700 hover:bg-gray-600 text-white rounded font-medium transition disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() =>
+                  handleApprovalSubmit(approvalDecision === 'approve')
+                }
+                disabled={
+                  approvalLoading ||
+                  !approvalFeedback ||
+                  approvalFeedback.length < 10 ||
+                  approvalFeedback.length > 1000 ||
+                  !reviewerId ||
+                  reviewerId.length < 2
+                }
+                className={`px-6 py-2 rounded font-medium transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 text-white ${
+                  approvalDecision === 'approve'
+                    ? 'bg-green-600 hover:bg-green-700'
+                    : 'bg-red-600 hover:bg-red-700'
+                }`}
+              >
+                {approvalLoading ? (
+                  <>
+                    <span className="animate-spin">⟳</span>
+                    {approvalDecision === 'approve'
+                      ? 'Approving...'
+                      : 'Rejecting...'}
+                  </>
+                ) : (
+                  <>
+                    {approvalDecision === 'approve'
+                      ? '✓ Approve & Publish'
+                      : '✕ Reject Task'}
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
-};;
+};;;
 
 export default ResultPreviewPanel;
