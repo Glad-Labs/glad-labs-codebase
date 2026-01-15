@@ -18,33 +18,43 @@ async function getPosts() {
   try {
     const FASTAPI_URL =
       process.env.NEXT_PUBLIC_FASTAPI_URL || 'http://localhost:8000';
-    
+
     // Validate URL is absolute
-    if (!FASTAPI_URL.startsWith('http://') && !FASTAPI_URL.startsWith('https://')) {
+    if (
+      !FASTAPI_URL.startsWith('http://') &&
+      !FASTAPI_URL.startsWith('https://')
+    ) {
       console.warn('Invalid NEXT_PUBLIC_FASTAPI_URL, using static fallback');
       return [];
     }
 
-    const response = await fetch(
-      `${FASTAPI_URL}/api/posts?skip=0&limit=20&published_only=true`,
-      {
-        // ISR: Revalidate every 1 hour (3600 seconds)
-        next: { revalidate: 3600 },
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      }
-    );
+    const url = `${FASTAPI_URL}/api/posts?skip=0&limit=20&published_only=true`;
+    console.log('📡 Fetching posts from:', url);
+
+    const response = await fetch(url, {
+      // ISR: Revalidate every 1 hour (3600 seconds)
+      next: { revalidate: 3600 },
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
 
     if (!response.ok) {
-      console.error(`Failed to fetch posts: ${response.status}`);
+      console.error(
+        `❌ Failed to fetch posts: ${response.status} ${response.statusText}`
+      );
       return [];
     }
 
     const data = await response.json();
-    return data.data || data.items || [];
+    console.log(
+      '✅ Posts fetched successfully, got',
+      data.data?.length || 0,
+      'posts'
+    );
+    return data.data || [];
   } catch (error) {
-    console.error('Error fetching posts for homepage:', error);
+    console.error('❌ Error fetching posts for homepage:', error.message);
     return [];
   }
 }
