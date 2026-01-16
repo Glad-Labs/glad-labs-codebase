@@ -32,7 +32,7 @@ const LayoutWrapper = ({ children }) => {
   // const [availableOllamaModels, setAvailableOllamaModels] = useState([]);
   // const [selectedOllamaModel, setSelectedOllamaModel] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
-  const [availableModels, setAvailableModels] = useState([]); // Used in loadModels
+  const [availableModels, setAvailableModels] = useState([]);
   const [modelsByProvider, setModelsByProvider] = useState({
     ollama: [],
     openai: [],

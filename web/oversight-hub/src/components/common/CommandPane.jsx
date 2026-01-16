@@ -225,7 +225,8 @@ const CommandPane = () => {
       setIsTyping(true);
 
       try {
-        const { makeRequest } = await import('../../services/cofounderAgentClient');
+        const { makeRequest } =
+          await import('../../services/cofounderAgentClient');
         const result = await makeRequest(
           '/api/command/execute',
           'POST',
@@ -243,13 +244,11 @@ const CommandPane = () => {
           },
           false,
           null,
-          30000  // 30 second timeout for command execution
+          30000 // 30 second timeout for command execution
         );
 
         if (result.error) {
-          throw new Error(
-            result.error || 'Command execution failed'
-          );
+          throw new Error(result.error || 'Command execution failed');
         }
 
         // Simulate progress updates (in real scenario, backend would stream this)
@@ -275,7 +274,8 @@ const CommandPane = () => {
             JSON.stringify(result)
           ).substring(0, 200),
           metadata: {
-            wordCount: (result.response || result.result || '').split(' ').length,
+            wordCount: (result.response || result.result || '').split(' ')
+              .length,
             qualityScore: 8.5,
             cost: 0.35,
             executionTime: new Date().getTime(),

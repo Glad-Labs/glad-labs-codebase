@@ -80,7 +80,7 @@ class ErrorBoundary extends React.Component {
     } catch (loggingError) {
       console.error('Error in error logging:', loggingError);
     }
-  };;
+  };
 
   handleReset = () => {
     // Reset error state

@@ -173,13 +173,11 @@ export function ModelSelectionPanel({
   useEffect(() => {
     fetchAvailableModels();
     // fetchAvailableModels is defined in the component, so it's stable
-     
   }, []);
 
   // Update cost estimates when selections change
   useEffect(() => {
     estimateCosts();
-     
   }, [modelSelections, qualityPreference]);
 
   // Notify parent of changes
@@ -193,7 +191,6 @@ export function ModelSelectionPanel({
         combinedCost: totalCost + totalElectricityCost,
       });
     }
-     
   }, [modelSelections, qualityPreference, totalCost, totalElectricityCost]);
 
   const fetchAvailableModels = async () => {

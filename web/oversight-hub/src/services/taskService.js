@@ -30,7 +30,14 @@ export const getTasks = async (offset = 0, limit = 20, filters = {}) => {
     ...(filters.category && { category: filters.category }),
   });
 
-  const result = await makeRequest(`/api/tasks?${params}`, 'GET', null, false, null, API_TIMEOUT);
+  const result = await makeRequest(
+    `/api/tasks?${params}`,
+    'GET',
+    null,
+    false,
+    null,
+    API_TIMEOUT
+  );
 
   if (result.error) {
     throw new Error(`Could not fetch tasks: ${result.error}`);
@@ -47,7 +54,14 @@ export const getTasks = async (offset = 0, limit = 20, filters = {}) => {
  * @throws {Error} If task not found or API fails
  */
 export const getTask = async (taskId) => {
-  const result = await makeRequest(`/api/tasks/${taskId}`, 'GET', null, false, null, API_TIMEOUT);
+  const result = await makeRequest(
+    `/api/tasks/${taskId}`,
+    'GET',
+    null,
+    false,
+    null,
+    API_TIMEOUT
+  );
 
   if (result.error) {
     throw new Error(`Could not fetch task: ${result.error}`);
@@ -106,7 +120,14 @@ export const createTask = async (taskData) => {
  * @throws {Error} If update fails
  */
 export const updateTask = async (taskId, updates) => {
-  const result = await makeRequest(`/api/tasks/${taskId}`, 'PATCH', updates, false, null, API_TIMEOUT);
+  const result = await makeRequest(
+    `/api/tasks/${taskId}`,
+    'PATCH',
+    updates,
+    false,
+    null,
+    API_TIMEOUT
+  );
 
   if (result.error) {
     throw new Error(`Could not update task: ${result.error}`);
@@ -173,7 +194,14 @@ export const rejectTask = async (taskId, reason = '') => {
  * @throws {Error} If deletion fails
  */
 export const deleteTask = async (taskId) => {
-  const result = await makeRequest(`/api/tasks/${taskId}`, 'DELETE', null, false, null, API_TIMEOUT);
+  const result = await makeRequest(
+    `/api/tasks/${taskId}`,
+    'DELETE',
+    null,
+    false,
+    null,
+    API_TIMEOUT
+  );
 
   if (result.error) {
     throw new Error(`Could not delete task: ${result.error}`);

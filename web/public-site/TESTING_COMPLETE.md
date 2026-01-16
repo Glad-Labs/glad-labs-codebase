@@ -19,7 +19,7 @@ The public-site now has comprehensive testing infrastructure including:
 
 #### 1. Component Tests
 
-**[components/**tests**/Header.test.js](components/__tests__/Header.test.js)** - 8 test cases
+**[components/**tests**/Header.test.js](components/**tests**/Header.test.js)** - 8 test cases
 
 - ✅ Renders navigation links (Articles, About, CTA)
 - ✅ Logo renders with correct branding
@@ -30,7 +30,7 @@ The public-site now has comprehensive testing infrastructure including:
 - ✅ Focus states for accessibility
 - ✅ Hover effects applied correctly
 
-**[components/**tests**/Footer.test.js](components/__tests__/Footer.test.js)** - 9 test cases
+**[components/**tests**/Footer.test.js](components/**tests**/Footer.test.js)** - 9 test cases
 
 - ✅ Footer renders with contentinfo role
 - ✅ Copyright year displays correctly
@@ -42,7 +42,7 @@ The public-site now has comprehensive testing infrastructure including:
 - ✅ Link href verification (/archive/1, /legal/privacy, etc.)
 - ✅ Semantic structure validation
 
-**[components/**tests**/PostCard.test.js](components/__tests__/PostCard.test.js)** - 8 test cases (Enhanced)
+**[components/**tests**/PostCard.test.js](components/**tests**/PostCard.test.js)** - 8 test cases (Enhanced)
 
 - ✅ Post title renders
 - ✅ Post excerpt displays
@@ -59,7 +59,7 @@ The public-site now has comprehensive testing infrastructure including:
 
 #### 2. Page Tests
 
-**[app/**tests**/page.test.js](app/__tests__/page.test.js)** - 8 test cases
+**[app/**tests**/page.test.js](app/**tests**/page.test.js)** - 8 test cases
 
 - ✅ Page component renders
 - ✅ Main page heading present
@@ -70,7 +70,7 @@ The public-site now has comprehensive testing infrastructure including:
 - ✅ Responsive layout classes
 - ✅ Text content validation
 
-**[app/archive/**tests**/[page].test.js](app/archive/__tests__/[page].test.js)** - 10 test cases
+**[app/archive/**tests**/[page].test.js](app/archive/**tests**/[page].test.js)** - 10 test cases
 
 - ✅ Archive page loads with correct URL pattern
 - ✅ Archive heading displays
@@ -85,7 +85,7 @@ The public-site now has comprehensive testing infrastructure including:
 
 #### 3. Utility Tests
 
-**[lib/**tests**/url.test.js](lib/__tests__/url.test.js)** - 15 test cases
+**[lib/**tests**/url.test.js](lib/**tests**/url.test.js)** - 15 test cases
 
 - ✅ getAPIBaseURL() returns FastAPI URL
 - ✅ URL format validation (http/https)
@@ -103,7 +103,7 @@ The public-site now has comprehensive testing infrastructure including:
 - ✅ Special character handling
 - ✅ URL encoding preservation
 
-**[lib/**tests**/api-fastapi.test.js](lib/__tests__/api-fastapi.test.js)** - 20 test cases
+**[lib/**tests**/api-fastapi.test.js](lib/**tests**/api-fastapi.test.js)** - 20 test cases
 
 - ✅ getPaginatedPosts() API calls
 - ✅ Paginated data structure

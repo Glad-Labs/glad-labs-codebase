@@ -31,4 +31,4 @@ export const sendIntervention = async () => {
     console.error('Failed to send intervention signal:', error);
     alert(`Failed to send intervention signal: ${error.message}`);
   }
-};;
+};

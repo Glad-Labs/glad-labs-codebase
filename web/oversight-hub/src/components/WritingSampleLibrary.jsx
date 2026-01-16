@@ -34,10 +34,10 @@ import SearchIcon from '@mui/icons-material/Search';
 
 /**
  * WritingSampleLibrary Component
- * 
+ *
  * Displays and manages user's writing samples
  * Includes: list, view, delete, pagination, search
- * 
+ *
  * Features:
  * - Display all writing samples
  * - View full content
@@ -103,12 +103,15 @@ function WritingSampleLibrary(props) {
     if (!selectedSample) return;
 
     try {
-      const response = await fetch(`/api/writing-style/samples/${selectedSample.id}`, {
-        method: 'DELETE',
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem('token')}`,
-        },
-      });
+      const response = await fetch(
+        `/api/writing-style/samples/${selectedSample.id}`,
+        {
+          method: 'DELETE',
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem('token')}`,
+          },
+        }
+      );
 
       if (response.ok) {
         setSamples(samples.filter((s) => s.id !== selectedSample.id));
@@ -170,7 +173,9 @@ function WritingSampleLibrary(props) {
       <Divider />
       <CardContent>
         {error && (
-          <Box sx={{ mb: 2, p: 1.5, backgroundColor: '#ffebee', borderRadius: 1 }}>
+          <Box
+            sx={{ mb: 2, p: 1.5, backgroundColor: '#ffebee', borderRadius: 1 }}
+          >
             <Typography color="error" variant="body2">
               {error}
             </Typography>
@@ -214,9 +219,7 @@ function WritingSampleLibrary(props) {
                     <TableCell>Title</TableCell>
                     <TableCell>Style</TableCell>
                     <TableCell>Tone</TableCell>
-                    <TableCell align="right">
-                      Word Count
-                    </TableCell>
+                    <TableCell align="right">Word Count</TableCell>
                     <TableCell align="center">Created</TableCell>
                     <TableCell align="right">Actions</TableCell>
                   </TableRow>
@@ -227,7 +230,11 @@ function WritingSampleLibrary(props) {
                       <TableCell>{sample.title}</TableCell>
                       <TableCell>
                         {sample.style ? (
-                          <Chip label={sample.style} size="small" variant="filled" />
+                          <Chip
+                            label={sample.style}
+                            size="small"
+                            variant="filled"
+                          />
                         ) : (
                           <Typography variant="caption" color="textSecondary">
                             -
@@ -236,14 +243,20 @@ function WritingSampleLibrary(props) {
                       </TableCell>
                       <TableCell>
                         {sample.tone ? (
-                          <Chip label={sample.tone} size="small" variant="outlined" />
+                          <Chip
+                            label={sample.tone}
+                            size="small"
+                            variant="outlined"
+                          />
                         ) : (
                           <Typography variant="caption" color="textSecondary">
                             -
                           </Typography>
                         )}
                       </TableCell>
-                      <TableCell align="right">{sample.word_count || 0}</TableCell>
+                      <TableCell align="right">
+                        {sample.word_count || 0}
+                      </TableCell>
                       <TableCell align="center">
                         <Typography variant="caption">
                           {sample.created_at
@@ -293,7 +306,13 @@ function WritingSampleLibrary(props) {
 
       {/* View Dialog */}
       <Dialog open={viewDialogOpen} maxWidth="md" fullWidth>
-        <DialogTitle sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <DialogTitle
+          sx={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+          }}
+        >
           <span>{selectedSample?.title}</span>
           {selectedSample?.word_count && (
             <Chip label={`${selectedSample.word_count} words`} size="small" />
@@ -321,13 +340,19 @@ function WritingSampleLibrary(props) {
           {/* Metadata */}
           <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', mt: 2 }}>
             {selectedSample?.style && (
-              <Chip label={`Style: ${selectedSample.style}`} variant="outlined" />
+              <Chip
+                label={`Style: ${selectedSample.style}`}
+                variant="outlined"
+              />
             )}
             {selectedSample?.tone && (
               <Chip label={`Tone: ${selectedSample.tone}`} variant="outlined" />
             )}
             {selectedSample?.word_count && (
-              <Chip label={`${selectedSample.word_count} words`} variant="outlined" />
+              <Chip
+                label={`${selectedSample.word_count} words`}
+                variant="outlined"
+              />
             )}
             {selectedSample?.created_at && (
               <Chip
@@ -347,22 +372,20 @@ function WritingSampleLibrary(props) {
         <DialogTitle>Delete Sample?</DialogTitle>
         <DialogContent>
           <Typography>
-            Are you sure you want to delete
-            {' '}
-            <strong>{selectedSample?.title}</strong>
-            ?
+            Are you sure you want to delete{' '}
+            <strong>{selectedSample?.title}</strong>?
           </Typography>
-          <Typography variant="caption" color="textSecondary" sx={{ display: 'block', mt: 1 }}>
+          <Typography
+            variant="caption"
+            color="textSecondary"
+            sx={{ display: 'block', mt: 1 }}
+          >
             This action cannot be undone.
           </Typography>
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setDeleteDialogOpen(false)}>Cancel</Button>
-          <Button
-            color="error"
-            variant="contained"
-            onClick={handleDelete}
-          >
+          <Button color="error" variant="contained" onClick={handleDelete}>
             Delete
           </Button>
         </DialogActions>

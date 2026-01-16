@@ -154,7 +154,8 @@ const TaskManagement = () => {
       // ✅ FIXED: Fetch with a reasonable high limit (100) to get more tasks in one request for KPI
       // This way KPI stats are more representative, while still paginating for display
       // Request all available tasks to calculate stats correctly
-      const { getTasks: getTasksFromAPI } = await import('../../services/taskService');
+      const { getTasks: getTasksFromAPI } =
+        await import('../../services/taskService');
       const data = await getTasksFromAPI(0, 100);
       console.log('✅ TaskManagement: API Response received:', data);
 
@@ -401,7 +402,6 @@ const TaskManagement = () => {
     // Auto-refresh every 10 seconds
     const interval = setInterval(fetchTasks, 10000);
     return () => clearInterval(interval);
-     
   }, [authLoading, activeTab]);
 
   // Handle pagination separately - paginate allTasks without refetching
@@ -1031,14 +1031,10 @@ const TaskManagement = () => {
                               headers['Authorization'] = `Bearer ${token}`;
                             }
 
-                            const { getTask: getTaskById } = await import(
-                              '../../services/taskService'
-                            );
+                            const { getTask: getTaskById } =
+                              await import('../../services/taskService');
                             const fullTask = await getTaskById(task.id);
-                            console.log(
-                              '✅ Full task data fetched:',
-                              fullTask
-                            );
+                            console.log('✅ Full task data fetched:', fullTask);
 
                             // Task response includes task_metadata from convert_db_row_to_dict()
                             setSelectedTask(fullTask);
@@ -1330,10 +1326,12 @@ const TaskManagement = () => {
                     headers['Authorization'] = `Bearer ${token}`;
                   }
 
-                  const { approveTask: approveContentTask } = await import(
-                    '../../services/taskService'
+                  const { approveTask: approveContentTask } =
+                    await import('../../services/taskService');
+                  await approveContentTask(
+                    selectedTask.id,
+                    updatedTask.feedback || 'Approved in oversight hub'
                   );
-                  await approveContentTask(selectedTask.id, updatedTask.feedback || 'Approved in oversight hub');
                   // ✅ Update local task status to 'published' and approval_status to 'approved' before closing
                   setTasks(
                     tasks.map((t) =>
@@ -1365,9 +1363,8 @@ const TaskManagement = () => {
                 setError(null);
                 try {
                   // ✅ Send rejection to backend
-                  const { rejectTask: rejectContentTask } = await import(
-                    '../../services/taskService'
-                  );
+                  const { rejectTask: rejectContentTask } =
+                    await import('../../services/taskService');
                   await rejectContentTask(
                     selectedTask.id,
                     rejectedTask.rejection_reason || 'Rejected in oversight hub'

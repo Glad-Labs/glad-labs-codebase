@@ -34,14 +34,15 @@ const ExecutiveDashboard = () => {
       try {
         setLoading(true);
 
-        const { makeRequest } = await import('../../services/cofounderAgentClient');
+        const { makeRequest } =
+          await import('../../services/cofounderAgentClient');
         const result = await makeRequest(
           `/api/analytics/kpis?range=${timeRange}`,
           'GET',
           null,
           false,
           null,
-          15000  // 15 second timeout for analytics
+          15000 // 15 second timeout for analytics
         );
 
         if (result.error) {

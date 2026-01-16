@@ -10,7 +10,7 @@
  *
  * Used in: ExecutiveDashboard, CostMetricsDashboard
  * Data source: analytics/kpis endpoint or dedicated cost endpoints
- * 
+ *
  * Props:
  *  - costByPhase (object): { phase: cost }
  *  - costByModel (object): { model: cost }
@@ -336,8 +336,8 @@ const CostBreakdownCards = ({ costByPhase = {}, costByModel = {} }) => {
                     color: theme.palette.text.secondary,
                   }}
                 >
-                  Pricing: Ollama free | GPT-3.5 $0.00175/1K | GPT-4
-                  $0.045/1K | Claude $0.015-$0.045/1K
+                  Pricing: Ollama free | GPT-3.5 $0.00175/1K | GPT-4 $0.045/1K |
+                  Claude $0.015-$0.045/1K
                 </Typography>
               </CardContent>
             </Card>

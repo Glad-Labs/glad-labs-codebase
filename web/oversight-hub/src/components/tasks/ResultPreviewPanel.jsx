@@ -1,6 +1,5 @@
 import React, { useState, useRef } from 'react';
 import ReactMarkdown from 'react-markdown';
-import { getAuthToken } from '../../services/authService';
 import ErrorDetailPanel from './ErrorDetailPanel';
 import ConstraintComplianceDisplay from './ConstraintComplianceDisplay';
 

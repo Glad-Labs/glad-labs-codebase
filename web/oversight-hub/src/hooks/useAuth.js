@@ -72,6 +72,6 @@ export const useAuth = () => {
     setIsAuthenticated,
     setAccessToken,
   };
-};;
+};
 
 export default useAuth;

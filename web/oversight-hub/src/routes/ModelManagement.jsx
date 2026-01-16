@@ -80,7 +80,6 @@ function ModelManagement() {
       }
     };
     fetch();
-     
   }, []);
 
   const runModelTest = async () => {

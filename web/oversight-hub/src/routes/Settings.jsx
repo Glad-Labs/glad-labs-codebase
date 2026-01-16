@@ -1,5 +1,5 @@
 import React from 'react';
-import { Container, Stack } from '@mui/material';
+import { Container } from '@mui/material';
 import useStore from '../store/useStore';
 import WritingStyleManager from '../components/WritingStyleManager';
 import './Settings.css';

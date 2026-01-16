@@ -50,7 +50,9 @@ export async function getOllamaModels() {
   } catch (error) {
     if (error.name === 'AbortError') {
       // eslint-disable-next-line no-console
-      console.warn('⚠️ Ollama timeout - backend Ollama endpoint may be unavailable');
+      console.warn(
+        '⚠️ Ollama timeout - backend Ollama endpoint may be unavailable'
+      );
     } else {
       // eslint-disable-next-line no-console
       console.warn('⚠️ Ollama not available:', error.message);

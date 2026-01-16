@@ -4,7 +4,8 @@ import Image from 'next/image';
 // SEO Metadata
 export const metadata = {
   title: 'Glad Labs - AI & Technology Insights',
-  description: 'Deep dives into AI, technology, and digital transformation. Explore our latest insights and expert analysis.',
+  description:
+    'Deep dives into AI, technology, and digital transformation. Explore our latest insights and expert analysis.',
   openGraph: {
     title: 'Glad Labs - AI & Technology Insights',
     description: 'Deep dives into AI, technology, and digital transformation',
