@@ -13,7 +13,7 @@
 import React, { useState } from 'react';
 import PropTypes from 'prop-types';
 
-function ApprovalPanel({ taskId, outputs, qualityScore, onApprove, loading }) {
+function ApprovalPanel({ _taskId, outputs, qualityScore, onApprove, loading }) {
   const [feedback, setFeedback] = useState('');
   const [showFeedback, setShowFeedback] = useState(false);
 

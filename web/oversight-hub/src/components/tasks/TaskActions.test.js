@@ -5,7 +5,7 @@
  */
 
 import React from 'react';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import '@testing-library/jest-dom';
 import TaskActions from './TaskActions';
@@ -32,35 +32,35 @@ describe('TaskActions Component', () => {
 
   describe('Component Rendering', () => {
     it('should render without errors when no task is selected', () => {
-      const { container } = render(
+      const { _container } = render(
         <TaskActions {...defaultProps} selectedTask={null} />
       );
 
-      expect(container).toBeInTheDocument();
+      expect(_container).toBeInTheDocument();
     });
 
     it('should render successfully with a selected task', () => {
-      const { container } = render(<TaskActions {...defaultProps} />);
+      const { _container } = render(<TaskActions {...defaultProps} />);
 
-      expect(container).toBeInTheDocument();
+      expect(_container).toBeInTheDocument();
     });
   });
 
   describe('Approve Dialog', () => {
     it('should have approve action available', () => {
-      const { container } = render(<TaskActions {...defaultProps} />);
+      const { _container } = render(<TaskActions {...defaultProps} />);
 
       // Approve functionality should be available via API
       expect(defaultProps.onApprove).toBeDefined();
     });
 
     it('should call onApprove with task ID and feedback', async () => {
-      const user = userEvent.setup();
+      const _user = userEvent.setup();
 
       // Simulate approve action
       defaultProps.onApprove.mockResolvedValue(undefined);
 
-      const { rerender } = render(<TaskActions {...defaultProps} />);
+      const { _rerender } = render(<TaskActions {...defaultProps} />);
 
       // Mock opening approve dialog and submitting
       await defaultProps.onApprove(mockTask.id, 'Great work!');
@@ -79,8 +79,8 @@ describe('TaskActions Component', () => {
 
       try {
         await defaultProps.onApprove(mockTask.id, '');
-      } catch (error) {
-        expect(error.message).toBe(errorMessage);
+      } catch (_error) {
+        expect(_error.message).toBe(errorMessage);
       }
 
       expect(defaultProps.onApprove).toHaveBeenCalled();
@@ -100,7 +100,7 @@ describe('TaskActions Component', () => {
 
   describe('Reject Dialog', () => {
     it('should have reject action available', () => {
-      const { container } = render(<TaskActions {...defaultProps} />);
+      const { _container } = render(<TaskActions {...defaultProps} />);
 
       expect(defaultProps.onReject).toBeDefined();
     });
@@ -155,7 +155,7 @@ describe('TaskActions Component', () => {
 
   describe('Delete Dialog', () => {
     it('should have delete action available', () => {
-      const { container } = render(<TaskActions {...defaultProps} />);
+      const { _container } = render(<TaskActions {...defaultProps} />);
 
       expect(defaultProps.onDelete).toBeDefined();
     });

@@ -17,8 +17,6 @@ import OrchestratorResultMessage from '../OrchestratorResultMessage';
 import OrchestratorErrorMessage from '../OrchestratorErrorMessage';
 import { Message } from '@chatscope/chat-ui-kit-react';
 
-const COFOUNDER_API_URL = 'http://localhost:8000/command';
-
 // Available AI Models
 const AI_MODELS = [
   { id: 'gpt-4', name: 'GPT-4 (Advanced)' },
@@ -179,7 +177,7 @@ const CommandPane = () => {
    * Handle retry after error
    */
   const handleRetryCommand = useCallback(
-    (errorMessage) => {
+    (_errorMessage) => {
       const retryMessage = {
         type: 'text',
         direction: 'incoming',
@@ -415,7 +413,7 @@ const CommandPane = () => {
   }, [handleResize]);
 
   const startResize = useCallback(
-    (e) => {
+    (_e) => {
       isResizing.current = true;
       document.addEventListener('mousemove', handleResize);
       document.addEventListener('mouseup', stopResize);

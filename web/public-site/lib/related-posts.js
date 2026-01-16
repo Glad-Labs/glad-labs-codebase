@@ -137,8 +137,8 @@ export function calculateRelevanceScore(post, query) {
  * Get posts published around the same time
  * Useful for "you might have missed" sections
  */
-export async function getPostsAroundDate(date, daysRange = 30, _limit = 5) {
-  if (!date) {
+export async function getPostsAroundDate(_date, _daysRange = 30, _limit = 5) {
+  if (!_date) {
     return [];
   }
 

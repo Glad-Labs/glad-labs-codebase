@@ -661,7 +661,7 @@ export function ModelSelectionPanel({
                   </TableRow>
                 </TableHead>
                 <TableBody>
-                  {PHASES.map((phase, idx) => (
+                  {PHASES.map((phase, _idx) => (
                     <TableRow
                       key={phase}
                       sx={{

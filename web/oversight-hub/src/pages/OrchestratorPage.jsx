@@ -6,10 +6,8 @@ import {
   CheckCircle,
   XCircle,
   Clock,
-  ArrowRight,
   BarChart3,
   Brain,
-  Settings,
   Download,
   Play,
   Pause,
@@ -21,7 +19,6 @@ const OrchestratorPage = () => {
   const [orchestrations, setOrchestrations] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-  const [selectedOrchestration, setSelectedOrchestration] = useState(null);
   const [approvalMode, setApprovalMode] = useState(false);
   const [learningPatterns, setLearningPatterns] = useState(null);
   const [executionStats, setExecutionStats] = useState(null);
@@ -75,8 +72,8 @@ const OrchestratorPage = () => {
     }
   };
 
-  const handleProcessRequest = async (e) => {
-    e.preventDefault();
+  const handleProcessRequest = async (_e) => {
+    _e.preventDefault();
     if (!userRequest.trim()) return;
 
     try {

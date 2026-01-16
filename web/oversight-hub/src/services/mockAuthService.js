@@ -29,7 +29,7 @@ if (process.env.NODE_ENV !== 'development') {
  *
  * ⚠️ These mock tokens are NOT valid and NOT secure
  */
-export const generateMockGitHubAuthURL = (clientId) => {
+export const generateMockGitHubAuthURL = (_clientId) => {
   if (process.env.NODE_ENV !== 'development') {
     throw new Error('Mock auth is disabled in non-development environments');
   }

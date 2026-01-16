@@ -19,7 +19,6 @@ import {
   Dialog,
   DialogTitle,
   DialogContent,
-  DialogActions,
   Tabs,
   Tab,
 } from '@mui/material';
@@ -77,7 +76,7 @@ const TaskManagement = () => {
    * ✅ REFACTORED: Changed from /api/content/blog-posts/tasks/{id} to /api/content/tasks/{id}
    * Now supports all task types: blog_post, social_media, email, newsletter
    */
-  const fetchContentTaskStatus = async (taskId) => {
+  const _fetchContentTaskStatus = async (taskId) => {
     try {
       const token = getAuthToken();
       const headers = { 'Content-Type': 'application/json' };
@@ -334,7 +333,7 @@ const TaskManagement = () => {
   /**
    * Get priority chip color
    */
-  const getPriorityColor = (priority) => {
+  const _getPriorityColor = (priority) => {
     const colors = {
       low: 'default',
       medium: 'info',

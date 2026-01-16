@@ -114,12 +114,12 @@ export const verifySession = async () => {
               localStorage.removeItem('user');
               return null;
             }
-          } catch (e) {
+          } catch (_e) {
             // Could not parse payload, but JWT format is valid
           }
         }
         return parsedUser;
-      } catch (e) {
+      } catch (_e) {
         return null;
       }
     }
@@ -356,7 +356,7 @@ export const initializeDevToken = async () => {
             Object.keys(parsed.state || {})
           );
         }
-      } catch (e) {
+      } catch (_e) {
         console.log('[authService] Could not parse Zustand data');
       }
       throw new Error('Failed to store token in localStorage');

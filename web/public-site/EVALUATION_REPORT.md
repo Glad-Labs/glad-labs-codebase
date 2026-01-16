@@ -51,6 +51,7 @@ The Glad Labs public-site is a well-architected Next.js 15 application with soli
    - Will cause runtime errors
 
 2. **Related-Posts.js - Unreachable Code**
+
    ```javascript
    // Lines 114, 159: Code after return statements
    ```
@@ -516,6 +517,7 @@ useEffect(() => {
    ```
 
 2. **Document API integration:**
+
    ```markdown
    # API Integration
 

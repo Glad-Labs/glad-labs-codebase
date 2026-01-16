@@ -9,34 +9,51 @@ const formatTimestamp = (timestamp) => {
   return 'N/A';
 };
 
+/**
+ * Get icon character for status badge.
+ * Enterprise-level status display with comprehensive icon mapping.
+ */
 const getStatusIcon = (status) => {
-  switch (status?.toLowerCase()) {
-    case 'completed':
-      return '✓';
-    case 'pending':
-      return '⧗';
-    case 'running':
-      return '⟳';
-    case 'failed':
-      return '✗';
-    default:
-      return '○';
-  }
+  const statusLower = status?.toLowerCase();
+  const iconMap = {
+    pending: '⧗', // Hourglass - waiting
+    in_progress: '⟳', // Refresh - processing
+    running: '⟳', // Refresh - processing (legacy)
+    awaiting_approval: '⚠', // Warning - needs review
+    approved: '✓', // Check - approved
+    published: '✓✓', // Double check - live
+    completed: '✓', // Check - done
+    failed: '✗', // X - error
+    on_hold: '⊥', // Pause - paused
+    rejected: '✗', // X - rejected
+    cancelled: '⊙', // Circle - cancelled
+  };
+  return iconMap[statusLower] || '○';
 };
 
+/**
+ * Get CSS class name for status badge styling.
+ * Maps status values to enterprise-level CSS classes.
+ */
 const getStatusColor = (status) => {
-  switch (status?.toLowerCase()) {
-    case 'completed':
-      return 'status-completed';
-    case 'pending':
-      return 'status-pending';
-    case 'running':
-      return 'status-running';
-    case 'failed':
-      return 'status-failed';
-    default:
-      return 'status-default';
-  }
+  const statusLower = status?.toLowerCase();
+  const statusMap = {
+    // Main workflow statuses
+    pending: 'status-pending',
+    in_progress: 'status-in-progress',
+    running: 'status-in-progress', // Map legacy to new
+    awaiting_approval: 'status-awaiting-approval',
+    approved: 'status-approved',
+    published: 'status-published',
+    completed: 'status-published', // Map legacy to published
+
+    // Error and management statuses
+    failed: 'status-failed',
+    on_hold: 'status-on-hold',
+    rejected: 'status-rejected',
+    cancelled: 'status-cancelled',
+  };
+  return statusMap[statusLower] || 'status-default';
 };
 
 const TaskList = ({

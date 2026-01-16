@@ -24,7 +24,6 @@ import {
   Refresh as RefreshIcon,
   CheckCircle as CheckCircleIcon,
   Error as ErrorIcon,
-  TrendingUp as TrendingUpIcon,
 } from '@mui/icons-material';
 import {
   getCostMetrics,
