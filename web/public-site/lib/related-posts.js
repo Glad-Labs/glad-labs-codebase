@@ -104,18 +104,6 @@ export async function getPostsByMultipleCriteria(
 }
 
 /**
- * Get posts grouped by category
- * Useful for sidebar widgets or category collections
- */
-export async function getPostsGroupedByCategory(_limit = 3) {
-  // TODO: Implement category grouping
-  // Would require fetching all categories first, then posts per category
-  // Current limitation: Strapi doesn't have categories endpoint
-
-  return {};
-}
-
-/**
  * Calculate post relevance score for ranking
  * Higher scores = more relevant
  */
@@ -146,18 +134,6 @@ export function calculateRelevanceScore(post, query) {
 }
 
 /**
- * Get "More from Author" posts
- * (Requires author field in Strapi)
- */
-export async function getMoreFromAuthor(authorId, _limit = 3) {
-  // TODO: Implement author-based recommendations
-  // Requires author field in backend posts
-  // Current limitation: authorId not tracked in Strapi
-
-  return [];
-}
-
-/**
  * Get posts published around the same time
  * Useful for "you might have missed" sections
  */
@@ -166,44 +142,9 @@ export async function getPostsAroundDate(date, daysRange = 30, _limit = 5) {
     return [];
   }
 
-  try {
-    const targetDate = new Date(date);
-    const startDate = new Date(targetDate);
-    const endDate = new Date(targetDate);
-
-    startDate.setDate(startDate.getDate() - daysRange);
-    endDate.setDate(endDate.getDate() + daysRange);
-
-    // This would require date range filtering in Strapi
-    // Placeholder for future implementation
-    return [];
-  } catch (error) {
-    console.error('Error getting posts around date:', error);
-    return [];
-  }
-}
-
-/**
- * Get recommended posts for user based on reading history
- * (Would require tracking and user data)
- */
-export async function getRecommendedPosts(userReadingHistory = [], _limit = 5) {
-  try {
-    if (!Array.isArray(userReadingHistory) || userReadingHistory.length === 0) {
-      return [];
-    }
-
-    const recommendedMap = new Map();
-
-    // For each post read, find related posts
-    // Placeholder for future implementation
-    // TODO: Implement post retrieval and recommendation logic
-
-    return Array.from(recommendedMap.values()).slice(0, _limit);
-  } catch (error) {
-    console.error('Error getting recommended posts:', error);
-    return [];
-  }
+  // Note: Strapi doesn't support date range filtering in current setup
+  // This function is reserved for future enhancement when date filtering is added
+  return [];
 }
 
 /**
