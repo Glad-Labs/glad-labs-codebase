@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import useStore from '../store/useStore';
 import { getTasks } from '../services/cofounderAgentClient';
 import CreateTaskModal from '../components/tasks/CreateTaskModal';
+import { StatusDashboardMetrics } from '../components/tasks/StatusComponents';
 import './TaskManagement.css';
 
 function TaskManagement() {
@@ -166,6 +167,14 @@ function TaskManagement() {
           </span>
           <span className="stat-label">Failed</span>
         </div>
+      </div>
+
+      {/* Metrics Dashboard */}
+      <div className="metrics-section" style={{ marginBottom: '30px' }}>
+        <StatusDashboardMetrics
+          statusHistory={filteredTasks.flatMap((t) => t.statusHistory || [])}
+          compact={true}
+        />
       </div>
 
       {/* Unified Table - All Tasks */}

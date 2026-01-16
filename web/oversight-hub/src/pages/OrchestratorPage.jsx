@@ -13,6 +13,7 @@ import {
   Pause,
 } from 'lucide-react';
 import { makeRequest } from '../services/cofounderAgentClient';
+import { unifiedStatusService } from '../services/unifiedStatusService';
 
 const OrchestratorPage = () => {
   const [userRequest, setUserRequest] = useState('');
@@ -94,10 +95,9 @@ const OrchestratorPage = () => {
 
   const handleApprove = async (executionId) => {
     try {
-      await makeRequest(
-        `/api/orchestrator/executions/${executionId}/approve`,
-        'POST',
-        {}
+      await unifiedStatusService.approve(
+        executionId,
+        'Approved via OrchestratorPage'
       );
       alert('✅ Execution approved');
       await loadOrchestrations();
@@ -107,14 +107,11 @@ const OrchestratorPage = () => {
   };
 
   const handleReject = async (executionId) => {
-    if (!window.confirm('Reject this execution plan?')) return;
+    const reason = window.prompt('Reason for rejection:');
+    if (!reason) return;
 
     try {
-      await makeRequest(
-        `/api/orchestrator/executions/${executionId}/reject`,
-        'POST',
-        {}
-      );
+      await unifiedStatusService.reject(executionId, reason);
       alert('✅ Execution rejected');
       await loadOrchestrations();
     } catch (err) {
