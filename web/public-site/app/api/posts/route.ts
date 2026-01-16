@@ -5,7 +5,10 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 
-const API_BASE = process.env.NEXT_PUBLIC_FASTAPI_URL || 'http://localhost:8000';
+const API_BASE =
+  process.env.NEXT_PUBLIC_API_BASE_URL ||
+  process.env.NEXT_PUBLIC_FASTAPI_URL ||
+  'http://localhost:8000';
 
 // GET /api/posts?page=1&limit=10&status=published
 export async function GET(request: NextRequest) {

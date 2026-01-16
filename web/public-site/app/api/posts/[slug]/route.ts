@@ -5,7 +5,10 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 
-const API_BASE = process.env.NEXT_PUBLIC_FASTAPI_URL || 'http://localhost:8000';
+const API_BASE =
+  process.env.NEXT_PUBLIC_API_BASE_URL ||
+  process.env.NEXT_PUBLIC_FASTAPI_URL ||
+  'http://localhost:8000';
 
 // GET /api/posts/[slug]
 export async function GET(

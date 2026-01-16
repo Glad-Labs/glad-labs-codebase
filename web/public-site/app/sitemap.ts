@@ -12,7 +12,9 @@ import type { MetadataRoute } from 'next';
 // Import FastAPI client to query published posts
 async function fetchPublishedContent() {
   const FASTAPI_URL =
-    process.env.NEXT_PUBLIC_FASTAPI_URL || 'http://localhost:8000';
+    process.env.NEXT_PUBLIC_API_BASE_URL ||
+    process.env.NEXT_PUBLIC_FASTAPI_URL ||
+    'http://localhost:8000';
 
   // Validate that FASTAPI_URL is a valid absolute URL
   let isValidUrl = false;

@@ -17,14 +17,16 @@ export const metadata = {
 async function getPosts() {
   try {
     const FASTAPI_URL =
-      process.env.NEXT_PUBLIC_FASTAPI_URL || 'http://localhost:8000';
+      process.env.NEXT_PUBLIC_API_BASE_URL ||
+      process.env.NEXT_PUBLIC_FASTAPI_URL ||
+      'http://localhost:8000';
 
     // Validate URL is absolute
     if (
       !FASTAPI_URL.startsWith('http://') &&
       !FASTAPI_URL.startsWith('https://')
     ) {
-      console.warn('Invalid NEXT_PUBLIC_FASTAPI_URL, using static fallback');
+      console.warn('Invalid NEXT_PUBLIC_API_BASE_URL, using static fallback');
       return [];
     }
 

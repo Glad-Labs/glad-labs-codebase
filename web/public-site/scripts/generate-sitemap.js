@@ -2,7 +2,9 @@ import fs from 'fs';
 import qs from 'qs';
 
 const FASTAPI_URL =
-  process.env.NEXT_PUBLIC_FASTAPI_URL || 'http://localhost:8000';
+  process.env.NEXT_PUBLIC_API_BASE_URL ||
+  process.env.NEXT_PUBLIC_FASTAPI_URL ||
+  'http://localhost:8000';
 const SITE_URL = 'https://www.glad-labs.com'; // Replace with your actual site URL
 
 async function fetchAPI(path, urlParamsObject = {}, options = {}) {

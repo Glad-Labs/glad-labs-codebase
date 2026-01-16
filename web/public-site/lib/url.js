@@ -4,7 +4,9 @@
  */
 
 const FASTAPI_URL =
-  process.env.NEXT_PUBLIC_FASTAPI_URL || 'http://localhost:8000';
+  process.env.NEXT_PUBLIC_API_BASE_URL ||
+  process.env.NEXT_PUBLIC_FASTAPI_URL ||
+  'http://localhost:8000';
 
 /**
  * Construct absolute URL for API calls and image assets

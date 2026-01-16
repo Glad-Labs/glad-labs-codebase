@@ -4,6 +4,11 @@ import { useState, useEffect, use } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 
+const API_BASE =
+  process.env.NEXT_PUBLIC_API_BASE_URL ||
+  process.env.NEXT_PUBLIC_FASTAPI_URL ||
+  'http://localhost:8000';
+
 interface Post {
   id: string;
   title: string;
@@ -38,7 +43,7 @@ export default function ArchivePage({ params }: ArchivePageProps) {
         setLoading(true);
         const skip = (pageNum - 1) * POSTS_PER_PAGE;
         const response = await fetch(
-          `http://localhost:8000/api/posts?skip=${skip}&limit=${POSTS_PER_PAGE}&status=published`
+          `${API_BASE}/api/posts?skip=${skip}&limit=${POSTS_PER_PAGE}&status=published`
         );
 
         if (!response.ok) {

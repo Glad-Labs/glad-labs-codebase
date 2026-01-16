@@ -5,6 +5,11 @@ import { useParams } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
 
+const API_BASE =
+  process.env.NEXT_PUBLIC_API_BASE_URL ||
+  process.env.NEXT_PUBLIC_FASTAPI_URL ||
+  'http://localhost:8000';
+
 interface Post {
   id: string;
   title: string;
@@ -42,9 +47,7 @@ export default function PostPage() {
         console.log('[Post Page] Fetching post with slug:', slug);
 
         // Fetch all posts and filter by slug since by-slug endpoint doesn't exist
-        const response = await fetch(
-          `http://localhost:8000/api/posts?populate=*`
-        );
+        const response = await fetch(`${API_BASE}/api/posts?populate=*`);
 
         if (!response.ok) {
           throw new Error('Failed to fetch posts');
