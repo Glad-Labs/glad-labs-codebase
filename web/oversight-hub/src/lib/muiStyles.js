@@ -14,11 +14,18 @@ const colors = {
 
   status: {
     pending: '#FF9800', // warning
-    inProgress: '#2196F3', // info
+    in_progress: '#2196F3', // info
+    inProgress: '#2196F3', // alias for snake_case
+    awaiting_approval: '#FF9800', // amber
+    awaitingApproval: '#FF9800', // alias
+    approved: '#4CAF50', // success
+    rejected: '#F44336', // error
     completed: '#4CAF50', // success
     failed: '#F44336', // error
     published: '#4CAF50', // success
-    rejected: '#F44336', // error
+    on_hold: '#9C27B0', // purple
+    onHold: '#9C27B0', // alias
+    cancelled: '#9E9E9E', // gray
   },
 
   phase: {
@@ -308,7 +315,26 @@ export {
 
 // Status color getter utility
 export const getStatusColor = (status) => {
-  return colors.status[status] || colors.status.pending;
+  if (!status) return colors.status.pending;
+
+  // Try direct lookup first (snake_case or camelCase)
+  if (colors.status[status]) {
+    return colors.status[status];
+  }
+
+  // Try converting snake_case to camelCase
+  const camelCase = status
+    .split('_')
+    .map((word, idx) =>
+      idx === 0 ? word : word.charAt(0).toUpperCase() + word.slice(1)
+    )
+    .join('');
+
+  if (colors.status[camelCase]) {
+    return colors.status[camelCase];
+  }
+
+  return colors.status.pending;
 };
 
 // Phase color getter utility

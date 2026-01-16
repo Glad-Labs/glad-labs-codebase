@@ -926,8 +926,8 @@ export async function getBusinessMetricsAnalysis() {
   );
 }
 
-// eslint-disable-next-line no-unused-vars
-const cofounderAgentClient = {
+ 
+export const cofounderAgentClient = {
   logout,
   refreshAccessToken,
   getTasks,

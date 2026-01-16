@@ -21,7 +21,6 @@ import {
   Button,
   CircularProgress,
   Alert,
-  Box,
 } from '@mui/material';
 import { unifiedStatusService } from '../../services/unifiedStatusService';
 

@@ -84,7 +84,7 @@ const nextConfig = {
           {
             key: 'Content-Security-Policy',
             value:
-              "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.googletagmanager.com https://pagead2.googlesyndication.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data: https:; font-src 'self' data: https://fonts.gstatic.com; connect-src 'self' https://www.google-analytics.com https://cofounder-production.up.railway.app https://api.railway.app; frame-src 'self' https://pagead2.googlesyndication.com;",
+              "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.googletagmanager.com https://pagead2.googlesyndication.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data: https:; font-src 'self' data: https://fonts.gstatic.com; connect-src 'self' http://localhost:8000 https://www.google-analytics.com https://cofounder-production.up.railway.app https://api.railway.app; frame-src 'self' https://pagead2.googlesyndication.com;",
           },
           // Control referrer information
           {

@@ -87,9 +87,17 @@ export default [
   },
   // Test files - disable img element warning for mocks
   {
-    files: ['**/__tests__/**/*.{js,jsx}', '**/*.test.{js,jsx}', '**/*.spec.{js,jsx}'],
+    files: [
+      '**/__tests__/**/*.{js,jsx}',
+      '**/*.test.{js,jsx}',
+      '**/*.spec.{js,jsx}',
+    ],
     rules: {
       '@next/next/no-img-element': 'off',
-      'no-unused-vars': ['warn', { argsIgnorePattern: '^_', varsIgnorePattern: '^_' }],
+      'no-unused-vars': [
+        'warn',
+        { argsIgnorePattern: '^_', varsIgnorePattern: '^_' },
+      ],
     },
   },
+];
