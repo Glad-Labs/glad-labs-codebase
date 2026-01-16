@@ -1042,7 +1042,13 @@ const ResultPreviewPanel = ({
                       approvalLoading ||
                       approvalFeedback.length < 10 ||
                       !reviewerId ||
-                      reviewerId.length < 2
+                      reviewerId.length < 2 ||
+                      task?.status === 'published'
+                    }
+                    title={
+                      task?.status === 'published'
+                        ? 'Cannot approve a published task'
+                        : ''
                     }
                     className="flex-1 px-4 py-3 bg-green-600 hover:bg-green-700 text-white rounded font-medium transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                   >
@@ -1050,6 +1056,8 @@ const ResultPreviewPanel = ({
                       <>
                         <span className="animate-spin">⟳</span> Approving...
                       </>
+                    ) : task?.status === 'published' ? (
+                      '✅ Already Published'
                     ) : (
                       '✅ Approve & Publish'
                     )}
@@ -1060,7 +1068,13 @@ const ResultPreviewPanel = ({
                       approvalLoading ||
                       approvalFeedback.length < 10 ||
                       !reviewerId ||
-                      reviewerId.length < 2
+                      reviewerId.length < 2 ||
+                      task?.status === 'published'
+                    }
+                    title={
+                      task?.status === 'published'
+                        ? 'Cannot reject a published task'
+                        : ''
                     }
                     className="flex-1 px-4 py-3 bg-red-600 hover:bg-red-700 text-white rounded font-medium transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                   >
@@ -1068,6 +1082,8 @@ const ResultPreviewPanel = ({
                       <>
                         <span className="animate-spin">⟳</span> Rejecting...
                       </>
+                    ) : task?.status === 'published' ? (
+                      '❌ Already Published'
                     ) : (
                       '❌ Reject for Revision'
                     )}
