@@ -56,7 +56,12 @@ export async function makeRequest(
     const url = `${API_BASE_URL}${endpoint}`;
     console.log(`🔵 makeRequest: ${method} ${url}`);
     const config = { method, headers: getAuthHeaders() };
-    if (data) {
+
+    // Handle FormData (file uploads) - must NOT set Content-Type header
+    if (data instanceof FormData) {
+      delete config.headers['Content-Type']; // Let browser set it automatically
+      config.body = data;
+    } else if (data) {
       config.body = JSON.stringify(data);
     }
 
