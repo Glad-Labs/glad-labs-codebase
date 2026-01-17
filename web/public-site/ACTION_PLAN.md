@@ -3,18 +3,21 @@
 ## Priority 1: Critical Fixes (Blocks Production)
 
 ### 1.1 Fix Missing getFastAPIURL Import ⚠️ URGENT
+
 **File:** `web/public-site/app/page.js`
 **Issue:** Function doesn't exist in `lib/url.js`
 **Impact:** App crashes when fetching posts
 **Effort:** 5 minutes
 
 **Current Code:**
+
 ```javascript
 import { getFastAPIURL } from '@/lib/url';
 const fastApiUrl = getFastAPIURL();
 ```
 
 **Solution:**
+
 ```javascript
 import { getAbsoluteURL } from '@/lib/url';
 const apiUrl = getAbsoluteURL('/api/posts');
@@ -24,6 +27,7 @@ const apiUrl = getAbsoluteURL('/api/posts');
 ---
 
 ### 1.2 Fix Jest Configuration ⚠️ BLOCKS TESTING
+
 **File:** `web/public-site/jest.config.js`
 **Issue:** CommonJS syntax in ES module context
 **Error:** `ReferenceError: require is not defined in ES module scope`
@@ -35,20 +39,23 @@ Rename `jest.config.js` → `jest.config.cjs`
 No other changes needed. Node will automatically handle CommonJS.
 
 **Solution - Option B (Convert to ESM):**
+
 ```javascript
 // Change from:
-const nextJest = require('next/jest')
+const nextJest = require('next/jest');
 
 // To:
-import nextJest from 'next/jest.js'
-export default nextJest(customJestConfig)
+import nextJest from 'next/jest.js';
+export default nextJest(customJestConfig);
 ```
 
 ---
 
 ### 1.3 Fix Undefined Variables in search.js ⚠️ WILL CRASH
+
 **File:** `web/public-site/lib/search.js`
 **Issues:**
+
 - Line 49: `baseUrl` is undefined (used but never defined)
 - Line 52: `token` is undefined (used but never defined)
 - Line 1: `fastAPISearch` imported but never used
@@ -57,6 +64,7 @@ export default nextJest(customJestConfig)
 **Effort:** 10 minutes
 
 **Fix:**
+
 ```javascript
 // Add missing definitions
 const baseUrl = process.env.NEXT_PUBLIC_FASTAPI_URL || 'http://localhost:8000';
@@ -69,8 +77,10 @@ const token = process.env.NEXT_PUBLIC_AUTH_TOKEN || '';
 ---
 
 ### 1.4 Fix Unreachable Code in related-posts.js ⚠️ LOGIC ERROR
+
 **File:** `web/public-site/lib/related-posts.js`
 **Issues:**
+
 - Lines 114, 159: Code after return statements (dead code)
 - Unused parameters: `limit`, `postId`, `relevanceScore`
 - Unused import: `searchPosts`
@@ -79,6 +89,7 @@ const token = process.env.NEXT_PUBLIC_AUTH_TOKEN || '';
 **Effort:** 15 minutes
 
 **What to do:**
+
 1. Review logic around lines 110-120 and 155-165
 2. Either move code before return or delete dead code
 3. Remove unused parameters from function signatures
@@ -89,7 +100,9 @@ const token = process.env.NEXT_PUBLIC_AUTH_TOKEN || '';
 ## Priority 2: Code Cleanup (Improves Maintainability)
 
 ### 2.1 Delete Orphaned Header Components 🗑️ CLEANUP
+
 **Files to Delete:**
+
 - `web/public-site/components/Header.jsx`
 - `web/public-site/components/HeaderClient.jsx`
 - `web/public-site/components/HeaderServer.jsx`
@@ -104,14 +117,17 @@ const token = process.env.NEXT_PUBLIC_AUTH_TOKEN || '';
 ---
 
 ### 2.2 Fix Unused Variables (ESLint Warnings) 📋
+
 **Effort:** 30 minutes
 
 **Automated Fix First:**
+
 ```bash
 npm run lint:fix
 ```
 
 **Manual Fixes Needed:**
+
 1. **lib/seo.js (line 85):**
    - Remove unused `slug` extraction if not needed
    - Or use slug in structured data
@@ -129,16 +145,20 @@ npm run lint:fix
 ---
 
 ### 2.3 Fix Test File Image Tags 📸
+
 **Files:**
+
 - `web/public-site/app/__tests__/page.test.js`
 - `web/public-site/app/archive/__tests__/page.test.js`
 
 **Change from:**
+
 ```javascript
 <img src="..." alt="..." />
 ```
 
 **Change to:**
+
 ```javascript
 import Image from 'next/image'
 <Image src="..." alt="..." width={...} height={...} />
@@ -151,10 +171,12 @@ import Image from 'next/image'
 ## Priority 3: Architecture Improvements (Best Practices)
 
 ### 3.1 Enable Error Boundary in Layout
+
 **File:** `web/public-site/app/layout.js`
 **Effort:** 5 minutes
 
 **Current:**
+
 ```javascript
 <body>
   <TopNavigation />
@@ -164,31 +186,37 @@ import Image from 'next/image'
 ```
 
 **Improved:**
+
 ```javascript
-import ErrorBoundary from '@/components/ErrorBoundary'
+import ErrorBoundary from '@/components/ErrorBoundary';
 
 <body>
   <TopNavigation />
-  <ErrorBoundary>
-    {children}
-  </ErrorBoundary>
+  <ErrorBoundary>{children}</ErrorBoundary>
   <Footer />
-</body>
+</body>;
 ```
 
 ---
 
 ### 3.2 Decide on AdSense & Cookie Consent
+
 **File:** `web/public-site/app/layout.js`
 
 **Currently:**
+
 ```javascript
 // Imported but commented out
-{/* <AdSenseScript /> */}
-{/* <CookieConsentBanner /> */}
+{
+  /* <AdSenseScript /> */
+}
+{
+  /* <CookieConsentBanner /> */
+}
 ```
 
 **Decision Needed:**
+
 1. **If Implementing:** Uncomment and enable
 2. **If Not Ready:** Delete imports and components
 
@@ -197,21 +225,24 @@ import ErrorBoundary from '@/components/ErrorBoundary'
 ---
 
 ### 3.3 Improve CSP Security Header
+
 **File:** `web/public-site/next.config.js`
 
 **Current CSP Issue:**
+
 ```javascript
 script-src 'unsafe-inline' 'unsafe-eval'  // ⚠️ Too permissive
 ```
 
 **Recommended:**
+
 ```javascript
 // In production
 script-src 'self' https://www.googletagmanager.com
 
 // In development (keep permissive for dev tools)
-process.env.NODE_ENV === 'production' 
-  ? 'self' 
+process.env.NODE_ENV === 'production'
+  ? 'self'
   : "'unsafe-eval' 'unsafe-inline'"
 ```
 
@@ -222,8 +253,10 @@ process.env.NODE_ENV === 'production'
 ## Priority 4: Testing & Coverage (Quality Assurance)
 
 ### 4.1 Fix and Run Tests
+
 **Effort:** 1-2 hours
 **Commands:**
+
 ```bash
 # 1. Fix Jest config (from Priority 1.2)
 mv jest.config.js jest.config.cjs
@@ -243,12 +276,15 @@ npm run test:coverage
 ---
 
 ### 4.2 Create Critical Test Cases
+
 **Test Files to Update:**
+
 - `web/public-site/app/__tests__/page.test.js` - Fix Image usage
 - `web/public-site/app/posts/__tests__/[slug]/page.test.tsx` - Add tests
 - `web/public-site/app/archive/__tests__/page.test.ts` - Fix Image usage
 
 **Test Cases Needed:**
+
 1. Home page renders with posts
 2. Navigation links work
 3. Post detail page loads content
@@ -262,27 +298,33 @@ npm run test:coverage
 ## Priority 5: Documentation & Optimization
 
 ### 5.1 Create Component Documentation
+
 **Effort:** 1 hour
 
 Create `web/public-site/COMPONENTS.md`:
+
 ```markdown
 # Component Documentation
 
 ## TopNav
+
 - Server component
 - Shows navigation and CTA
 - No props needed
 
-## Footer  
+## Footer
+
 - Server component
 - Shows company info
 
 ## HomePage
+
 - Client component
 - Fetches posts from API
 - Shows post carousel
 
 ## ErrorBoundary
+
 - Error recovery UI
 - Wraps main content
 ```
@@ -290,22 +332,27 @@ Create `web/public-site/COMPONENTS.md`:
 ---
 
 ### 5.2 Document API Integration
+
 **Effort:** 30 minutes
 
 Create `web/public-site/API.md`:
+
 ```markdown
 # API Integration Guide
 
 ## Base URL
+
 - Development: `http://localhost:8000`
 - Environment: `NEXT_PUBLIC_FASTAPI_URL`
 
 ## Endpoints Used
+
 - `GET /api/posts` - List all posts
 - `GET /api/posts/:id` - Get single post
 - `GET /api/posts/search` - Search posts
 
 ## Error Handling
+
 - Timeouts after 30 seconds
 - Retry once on network error
 ```
@@ -313,6 +360,7 @@ Create `web/public-site/API.md`:
 ---
 
 ### 5.3 Enable Bundle Analysis
+
 **Effort:** 15 minutes
 
 ```bash
@@ -331,6 +379,7 @@ ANALYZE=true npm run build
 ---
 
 ### 5.4 Implement Data Fetching Cache
+
 **Effort:** 2-3 hours
 **Approach:** Add SWR for intelligent caching
 
@@ -339,16 +388,17 @@ npm install swr
 ```
 
 **Update app/page.js:**
+
 ```javascript
-import useSWR from 'swr'
+import useSWR from 'swr';
 
 export default function HomePage() {
   const { data: posts, error } = useSWR(
     '/api/posts?populate=*&status=published&limit=20',
     fetcher,
     { revalidateOnFocus: false }
-  )
-  
+  );
+
   // Prevents refetch on window focus
   // Reduces API calls by ~80%
 }
@@ -359,6 +409,7 @@ export default function HomePage() {
 ## Execution Timeline
 
 ### Quick Wins (1-2 hours)
+
 - ✅ Fix `getFastAPIURL` import (5 min)
 - ✅ Fix Jest config (3 min)
 - ✅ Delete orphaned Header files (2 min)
@@ -366,6 +417,7 @@ export default function HomePage() {
 - ✅ Enable ErrorBoundary (5 min)
 
 ### Medium Tasks (2-3 hours)
+
 - ✅ Fix all undefined/unused variables (30 min)
 - ✅ Run `npm run lint:fix` (5 min)
 - ✅ Improve CSP header (10 min)
@@ -373,6 +425,7 @@ export default function HomePage() {
 - ✅ Create component docs (1 hour)
 
 ### Longer Tasks (3-4 hours)
+
 - ✅ Establish test coverage (2 hours)
 - ✅ Implement SWR caching (2 hours)
 - ✅ Bundle analysis (1 hour)
@@ -383,15 +436,15 @@ export default function HomePage() {
 
 ## Success Criteria
 
-| Metric | Current | Target |
-|--------|---------|--------|
-| Linting Errors | 0 | 0 ✅ |
-| Linting Warnings | 24 | <5 ✅ |
-| Test Pass Rate | N/A | 100% |
-| Test Coverage | 0% | >70% |
-| Orphaned Files | 5 | 0 |
-| Critical Bugs | 4 | 0 |
-| Pages Rendering | 8/8 | 8/8 ✅ |
+| Metric           | Current | Target |
+| ---------------- | ------- | ------ |
+| Linting Errors   | 0       | 0 ✅   |
+| Linting Warnings | 24      | <5 ✅  |
+| Test Pass Rate   | N/A     | 100%   |
+| Test Coverage    | 0%      | >70%   |
+| Orphaned Files   | 5       | 0      |
+| Critical Bugs    | 4       | 0      |
+| Pages Rendering  | 8/8     | 8/8 ✅ |
 
 ---
 

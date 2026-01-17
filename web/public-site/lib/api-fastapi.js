@@ -11,7 +11,9 @@
 
 // API Configuration
 const FASTAPI_URL =
-  process.env.NEXT_PUBLIC_FASTAPI_URL || 'http://localhost:8000';
+  process.env.NEXT_PUBLIC_API_BASE_URL ||
+  process.env.NEXT_PUBLIC_FASTAPI_URL ||
+  'http://localhost:8000';
 const API_BASE = `${FASTAPI_URL}/api`;
 
 // Cache control for static content

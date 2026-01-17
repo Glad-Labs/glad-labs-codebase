@@ -89,7 +89,7 @@ async function hmacSha256Sign(message, secret) {
     }
     return base64UrlEncode(binaryString);
   } catch (_error) {
-    // eslint-disable-next-line no-console
+     
     console.error('Error signing JWT:', _error);
     throw _error;
   }
@@ -114,7 +114,7 @@ export const decodeJWTToken = (token) => {
     // JWT format: header.payload.signature
     const parts = token.split('.');
     if (parts.length !== 3) {
-      // eslint-disable-next-line no-console
+       
       console.warn('Invalid JWT format: expected 3 parts');
       return null;
     }
@@ -127,7 +127,7 @@ export const decodeJWTToken = (token) => {
 
     return JSON.parse(payloadDecoded);
   } catch (_error) {
-    // eslint-disable-next-line no-console
+     
     console.error('Error decoding JWT token:', _error);
     return null;
   }

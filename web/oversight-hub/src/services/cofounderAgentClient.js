@@ -56,7 +56,12 @@ export async function makeRequest(
     const url = `${API_BASE_URL}${endpoint}`;
     console.log(`🔵 makeRequest: ${method} ${url}`);
     const config = { method, headers: getAuthHeaders() };
-    if (data) {
+
+    // Handle FormData (file uploads) - must NOT set Content-Type header
+    if (data instanceof FormData) {
+      delete config.headers['Content-Type']; // Let browser set it automatically
+      config.body = data;
+    } else if (data) {
       config.body = JSON.stringify(data);
     }
 
@@ -407,180 +412,6 @@ export async function getCurrentUser() {
 }
 
 // ============================================================================
-// CMS Operations - Posts
-// ============================================================================
-
-/**
- * ⚠️ DEPRECATED: CMS endpoints (/api/posts, /api/categories, /api/tags) are not implemented in backend
- *
- * For content management, use the Unified Content Task API instead:
- * - POST   /api/content/tasks              Create content task
- * - GET    /api/content/tasks/{id}         Get task status
- * - GET    /api/content/tasks              List tasks with filters
- *
- * The following functions are kept for backwards compatibility but will throw errors
- * if called. Update to use the content task API above.
- */
-
-/**
- * ⚠️ DEPRECATED - Use createTask() with type='blog_post' instead
- * Get paginated posts
- * @param {number} skip - Number of posts to skip
- * @param {number} limit - Number of posts to return
- * @param {boolean} publishedOnly - Only return published posts
- * @returns {Promise} Paginated posts with metadata
- */
-export async function getPosts(skip = 0, limit = 10, publishedOnly = true) {
-  console.warn(
-    '⚠️ getPosts() is deprecated - /api/posts endpoint not implemented in backend. ' +
-      'Use createTask() with type="blog_post" or content API instead.'
-  );
-  const query = new URLSearchParams({
-    skip,
-    limit,
-    published_only: publishedOnly,
-  }).toString();
-  return makeRequest(`/api/posts?${query}`, 'GET');
-}
-
-/**
- * ⚠️ DEPRECATED - /api/posts endpoint not implemented
- * Get post by slug
- * @param {string} slug - Post slug
- * @returns {Promise} Post data
- */
-export async function getPostBySlug(slug) {
-  console.warn(
-    '⚠️ getPostBySlug() is deprecated - /api/posts endpoint not implemented in backend.'
-  );
-  return makeRequest(`/api/posts/${slug}`, 'GET');
-}
-
-/**
- * ⚠️ DEPRECATED - Use createTask() with type='blog_post' instead
- * Create new post
- * @param {object} postData - Post data {title, slug, content, excerpt, category_id, tags}
- * @returns {Promise} Created post
- */
-export async function createPost(postData) {
-  console.warn(
-    '⚠️ createPost() is deprecated - /api/posts endpoint not implemented in backend. ' +
-      'Use createTask() with type="blog_post" instead.'
-  );
-  return makeRequest('/api/posts', 'POST', postData);
-}
-
-/**
- * ⚠️ DEPRECATED - /api/posts endpoint not implemented
- * Update existing post
- * @param {number} postId - Post ID
- * @param {object} postData - Post updates
- * @returns {Promise} Updated post
- */
-export async function updatePost(postId, postData) {
-  console.warn(
-    '⚠️ updatePost() is deprecated - /api/posts endpoint not implemented in backend.'
-  );
-  return makeRequest(`/api/posts/${postId}`, 'PUT', postData);
-}
-
-/**
- * ⚠️ DEPRECATED - /api/posts endpoint not implemented
- * Delete post
- * @param {number} postId - Post ID
- * @returns {Promise} Deletion confirmation
- */
-export async function deletePost(postId) {
-  console.warn(
-    '⚠️ deletePost() is deprecated - /api/posts endpoint not implemented in backend.'
-  );
-  return makeRequest(`/api/posts/${postId}`, 'DELETE');
-}
-
-// ============================================================================
-// CMS Operations - Categories (DEPRECATED)
-// ============================================================================
-
-/**
- * ⚠️ DEPRECATED - /api/categories endpoint not implemented in backend
- * Get all categories
- * @returns {Promise} List of categories
- */
-export async function getCategories() {
-  console.warn(
-    '⚠️ getCategories() is deprecated - /api/categories endpoint not implemented in backend.'
-  );
-  return makeRequest('/api/categories', 'GET');
-}
-
-/**
- * ⚠️ DEPRECATED - /api/categories endpoint not implemented
- * Get category by slug
- * @param {string} slug - Category slug
- * @returns {Promise} Category data
- */
-export async function getCategoryBySlug(slug) {
-  console.warn(
-    '⚠️ getCategoryBySlug() is deprecated - /api/categories endpoint not implemented in backend.'
-  );
-  return makeRequest(`/api/categories/${slug}`, 'GET');
-}
-
-/**
- * ⚠️ DEPRECATED - /api/categories endpoint not implemented
- * Create new category
- * @param {object} categoryData - Category data {name, slug, description}
- * @returns {Promise} Created category
- */
-export async function createCategory(categoryData) {
-  console.warn(
-    '⚠️ createCategory() is deprecated - /api/categories endpoint not implemented in backend.'
-  );
-  return makeRequest('/api/categories', 'POST', categoryData);
-}
-
-// ============================================================================
-// CMS Operations - Tags (DEPRECATED)
-// ============================================================================
-
-/**
- * ⚠️ DEPRECATED - /api/tags endpoint not implemented in backend
- * Get all tags
- * @returns {Promise} List of tags
- */
-export async function getTags() {
-  console.warn(
-    '⚠️ getTags() is deprecated - /api/tags endpoint not implemented in backend.'
-  );
-  return makeRequest('/api/tags', 'GET');
-}
-
-/**
- * ⚠️ DEPRECATED - /api/tags endpoint not implemented
- * Get tag by slug
- * @param {string} slug - Tag slug
- * @returns {Promise} Tag data
- */
-export async function getTagBySlug(slug) {
-  console.warn(
-    '⚠️ getTagBySlug() is deprecated - /api/tags endpoint not implemented in backend.'
-  );
-  return makeRequest(`/api/tags/${slug}`, 'GET');
-}
-
-/**
- * ⚠️ DEPRECATED - /api/tags endpoint not implemented
- * Create new tag
- * @param {object} tagData - Tag data {name, slug, color}
- * @returns {Promise} Created tag
- */
-export async function createTag(tagData) {
-  console.warn(
-    '⚠️ createTag() is deprecated - /api/tags endpoint not implemented in backend.'
-  );
-  return makeRequest('/api/tags', 'POST', tagData);
-}
-
 // ============================================================================
 // Task Management
 // ============================================================================
@@ -1100,8 +931,8 @@ export async function getBusinessMetricsAnalysis() {
   );
 }
 
-// eslint-disable-next-line no-unused-vars
-const cofounderAgentClient = {
+ 
+export const cofounderAgentClient = {
   logout,
   refreshAccessToken,
   getTasks,
@@ -1115,18 +946,6 @@ const cofounderAgentClient = {
   getOAuthLoginURL,
   handleOAuthCallback,
   getCurrentUser,
-  // CMS functions
-  getPosts,
-  getPostBySlug,
-  createPost,
-  updatePost,
-  deletePost,
-  getCategories,
-  getCategoryBySlug,
-  createCategory,
-  getTags,
-  getTagBySlug,
-  createTag,
   // Task management
   createTask,
   listTasks,

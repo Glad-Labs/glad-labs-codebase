@@ -8,7 +8,7 @@ import ErrorMessage from '../common/ErrorMessage';
 const OversightHub = () => {
   const [page, setPage] = useState(1);
   const [limit] = useState(10);
-  const { tasks, loading, error, total, hasMore } = useTasks(page, limit);
+  const { tasks, loading, error, total, _hasMore } = useTasks(page, limit);
   const { isModalOpen, setSelectedTask, clearSelectedTask } = useStore();
 
   if (loading && tasks.length === 0) return <p>Loading tasks...</p>;

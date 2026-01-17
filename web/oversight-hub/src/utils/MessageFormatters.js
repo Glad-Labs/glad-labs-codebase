@@ -345,7 +345,7 @@ export const safeFormat = (formatter, value, defaultValue = 'N/A') => {
   try {
     return isFormattable(value) ? formatter(value) : defaultValue;
   } catch (error) {
-    // eslint-disable-next-line no-console
+     
     console.warn(`Formatting error: ${error.message}`);
     return defaultValue;
   }

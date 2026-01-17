@@ -297,7 +297,7 @@ export {
 
 #### Component Tests
 
-**[components/**tests**/Header.test.js](components/__tests__/Header.test.js)** - 8 tests
+**[components/**tests**/Header.test.js](components/**tests**/Header.test.js)** - 8 tests
 
 - Navigation links render
 - Logo visible
@@ -307,7 +307,7 @@ export {
 - Button keyboard access
 - Focus states
 
-**[components/**tests**/Footer.test.js](components/__tests__/Footer.test.js)** - 9 tests
+**[components/**tests**/Footer.test.js](components/**tests**/Footer.test.js)** - 9 tests
 
 - Footer contentinfo role
 - Copyright year current
@@ -318,7 +318,7 @@ export {
 - Navigation accessibility
 - Link href verification
 
-**[components/**tests**/PostCard.test.js](components/__tests__/PostCard.test.js)** - Enhanced
+**[components/**tests**/PostCard.test.js](components/**tests**/PostCard.test.js)** - Enhanced
 
 - Post title render
 - Excerpt display
@@ -331,7 +331,7 @@ export {
 
 #### Page Tests
 
-**[app/**tests**/page.test.js](app/__tests__/page.test.js)** - 8 tests
+**[app/**tests**/page.test.js](app/**tests**/page.test.js)** - 8 tests
 
 - Page component render
 - Heading presence
@@ -342,7 +342,7 @@ export {
 - Responsive classes
 - Text content
 
-**[app/archive/**tests**/[page].test.js](app/archive/__tests__/[page].test.js)** - 10 tests
+**[app/archive/**tests**/[page].test.js](app/archive/**tests**/[page].test.js)** - 10 tests
 
 - Archive page load
 - Page heading
@@ -355,7 +355,7 @@ export {
 
 #### Utility Tests
 
-**[lib/**tests**/url.test.js](lib/__tests__/url.test.js)** - 15 tests
+**[lib/**tests**/url.test.js](lib/**tests**/url.test.js)** - 15 tests
 
 - getAPIBaseURL() returns URL
 - URL format validation
@@ -369,7 +369,7 @@ export {
 - URL consistency
 - Special character handling
 
-**[lib/**tests**/api-fastapi.test.js](lib/__tests__/api-fastapi.test.js)** - 20 tests
+**[lib/**tests**/api-fastapi.test.js](lib/**tests**/api-fastapi.test.js)** - 20 tests
 
 - getPaginatedPosts() API calls
 - Page parameter passing

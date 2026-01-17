@@ -52,7 +52,24 @@ const apiClient = axios.create({
 // Request interceptor: Add authorization token
 apiClient.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem('auth_token');
+    // Try to get token from Zustand persist storage first
+    let token = null;
+
+    const persistedData = localStorage.getItem('oversight-hub-storage');
+    if (persistedData) {
+      try {
+        const parsed = JSON.parse(persistedData);
+        token = parsed.state?.accessToken || parsed.state?.auth_token;
+      } catch (e) {
+        console.warn('Failed to parse Zustand persist storage:', e);
+      }
+    }
+
+    // Fallback to direct localStorage key (for backwards compatibility)
+    if (!token) {
+      token = localStorage.getItem('auth_token');
+    }
+
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }

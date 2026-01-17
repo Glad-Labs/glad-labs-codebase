@@ -15,7 +15,7 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import { Box, Typography, Button, Alert, Tabs, Tab } from '@mui/material';
+import { Box, Typography, Button, Alert } from '@mui/material';
 import { Add as AddIcon, Refresh as RefreshIcon } from '@mui/icons-material';
 import useAuth from '../../hooks/useAuth';
 import { useTaskData } from '../../hooks/useTaskData';
@@ -386,10 +386,14 @@ const TaskManagement = () => {
             setShowCreateModal(false);
             fetchTasks();
           }}
+          onTaskCreated={() => {
+            setShowCreateModal(false);
+            fetchTasks();
+          }}
         />
       )}
     </Box>
   );
-};;
+};
 
 export default TaskManagement;

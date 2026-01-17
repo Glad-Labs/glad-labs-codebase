@@ -41,8 +41,16 @@ const ExecutionHub = () => {
             getOrchestratorOverallStatus().catch(() => null),
             // 🆕 Fetch workflow history from backend using makeRequest
             (async () => {
-              const { makeRequest } = await import('../../services/cofounderAgentClient');
-              const result = await makeRequest('/api/workflow/history', 'GET', null, false, null, 10000);
+              const { makeRequest } =
+                await import('../../services/cofounderAgentClient');
+              const result = await makeRequest(
+                '/api/workflow/history',
+                'GET',
+                null,
+                false,
+                null,
+                10000
+              );
               return result.error ? null : result;
             })(),
           ]);

@@ -33,7 +33,7 @@ function NaturalLanguageInput({ onSubmit, loading, tools, onReset }) {
     selectedModel: 'ollama-mistral', // Default model
   });
   const [requestError, setRequestError] = useState('');
-  const [availableModels, setAvailableModels] = useState([]);
+  const [_availableModels, setAvailableModels] = useState([]);
   const [modelsByProvider, setModelsByProvider] = useState({
     ollama: [],
     openai: [],

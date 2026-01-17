@@ -38,21 +38,23 @@ export async function getOllamaModels() {
     clearTimeout(timeoutId);
 
     if (!response.ok) {
-      // eslint-disable-next-line no-console
+       
       console.warn(`⚠️ Ollama API returned status ${response.status}`);
       return [];
     }
 
     const data = await response.json();
-    // eslint-disable-next-line no-console
+     
     console.log(`✅ Retrieved ${data.models?.length || 0} Ollama models`);
     return data.models || [];
   } catch (error) {
     if (error.name === 'AbortError') {
-      // eslint-disable-next-line no-console
-      console.warn('⚠️ Ollama timeout - backend Ollama endpoint may be unavailable');
+       
+      console.warn(
+        '⚠️ Ollama timeout - backend Ollama endpoint may be unavailable'
+      );
     } else {
-      // eslint-disable-next-line no-console
+       
       console.warn('⚠️ Ollama not available:', error.message);
     }
     return [];
@@ -80,11 +82,11 @@ export async function isOllamaAvailable() {
     }
 
     const data = await response.json();
-    // eslint-disable-next-line no-console
+     
     console.log(`✅ Ollama available with ${data.models?.length || 0} models`);
     return data.connected === true;
   } catch (error) {
-    // eslint-disable-next-line no-console
+     
     console.debug('Ollama not available:', error.message);
     return false;
   }
@@ -239,7 +241,7 @@ export async function getOllamaModelInfo(modelId) {
 
     return await response.json();
   } catch (error) {
-    // eslint-disable-next-line no-console
+     
     console.error('Error fetching Ollama model info:', error);
     throw error;
   }

@@ -52,7 +52,6 @@ function IntelligentOrchestratorPanel() {
     }, 2000); // Poll every 2 seconds
 
     return () => clearInterval(interval);
-     
   }, [orchestrator.taskId, orchestrator.status]);
 
   const fetchTools = async () => {

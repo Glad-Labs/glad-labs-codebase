@@ -6,22 +6,20 @@ import {
   CheckCircle,
   XCircle,
   Clock,
-  ArrowRight,
   BarChart3,
   Brain,
-  Settings,
   Download,
   Play,
   Pause,
 } from 'lucide-react';
 import { makeRequest } from '../services/cofounderAgentClient';
+import { unifiedStatusService } from '../services/unifiedStatusService';
 
 const OrchestratorPage = () => {
   const [userRequest, setUserRequest] = useState('');
   const [orchestrations, setOrchestrations] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-  const [selectedOrchestration, setSelectedOrchestration] = useState(null);
   const [approvalMode, setApprovalMode] = useState(false);
   const [learningPatterns, setLearningPatterns] = useState(null);
   const [executionStats, setExecutionStats] = useState(null);
@@ -75,8 +73,8 @@ const OrchestratorPage = () => {
     }
   };
 
-  const handleProcessRequest = async (e) => {
-    e.preventDefault();
+  const handleProcessRequest = async (_e) => {
+    _e.preventDefault();
     if (!userRequest.trim()) return;
 
     try {
@@ -97,10 +95,9 @@ const OrchestratorPage = () => {
 
   const handleApprove = async (executionId) => {
     try {
-      await makeRequest(
-        `/api/orchestrator/executions/${executionId}/approve`,
-        'POST',
-        {}
+      await unifiedStatusService.approve(
+        executionId,
+        'Approved via OrchestratorPage'
       );
       alert('✅ Execution approved');
       await loadOrchestrations();
@@ -110,14 +107,11 @@ const OrchestratorPage = () => {
   };
 
   const handleReject = async (executionId) => {
-    if (!window.confirm('Reject this execution plan?')) return;
+    const reason = window.prompt('Reason for rejection:');
+    if (!reason) return;
 
     try {
-      await makeRequest(
-        `/api/orchestrator/executions/${executionId}/reject`,
-        'POST',
-        {}
-      );
+      await unifiedStatusService.reject(executionId, reason);
       alert('✅ Execution rejected');
       await loadOrchestrations();
     } catch (err) {

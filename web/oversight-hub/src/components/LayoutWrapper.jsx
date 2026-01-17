@@ -32,7 +32,7 @@ const LayoutWrapper = ({ children }) => {
   // const [availableOllamaModels, setAvailableOllamaModels] = useState([]);
   // const [selectedOllamaModel, setSelectedOllamaModel] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
-  const [availableModels, setAvailableModels] = useState([]); // Used in loadModels
+  const [_availableModels, setAvailableModels] = useState([]);
   const [modelsByProvider, setModelsByProvider] = useState({
     ollama: [],
     openai: [],
@@ -205,7 +205,8 @@ const LayoutWrapper = ({ children }) => {
           timestamp: new Date().toISOString(),
         },
       ]);
-    } catch (error) {
+    } catch (_error) {
+      // Silently handle errors for chat display
       setChatMessages((prev) => [
         ...prev,
         {

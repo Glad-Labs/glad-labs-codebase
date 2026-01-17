@@ -23,10 +23,10 @@ import CloudUploadIcon from '@mui/icons-material/CloudUpload';
 
 /**
  * WritingSampleUpload Component
- * 
+ *
  * Allows users to upload writing samples (TXT, CSV, JSON)
  * Includes file selection, metadata entry, and upload progress
- * 
+ *
  * Features:
  * - Drag-and-drop file selection
  * - Click-to-select files
@@ -96,7 +96,9 @@ function WritingSampleUpload(props) {
   // Validate file type
   const validateAndSetFile = (selectedFile) => {
     const validExtensions = ['.txt', '.csv', '.json'];
-    const fileExtension = selectedFile.name.substring(selectedFile.name.lastIndexOf('.')).toLowerCase();
+    const fileExtension = selectedFile.name
+      .substring(selectedFile.name.lastIndexOf('.'))
+      .toLowerCase();
 
     if (!validExtensions.includes(fileExtension)) {
       setMessage({
@@ -285,7 +287,9 @@ function WritingSampleUpload(props) {
                   </MenuItem>
                 ))}
               </Select>
-              <FormHelperText>Optional - auto-detected if not selected</FormHelperText>
+              <FormHelperText>
+                Optional - auto-detected if not selected
+              </FormHelperText>
             </FormControl>
           </Grid>
 
@@ -306,7 +310,9 @@ function WritingSampleUpload(props) {
                   </MenuItem>
                 ))}
               </Select>
-              <FormHelperText>Optional - auto-detected if not selected</FormHelperText>
+              <FormHelperText>
+                Optional - auto-detected if not selected
+              </FormHelperText>
             </FormControl>
           </Grid>
         </Grid>
@@ -341,7 +347,9 @@ function WritingSampleUpload(props) {
           color="primary"
           onClick={handleUpload}
           disabled={!file || uploading}
-          startIcon={uploading ? <CircularProgress size={20} /> : <CloudUploadIcon />}
+          startIcon={
+            uploading ? <CircularProgress size={20} /> : <CloudUploadIcon />
+          }
           fullWidth
           size="large"
           sx={{
@@ -349,12 +357,16 @@ function WritingSampleUpload(props) {
             fontSize: '1rem',
           }}
         >
-          {uploading ? `Uploading... ${Math.round(progress)}%` : 'Upload Sample'}
+          {uploading
+            ? `Uploading... ${Math.round(progress)}%`
+            : 'Upload Sample'}
         </Button>
 
         {/* File Info */}
         {file && (
-          <Box sx={{ mt: 2, p: 1.5, backgroundColor: '#f5f5f5', borderRadius: 1 }}>
+          <Box
+            sx={{ mt: 2, p: 1.5, backgroundColor: '#f5f5f5', borderRadius: 1 }}
+          >
             <Typography variant="caption" display="block">
               <strong>File:</strong> {file.name}
             </Typography>

@@ -5,6 +5,8 @@
  * - Approve task dialog (with feedback field)
  * - Reject task dialog (with reason field)
  * - Delete confirmation dialog
+ * 
+ * Integrates with unifiedStatusService for all status operations.
  */
 
 import React, { useState } from 'react';
@@ -20,6 +22,7 @@ import {
   CircularProgress,
   Alert,
 } from '@mui/material';
+import { unifiedStatusService } from '../../services/unifiedStatusService';
 
 const TaskActions = ({
   selectedTask = null,
@@ -33,22 +36,52 @@ const TaskActions = ({
   const [feedback, setFeedback] = useState('');
   const [reason, setReason] = useState('');
   const [error, setError] = useState('');
+  const [validationWarning, setValidationWarning] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleCloseDialog = () => {
     setDialogType(null);
     setFeedback('');
     setReason('');
     setError('');
+    setValidationWarning('');
   };
 
   const handleApproveSubmit = async () => {
+    if (!selectedTask?.id) {
+      setError('Task ID is missing');
+      return;
+    }
+
     try {
       setError('');
-      await onApprove(selectedTask.id, feedback);
+      setValidationWarning('');
+      setIsSubmitting(true);
+
+      // Use unified service
+      const result = await unifiedStatusService.approve(
+        selectedTask.id,
+        feedback
+      );
+
+      // Show validation warnings if any
+      if (result.validation_details?.warnings?.length > 0) {
+        setValidationWarning(
+          'Warnings: ' + result.validation_details.warnings.join(', ')
+        );
+      }
+
+      // Call legacy callback if provided
+      if (onApprove) {
+        await onApprove(selectedTask.id, feedback);
+      }
+
       handleCloseDialog();
       onClose();
     } catch (err) {
       setError(err.message || 'Failed to approve task');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -57,29 +90,69 @@ const TaskActions = ({
       setError('Please provide a reason for rejection');
       return;
     }
+    if (!selectedTask?.id) {
+      setError('Task ID is missing');
+      return;
+    }
+
     try {
       setError('');
-      await onReject(selectedTask.id, reason);
+      setValidationWarning('');
+      setIsSubmitting(true);
+
+      // Use unified service
+      const result = await unifiedStatusService.reject(selectedTask.id, reason);
+
+      // Show validation warnings if any
+      if (result.validation_details?.warnings?.length > 0) {
+        setValidationWarning(
+          'Warnings: ' + result.validation_details.warnings.join(', ')
+        );
+      }
+
+      // Call legacy callback if provided
+      if (onReject) {
+        await onReject(selectedTask.id, reason);
+      }
+
       handleCloseDialog();
       onClose();
     } catch (err) {
       setError(err.message || 'Failed to reject task');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
   const handleDeleteSubmit = async () => {
+    if (!selectedTask?.id) {
+      setError('Task ID is missing');
+      return;
+    }
+
     try {
       setError('');
-      await onDelete(selectedTask.id);
+      setIsSubmitting(true);
+
+      // Call legacy callback if provided
+      if (onDelete) {
+        await onDelete(selectedTask.id);
+      }
+
       handleCloseDialog();
       onClose();
     } catch (err) {
       setError(err.message || 'Failed to delete task');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
   return (
     <>
+      {/* Hidden triggers for dialogs - opened by parent component */}
+      {/* The dialogs are controlled by dialogType state */}
+
       {/* Approval Dialog */}
       <Dialog
         open={dialogType === 'approve'}
@@ -92,6 +165,11 @@ const TaskActions = ({
           {error && (
             <Alert severity="error" sx={{ mb: 2 }}>
               {error}
+            </Alert>
+          )}
+          {validationWarning && (
+            <Alert severity="warning" sx={{ mb: 2 }}>
+              {validationWarning}
             </Alert>
           )}
           <DialogContentText sx={{ mb: 2 }}>
@@ -108,20 +186,27 @@ const TaskActions = ({
             value={feedback}
             onChange={(e) => setFeedback(e.target.value)}
             placeholder="Add any feedback or notes..."
-            disabled={isLoading}
+            disabled={isLoading || isSubmitting}
           />
         </DialogContent>
         <DialogActions>
-          <Button onClick={handleCloseDialog} disabled={isLoading}>
+          <Button
+            onClick={handleCloseDialog}
+            disabled={isLoading || isSubmitting}
+          >
             Cancel
           </Button>
           <Button
             onClick={handleApproveSubmit}
             variant="contained"
             color="success"
-            disabled={isLoading}
+            disabled={isLoading || isSubmitting}
           >
-            {isLoading ? <CircularProgress size={20} /> : 'Approve'}
+            {isLoading || isSubmitting ? (
+              <CircularProgress size={20} />
+            ) : (
+              'Approve'
+            )}
           </Button>
         </DialogActions>
       </Dialog>
@@ -140,6 +225,11 @@ const TaskActions = ({
               {error}
             </Alert>
           )}
+          {validationWarning && (
+            <Alert severity="warning" sx={{ mb: 2 }}>
+              {validationWarning}
+            </Alert>
+          )}
           <DialogContentText sx={{ mb: 2 }}>
             Please provide a reason for rejecting this task.
           </DialogContentText>
@@ -154,21 +244,28 @@ const TaskActions = ({
             value={reason}
             onChange={(e) => setReason(e.target.value)}
             placeholder="Explain why you're rejecting this task..."
-            disabled={isLoading}
+            disabled={isLoading || isSubmitting}
             required
           />
         </DialogContent>
         <DialogActions>
-          <Button onClick={handleCloseDialog} disabled={isLoading}>
+          <Button
+            onClick={handleCloseDialog}
+            disabled={isLoading || isSubmitting}
+          >
             Cancel
           </Button>
           <Button
             onClick={handleRejectSubmit}
             variant="contained"
             color="error"
-            disabled={isLoading || !reason.trim()}
+            disabled={isLoading || isSubmitting || !reason.trim()}
           >
-            {isLoading ? <CircularProgress size={20} /> : 'Reject'}
+            {isLoading || isSubmitting ? (
+              <CircularProgress size={20} />
+            ) : (
+              'Reject'
+            )}
           </Button>
         </DialogActions>
       </Dialog>
@@ -193,22 +290,34 @@ const TaskActions = ({
           </DialogContentText>
         </DialogContent>
         <DialogActions>
-          <Button onClick={handleCloseDialog} disabled={isLoading}>
+          <Button
+            onClick={handleCloseDialog}
+            disabled={isLoading || isSubmitting}
+          >
             Cancel
           </Button>
           <Button
             onClick={handleDeleteSubmit}
             variant="contained"
             color="error"
-            disabled={isLoading}
+            disabled={isLoading || isSubmitting}
           >
-            {isLoading ? <CircularProgress size={20} /> : 'Delete'}
+            {isLoading || isSubmitting ? (
+              <CircularProgress size={20} />
+            ) : (
+              'Delete'
+            )}
           </Button>
         </DialogActions>
       </Dialog>
     </>
   );
 };
+
+// Export methods for dialog state management
+TaskActions.openApproveDialog = (setDialogType) => setDialogType('approve');
+TaskActions.openRejectDialog = (setDialogType) => setDialogType('reject');
+TaskActions.openDeleteDialog = (setDialogType) => setDialogType('delete');
 
 TaskActions.propTypes = {
   selectedTask: PropTypes.shape({

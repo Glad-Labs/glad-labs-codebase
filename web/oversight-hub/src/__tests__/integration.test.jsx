@@ -447,7 +447,7 @@ describe('Multi-Form Workflows', () => {
         <TaskCreationModal
           open={showModal}
           onClose={() => setShowModal(false)}
-          onSubmit={async (data) => ({ id: 1 })}
+          onSubmit={async (_data) => ({ id: 1 })}
         />
       </>
     );

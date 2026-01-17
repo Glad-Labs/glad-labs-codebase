@@ -1,55 +1,70 @@
-'use client';
-
 import Link from 'next/link';
 import Image from 'next/image';
-import { useState, useEffect } from 'react';
-import { getAbsoluteURL } from '../lib/url';
 
-export default function HomePage() {
-  const [posts, setPosts] = useState([]);
-  const [currentIndex, setCurrentIndex] = useState(0);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+// SEO Metadata
+export const metadata = {
+  title: 'Glad Labs - AI & Technology Insights',
+  description:
+    'Deep dives into AI, technology, and digital transformation. Explore our latest insights and expert analysis.',
+  openGraph: {
+    title: 'Glad Labs - AI & Technology Insights',
+    description: 'Deep dives into AI, technology, and digital transformation',
+    type: 'website',
+    locale: 'en_US',
+  },
+};
 
-  useEffect(() => {
-    const fetchPosts = async () => {
-      try {
-        setLoading(true);
-        const response = await fetch(
-          getAbsoluteURL('/api/posts?populate=*&status=published&limit=20')
-        );
+// Server-side data fetching with ISR (Incremental Static Regeneration)
+async function getPosts() {
+  try {
+    const FASTAPI_URL =
+      process.env.NEXT_PUBLIC_API_BASE_URL ||
+      process.env.NEXT_PUBLIC_FASTAPI_URL ||
+      'http://localhost:8000';
 
-        if (!response.ok) {
-          throw new Error('Failed to fetch posts');
-        }
+    // Validate URL is absolute
+    if (
+      !FASTAPI_URL.startsWith('http://') &&
+      !FASTAPI_URL.startsWith('https://')
+    ) {
+      console.warn('Invalid NEXT_PUBLIC_API_BASE_URL, using static fallback');
+      return [];
+    }
 
-        const data = await response.json();
-        const posts = data.data || data || [];
-        setPosts(posts);
-        setError(null);
-      } catch (err) {
-        console.error('[Home Page] Error fetching posts:', err);
-        setError(err instanceof Error ? err.message : 'Failed to load posts');
-        setPosts([]);
-      } finally {
-        setLoading(false);
-      }
-    };
+    const url = `${FASTAPI_URL}/api/posts?skip=0&limit=20&published_only=true`;
+    console.log('📡 Fetching posts from:', url);
 
-    fetchPosts();
-  }, []);
+    const response = await fetch(url, {
+      // ISR: Revalidate every 1 hour (3600 seconds)
+      next: { revalidate: 3600 },
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
 
-  const handlePrevious = () => {
-    setCurrentIndex((prev) => (prev === 0 ? posts.length - 1 : prev - 1));
-  };
+    if (!response.ok) {
+      console.error(
+        `❌ Failed to fetch posts: ${response.status} ${response.statusText}`
+      );
+      return [];
+    }
 
-  const handleNext = () => {
-    setCurrentIndex((prev) => (prev === posts.length - 1 ? 0 : prev + 1));
-  };
+    const data = await response.json();
+    console.log(
+      '✅ Posts fetched successfully, got',
+      data.data?.length || 0,
+      'posts'
+    );
+    return data.data || [];
+  } catch (error) {
+    console.error('❌ Error fetching posts for homepage:', error.message);
+    return [];
+  }
+}
 
-  const currentPost = posts[currentIndex];
-  const nextPost = posts[(currentIndex + 1) % posts.length];
-  const prevPost = posts[(currentIndex - 1 + posts.length) % posts.length];
+export default async function HomePage() {
+  const posts = await getPosts();
+  const currentPost = posts[0];
 
   return (
     <main className="min-h-screen bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950">
@@ -71,30 +86,18 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Featured Post Carousel */}
-      {loading && (
+      {/* Featured Post */}
+      {posts.length === 0 ? (
         <section className="py-12 px-4 md:px-0">
           <div className="container mx-auto max-w-6xl">
-            <div className="h-96 bg-slate-800 rounded-xl flex items-center justify-center">
-              <p className="text-slate-400">Loading posts...</p>
-            </div>
-          </div>
-        </section>
-      )}
-
-      {error && (
-        <section className="py-12 px-4 md:px-0">
-          <div className="container mx-auto max-w-6xl">
-            <div className="h-96 bg-slate-800 rounded-xl flex items-center justify-center border border-red-500/30">
-              <p className="text-red-400">
-                Unable to load posts. Please try again later.
+            <div className="h-96 bg-slate-800 rounded-xl flex items-center justify-center border border-slate-700">
+              <p className="text-slate-400">
+                No posts available yet. Check back soon!
               </p>
             </div>
           </div>
         </section>
-      )}
-
-      {!loading && !error && posts.length > 0 && currentPost && (
+      ) : (
         <section className="py-12 px-4 md:px-0">
           <div className="container mx-auto max-w-6xl">
             {/* Main Featured Post Card */}
@@ -102,10 +105,10 @@ export default function HomePage() {
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 p-8">
                 {/* Featured Image */}
                 <div className="relative aspect-video lg:aspect-auto h-full min-h-96 bg-slate-700 rounded-xl overflow-hidden">
-                  {currentPost.featured_image_url ? (
+                  {currentPost?.featured_image_url ? (
                     <Image
                       src={currentPost.featured_image_url}
-                      alt={currentPost.title}
+                      alt={currentPost.title || 'Featured Post'}
                       fill
                       sizes="(min-width: 1024px) 50vw, 100vw"
                       className="object-cover"
@@ -122,7 +125,7 @@ export default function HomePage() {
                 <div className="flex flex-col justify-between">
                   {/* Category & Meta */}
                   <div>
-                    {currentPost.category && (
+                    {currentPost?.category && (
                       <div className="inline-block mb-4">
                         <span className="px-3 py-1 bg-cyan-500/20 text-cyan-300 rounded-full text-sm font-medium border border-cyan-500/30">
                           {currentPost.category.name || 'Featured'}
@@ -132,13 +135,13 @@ export default function HomePage() {
 
                     {/* Title */}
                     <h2 className="text-3xl sm:text-4xl font-bold text-white mb-4 leading-tight">
-                      {currentPost.title}
+                      {currentPost?.title}
                     </h2>
 
                     {/* Excerpt */}
                     <p className="text-lg text-slate-300 mb-6 leading-relaxed">
-                      {currentPost.excerpt ||
-                        (currentPost.content
+                      {currentPost?.excerpt ||
+                        (currentPost?.content
                           ? currentPost.content.substring(0, 200) + '...'
                           : 'Read this insightful article')}
                     </p>
@@ -147,7 +150,7 @@ export default function HomePage() {
                   {/* Meta Information & CTA */}
                   <div className="flex items-center justify-between pt-6 border-t border-slate-700/50">
                     <div className="text-sm text-slate-400">
-                      {currentPost.published_at && (
+                      {currentPost?.published_at && (
                         <time dateTime={currentPost.published_at}>
                           {new Date(
                             currentPost.published_at
@@ -161,7 +164,7 @@ export default function HomePage() {
                     </div>
 
                     <Link
-                      href={`/posts/${currentPost.slug}`}
+                      href={`/posts/${currentPost?.slug}`}
                       className="inline-flex items-center gap-2 px-6 py-2 bg-gradient-to-r from-cyan-500 to-blue-500 text-white rounded-lg font-semibold hover:shadow-lg hover:shadow-cyan-500/50 transition-all"
                     >
                       Read Article
@@ -172,76 +175,59 @@ export default function HomePage() {
               </div>
             </div>
 
-            {/* Navigation Controls */}
-            <div className="flex items-center justify-between mt-8">
-              {/* Previous/Next Buttons */}
-              <div className="flex gap-4">
-                <button
-                  onClick={handlePrevious}
-                  className="px-6 py-3 bg-slate-800 hover:bg-slate-700 text-white rounded-lg font-semibold transition-colors border border-slate-700 hover:border-cyan-500/50"
-                  aria-label="Previous post"
-                >
-                  ← Previous
-                </button>
-                <button
-                  onClick={handleNext}
-                  className="px-6 py-3 bg-slate-800 hover:bg-slate-700 text-white rounded-lg font-semibold transition-colors border border-slate-700 hover:border-cyan-500/50"
-                  aria-label="Next post"
-                >
-                  Next →
-                </button>
-              </div>
-
-              {/* Post Counter */}
-              <div className="text-slate-400 font-medium">
-                {currentIndex + 1} / {posts.length}
-              </div>
-            </div>
-
-            {/* Dot Indicators for first 5 posts */}
-            <div className="flex gap-2 mt-6 justify-center flex-wrap">
-              {posts.slice(0, 5).map((post, index) => (
-                <button
-                  key={post.id || index}
-                  onClick={() => setCurrentIndex(index)}
-                  className={`h-2 rounded-full transition-all ${
-                    index === currentIndex
-                      ? 'w-8 bg-cyan-400'
-                      : 'w-2 bg-slate-700 hover:bg-slate-600'
-                  }`}
-                  aria-label={`Go to post ${index + 1}`}
-                />
-              ))}
-            </div>
-
-            {/* Preview Cards - Hidden on Mobile */}
+            {/* Recent Posts Grid */}
             {posts.length > 1 && (
-              <div className="hidden lg:grid grid-cols-2 gap-6 mt-12">
-                {/* Previous Post Preview */}
-                {prevPost && (
-                  <div
-                    className="p-6 bg-slate-800/50 rounded-lg border border-slate-700 hover:border-slate-600 transition-colors cursor-pointer"
-                    onClick={handlePrevious}
-                  >
-                    <p className="text-sm text-slate-400 mb-2">← Previous</p>
-                    <h3 className="text-lg font-semibold text-white truncate hover:text-cyan-400 transition-colors">
-                      {prevPost.title}
-                    </h3>
-                  </div>
-                )}
+              <div className="mt-12">
+                <h2 className="text-2xl font-bold text-white mb-6">
+                  Recent Posts
+                </h2>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {posts.slice(1, 7).map((post) => (
+                    <Link
+                      key={post.id || post.slug}
+                      href={`/posts/${post.slug}`}
+                      className="group bg-slate-800/50 rounded-lg overflow-hidden border border-slate-700 hover:border-cyan-500/50 transition-all hover:shadow-lg hover:shadow-cyan-500/10"
+                    >
+                      {/* Post Image */}
+                      {post.featured_image_url && (
+                        <div className="relative aspect-video overflow-hidden bg-slate-700">
+                          <Image
+                            src={post.featured_image_url}
+                            alt={post.title}
+                            fill
+                            sizes="(min-width: 1024px) 33vw, (min-width: 768px) 50vw, 100vw"
+                            className="object-cover group-hover:scale-105 transition-transform"
+                          />
+                        </div>
+                      )}
 
-                {/* Next Post Preview */}
-                {nextPost && (
-                  <div
-                    className="p-6 bg-slate-800/50 rounded-lg border border-slate-700 hover:border-slate-600 transition-colors cursor-pointer text-right"
-                    onClick={handleNext}
-                  >
-                    <p className="text-sm text-slate-400 mb-2">Next →</p>
-                    <h3 className="text-lg font-semibold text-white truncate hover:text-cyan-400 transition-colors">
-                      {nextPost.title}
-                    </h3>
-                  </div>
-                )}
+                      {/* Post Info */}
+                      <div className="p-6">
+                        <h3 className="text-lg font-semibold text-white mb-2 group-hover:text-cyan-400 transition-colors line-clamp-2">
+                          {post.title}
+                        </h3>
+                        <p className="text-sm text-slate-400 line-clamp-2">
+                          {post.excerpt ||
+                            (post.content
+                              ? post.content.substring(0, 100) + '...'
+                              : '')}
+                        </p>
+                        {post.published_at && (
+                          <time className="text-xs text-slate-500 mt-3 block">
+                            {new Date(post.published_at).toLocaleDateString(
+                              'en-US',
+                              {
+                                year: 'numeric',
+                                month: 'short',
+                                day: 'numeric',
+                              }
+                            )}
+                          </time>
+                        )}
+                      </div>
+                    </Link>
+                  ))}
+                </div>
               </div>
             )}
           </div>

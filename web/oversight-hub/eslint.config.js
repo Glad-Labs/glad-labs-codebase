@@ -57,13 +57,17 @@ module.exports = [
       ...react.configs.recommended.rules,
       ...reactHooks.configs.recommended.rules,
       'react/react-in-jsx-scope': 'off',
-      'react/prop-types': 'warn',
+      'react/prop-types': 'off', // Disabled - TypeScript/JSDoc would be better
       'react-hooks/rules-of-hooks': 'error',
-      'react-hooks/exhaustive-deps': 'off', // Disabled due to ESLint 9 compatibility issue
-      'no-console': 'warn',
+      'react-hooks/exhaustive-deps': 'off',
+      'no-console': process.env.NODE_ENV === 'production' ? 'error' : 'off',
       'no-unused-vars': [
         'warn',
-        { argsIgnorePattern: '^_', varsIgnorePattern: '^_' },
+        {
+          argsIgnorePattern: '^_',
+          varsIgnorePattern: '^_',
+          ignoreRestSiblings: true,
+        },
       ],
     },
     settings: {

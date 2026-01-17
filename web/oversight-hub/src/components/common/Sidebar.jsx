@@ -40,7 +40,7 @@ const Sidebar = () => {
   }, [handleResize]);
 
   const startResize = useCallback(
-    (e) => {
+    (_e) => {
       isResizing.current = true;
       document.addEventListener('mousemove', handleResize);
       document.addEventListener('mouseup', stopResize);

@@ -311,7 +311,11 @@ class ModelService {
    */
   getModelValue(model) {
     if (typeof model === 'string') return model;
-    const provider = (model.provider || 'ollama').toLowerCase();
+    let provider = (model.provider || 'ollama').toLowerCase();
+    // Map 'google' to 'gemini' for backend API compatibility
+    if (provider === 'google') {
+      provider = 'gemini';
+    }
     const name = model.name || model.id || 'default';
     return `${provider}-${name}`;
   }
