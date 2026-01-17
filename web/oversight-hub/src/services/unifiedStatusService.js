@@ -50,12 +50,6 @@ export const unifiedStatusService = {
    * @throws {Error} - On validation failure or API error
    */
   async updateStatus(taskId, newStatus, options = {}) {
-    console.log(`\n${'=' * 80}`);
-    console.log(`🔵 unifiedStatusService.updateStatus()`);
-    console.log(`   Task ID: ${taskId}`);
-    console.log(`   New Status: ${newStatus}`);
-    console.log(`   Options:`, options);
-
     const {
       reason = '',
       feedback = '',
@@ -72,81 +66,26 @@ export const unifiedStatusService = {
           ...metadata,
           timestamp: new Date().toISOString(),
           updated_from_ui: true,
-          feedback, // Include feedback in metadata since backend schema doesn't have a feedback field
+          feedback,
         },
       };
 
-      console.log(
-        `\n📤 Payload to send to backend:`,
-        JSON.stringify(payload, null, 2)
-      );
-
-      // Try new endpoint first (Phase 5+)
+      // Try new endpoint first
       try {
-        console.log(
-          `\n🔄 Attempting NEW endpoint: PUT /api/tasks/${taskId}/status/validated`
-        );
         const response = await makeRequest(
           `/api/tasks/${taskId}/status/validated`,
           'PUT',
           payload
         );
-        console.log(`✅ NEW endpoint successful!`);
-        console.log(`   Response:`, response);
-        console.log(`${'=' * 80}\n`);
         return response;
       } catch (newError) {
-        // Fall back to legacy endpoint if new endpoint not available
-        if (newError.status === 404) {
-          console.warn(
-            '⚠️  New status endpoint not found (404), falling back to LEGACY endpoint'
-          );
-          return await this._updateStatusLegacy(taskId, newStatus, payload);
-        }
+        // If new endpoint not available, throw error - don't fall back to legacy
         throw newError;
       }
     } catch (error) {
-      console.error('❌ Status update error:', error);
-      console.error(`   Message: ${error.message}`);
-      console.error(`   Stack:`, error.stack);
       throw new Error(
         error.message || 'Failed to update task status. Please try again.'
       );
-    }
-  },
-
-  /**
-   * Legacy endpoint fallback (for existing /orchestrator/executions endpoint)
-   * @private
-   */
-  async _updateStatusLegacy(taskId, newStatus, payload) {
-    console.log(
-      `\n🔄 Attempting LEGACY endpoint: POST /api/orchestrator/executions/${taskId}/approve`
-    );
-
-    // Map new status to legacy format if needed
-    const legacyStatus = STATUS_MAP_NEW_TO_LEGACY[newStatus] || newStatus;
-
-    try {
-      const legacyPayload = {
-        status: legacyStatus,
-        feedback: payload.feedback,
-        metadata: payload.metadata,
-      };
-      console.log(`   Legacy payload:`, legacyPayload);
-
-      const response = await makeRequest(
-        `/api/orchestrator/executions/${taskId}/approve`,
-        'POST',
-        legacyPayload
-      );
-      console.log(`✅ LEGACY endpoint successful!`);
-      console.log(`   Response:`, response);
-      console.log(`${'=' * 80}\n`);
-      return response;
-    } catch (error) {
-      console.error(`❌ Legacy endpoint failed:`, error);
-      throw new Error('Legacy endpoint call failed: ' + error.message);
     }
   },
 
@@ -158,17 +97,10 @@ export const unifiedStatusService = {
    * @returns {Promise<Object>} - Result object
    */
   async approve(taskId, feedback = '', userId = null) {
-    console.log(`\n${'=' * 80}`);
-    console.log(`🔵 unifiedStatusService.approve()`);
-    console.log(`   Task ID: ${taskId}`);
-    console.log(`   Feedback: ${feedback.substring(0, 50)}...`);
-    console.log(`   User ID: ${userId}`);
-
     if (!taskId) {
       throw new Error('Task ID is required');
     }
 
-    console.log(`\n🔄 Calling updateStatus() with APPROVED status...`);
     const payload = {
       reason: 'Task approved',
       feedback,
@@ -178,15 +110,12 @@ export const unifiedStatusService = {
         approval_feedback: feedback,
       },
     };
-    console.log(`   Payload:`, payload);
 
     const result = await this.updateStatus(
       taskId,
       STATUS_ENUM.APPROVED,
       payload
     );
-    console.log(`✅ updateStatus() returned:`, result);
-    console.log(`${'=' * 80}\n`);
     return result;
   },
 
@@ -293,28 +222,12 @@ export const unifiedStatusService = {
     }
 
     try {
-      // Try new endpoint first
-      try {
-        const response = await makeRequest(
-          `/api/tasks/${taskId}/status-history?limit=${limit}`,
-          'GET'
-        );
-        return response;
-      } catch (newError) {
-        if (newError.status === 404) {
-          console.warn('New history endpoint not found');
-          // Return empty history if endpoint not available
-          return {
-            task_id: taskId,
-            history: [],
-            total: 0,
-            message: 'History endpoint not available in this version',
-          };
-        }
-        throw newError;
-      }
+      const response = await makeRequest(
+        `/api/tasks/${taskId}/status-history?limit=${limit}`,
+        'GET'
+      );
+      return response;
     } catch (error) {
-      console.error('Failed to get status history:', error);
       return {
         task_id: taskId,
         history: [],
@@ -336,28 +249,12 @@ export const unifiedStatusService = {
     }
 
     try {
-      // Try new endpoint first
-      try {
-        const response = await makeRequest(
-          `/api/tasks/${taskId}/status-history/failures?limit=${limit}`,
-          'GET'
-        );
-        return response;
-      } catch (newError) {
-        if (newError.status === 404) {
-          console.warn('New failures endpoint not found');
-          // Return empty failures if endpoint not available
-          return {
-            task_id: taskId,
-            failures: [],
-            total: 0,
-            message: 'Failures endpoint not available in this version',
-          };
-        }
-        throw newError;
-      }
+      const response = await makeRequest(
+        `/api/tasks/${taskId}/status-history/failures?limit=${limit}`,
+        'GET'
+      );
+      return response;
     } catch (error) {
-      console.error('Failed to get validation failures:', error);
       return {
         task_id: taskId,
         failures: [],
@@ -384,23 +281,12 @@ export const unifiedStatusService = {
         query.append('status', status);
       }
 
-      try {
-        const response = await makeRequest(
-          `/api/tasks/metrics?${query.toString()}`,
-          'GET'
-        );
-        return response;
-      } catch (newError) {
-        if (newError.status === 404) {
-          return {
-            metrics: {},
-            message: 'Metrics endpoint not available in this version',
-          };
-        }
-        throw newError;
-      }
+      const response = await makeRequest(
+        `/api/tasks/metrics?${query.toString()}`,
+        'GET'
+      );
+      return response;
     } catch (error) {
-      console.error('Failed to get metrics:', error);
       return {
         metrics: {},
         error: error.message,
@@ -443,10 +329,7 @@ export const unifiedStatusService = {
 
     return Promise.all(taskIds.map((id) => this.approve(id, feedback))).catch(
       (error) => {
-        console.error('Batch approve failed:', error);
-        throw new Error(
-          'One or more approvals failed. Check console for details.'
-        );
+        throw new Error('One or more approvals failed: ' + error.message);
       }
     );
   },
@@ -467,10 +350,7 @@ export const unifiedStatusService = {
 
     return Promise.all(taskIds.map((id) => this.reject(id, reason))).catch(
       (error) => {
-        console.error('Batch reject failed:', error);
-        throw new Error(
-          'One or more rejections failed. Check console for details.'
-        );
+        throw new Error('One or more rejections failed: ' + error.message);
       }
     );
   },

@@ -38,25 +38,12 @@ export async function getOllamaModels() {
     clearTimeout(timeoutId);
 
     if (!response.ok) {
-       
-      console.warn(`⚠️ Ollama API returned status ${response.status}`);
       return [];
     }
 
     const data = await response.json();
-     
-    console.log(`✅ Retrieved ${data.models?.length || 0} Ollama models`);
     return data.models || [];
   } catch (error) {
-    if (error.name === 'AbortError') {
-       
-      console.warn(
-        '⚠️ Ollama timeout - backend Ollama endpoint may be unavailable'
-      );
-    } else {
-       
-      console.warn('⚠️ Ollama not available:', error.message);
-    }
     return [];
   }
 }
@@ -82,12 +69,8 @@ export async function isOllamaAvailable() {
     }
 
     const data = await response.json();
-     
-    console.log(`✅ Ollama available with ${data.models?.length || 0} models`);
     return data.connected === true;
   } catch (error) {
-     
-    console.debug('Ollama not available:', error.message);
     return false;
   }
 }
@@ -241,8 +224,6 @@ export async function getOllamaModelInfo(modelId) {
 
     return await response.json();
   } catch (error) {
-     
-    console.error('Error fetching Ollama model info:', error);
     throw error;
   }
 }

@@ -345,8 +345,6 @@ export const safeFormat = (formatter, value, defaultValue = 'N/A') => {
   try {
     return isFormattable(value) ? formatter(value) : defaultValue;
   } catch (error) {
-     
-    console.warn(`Formatting error: ${error.message}`);
     return defaultValue;
   }
 };

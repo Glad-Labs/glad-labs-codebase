@@ -89,8 +89,6 @@ async function hmacSha256Sign(message, secret) {
     }
     return base64UrlEncode(binaryString);
   } catch (_error) {
-     
-    console.error('Error signing JWT:', _error);
     throw _error;
   }
 }
@@ -111,15 +109,11 @@ function base64UrlEncode(str) {
  */
 export const decodeJWTToken = (token) => {
   try {
-    // JWT format: header.payload.signature
     const parts = token.split('.');
     if (parts.length !== 3) {
-       
-      console.warn('Invalid JWT format: expected 3 parts');
       return null;
     }
 
-    // Decode payload (second part)
     const payloadEncoded = parts[1];
     const payloadDecoded = atob(
       payloadEncoded.replace(/-/g, '+').replace(/_/g, '/')
@@ -127,8 +121,6 @@ export const decodeJWTToken = (token) => {
 
     return JSON.parse(payloadDecoded);
   } catch (_error) {
-     
-    console.error('Error decoding JWT token:', _error);
     return null;
   }
 };
