@@ -1,3 +1,7 @@
+/**
+ * TaskManagement.jsx - Enhanced Task Management Page
+ * Features: Task creation, filtering, sorting, detail view, actions (pause/resume/cancel/delete)
+ */
 import React, { useState, useEffect } from 'react';
 import useStore from '../store/useStore';
 import { getTasks, bulkUpdateTasks } from '../services/cofounderAgentClient';
@@ -9,7 +13,7 @@ import { StatusDashboardMetrics } from '../components/tasks/StatusComponents';
 import './TaskManagement.css';
 
 function TaskManagement() {
-  const { setTasks } = useStore();
+  const { setTasks, setSelectedTask, selectedTask } = useStore();
   const [localTasks, setLocalTasks] = useState([]);
   const [sortBy, setSortBy] = useState('created_at');
   const [sortDirection, setSortDirection] = useState('desc');
@@ -18,7 +22,6 @@ function TaskManagement() {
   const [deleting, setDeleting] = useState(false);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showDetailModal, setShowDetailModal] = useState(false);
-  const [selectedTask, setSelectedTask] = useState(null);
   const [page, setPage] = useState(1);
   const [limit] = useState(10);
   const [total, setTotal] = useState(0);
@@ -115,7 +118,9 @@ function TaskManagement() {
 
   // Handler to open detail modal for editing
   const handleEditTask = (task) => {
+    console.log('👁️ handleEditTask called with task:', task);
     setSelectedTask(task);
+    setSelectedTask(task); // Set in store so TaskDetailModal can access it
     setShowDetailModal(true);
   };
 
@@ -129,7 +134,7 @@ function TaskManagement() {
       setDeleting(true);
       setError(null);
       const result = await bulkUpdateTasks([taskId], 'delete');
-      
+
       if (result.updated_count > 0) {
         setSuccessMessage('Task deleted successfully');
         setTimeout(() => setSuccessMessage(null), 3000);
@@ -158,7 +163,7 @@ function TaskManagement() {
     try {
       setError(null);
       const result = await bulkUpdateTasks([taskId], action);
-      
+
       if (result.updated_count > 0) {
         setSuccessMessage(`Task ${action} successful`);
         setTimeout(() => setSuccessMessage(null), 3000);
@@ -176,7 +181,7 @@ function TaskManagement() {
   // Filter and sort tasks
   const getFilteredTasks = () => {
     let filtered = localTasks || [];
-    
+
     // Apply status filter
     if (statusFilter && statusFilter !== '') {
       filtered = filtered.filter(
@@ -231,30 +236,47 @@ function TaskManagement() {
         <h1 className="dashboard-title">Task Management</h1>
       </div>
 
+      {/* Error/Success Messages */}
+      {error && (
+        <div className="alert alert-error" style={{ marginBottom: '20px' }}>
+          <span>{error}</span>
+          <button
+            onClick={() => setError(null)}
+            style={{ marginLeft: 'auto', cursor: 'pointer' }}
+          >
+            ✕
+          </button>
+        </div>
+      )}
+      {successMessage && (
+        <div className="alert alert-success" style={{ marginBottom: '20px' }}>
+          <span>{successMessage}</span>
+        </div>
+      )}
+
       {/* Summary Stats */}
       <div className="summary-stats">
         <div className="stat-box">
           <span className="stat-count">{filteredTasks?.length || 0}</span>
-          <span className="stat-label">Total Tasks</span>
+          <span className="stat-label">Filtered Tasks</span>
         </div>
         <div className="stat-box">
           <span className="stat-count">
-            {filteredTasks?.filter(
-              (t) => t.status?.toLowerCase() === 'completed'
-            ).length || 0}
+            {localTasks?.filter((t) => t.status?.toLowerCase() === 'completed')
+              .length || 0}
           </span>
           <span className="stat-label">Completed</span>
         </div>
         <div className="stat-box">
           <span className="stat-count">
-            {filteredTasks?.filter((t) => t.status?.toLowerCase() === 'running')
+            {localTasks?.filter((t) => t.status?.toLowerCase() === 'running')
               .length || 0}
           </span>
           <span className="stat-label">Running</span>
         </div>
         <div className="stat-box">
           <span className="stat-count">
-            {filteredTasks?.filter((t) => t.status?.toLowerCase() === 'failed')
+            {localTasks?.filter((t) => t.status?.toLowerCase() === 'failed')
               .length || 0}
           </span>
           <span className="stat-label">Failed</span>
@@ -264,27 +286,65 @@ function TaskManagement() {
       {/* Metrics Dashboard */}
       <div className="metrics-section" style={{ marginBottom: '30px' }}>
         <StatusDashboardMetrics
-          statusHistory={filteredTasks.flatMap((t) => t.statusHistory || [])}
+          statusHistory={localTasks.flatMap((t) => t.statusHistory || [])}
           compact={true}
         />
       </div>
 
-      {/* Unified Table - All Tasks */}
+      {/* Task Filters */}
+      <TaskFilters
+        sortBy={sortBy}
+        sortDirection={sortDirection}
+        statusFilter={statusFilter}
+        onSortChange={handleSort}
+        onDirectionChange={(dir) => setSortDirection(dir)}
+        onStatusChange={handleStatusFilter}
+        onResetFilters={handleResetFilters}
+      />
+
+      {/* Create Task Button */}
       <div className="table-controls">
-        <button
-          className="btn-create-task"
-          onClick={() => setShowCreateModal(true)}
-        >
-          + Create Task
-        </button>
+        <div className="button-group">
+          <button
+            className="btn-create-task"
+            onClick={() => setShowCreateModal(true)}
+          >
+            ➕ Create Task
+          </button>
+          <button
+            className="btn-refresh"
+            onClick={fetchTasks}
+            disabled={loading}
+            title="Refresh task list"
+          >
+            🔄 Refresh
+          </button>
+          <button
+            className="btn-clear-filters"
+            onClick={handleResetFilters}
+            title="Clear all filters and sorts"
+          >
+            ✕ Clear Filters
+          </button>
+        </div>
+
+        <div className="stats-line">
+          <span className="stat-text">
+            {filteredTasks.length} of {total} tasks
+          </span>
+        </div>
       </div>
 
-      {/* Unified Tasks Table */}
+      {/* Tasks Table */}
       <div className="tasks-table-container">
         {loading && <div className="loading">Loading tasks...</div>}
         {!loading && filteredTasks.length === 0 ? (
           <div className="empty-state">
-            <p>No tasks found. Create your first blog post to get started!</p>
+            <p>
+              {statusFilter
+                ? 'No tasks found with the selected filter. Try adjusting your filters.'
+                : 'No tasks found. Create your first task to get started!'}
+            </p>
           </div>
         ) : (
           <>
@@ -303,7 +363,7 @@ function TaskManagement() {
                     onClick={() => handleSort('topic')}
                     className={`sortable ${sortBy === 'topic' ? 'active-sort' : ''}`}
                   >
-                    Agent{' '}
+                    Topic{' '}
                     {sortBy === 'topic' &&
                       (sortDirection === 'asc' ? '↑' : '↓')}
                   </th>
@@ -315,7 +375,7 @@ function TaskManagement() {
                     {sortBy === 'status' &&
                       (sortDirection === 'asc' ? '↑' : '↓')}
                   </th>
-                  <th>Priority</th>
+                  <th>Progress</th>
                   <th
                     onClick={() => handleSort('created_at')}
                     className={`sortable ${sortBy === 'created_at' ? 'active-sort' : ''}`}
@@ -331,24 +391,19 @@ function TaskManagement() {
                 {filteredTasks.map((task) => (
                   <tr
                     key={task.id}
-                    className={`status-${task.status?.toLowerCase()}`}
+                    className={`status-${task.status?.toLowerCase()} clickable-row`}
+                    onClick={() => handleEditTask(task)}
+                    title="Click to view details"
                   >
                     <td className="task-name">
-                      {task.task_name || task.topic || 'Untitled'}
+                      {typeof task.task_name === 'object'
+                        ? JSON.stringify(task.task_name)
+                        : task.task_name || task.topic || 'Untitled'}
                     </td>
-                    <td className="agent">
-                      <span className="agent-badge">
-                        {task.agent_id
-                          ? task.agent_id
-                              .replace(/-/g, ' ')
-                              .split(' ')
-                              .map(
-                                (word) =>
-                                  word.charAt(0).toUpperCase() + word.slice(1)
-                              )
-                              .join(' ')
-                          : 'Content Generator'}
-                      </span>
+                    <td className="topic">
+                      {typeof task.topic === 'object'
+                        ? JSON.stringify(task.topic)
+                        : task.topic || task.task_name || '-'}
                     </td>
                     <td>
                       <span
@@ -360,30 +415,105 @@ function TaskManagement() {
                           : 'Unknown'}
                       </span>
                     </td>
-                    <td className="priority">
-                      <span className="priority-badge priority-normal">
-                        Normal
-                      </span>
+                    <td className="progress">
+                      {(() => {
+                        const progressValue = task.progress;
+                        if (
+                          typeof progressValue === 'number' &&
+                          progressValue > 0
+                        ) {
+                          return (
+                            <>
+                              <div className="progress-bar">
+                                <div
+                                  className="progress-fill"
+                                  style={{ width: `${progressValue}%` }}
+                                />
+                              </div>
+                              <span className="progress-text">
+                                {progressValue}%
+                              </span>
+                            </>
+                          );
+                        }
+                        return <span className="progress-text">-</span>;
+                      })()}
                     </td>
                     <td className="task-date">
-                      {task.created_at
-                        ? new Date(task.created_at).toLocaleDateString(
-                            'en-US',
-                            {
-                              month: '2-digit',
-                              day: '2-digit',
+                      {(() => {
+                        try {
+                          if (task.created_at) {
+                            const dateObj = new Date(task.created_at);
+                            if (isNaN(dateObj.getTime())) return '-';
+                            return dateObj.toLocaleDateString('en-US', {
+                              month: 'short',
+                              day: 'numeric',
                               year: 'numeric',
                               hour: '2-digit',
                               minute: '2-digit',
-                            }
-                          )
-                        : '-'}
+                            });
+                          }
+                          return '-';
+                        } catch (e) {
+                          return '-';
+                        }
+                      })()}
                     </td>
-                    <td>
-                      <button className="action-btn" title="View Details">
-                        ✏️
+                    <td className="actions">
+                      <button
+                        className="action-btn view"
+                        onClick={() => handleEditTask(task)}
+                        title="View Details"
+                        disabled={deleting}
+                      >
+                        👁️
                       </button>
-                      <button className="action-btn delete" title="Delete">
+                      {task.status?.toLowerCase() === 'running' && (
+                        <>
+                          <button
+                            className="action-btn pause"
+                            onClick={() => handleTaskAction(task.id, 'pause')}
+                            title="Pause Task"
+                            disabled={deleting}
+                          >
+                            ⏸️
+                          </button>
+                          <button
+                            className="action-btn cancel"
+                            onClick={() => handleTaskAction(task.id, 'cancel')}
+                            title="Cancel Task"
+                            disabled={deleting}
+                          >
+                            ⏹️
+                          </button>
+                        </>
+                      )}
+                      {task.status?.toLowerCase() === 'paused' && (
+                        <button
+                          className="action-btn resume"
+                          onClick={() => handleTaskAction(task.id, 'resume')}
+                          title="Resume Task"
+                          disabled={deleting}
+                        >
+                          ▶️
+                        </button>
+                      )}
+                      {task.status?.toLowerCase() === 'failed' && (
+                        <button
+                          className="action-btn retry"
+                          onClick={() => handleTaskAction(task.id, 'retry')}
+                          title="Retry Task"
+                          disabled={deleting}
+                        >
+                          🔄
+                        </button>
+                      )}
+                      <button
+                        className="action-btn delete"
+                        onClick={() => handleDeleteTask(task.id)}
+                        title="Delete Task"
+                        disabled={deleting}
+                      >
                         🗑️
                       </button>
                     </td>
@@ -477,6 +607,17 @@ function TaskManagement() {
             setShowCreateModal(false);
             fetchTasks();
           }}
+        />
+      )}
+
+      {/* Task Detail Modal */}
+      {showDetailModal && (
+        <TaskDetailModal
+          onClose={() => {
+            setShowDetailModal(false);
+            setSelectedTask(null);
+          }}
+          onUpdate={handleTaskDetailUpdate}
         />
       )}
     </div>

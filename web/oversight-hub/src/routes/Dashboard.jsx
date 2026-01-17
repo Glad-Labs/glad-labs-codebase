@@ -8,7 +8,7 @@
  */
 
 import React from 'react';
-import TaskManagement from '../components/tasks/TaskManagement';
+import TaskManagement from './TaskManagement';
 
 const Dashboard = () => {
   return <TaskManagement />;
