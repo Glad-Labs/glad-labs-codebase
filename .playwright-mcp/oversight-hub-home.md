@@ -1,4 +1,5 @@
 ### New console messages
+
 - [LOG] [authService] Development token initialized/refreshed with proper JWT format @ http://localhos...
 - [LOG] [authService] ✅ Token verified in localStorage @ http://localhost:3001/static/js/bundle.js:143...
 - [LOG] [AuthContext] ✅ Development token initialized successfully @ http://localhost:3001/static/js/b...
@@ -16,15 +17,17 @@
 - [LOG] ✅ makeRequest: Returning result @ http://localhost:3001/static/js/bundle.js:144328
 
 ### Page state
+
 - Page URL: http://localhost:3001/login
 - Page Title: Dexter's Lab - AI Co-Founder
 - Page Snapshot:
+
 ```yaml
 - generic [ref=e30]:
-  - generic [ref=e31]:
-    - heading "Glad Labs" [level=1] [ref=e32]
-    - heading "Oversight Hub" [level=2] [ref=e33]
-  - generic [ref=e34]:
-    - button "Sign in with GitHub" [ref=e35] [cursor=pointer]
-    - generic [ref=e37]: "{ \"clientId\": \"NOT SET\", \"mockAuth\": \"DISABLED\" }"
+    - generic [ref=e31]:
+        - heading "Glad Labs" [level=1] [ref=e32]
+        - heading "Oversight Hub" [level=2] [ref=e33]
+    - generic [ref=e34]:
+        - button "Sign in with GitHub" [ref=e35] [cursor=pointer]
+        - generic [ref=e37]: '{ "clientId": "NOT SET", "mockAuth": "DISABLED" }'
 ```

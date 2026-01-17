@@ -5,7 +5,7 @@
  * - Approve task dialog (with feedback field)
  * - Reject task dialog (with reason field)
  * - Delete confirmation dialog
- * 
+ *
  * Integrates with unifiedStatusService for all status operations.
  */
 

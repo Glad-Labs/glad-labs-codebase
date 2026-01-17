@@ -1,98 +1,100 @@
 ### Page state
+
 - Page URL: http://localhost:3001/
 - Page Title: Dexter's Lab - AI Co-Founder
 - Page Snapshot:
+
 ```yaml
 - generic [ref=e3]:
-  - banner [ref=e4]:
-    - generic [ref=e5]:
-      - button "☰" [ref=e6] [cursor=pointer]
-      - heading "🎛️ Oversight Hub" [level=1] [ref=e7]
-    - generic [ref=e8]: 🟢 Ollama Ready
-  - generic [ref=e9]:
-    - generic [ref=e11]:
-      - generic [ref=e12]:
-        - generic [ref=e29]:
-          - heading "🎛️ Executive Dashboard" [level=1] [ref=e30]
-          - paragraph [ref=e31]: AI-Powered Business Management System - Real-time KPI Overview
-        - combobox [ref=e33] [cursor=pointer]:
-          - option "Last 24 Hours"
-          - option "Last 7 Days"
-          - option "Last 30 Days" [selected]
-          - option "Last 90 Days"
-          - option "All Time"
-      - heading "Key Performance Indicators" [level=2] [ref=e35]
-      - generic [ref=e36]:
-        - generic [ref=e37]:
-          - heading "🔧 System Status" [level=3] [ref=e38]
-          - generic [ref=e39]:
-            - generic [ref=e40]:
-              - generic [ref=e41]: 🤖
-              - generic [ref=e42]:
-                - generic [ref=e43]: Agents Active
-                - generic [ref=e44]: /
-            - generic [ref=e45]:
-              - generic [ref=e46]: 📤
-              - generic [ref=e48]: Tasks Queued
-            - generic [ref=e49]:
-              - generic [ref=e50]: ⚠️
-              - generic [ref=e52]: Tasks Failed
-            - generic [ref=e53]:
-              - generic [ref=e54]: ✓
-              - generic [ref=e55]:
-                - generic [ref=e56]: System Uptime
-                - generic [ref=e57]: "%"
-            - generic [ref=e58]:
-              - generic [ref=e59]: 🔄
-              - generic [ref=e61]: Last Sync
-        - generic [ref=e62]:
-          - heading "⚡ Quick Actions" [level=3] [ref=e63]
-          - generic [ref=e64]:
-            - button "➕ Create Task" [ref=e65] [cursor=pointer]:
-              - generic [ref=e66]: ➕
-              - generic [ref=e67]: Create Task
-            - button "👁️ Review Queue" [ref=e68] [cursor=pointer]:
-              - generic [ref=e69]: 👁️
-              - generic [ref=e70]: Review Queue
-            - button "🚀 Publish Now" [ref=e71] [cursor=pointer]:
-              - generic [ref=e72]: 🚀
-              - generic [ref=e73]: Publish Now
-            - button "📊 View Reports" [ref=e74] [cursor=pointer]:
-              - generic [ref=e75]: 📊
-              - generic [ref=e76]: View Reports
-            - button "💰 View Costs" [ref=e77] [cursor=pointer]:
-              - generic [ref=e78]: 💰
-              - generic [ref=e79]: View Costs
-    - generic [ref=e13]:
-      - generic [ref=e14]:
-        - generic [ref=e15]: 💬 Poindexter Assistant
-        - generic [ref=e16]:
-          - button "💭 Conversation" [ref=e17] [cursor=pointer]
-          - button "🔄 Agent" [ref=e18] [cursor=pointer]
-        - 'combobox "Select AI Model - Groups: Ollama (Local), OpenAI, Anthropic, Google" [ref=e19] [cursor=pointer]':
-          - option "-- Select Model --" [selected]
-          - option "Mistral"
-          - option "Llama2"
-          - option "Neural Chat"
-          - option "Qwen2.5"
-          - option "Mixtral"
-          - option "Deepseek R1"
-          - option "Llama3"
-          - option "gpt-4-turbo (openai)"
-          - option "gpt-4 (openai)"
-          - option "gpt-3.5-turbo (openai)"
-          - option "claude-3-opus-20240229 (anthropic)"
-          - option "claude-3-sonnet-20240229 (anthropic)"
-          - option "claude-3-haiku-20240307 (anthropic)"
-          - option "gemini-pro (google)"
-          - option "gemini-pro-vision (google)"
-          - option "gemini-1.5-pro (google)"
-          - option "gemini-1.5-flash (google)"
-      - generic [ref=e21]:
-        - generic [ref=e22]: 🤖
-        - paragraph [ref=e24]: Poindexter ready. How can I help?
-      - generic [ref=e25]:
-        - textbox "Ask Poindexter..." [ref=e26]
-        - button "📤" [disabled] [ref=e27]
-        - button "🗑️" [ref=e28] [cursor=pointer]
+    - banner [ref=e4]:
+        - generic [ref=e5]:
+            - button "☰" [ref=e6] [cursor=pointer]
+            - heading "🎛️ Oversight Hub" [level=1] [ref=e7]
+        - generic [ref=e8]: 🟢 Ollama Ready
+    - generic [ref=e9]:
+        - generic [ref=e11]:
+            - generic [ref=e12]:
+                - generic [ref=e29]:
+                    - heading "🎛️ Executive Dashboard" [level=1] [ref=e30]
+                    - paragraph [ref=e31]: AI-Powered Business Management System - Real-time KPI Overview
+                - combobox [ref=e33] [cursor=pointer]:
+                    - option "Last 24 Hours"
+                    - option "Last 7 Days"
+                    - option "Last 30 Days" [selected]
+                    - option "Last 90 Days"
+                    - option "All Time"
+            - heading "Key Performance Indicators" [level=2] [ref=e35]
+            - generic [ref=e36]:
+                - generic [ref=e37]:
+                    - heading "🔧 System Status" [level=3] [ref=e38]
+                    - generic [ref=e39]:
+                        - generic [ref=e40]:
+                            - generic [ref=e41]: 🤖
+                            - generic [ref=e42]:
+                                - generic [ref=e43]: Agents Active
+                                - generic [ref=e44]: /
+                        - generic [ref=e45]:
+                            - generic [ref=e46]: 📤
+                            - generic [ref=e48]: Tasks Queued
+                        - generic [ref=e49]:
+                            - generic [ref=e50]: ⚠️
+                            - generic [ref=e52]: Tasks Failed
+                        - generic [ref=e53]:
+                            - generic [ref=e54]: ✓
+                            - generic [ref=e55]:
+                                - generic [ref=e56]: System Uptime
+                                - generic [ref=e57]: '%'
+                        - generic [ref=e58]:
+                            - generic [ref=e59]: 🔄
+                            - generic [ref=e61]: Last Sync
+                - generic [ref=e62]:
+                    - heading "⚡ Quick Actions" [level=3] [ref=e63]
+                    - generic [ref=e64]:
+                        - button "➕ Create Task" [ref=e65] [cursor=pointer]:
+                            - generic [ref=e66]: ➕
+                            - generic [ref=e67]: Create Task
+                        - button "👁️ Review Queue" [ref=e68] [cursor=pointer]:
+                            - generic [ref=e69]: 👁️
+                            - generic [ref=e70]: Review Queue
+                        - button "🚀 Publish Now" [ref=e71] [cursor=pointer]:
+                            - generic [ref=e72]: 🚀
+                            - generic [ref=e73]: Publish Now
+                        - button "📊 View Reports" [ref=e74] [cursor=pointer]:
+                            - generic [ref=e75]: 📊
+                            - generic [ref=e76]: View Reports
+                        - button "💰 View Costs" [ref=e77] [cursor=pointer]:
+                            - generic [ref=e78]: 💰
+                            - generic [ref=e79]: View Costs
+        - generic [ref=e13]:
+            - generic [ref=e14]:
+                - generic [ref=e15]: 💬 Poindexter Assistant
+                - generic [ref=e16]:
+                    - button "💭 Conversation" [ref=e17] [cursor=pointer]
+                    - button "🔄 Agent" [ref=e18] [cursor=pointer]
+                - 'combobox "Select AI Model - Groups: Ollama (Local), OpenAI, Anthropic, Google" [ref=e19] [cursor=pointer]':
+                    - option "-- Select Model --" [selected]
+                    - option "Mistral"
+                    - option "Llama2"
+                    - option "Neural Chat"
+                    - option "Qwen2.5"
+                    - option "Mixtral"
+                    - option "Deepseek R1"
+                    - option "Llama3"
+                    - option "gpt-4-turbo (openai)"
+                    - option "gpt-4 (openai)"
+                    - option "gpt-3.5-turbo (openai)"
+                    - option "claude-3-opus-20240229 (anthropic)"
+                    - option "claude-3-sonnet-20240229 (anthropic)"
+                    - option "claude-3-haiku-20240307 (anthropic)"
+                    - option "gemini-pro (google)"
+                    - option "gemini-pro-vision (google)"
+                    - option "gemini-1.5-pro (google)"
+                    - option "gemini-1.5-flash (google)"
+            - generic [ref=e21]:
+                - generic [ref=e22]: 🤖
+                - paragraph [ref=e24]: Poindexter ready. How can I help?
+            - generic [ref=e25]:
+                - textbox "Ask Poindexter..." [ref=e26]
+                - button "📤" [disabled] [ref=e27]
+                - button "🗑️" [ref=e28] [cursor=pointer]
 ```

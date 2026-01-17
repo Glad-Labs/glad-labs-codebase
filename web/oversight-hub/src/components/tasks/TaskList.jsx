@@ -12,7 +12,7 @@ const formatTimestamp = (timestamp) => {
 /**
  * Get icon character for status badge.
  * Enterprise-level status display with comprehensive icon mapping.
- * 
+ *
  * DISTINCTIONS:
  * - completed (✓) = single task finished
  * - approved (✓) = human approved, waiting to publish
@@ -39,7 +39,7 @@ const getStatusIcon = (status) => {
 /**
  * Get CSS class name for status badge styling.
  * Maps status values to enterprise-level CSS classes.
- * 
+ *
  * STATE HIERARCHY:
  * - Approval Workflow: awaiting_approval → approved → published
  * - Direct Completion: completed (non-approval tasks)
@@ -54,11 +54,11 @@ const getStatusColor = (status) => {
     in_progress: 'status-in-progress',
     running: 'status-in-progress', // Map legacy to new
     awaiting_approval: 'status-awaiting-approval',
-    
+
     // Approval workflow: human decision → published (live)
     approved: 'status-approved',
     published: 'status-published',
-    
+
     // Task completion (non-approval workflow)
     completed: 'status-completed', // Task finished without approval
 

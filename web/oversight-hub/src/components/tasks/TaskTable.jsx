@@ -48,7 +48,7 @@ const getStatusColor = (status) => {
     completed: 'success',
   };
   return colors[status] || 'default';
-};;
+};
 
 const TaskTable = ({
   tasks = [],

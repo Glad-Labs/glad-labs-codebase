@@ -1,7 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import useStore from '../store/useStore';
-import { getTasks } from '../services/cofounderAgentClient';
+import { getTasks, bulkUpdateTasks } from '../services/cofounderAgentClient';
 import CreateTaskModal from '../components/tasks/CreateTaskModal';
+import TaskDetailModal from '../components/tasks/TaskDetailModal';
+import TaskFilters from '../components/tasks/TaskFilters';
+import TaskActions from '../components/tasks/TaskActions';
 import { StatusDashboardMetrics } from '../components/tasks/StatusComponents';
 import './TaskManagement.css';
 
@@ -10,11 +13,17 @@ function TaskManagement() {
   const [localTasks, setLocalTasks] = useState([]);
   const [sortBy, setSortBy] = useState('created_at');
   const [sortDirection, setSortDirection] = useState('desc');
+  const [statusFilter, setStatusFilter] = useState('');
   const [loading, setLoading] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [showDetailModal, setShowDetailModal] = useState(false);
+  const [selectedTask, setSelectedTask] = useState(null);
   const [page, setPage] = useState(1);
   const [limit] = useState(10);
   const [total, setTotal] = useState(0);
+  const [error, setError] = useState(null);
+  const [successMessage, setSuccessMessage] = useState(null);
 
   // Fetch tasks from API
   useEffect(() => {
@@ -78,6 +87,7 @@ function TaskManagement() {
   const fetchTasks = async () => {
     try {
       setLoading(true);
+      setError(null);
       const offset = (page - 1) * limit;
       const response = await getTasks(limit, offset);
       if (response && response.tasks) {
@@ -95,6 +105,7 @@ function TaskManagement() {
       }
     } catch (error) {
       console.error('Error fetching tasks:', error);
+      setError(`Failed to fetch tasks: ${error.message}`);
       setLocalTasks([]);
       setTotal(0);
     } finally {
@@ -102,10 +113,79 @@ function TaskManagement() {
     }
   };
 
+  // Handler to open detail modal for editing
+  const handleEditTask = (task) => {
+    setSelectedTask(task);
+    setShowDetailModal(true);
+  };
+
+  // Handler to delete a single task
+  const handleDeleteTask = async (taskId) => {
+    if (!window.confirm('Are you sure you want to delete this task?')) {
+      return;
+    }
+
+    try {
+      setDeleting(true);
+      setError(null);
+      const result = await bulkUpdateTasks([taskId], 'delete');
+      
+      if (result.updated_count > 0) {
+        setSuccessMessage('Task deleted successfully');
+        setTimeout(() => setSuccessMessage(null), 3000);
+        // Refresh task list
+        fetchTasks();
+      } else {
+        setError('Failed to delete task');
+      }
+    } catch (err) {
+      console.error('Error deleting task:', err);
+      setError(`Failed to delete task: ${err.message}`);
+    } finally {
+      setDeleting(false);
+    }
+  };
+
+  // Handler for task detail modal updates
+  const handleTaskDetailUpdate = async () => {
+    setShowDetailModal(false);
+    setSelectedTask(null);
+    fetchTasks();
+  };
+
+  // Handler for task actions (pause, resume, cancel)
+  const handleTaskAction = async (taskId, action) => {
+    try {
+      setError(null);
+      const result = await bulkUpdateTasks([taskId], action);
+      
+      if (result.updated_count > 0) {
+        setSuccessMessage(`Task ${action} successful`);
+        setTimeout(() => setSuccessMessage(null), 3000);
+        // Refresh task list
+        fetchTasks();
+      } else {
+        setError(`Failed to ${action} task`);
+      }
+    } catch (err) {
+      console.error(`Error performing ${action} on task:`, err);
+      setError(`Failed to ${action} task: ${err.message}`);
+    }
+  };
+
+  // Filter and sort tasks
   const getFilteredTasks = () => {
-    // Return ALL tasks regardless of status, use local state
-    let allTasks = localTasks || [];
-    return allTasks.sort((a, b) => {
+    let filtered = localTasks || [];
+    
+    // Apply status filter
+    if (statusFilter && statusFilter !== '') {
+      filtered = filtered.filter(
+        (t) => t.status?.toLowerCase() === statusFilter.toLowerCase()
+      );
+    }
+
+    // Apply sorting
+    return filtered.sort((a, b) => {
       let aVal = a[sortBy] || 0;
       let bVal = b[sortBy] || 0;
 
@@ -129,6 +209,18 @@ function TaskManagement() {
       setSortBy(column);
       setSortDirection('asc');
     }
+  };
+
+  const handleStatusFilter = (status) => {
+    setStatusFilter(status);
+    setPage(1); // Reset to first page
+  };
+
+  const handleResetFilters = () => {
+    setStatusFilter('');
+    setSortBy('created_at');
+    setSortDirection('desc');
+    setPage(1);
   };
 
   const filteredTasks = getFilteredTasks();
