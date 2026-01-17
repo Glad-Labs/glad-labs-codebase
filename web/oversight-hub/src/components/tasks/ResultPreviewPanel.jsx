@@ -477,73 +477,51 @@ const ResultPreviewPanel = ({
 
     try {
       const taskId = task.id || task.task_id;
-      // const token = getAuthToken(); // Token available if needed for auth
 
-      const approvalPayload = {
-        approved,
-        human_feedback: approvalFeedback,
-        reviewer_id: reviewerId,
-        featured_image_url: featuredImageUrl,
-      };
-
-      console.log('📤 Sending approval request:', {
-        taskId,
-        ...approvalPayload,
-      });
-
-      const { makeRequest } =
-        await import('../../services/cofounderAgentClient');
-      const result = await makeRequest(
-        `/api/content/tasks/${taskId}/approve`,
-        'POST',
-        approvalPayload,
-        false,
-        null,
-        30000 // 30 second timeout
+      console.log(
+        `📤 Sending ${approved ? 'approval' : 'rejection'} request:`,
+        {
+          taskId,
+          feedback: approvalFeedback,
+          reviewerId,
+        }
       );
 
-      if (result.error) {
-        throw new Error(result.error || 'Approval failed');
-      }
+      // Use unified status service for all approval/rejection operations
+      const { unifiedStatusService } =
+        await import('../../services/unifiedStatusService');
 
-      console.log('✅ Approval submitted:', result);
-
-      // Call the appropriate callback based on approval decision
-      // Note: The /api/content/tasks/{id}/approve endpoint handles BOTH approve AND reject
-      // so we don't need to make a separate API call - just update local state
+      let result;
       if (approved) {
-        onApprove({
-          ...task,
-          status: 'approved',
-          approval_status: 'approved',
-          approval_timestamp: result.approval_timestamp,
-          reviewer_id: reviewerId,
-          cms_post_id: result.strapi_post_id,
-          published_url: result.published_url,
-          featured_image_url: featuredImageUrl,
-        });
+        result = await unifiedStatusService.approve(
+          taskId,
+          approvalFeedback,
+          reviewerId
+        );
       } else {
-        // When rejecting through the approval modal, the approval endpoint already updated
-        // the task status to 'rejected'. We just need to update local state.
-        // DO NOT call onReject() which would try to call /api/tasks/{id}/reject API
-        onApprove({
-          ...task,
-          status: 'rejected',
-          approval_status: 'rejected',
-          rejection_reason: approvalFeedback,
-          reviewer_id: reviewerId,
-        });
+        result = await unifiedStatusService.reject(
+          taskId,
+          approvalFeedback,
+          reviewerId
+        );
       }
 
-      const successMsg =
-        approved && result.published_url
-          ? `✅ Task approved and published!\n\nURL: ${result.published_url}\n\nMessage: ${result.message}`
-          : `✅ Task ${approved ? 'approved' : 'rejected'} successfully!\n\nMessage: ${result.message}`;
+      console.log(
+        `✅ ${approved ? 'Approval' : 'Rejection'} submitted:`,
+        result
+      );
+
+      const successMsg = approved
+        ? `✅ Task approved successfully!\n\nMessage: ${result.message}`
+        : `✅ Task rejected successfully!\n\nMessage: ${result.message}`;
 
       alert(successMsg);
+
+      // Close the modal - parent component will refresh task list
+      onClose();
     } catch (error) {
-      console.error('❌ Approval error:', error);
-      alert(`❌ Error submitting approval: ${error.message}`);
+      console.error(`❌ ${approved ? 'Approval' : 'Rejection'} error:`, error);
+      alert(`❌ Error: ${error.message}`);
     } finally {
       setApprovalLoading(false);
     }
@@ -966,10 +944,14 @@ const ResultPreviewPanel = ({
                   </h4>
                   <div className="prose prose-invert text-sm max-w-none max-h-48 overflow-y-auto">
                     <div className="text-cyan-400 font-semibold mb-2">
-                      {task?.task_metadata?.title || task?.title || 'Untitled'}
+                      {editedTitle ||
+                        task?.task_metadata?.title ||
+                        task?.title ||
+                        'Untitled'}
                     </div>
                     <p className="text-gray-300 text-xs">
                       {(
+                        editedContent ||
                         task?.result?.content ||
                         task?.content ||
                         'No content available'
@@ -1099,8 +1081,10 @@ const ResultPreviewPanel = ({
           {/* Only show action buttons if NOT awaiting approval or rejected (inline form handles those cases) */}
           {!['awaiting_approval', 'rejected'].includes(task.status) ? (
             <>
-              {/* Only allow rejecting tasks that are in terminal rejection-eligible states */}
-              {['completed', 'approved'].includes(task.status) && (
+              {/* Allow rejecting tasks in workflow and terminal states */}
+              {['awaiting_approval', 'completed', 'approved'].includes(
+                task.status
+              ) && (
                 <button
                   onClick={() => onReject(task)}
                   disabled={isLoading}
@@ -1124,18 +1108,8 @@ const ResultPreviewPanel = ({
               ) && (
                 <button
                   onClick={() => {
-                    const updatedTask = {
-                      ...task,
-                      title: editedTitle,
-                      featured_image_url: featuredImageUrl,
-                      result: {
-                        ...task.result,
-                        content: editedContent,
-                        seo: editedSEO,
-                      },
-                      publish_destination: publishDestination,
-                    };
-                    onApprove(updatedTask);
+                    // NOTE: Do NOT call onApprove() - form already made API call
+                    // Callback would trigger duplicate /api/tasks/{id}/status/validated call
                   }}
                   disabled={isLoading || !publishDestination}
                   className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded font-medium transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"

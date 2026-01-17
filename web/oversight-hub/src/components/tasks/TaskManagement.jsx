@@ -25,11 +25,8 @@ import TaskTable from './TaskTable';
 import TaskActions from './TaskActions';
 import CreateTaskModal from './CreateTaskModal';
 import ResultPreviewPanel from './ResultPreviewPanel';
-import {
-  approveTask,
-  rejectTask,
-  deleteContentTask,
-} from '../../services/taskService';
+import { deleteContentTask } from '../../services/taskService';
+import { unifiedStatusService } from '../../services/unifiedStatusService';
 
 /**
  * TaskManagement - Comprehensive task queue and management interface
@@ -137,7 +134,7 @@ const TaskManagement = () => {
   const handleApprove = async (taskId, feedback = '') => {
     try {
       setError(null);
-      await approveTask(taskId, feedback || '');
+      await unifiedStatusService.approve(taskId, feedback || '');
 
       // Refresh task list
       await fetchTasks();
@@ -157,7 +154,7 @@ const TaskManagement = () => {
   const handleReject = async (taskId, reason = '') => {
     try {
       setError(null);
-      await rejectTask(taskId, reason || '');
+      await unifiedStatusService.reject(taskId, reason || '');
 
       // Refresh task list
       await fetchTasks();
@@ -352,7 +349,9 @@ const TaskManagement = () => {
         }}
       />
 
-      {/* Task Actions Dialogs */}
+      {/* Task Actions Dialogs - DISABLED: Never opened, ResultPreviewPanel is the primary approval UI */}
+      {/* TODO: Remove TaskActions component entirely or re-enable with proper dialog triggers */}
+      {/*
       {selectedTask && (
         <TaskActions
           selectedTask={selectedTask}
@@ -365,6 +364,7 @@ const TaskManagement = () => {
           }}
         />
       )}
+      */}
 
       {/* Detail Panel */}
       {selectedTask && (

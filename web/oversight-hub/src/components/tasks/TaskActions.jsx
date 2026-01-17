@@ -71,11 +71,7 @@ const TaskActions = ({
         );
       }
 
-      // Call legacy callback if provided
-      if (onApprove) {
-        await onApprove(selectedTask.id, feedback);
-      }
-
+      // NOTE: Do NOT call callback - unifiedStatusService already handled approval
       handleCloseDialog();
       onClose();
     } catch (err) {
@@ -110,11 +106,7 @@ const TaskActions = ({
         );
       }
 
-      // Call legacy callback if provided
-      if (onReject) {
-        await onReject(selectedTask.id, reason);
-      }
-
+      // NOTE: Do NOT call callback - unifiedStatusService already handled rejection
       handleCloseDialog();
       onClose();
     } catch (err) {
@@ -134,11 +126,7 @@ const TaskActions = ({
       setError('');
       setIsSubmitting(true);
 
-      // Call legacy callback if provided
-      if (onDelete) {
-        await onDelete(selectedTask.id);
-      }
-
+      // NOTE: Do NOT call callback - prevents duplicate API calls
       handleCloseDialog();
       onClose();
     } catch (err) {
