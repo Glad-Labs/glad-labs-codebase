@@ -27,14 +27,6 @@ export function getAbsoluteURL(path = '') {
 }
 
 /**
- * Legacy alias for backward compatibility
- * @deprecated Use getAbsoluteURL instead
- */
-export function getStrapiURL(path = '') {
-  return getAbsoluteURL(path);
-}
-
-/**
  * Get the FastAPI base URL
  * @returns {string} - Base API URL
  */

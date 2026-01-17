@@ -29,7 +29,6 @@
  * - GET  /api/models - List available AI models
  * - POST /api/models/test - Test model connectivity
  * - GET  /api/models/status - Get provider status
- * - GET  /api/content/metrics - Content generation metrics
  */
 
 import axios from 'axios';
@@ -409,15 +408,15 @@ export const getTaskMetrics = async () => {
 };
 
 /**
- * Get content generation metrics
- * @returns {Promise<Object>} Content metrics (posts created, quality scores, etc)
+ * Get metrics
+ * @returns {Promise<Object>} Metrics (posts created, quality scores, etc)
  */
 export const getContentMetrics = async () => {
   try {
-    const response = await apiClient.get('/api/content/metrics');
+    const response = await apiClient.get('/api/metrics');
     return response.data;
   } catch (error) {
-    console.error('Error getting content metrics:', error);
+    console.error('Error getting metrics:', error);
     throw error;
   }
 };

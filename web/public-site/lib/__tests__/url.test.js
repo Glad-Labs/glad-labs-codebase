@@ -1,4 +1,4 @@
-import { getAbsoluteURL, getStrapiURL, getAPIBaseURL } from '../url';
+import { getAbsoluteURL, getAPIBaseURL } from '../url';
 
 describe('URL Utilities (lib/url.js)', () => {
   // Store original env variables
@@ -91,33 +91,6 @@ describe('URL Utilities (lib/url.js)', () => {
 
       expect(absoluteURL).toBeDefined();
       expect(absoluteURL).toMatch(/^https?:\/\//);
-    });
-  });
-
-  describe('getStrapiURL() - Legacy Alias', () => {
-    test('returns FastAPI base URL as legacy alias', () => {
-      const strapiURL = getStrapiURL();
-
-      expect(strapiURL).toBeDefined();
-      expect(typeof strapiURL).toBe('string');
-    });
-
-    test('provides backward compatibility', () => {
-      const strapiURL = getStrapiURL();
-      const apiBaseURL = getAPIBaseURL();
-
-      // Should return the same value for backward compatibility
-      expect(strapiURL).toBe(apiBaseURL);
-    });
-
-    test('works with path parameter for backward compat', () => {
-      const path = '/api/content';
-      const result = getStrapiURL(path);
-
-      expect(result).toBeDefined();
-      if (result.includes('http')) {
-        expect(result).toMatch(/^https?:\/\//);
-      }
     });
   });
 

@@ -211,16 +211,16 @@ export const deleteTask = async (taskId) => {
 };
 
 /**
- * Fetch content task by ID
+ * Fetch task by ID
  * Returns detailed task info with generated content and metadata
  *
- * @param {string} taskId - Content task ID
+ * @param {string} taskId - Task ID
  * @returns {Promise<object>} Task object with content
  * @throws {Error} If task not found
  */
 export const getContentTask = async (taskId) => {
   const result = await makeRequest(
-    `/api/content/tasks/${taskId}`,
+    `/api/tasks/${taskId}`,
     'GET',
     null,
     false,
@@ -229,22 +229,22 @@ export const getContentTask = async (taskId) => {
   );
 
   if (result.error) {
-    throw new Error(`Could not fetch content task: ${result.error}`);
+    throw new Error(`Could not fetch task: ${result.error}`);
   }
 
   return result;
 };
 
 /**
- * Delete content task
+ * Delete task
  *
- * @param {string} taskId - Content task ID
+ * @param {string} taskId - Task ID
  * @returns {Promise<void>}
  * @throws {Error} If deletion fails
  */
 export const deleteContentTask = async (taskId) => {
   const result = await makeRequest(
-    `/api/content/tasks/${taskId}`,
+    `/api/tasks/${taskId}`,
     'DELETE',
     null,
     false,
@@ -253,7 +253,7 @@ export const deleteContentTask = async (taskId) => {
   );
 
   if (result.error) {
-    throw new Error(`Could not delete content task: ${result.error}`);
+    throw new Error(`Could not delete task: ${result.error}`);
   }
 
   return result;

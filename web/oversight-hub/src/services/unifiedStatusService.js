@@ -11,7 +11,7 @@
  *   const history = await unifiedStatusService.getHistory(taskId);
  */
 
-import { cofounderAgentClient } from './cofounderAgentClient';
+import { makeRequest } from './cofounderAgentClient';
 import {
   STATUS_ENUM,
   STATUS_MAP_NEW_TO_LEGACY,
@@ -50,6 +50,12 @@ export const unifiedStatusService = {
    * @throws {Error} - On validation failure or API error
    */
   async updateStatus(taskId, newStatus, options = {}) {
+    console.log(`\n${'=' * 80}`);
+    console.log(`🔵 unifiedStatusService.updateStatus()`);
+    console.log(`   Task ID: ${taskId}`);
+    console.log(`   New Status: ${newStatus}`);
+    console.log(`   Options:`, options);
+
     const {
       reason = '',
       feedback = '',
@@ -59,37 +65,50 @@ export const unifiedStatusService = {
 
     try {
       const payload = {
-        new_status: newStatus,
+        status: newStatus,
+        updated_by: userId || getCurrentUserId(),
         reason,
-        feedback,
-        user_id: userId || getCurrentUserId(),
         metadata: {
           ...metadata,
           timestamp: new Date().toISOString(),
           updated_from_ui: true,
+          feedback, // Include feedback in metadata since backend schema doesn't have a feedback field
         },
       };
 
+      console.log(
+        `\n📤 Payload to send to backend:`,
+        JSON.stringify(payload, null, 2)
+      );
+
       // Try new endpoint first (Phase 5+)
       try {
-        const response = await cofounderAgentClient.makeRequest(
+        console.log(
+          `\n🔄 Attempting NEW endpoint: PUT /api/tasks/${taskId}/status/validated`
+        );
+        const response = await makeRequest(
           `/api/tasks/${taskId}/status/validated`,
           'PUT',
           payload
         );
+        console.log(`✅ NEW endpoint successful!`);
+        console.log(`   Response:`, response);
+        console.log(`${'=' * 80}\n`);
         return response;
       } catch (newError) {
         // Fall back to legacy endpoint if new endpoint not available
         if (newError.status === 404) {
           console.warn(
-            'New status endpoint not found, falling back to legacy endpoint'
+            '⚠️  New status endpoint not found (404), falling back to LEGACY endpoint'
           );
           return await this._updateStatusLegacy(taskId, newStatus, payload);
         }
         throw newError;
       }
     } catch (error) {
-      console.error('Status update error:', error);
+      console.error('❌ Status update error:', error);
+      console.error(`   Message: ${error.message}`);
+      console.error(`   Stack:`, error.stack);
       throw new Error(
         error.message || 'Failed to update task status. Please try again.'
       );
@@ -101,21 +120,32 @@ export const unifiedStatusService = {
    * @private
    */
   async _updateStatusLegacy(taskId, newStatus, payload) {
+    console.log(
+      `\n🔄 Attempting LEGACY endpoint: POST /api/orchestrator/executions/${taskId}/approve`
+    );
+
     // Map new status to legacy format if needed
     const legacyStatus = STATUS_MAP_NEW_TO_LEGACY[newStatus] || newStatus;
 
     try {
-      const response = await cofounderAgentClient.makeRequest(
+      const legacyPayload = {
+        status: legacyStatus,
+        feedback: payload.feedback,
+        metadata: payload.metadata,
+      };
+      console.log(`   Legacy payload:`, legacyPayload);
+
+      const response = await makeRequest(
         `/api/orchestrator/executions/${taskId}/approve`,
         'POST',
-        {
-          status: legacyStatus,
-          feedback: payload.feedback,
-          metadata: payload.metadata,
-        }
+        legacyPayload
       );
+      console.log(`✅ LEGACY endpoint successful!`);
+      console.log(`   Response:`, response);
+      console.log(`${'=' * 80}\n`);
       return response;
     } catch (error) {
+      console.error(`❌ Legacy endpoint failed:`, error);
       throw new Error('Legacy endpoint call failed: ' + error.message);
     }
   },
@@ -128,11 +158,18 @@ export const unifiedStatusService = {
    * @returns {Promise<Object>} - Result object
    */
   async approve(taskId, feedback = '', userId = null) {
+    console.log(`\n${'=' * 80}`);
+    console.log(`🔵 unifiedStatusService.approve()`);
+    console.log(`   Task ID: ${taskId}`);
+    console.log(`   Feedback: ${feedback.substring(0, 50)}...`);
+    console.log(`   User ID: ${userId}`);
+
     if (!taskId) {
       throw new Error('Task ID is required');
     }
 
-    return this.updateStatus(taskId, STATUS_ENUM.APPROVED, {
+    console.log(`\n🔄 Calling updateStatus() with APPROVED status...`);
+    const payload = {
       reason: 'Task approved',
       feedback,
       userId,
@@ -140,7 +177,17 @@ export const unifiedStatusService = {
         action: 'approve',
         approval_feedback: feedback,
       },
-    });
+    };
+    console.log(`   Payload:`, payload);
+
+    const result = await this.updateStatus(
+      taskId,
+      STATUS_ENUM.APPROVED,
+      payload
+    );
+    console.log(`✅ updateStatus() returned:`, result);
+    console.log(`${'=' * 80}\n`);
+    return result;
   },
 
   /**
@@ -248,7 +295,7 @@ export const unifiedStatusService = {
     try {
       // Try new endpoint first
       try {
-        const response = await cofounderAgentClient.makeRequest(
+        const response = await makeRequest(
           `/api/tasks/${taskId}/status-history?limit=${limit}`,
           'GET'
         );
@@ -291,7 +338,7 @@ export const unifiedStatusService = {
     try {
       // Try new endpoint first
       try {
-        const response = await cofounderAgentClient.makeRequest(
+        const response = await makeRequest(
           `/api/tasks/${taskId}/status-history/failures?limit=${limit}`,
           'GET'
         );
@@ -338,7 +385,7 @@ export const unifiedStatusService = {
       }
 
       try {
-        const response = await cofounderAgentClient.makeRequest(
+        const response = await makeRequest(
           `/api/tasks/metrics?${query.toString()}`,
           'GET'
         );

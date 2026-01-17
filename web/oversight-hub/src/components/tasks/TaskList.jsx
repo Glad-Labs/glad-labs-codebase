@@ -12,6 +12,11 @@ const formatTimestamp = (timestamp) => {
 /**
  * Get icon character for status badge.
  * Enterprise-level status display with comprehensive icon mapping.
+ * 
+ * DISTINCTIONS:
+ * - completed (✓) = single task finished
+ * - approved (✓) = human approved, waiting to publish
+ * - published (✓✓) = live on CMS
  */
 const getStatusIcon = (status) => {
   const statusLower = status?.toLowerCase();
@@ -20,9 +25,9 @@ const getStatusIcon = (status) => {
     in_progress: '⟳', // Refresh - processing
     running: '⟳', // Refresh - processing (legacy)
     awaiting_approval: '⚠', // Warning - needs review
-    approved: '✓', // Check - approved
-    published: '✓✓', // Double check - live
-    completed: '✓', // Check - done
+    approved: '✓', // Check - approved by human
+    published: '✓✓', // Double check - live on CMS
+    completed: '✓', // Check - task completed
     failed: '✗', // X - error
     on_hold: '⊥', // Pause - paused
     rejected: '✗', // X - rejected
@@ -34,6 +39,12 @@ const getStatusIcon = (status) => {
 /**
  * Get CSS class name for status badge styling.
  * Maps status values to enterprise-level CSS classes.
+ * 
+ * STATE HIERARCHY:
+ * - Approval Workflow: awaiting_approval → approved → published
+ * - Direct Completion: completed (non-approval tasks)
+ * - Error: failed
+ * - Management: rejected, cancelled, on_hold
  */
 const getStatusColor = (status) => {
   const statusLower = status?.toLowerCase();
@@ -43,9 +54,13 @@ const getStatusColor = (status) => {
     in_progress: 'status-in-progress',
     running: 'status-in-progress', // Map legacy to new
     awaiting_approval: 'status-awaiting-approval',
+    
+    // Approval workflow: human decision → published (live)
     approved: 'status-approved',
     published: 'status-published',
-    completed: 'status-published', // Map legacy to published
+    
+    // Task completion (non-approval workflow)
+    completed: 'status-completed', // Task finished without approval
 
     // Error and management statuses
     failed: 'status-failed',

@@ -108,6 +108,13 @@ export async function makeRequest(
         throw new Error('Unauthorized - token expired or invalid');
       }
 
+      // Handle 204 No Content response (no body to parse)
+      if (response.status === 204) {
+        console.log('🟢 makeRequest: 204 No Content response');
+        console.log('✅ makeRequest: Returning empty result');
+        return { success: true };
+      }
+
       const result = await response.json().catch(() => response.text());
       console.log('🟢 makeRequest: Response parsed:', result);
       if (!response.ok) {

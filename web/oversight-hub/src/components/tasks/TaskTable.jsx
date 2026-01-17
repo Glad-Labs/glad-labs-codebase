@@ -34,16 +34,21 @@ import {
 import { tableHeaderRow, loadingContainer } from '../../lib/muiStyles';
 
 const getStatusColor = (status) => {
+  // Map task statuses to Material-UI chip color variants
   const colors = {
     pending: 'warning',
     in_progress: 'info',
-    completed: 'success',
-    failed: 'error',
+    awaiting_approval: 'warning', // Amber/Orange
+    approved: 'success',
     published: 'success',
+    failed: 'error',
     rejected: 'error',
+    on_hold: 'warning', // Purple would need custom styling
+    cancelled: 'default',
+    completed: 'success',
   };
   return colors[status] || 'default';
-};
+};;
 
 const TaskTable = ({
   tasks = [],

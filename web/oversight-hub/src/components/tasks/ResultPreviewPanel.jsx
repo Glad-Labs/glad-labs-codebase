@@ -456,6 +456,13 @@ const ResultPreviewPanel = ({
 
   // Handle approval submission
   const handleApprovalSubmit = async (approved) => {
+    console.log(`\n${'=' * 80}`);
+    console.log(`🔵 handleApprovalSubmit() ENTRY`);
+    console.log(`   Approved: ${approved}`);
+    console.log(`   Task ID: ${task?.id || task?.task_id}`);
+    console.log(`   Feedback: ${approvalFeedback.substring(0, 50)}...`);
+    console.log(`   Reviewer: ${reviewerId}`);
+
     if (!task?.id && !task?.task_id) {
       console.error('❌ No task ID available for approval');
       alert('Error: Cannot approve without task ID');
@@ -464,28 +471,33 @@ const ResultPreviewPanel = ({
 
     // Validate approval feedback
     if (approvalFeedback.length < 10 || approvalFeedback.length > 1000) {
+      console.warn(
+        `⚠️  Feedback validation failed: ${approvalFeedback.length} chars (need 10-1000)`
+      );
       alert('Feedback must be between 10 and 1000 characters');
       return;
     }
 
     if (!reviewerId || reviewerId.length < 2) {
+      console.warn(
+        `⚠️  Reviewer ID validation failed: ${reviewerId?.length || 0} chars (need 2+)`
+      );
       alert('Reviewer ID is required (minimum 2 characters)');
       return;
     }
 
+    console.log(`✅ All validations passed`);
     setApprovalLoading(true);
 
     try {
       const taskId = task.id || task.task_id;
 
       console.log(
-        `📤 Sending ${approved ? 'approval' : 'rejection'} request:`,
-        {
-          taskId,
-          feedback: approvalFeedback,
-          reviewerId,
-        }
+        `\n📤 Sending ${approved ? 'APPROVAL' : 'REJECTION'} request...`
       );
+      console.log(`   Task ID: ${taskId}`);
+      console.log(`   Feedback length: ${approvalFeedback.length} chars`);
+      console.log(`   Reviewer: ${reviewerId}`);
 
       // Use unified status service for all approval/rejection operations
       const { unifiedStatusService } =
@@ -493,34 +505,50 @@ const ResultPreviewPanel = ({
 
       let result;
       if (approved) {
+        console.log(`\n🔄 Calling unifiedStatusService.approve()...`);
         result = await unifiedStatusService.approve(
           taskId,
           approvalFeedback,
           reviewerId
         );
+        console.log(`✅ approve() returned:`, result);
       } else {
+        console.log(`\n🔄 Calling unifiedStatusService.reject()...`);
         result = await unifiedStatusService.reject(
           taskId,
           approvalFeedback,
           reviewerId
         );
+        console.log(`✅ reject() returned:`, result);
       }
 
-      console.log(
-        `✅ ${approved ? 'Approval' : 'Rejection'} submitted:`,
-        result
-      );
+      // Verify response
+      console.log(`\n📊 Response validation:`);
+      console.log(`   - Has success flag: ${result.hasOwnProperty('success')}`);
+      console.log(`   - Success value: ${result.success}`);
+      console.log(`   - Has message: ${result.hasOwnProperty('message')}`);
+      console.log(`   - Message: ${result.message}`);
+      console.log(`   - Full response:`, result);
 
       const successMsg = approved
         ? `✅ Task approved successfully!\n\nMessage: ${result.message}`
         : `✅ Task rejected successfully!\n\nMessage: ${result.message}`;
 
+      console.log(`\n✅ ${approved ? 'APPROVAL' : 'REJECTION'} COMPLETE`);
+      console.log(`   Showing success alert...`);
       alert(successMsg);
 
+      console.log(`   Closing modal...`);
       // Close the modal - parent component will refresh task list
       onClose();
+      console.log(`${'=' * 80}\n`);
     } catch (error) {
-      console.error(`❌ ${approved ? 'Approval' : 'Rejection'} error:`, error);
+      console.error(
+        `\n❌ ${approved ? 'APPROVAL' : 'REJECTION'} ERROR:`,
+        error
+      );
+      console.error(`   Error message: ${error.message}`);
+      console.error(`   Error stack:`, error.stack);
       alert(`❌ Error: ${error.message}`);
     } finally {
       setApprovalLoading(false);
