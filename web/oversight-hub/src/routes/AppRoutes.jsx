@@ -1,16 +1,8 @@
 import React from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
-import {
-  Content,
-  Analytics,
-  Settings,
-  TaskManagement,
-  ModelManagement,
-  SocialMediaManagement,
-  CostMetricsDashboard,
-} from './index';
+import { Settings, TaskManagement, CostMetricsDashboard } from './index';
 import ExecutiveDashboard from '../components/pages/ExecutiveDashboard';
-import TrainingDataDashboard from '../pages/TrainingDataDashboard';
+import AIStudio from './AIStudio';
 import Login from '../pages/Login';
 import AuthCallback from '../pages/AuthCallback';
 import ProtectedRoute from '../components/ProtectedRoute';
@@ -45,41 +37,11 @@ function AppRoutes() {
         }
       />
       <Route
-        path="/models"
+        path="/ai"
         element={
           <ProtectedRoute>
             <LayoutWrapper>
-              <ModelManagement />
-            </LayoutWrapper>
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/social"
-        element={
-          <ProtectedRoute>
-            <LayoutWrapper>
-              <SocialMediaManagement />
-            </LayoutWrapper>
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/content"
-        element={
-          <ProtectedRoute>
-            <LayoutWrapper>
-              <Content />
-            </LayoutWrapper>
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/analytics"
-        element={
-          <ProtectedRoute>
-            <LayoutWrapper>
-              <Analytics />
+              <AIStudio />
             </LayoutWrapper>
           </ProtectedRoute>
         }
@@ -89,7 +51,17 @@ function AppRoutes() {
         element={
           <ProtectedRoute>
             <LayoutWrapper>
-              <TrainingDataDashboard />
+              <AIStudio />
+            </LayoutWrapper>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/models"
+        element={
+          <ProtectedRoute>
+            <LayoutWrapper>
+              <AIStudio />
             </LayoutWrapper>
           </ProtectedRoute>
         }

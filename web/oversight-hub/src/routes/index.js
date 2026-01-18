@@ -1,9 +1,5 @@
-export { default as Dashboard } from './Dashboard';
-export { default as Content } from './Content';
-export { default as Analytics } from './Analytics';
+// Active Routes - Actually used in the application
 export { default as Settings } from './Settings';
-// Import the refactored TaskManagement with full feature implementation
 export { default as TaskManagement } from './TaskManagement';
-export { default as ModelManagement } from './ModelManagement';
-export { default as SocialMediaManagement } from './SocialMediaManagement';
 export { default as CostMetricsDashboard } from './CostMetricsDashboard';
+export { default as AIStudio } from './AIStudio';

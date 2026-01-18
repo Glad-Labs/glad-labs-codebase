@@ -43,10 +43,7 @@ const LayoutWrapper = ({ children }) => {
   const navigationItems = [
     { label: 'Dashboard', icon: '📊', path: 'dashboard' },
     { label: 'Tasks', icon: '✅', path: 'tasks' },
-    { label: 'Content', icon: '📝', path: 'content' },
-    { label: 'Social', icon: '📱', path: 'social' },
-    { label: 'AI & Training', icon: '🧠', path: 'training' },
-    { label: 'Analytics', icon: '📈', path: 'analytics' },
+    { label: 'AI Studio', icon: '🤖', path: 'ai' },
     { label: 'Costs', icon: '💰', path: 'costs' },
     { label: 'Settings', icon: '⚙️', path: 'settings' },
   ];
