@@ -61,7 +61,7 @@ const TaskDetailModal = ({ onClose }) => {
         }
 
         const response = await fetch(
-          `http://localhost:8000/api/content/tasks/${selectedTask.id}/generate-image`,
+          `http://localhost:8000/api/tasks/${selectedTask.id}/generate-image`,
           {
             method: 'POST',
             headers,
@@ -108,7 +108,7 @@ const TaskDetailModal = ({ onClose }) => {
 
         // Call the approval endpoint with state-managed values
         const response = await fetch(
-          `http://localhost:8000/api/content/tasks/${selectedTask.id}/approve`,
+          `http://localhost:8000/api/tasks/${selectedTask.id}/approve`,
           {
             method: 'POST',
             headers,
@@ -127,9 +127,10 @@ const TaskDetailModal = ({ onClose }) => {
         }
 
         const result = await response.json();
-        alert(
-          `✅ Task approved and published!\n\nURL: ${result.published_url || 'Success'}`
-        );
+        const publishedUrl =
+          result.published_url ||
+          `${window.location.origin}/posts/${result.post_slug || 'published'}`;
+        alert(`✅ Task approved and published!\n\nURL: ${publishedUrl}`);
         // Reset form state
         setApprovalFeedback('');
         setReviewerId('oversight_hub_user');
@@ -168,7 +169,7 @@ const TaskDetailModal = ({ onClose }) => {
         }
 
         const response = await fetch(
-          `http://localhost:8000/api/content/tasks/${selectedTask.id}/approve`,
+          `http://localhost:8000/api/tasks/${selectedTask.id}/approve`,
           {
             method: 'POST',
             headers,
