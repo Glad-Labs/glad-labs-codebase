@@ -239,7 +239,10 @@ const TaskDetailModal = ({ onClose }) => {
         {selectedTask.topic || selectedTask.task_name || 'Untitled'}
       </DialogTitle>
 
-      <DialogContent dividers sx={{ backgroundColor: '#0f0f0f', borderColor: '#333' }}>
+      <DialogContent
+        dividers
+        sx={{ backgroundColor: '#0f0f0f', borderColor: '#333' }}
+      >
         <Box sx={{ borderBottom: 1, borderColor: '#333', mb: 2 }}>
           <Tabs
             value={tabValue}

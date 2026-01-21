@@ -1,10 +1,10 @@
 /**
  * AIStudio.jsx
- * 
+ *
  * Consolidated AI Management Dashboard combining:
  * - Model Management & Testing (Ollama, OpenAI, Anthropic, Google)
  * - Training Data Management (dataset creation, fine-tuning)
- * 
+ *
  * Provides unified interface for all AI/ML operations
  */
 
@@ -16,7 +16,7 @@ function AIStudio() {
   // ============================================================================
   // MODELS TAB STATE
   // ============================================================================
-  
+
   const FALLBACK_MODELS = [
     {
       id: 1,
@@ -99,7 +99,7 @@ function AIStudio() {
   // ============================================================================
   // MAIN TAB STATE
   // ============================================================================
-  
+
   const [activeTab, setActiveTab] = useState('models'); // models, test, training, history
 
   // ============================================================================
@@ -442,9 +442,11 @@ function AIStudio() {
       {/* TRAINING DATA TAB */}
       {activeTab === 'training' && (
         <div className="training-section">
-          {trainingError && <div className="error-message">{trainingError}</div>}
+          {trainingError && (
+            <div className="error-message">{trainingError}</div>
+          )}
           {trainingLoading && <p>Loading training data...</p>}
-          
+
           {stats && (
             <div className="training-stats">
               <h3>Training Statistics</h3>
@@ -456,7 +458,9 @@ function AIStudio() {
                 <div className="stat-card">
                   <span className="stat-label">Success Rate</span>
                   <span className="stat-value">
-                    {stats.success_rate ? `${(stats.success_rate * 100).toFixed(1)}%` : 'N/A'}
+                    {stats.success_rate
+                      ? `${(stats.success_rate * 100).toFixed(1)}%`
+                      : 'N/A'}
                   </span>
                 </div>
                 <div className="stat-card">
@@ -475,7 +479,9 @@ function AIStudio() {
               <div className="datasets-list">
                 {datasets.map((dataset, idx) => (
                   <div key={idx} className="dataset-item">
-                    <span className="dataset-name">{dataset.name || 'Unnamed'}</span>
+                    <span className="dataset-name">
+                      {dataset.name || 'Unnamed'}
+                    </span>
                     <span className="dataset-count">
                       {dataset.item_count || 0} items
                     </span>
@@ -493,8 +499,12 @@ function AIStudio() {
               <div className="jobs-list">
                 {trainingJobs.map((job, idx) => (
                   <div key={idx} className="job-item">
-                    <span className="job-name">{job.name || 'Unnamed Job'}</span>
-                    <span className="job-status">{job.status || 'pending'}</span>
+                    <span className="job-name">
+                      {job.name || 'Unnamed Job'}
+                    </span>
+                    <span className="job-status">
+                      {job.status || 'pending'}
+                    </span>
                   </div>
                 ))}
               </div>
