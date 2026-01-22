@@ -11,6 +11,7 @@ import {
   TextField,
 } from '@mui/material';
 import useStore from '../../store/useStore';
+import { approveTask, rejectTask } from '../../services/taskService';
 import {
   StatusAuditTrail,
   StatusTimeline,
@@ -52,7 +53,8 @@ const TaskDetailModal = ({ onClose }) => {
     async (source) => {
       setImageGenerating(true);
       try {
-        const token = localStorage.getItem('authToken');
+        // Use direct fetch for image generation with proper auth headers
+        const token = localStorage.getItem('auth_token');
         const headers = {
           'Content-Type': 'application/json',
         };
@@ -98,35 +100,12 @@ const TaskDetailModal = ({ onClose }) => {
     async (updatedTask) => {
       setApprovalLoading(true);
       try {
-        const token = localStorage.getItem('authToken');
-        const headers = {
-          'Content-Type': 'application/json',
-        };
-        if (token) {
-          headers['Authorization'] = `Bearer ${token}`;
-        }
-
-        // Call the approval endpoint with state-managed values
-        const response = await fetch(
-          `http://localhost:8000/api/tasks/${selectedTask.id}/approve`,
-          {
-            method: 'POST',
-            headers,
-            body: JSON.stringify({
-              approved: true,
-              human_feedback: approvalFeedback || 'Approved from oversight hub',
-              reviewer_id: reviewerId,
-              featured_image_url: updatedTask.featured_image_url,
-              image_source: imageSource,
-            }),
-          }
+        // Use the proper taskService method which handles auth headers correctly
+        const result = await approveTask(
+          selectedTask.id,
+          approvalFeedback || 'Approved from oversight hub'
         );
 
-        if (!response.ok) {
-          throw new Error(`Approval failed: ${response.statusText}`);
-        }
-
-        const result = await response.json();
         const publishedUrl =
           result.published_url ||
           `${window.location.origin}/posts/${result.post_slug || 'published'}`;
@@ -145,45 +124,18 @@ const TaskDetailModal = ({ onClose }) => {
         setApprovalLoading(false);
       }
     },
-    [
-      selectedTask,
-      approvalFeedback,
-      reviewerId,
-      imageSource,
-      selectedImageUrl,
-      setSelectedTask,
-      onClose,
-    ]
+    [selectedTask, approvalFeedback, setSelectedTask, onClose]
   );
 
   const handleRejectTask = useCallback(
     async (feedback) => {
       setApprovalLoading(true);
       try {
-        const token = localStorage.getItem('authToken');
-        const headers = {
-          'Content-Type': 'application/json',
-        };
-        if (token) {
-          headers['Authorization'] = `Bearer ${token}`;
-        }
-
-        const response = await fetch(
-          `http://localhost:8000/api/tasks/${selectedTask.id}/approve`,
-          {
-            method: 'POST',
-            headers,
-            body: JSON.stringify({
-              approved: false,
-              human_feedback: feedback || 'Rejected from oversight hub',
-              reviewer_id: reviewerId,
-            }),
-          }
+        // Use the proper taskService method which handles auth headers correctly
+        await rejectTask(
+          selectedTask.id,
+          feedback || 'Rejected from oversight hub'
         );
-
-        if (!response.ok) {
-          throw new Error(`Rejection failed: ${response.statusText}`);
-        }
 
         alert('✅ Task rejected successfully');
         // Reset form state
@@ -200,7 +152,7 @@ const TaskDetailModal = ({ onClose }) => {
         setApprovalLoading(false);
       }
     },
-    [selectedTask, reviewerId, setSelectedTask, onClose]
+    [selectedTask, setSelectedTask, onClose]
   );
 
   // Return null after all hooks have been called

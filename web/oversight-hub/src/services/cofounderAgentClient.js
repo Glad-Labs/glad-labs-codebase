@@ -40,6 +40,12 @@ function getAuthHeaders() {
   const headers = { 'Content-Type': 'application/json' };
   if (accessToken) {
     headers['Authorization'] = `Bearer ${accessToken}`;
+    console.log(
+      '[getAuthHeaders] Auth header set:',
+      headers['Authorization'].substring(0, 20) + '...'
+    );
+  } else {
+    console.warn('[getAuthHeaders] NO AUTH TOKEN FOUND!');
   }
   return headers;
 }
@@ -56,6 +62,14 @@ export async function makeRequest(
     const url = `${API_BASE_URL}${endpoint}`;
     console.log(`🔵 makeRequest: ${method} ${url}`);
     const config = { method, headers: getAuthHeaders() };
+
+    // Debug: Log headers being sent
+    console.log(`[makeRequest] Headers for ${method} request:`, {
+      Authorization: config.headers['Authorization']
+        ? config.headers['Authorization'].substring(0, 30) + '...'
+        : 'NOT SET',
+      'Content-Type': config.headers['Content-Type'],
+    });
 
     // Handle FormData (file uploads) - must NOT set Content-Type header
     if (data instanceof FormData) {
