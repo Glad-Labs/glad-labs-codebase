@@ -87,6 +87,7 @@ header {
   justify-content: flex-start;
   align-items: center;
   box-shadow: var(--shadow-medium);
+  -webkit-backdrop-filter: blur(10px);
   backdrop-filter: blur(10px);
   z-index: 100;
   position: relative;
@@ -102,6 +103,7 @@ header {
   align-items: center;
   justify-content: space-between;
   box-shadow: var(--shadow-medium);
+  -webkit-backdrop-filter: blur(10px);
   backdrop-filter: blur(10px);
   z-index: 100;
   flex-shrink: 0;
@@ -170,6 +172,7 @@ header {
   justify-content: space-between;
   align-items: center;
   box-shadow: var(--shadow-medium);
+  -webkit-backdrop-filter: blur(10px);
   backdrop-filter: blur(10px);
   z-index: 100;
   position: relative;
