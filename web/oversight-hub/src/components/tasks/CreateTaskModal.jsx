@@ -320,10 +320,8 @@ const CreateTaskModal = ({ isOpen, onClose, onTaskCreated }) => {
 
         // Create task record with image results
         taskPayload = {
-          task_name: `Image Generation: ${formData.description.substring(0, 50)}`,
+          task_type: 'blog_post', // Use blog_post as generic type for now
           topic: formData.description || '',
-          primary_keyword: formData.style || 'image',
-          target_audience: 'visual-content',
           category: 'image_generation',
           metadata: {
             task_type: 'image_generation',
@@ -343,53 +341,44 @@ const CreateTaskModal = ({ isOpen, onClose, onTaskCreated }) => {
           },
         };
       } else if (taskType === 'blog_post') {
-        // Create blog post task using generic endpoint with task_name mapping
-        const strictMode =
-          formData.strict_mode === true || formData.strict_mode === 'true';
+        // Create blog post task using unified endpoint
         taskPayload = {
+          task_type: 'blog_post',
           task_name: `Blog: ${formData.topic}`,
           topic: formData.topic || '',
-          primary_keyword: formData.keywords || '',
-          target_audience: formData.target_audience || '',
           category: 'blog_post',
-          model_selections: modelSelection.modelSelections || {},
+          style: formData.style || 'technical',
+          tone: formData.tone || 'professional',
+          target_length: parseInt(formData.word_count) || 1500,
+          generate_featured_image: formData.generate_featured_image !== false,
+          tags: formData.keywords
+            ? formData.keywords
+                .split(',')
+                .map((k) => k.trim())
+                .filter((k) => k)
+            : [],
+          models_by_phase: modelSelection.modelSelections || {},
           quality_preference: modelSelection.qualityPreference || 'balanced',
-          estimated_cost: modelSelection.estimatedCost || 0.0,
-          // NEW: Content constraints (Tier 1-3)
-          content_constraints: {
-            word_count: parseInt(formData.word_count) || 1500,
-            writing_style: formData.style || 'educational',
-            word_count_tolerance: parseInt(formData.word_count_tolerance) || 10,
-            strict_mode: strictMode,
-          },
           metadata: {
             task_type: 'blog_post',
+            task_name: `Blog: ${formData.topic}`,
             style: formData.style || 'technical',
             tone: formData.tone || 'professional',
             word_count: parseInt(formData.word_count) || 1500,
-            word_count_tolerance: parseInt(formData.word_count_tolerance) || 10,
-            strict_mode: strictMode,
-            tags: formData.keywords
-              ? formData.keywords
-                  .split(',')
-                  .map((k) => k.trim())
-                  .filter((k) => k)
-              : [],
-            generate_featured_image: true,
+            generate_featured_image: formData.generate_featured_image !== false,
             publish_mode: 'draft',
           },
         };
       } else {
-        // Use generic task endpoint for other types with model selections
+        // Use generic task endpoint for other types
         taskPayload = {
-          task_name: formData.title || formData.subject || `Task: ${taskType}`,
+          task_type: taskType || 'blog_post',
           topic: formData.topic || formData.description || '',
-          primary_keyword: formData.keywords || formData.primary_keyword || '',
-          target_audience: formData.target_audience || formData.audience || '',
           category: formData.category || taskType || 'general',
-          model_selections: modelSelection.modelSelections || {},
+          style: formData.style || 'narrative',
+          tone: formData.tone || 'professional',
+          models_by_phase: modelSelection.modelSelections || {},
           quality_preference: modelSelection.qualityPreference || 'balanced',
-          estimated_cost: modelSelection.estimatedCost || 0.0,
           metadata: {
             task_type: taskType,
             style: formData.style,
@@ -419,8 +408,35 @@ const CreateTaskModal = ({ isOpen, onClose, onTaskCreated }) => {
       setTaskType('');
       setFormData({});
     } catch (err) {
-      setError(`Failed to create task: ${err.message}`);
-      console.error('Task creation error:', err);
+      // Properly extract error message from various error object formats
+      let errorMessage = 'Unknown error';
+      
+      if (typeof err === 'string') {
+        errorMessage = err;
+      } else if (err instanceof Error) {
+        errorMessage = err.message;
+      } else if (err && typeof err === 'object') {
+        // Handle API error responses with detail/message fields
+        if (err.response?.detail) {
+          errorMessage = typeof err.response.detail === 'string' 
+            ? err.response.detail 
+            : JSON.stringify(err.response.detail);
+        } else if (err.response?.message) {
+          errorMessage = typeof err.response.message === 'string' 
+            ? err.response.message 
+            : JSON.stringify(err.response.message);
+        } else if (err.message) {
+          errorMessage = err.message;
+        }
+      }
+      
+      setError(`Failed to create task: ${errorMessage}`);
+      console.error('Task creation error:', {
+        message: errorMessage,
+        status: err?.status,
+        response: err?.response,
+        fullError: err,
+      });
     } finally {
       setSubmitting(false);
     }

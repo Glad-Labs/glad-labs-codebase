@@ -8,16 +8,23 @@ import {
   Tab,
   Box,
   Button,
-  TextField,
 } from '@mui/material';
 import useStore from '../../store/useStore';
-import { approveTask, rejectTask } from '../../services/taskService';
+import {
+  approveTask,
+  rejectTask,
+  publishTask,
+} from '../../services/taskService';
 import {
   StatusAuditTrail,
   StatusTimeline,
   ValidationFailureUI,
   StatusDashboardMetrics,
 } from './StatusComponents.jsx';
+import TaskContentPreview from './TaskContentPreview';
+import TaskImageManager from './TaskImageManager';
+import TaskApprovalForm from './TaskApprovalForm';
+import TaskMetadataDisplay from './TaskMetadataDisplay';
 
 function TabPanel(props) {
   const { children, value, index, ...other } = props;
@@ -95,7 +102,7 @@ const TaskDetailModal = ({ onClose }) => {
     [selectedTask, imageSource]
   );
 
-  // Handle task approval/publishing
+  // Handle task approval (WITHOUT publishing)
   const handleApproveTask = useCallback(
     async (updatedTask) => {
       setApprovalLoading(true);
@@ -106,10 +113,9 @@ const TaskDetailModal = ({ onClose }) => {
           approvalFeedback || 'Approved from oversight hub'
         );
 
-        const publishedUrl =
-          result.published_url ||
-          `${window.location.origin}/posts/${result.post_slug || 'published'}`;
-        alert(`✅ Task approved and published!\n\nURL: ${publishedUrl}`);
+        alert(
+          `✅ Task approved!\n\nStatus: ${result.status}\n\nNow waiting for you to publish when ready.`
+        );
         // Reset form state
         setApprovalFeedback('');
         setReviewerId('oversight_hub_user');
@@ -126,6 +132,31 @@ const TaskDetailModal = ({ onClose }) => {
     },
     [selectedTask, approvalFeedback, setSelectedTask, onClose]
   );
+
+  // Handle task publishing (separate step after approval)
+  const handlePublishTask = useCallback(async () => {
+    setApprovalLoading(true);
+    try {
+      const result = await publishTask(selectedTask.id);
+
+      const publishedUrl =
+        result.published_url ||
+        `${window.location.origin}/posts/${result.post_slug || 'published'}`;
+      alert(`✅ Task published!\n\nURL: ${publishedUrl}`);
+      // Reset form state
+      setApprovalFeedback('');
+      setReviewerId('oversight_hub_user');
+      setImageSource('pexels');
+      setSelectedImageUrl('');
+      setSelectedTask(null);
+      onClose();
+    } catch (error) {
+      console.error('❌ Publishing error:', error);
+      alert(`❌ Error publishing task: ${error.message}`);
+    } finally {
+      setApprovalLoading(false);
+    }
+  }, [selectedTask, setSelectedTask, onClose]);
 
   const handleRejectTask = useCallback(
     async (feedback) => {
@@ -223,389 +254,43 @@ const TaskDetailModal = ({ onClose }) => {
         {/* Tab 0: Content & Approval */}
         <TabPanel value={tabValue} index={0}>
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
-            {/* Content Title */}
-            {selectedTask.topic && (
-              <Box sx={{ mb: 2 }}>
-                <h2
-                  style={{
-                    margin: '0 0 8px 0',
-                    color: '#00d9ff',
-                    fontSize: '24px',
-                  }}
-                >
-                  {selectedTask.topic}
-                </h2>
-                <small style={{ color: '#999' }}>ID: {selectedTask.id}</small>
-              </Box>
-            )}
+            {/* Content Preview Component */}
+            <TaskContentPreview task={selectedTask} />
 
-            {/* Content Preview */}
-            <Box>
-              <h3 style={{ marginTop: 0, color: '#e0e0e0' }}>
-                📝 Content Preview
-              </h3>
-              {selectedTask.task_metadata?.content ? (
-                <Box
-                  sx={{
-                    backgroundColor: '#0f0f0f',
-                    padding: 2,
-                    borderRadius: 1,
-                    maxHeight: '500px',
-                    overflowY: 'auto',
-                    border: '1px solid #333',
-                    fontFamily: 'monospace',
-                    fontSize: '13px',
-                    lineHeight: '1.5',
-                    color: '#e0e0e0',
-                  }}
-                >
-                  <pre
-                    style={{
-                      whiteSpace: 'pre-wrap',
-                      wordWrap: 'break-word',
-                      margin: 0,
-                    }}
-                  >
-                    {selectedTask.task_metadata.content}
-                  </pre>
-                </Box>
-              ) : (
-                <p style={{ color: '#999', fontStyle: 'italic' }}>
-                  No content available for preview
-                </p>
-              )}
-            </Box>
+            {/* Image Manager Component */}
+            <TaskImageManager
+              task={selectedTask}
+              imageSource={imageSource}
+              selectedImageUrl={selectedImageUrl}
+              imageGenerating={imageGenerating}
+              onImageSourceChange={setImageSource}
+              onImageUrlChange={setSelectedImageUrl}
+              onGenerateImage={handleGenerateImage}
+            />
 
-            {/* Featured Image */}
-            {(selectedTask.task_metadata?.featured_image_url ||
-              selectedImageUrl) && (
-              <Box>
-                <h3 style={{ marginTop: 0, color: '#e0e0e0' }}>
-                  🖼️ Featured Image
-                </h3>
-                <Box
-                  component="img"
-                  src={
+            {/* Metadata Display Component */}
+            <TaskMetadataDisplay task={selectedTask} />
+
+            {/* Approval Form Component */}
+            <TaskApprovalForm
+              task={selectedTask}
+              approvalFeedback={approvalFeedback}
+              reviewerId={reviewerId}
+              approvalLoading={approvalLoading}
+              publishLoading={approvalLoading}
+              onApprove={() =>
+                handleApproveTask({
+                  ...selectedTask,
+                  featured_image_url:
                     selectedImageUrl ||
-                    selectedTask.task_metadata?.featured_image_url
-                  }
-                  alt="Featured"
-                  sx={{
-                    maxWidth: '100%',
-                    maxHeight: '300px',
-                    borderRadius: 1,
-                    border: '1px solid #333',
-                  }}
-                />
-              </Box>
-            )}
-
-            {/* Image Selection (for awaiting_approval) */}
-            {(selectedTask.status === 'awaiting_approval' ||
-              selectedTask.status === 'rejected') && (
-              <Box
-                sx={{
-                  background:
-                    'linear-gradient(135deg, #1a2a3a 0%, #1a2a1a 100%)',
-                  padding: 2,
-                  borderRadius: 1,
-                  border: '1px solid #00d9ff',
-                }}
-              >
-                <h3 style={{ marginTop: 0, color: '#00d9ff' }}>
-                  🎨 Image Management
-                </h3>
-                <Box sx={{ mb: 2 }}>
-                  <label
-                    style={{
-                      display: 'block',
-                      marginBottom: '8px',
-                      fontWeight: 'bold',
-                      color: '#e0e0e0',
-                    }}
-                  >
-                    Image Source:
-                  </label>
-                  <Box sx={{ display: 'flex', gap: 1 }}>
-                    <Button
-                      variant={
-                        imageSource === 'pexels' ? 'contained' : 'outlined'
-                      }
-                      onClick={() => setImageSource('pexels')}
-                      size="small"
-                      sx={{
-                        color: imageSource === 'pexels' ? '#fff' : '#00d9ff',
-                        backgroundColor:
-                          imageSource === 'pexels' ? '#00d9ff' : 'transparent',
-                        borderColor: '#00d9ff',
-                        '&:hover': {
-                          backgroundColor:
-                            imageSource === 'pexels'
-                              ? '#00c2d4'
-                              : 'rgba(0, 217, 255, 0.1)',
-                        },
-                      }}
-                    >
-                      📷 Pexels
-                    </Button>
-                    <Button
-                      variant={
-                        imageSource === 'sdxl' ? 'contained' : 'outlined'
-                      }
-                      onClick={() => setImageSource('sdxl')}
-                      size="small"
-                      sx={{
-                        color: imageSource === 'sdxl' ? '#fff' : '#00d9ff',
-                        backgroundColor:
-                          imageSource === 'sdxl' ? '#00d9ff' : 'transparent',
-                        borderColor: '#00d9ff',
-                        '&:hover': {
-                          backgroundColor:
-                            imageSource === 'sdxl'
-                              ? '#00c2d4'
-                              : 'rgba(0, 217, 255, 0.1)',
-                        },
-                      }}
-                    >
-                      🤖 SDXL
-                    </Button>
-                  </Box>
-                </Box>
-
-                {/* Image URL Input */}
-                <TextField
-                  fullWidth
-                  size="small"
-                  label="Image URL (or generate below)"
-                  value={selectedImageUrl}
-                  onChange={(e) => setSelectedImageUrl(e.target.value)}
-                  placeholder="https://..."
-                  sx={{
-                    mb: 2,
-                    '& .MuiOutlinedInput-root': {
-                      backgroundColor: '#0f0f0f',
-                      borderColor: '#333',
-                      color: '#e0e0e0',
-                      '&:hover fieldset': {
-                        borderColor: '#00d9ff',
-                      },
-                    },
-                    '& .MuiInputBase-input::placeholder': {
-                      color: '#666',
-                      opacity: 1,
-                    },
-                    '& .MuiInputLabel-root': {
-                      color: '#999',
-                    },
-                  }}
-                />
-
-                {/* Image Generation Buttons */}
-                <Box sx={{ display: 'flex', gap: 1, mb: 2 }}>
-                  <Button
-                    variant="contained"
-                    size="small"
-                    onClick={() => handleGenerateImage(imageSource)}
-                    disabled={imageGenerating}
-                    sx={{
-                      backgroundColor: '#00d9ff',
-                      color: '#000',
-                      fontWeight: 'bold',
-                      '&:hover': { backgroundColor: '#00c2d4' },
-                      '&:disabled': { backgroundColor: '#666', color: '#999' },
-                    }}
-                  >
-                    {imageGenerating ? '⟳ Generating...' : '✨ Generate Image'}
-                  </Button>
-                  {selectedImageUrl && (
-                    <Button
-                      variant="outlined"
-                      size="small"
-                      onClick={() => handleGenerateImage(imageSource)}
-                      disabled={imageGenerating}
-                      sx={{
-                        borderColor: '#00d9ff',
-                        color: '#00d9ff',
-                        '&:hover': {
-                          backgroundColor: 'rgba(0, 217, 255, 0.1)',
-                          borderColor: '#00d9ff',
-                        },
-                      }}
-                    >
-                      🔄 Retry
-                    </Button>
-                  )}
-                </Box>
-
-                <small
-                  style={{ display: 'block', marginTop: '8px', color: '#999' }}
-                >
-                  {imageSource === 'pexels'
-                    ? '✓ Will search Pexels for relevant images'
-                    : '✓ Will generate with SDXL based on content'}
-                </small>
-              </Box>
-            )}
-
-            {/* Task Metadata */}
-            {(selectedTask.category ||
-              selectedTask.style ||
-              selectedTask.target_audience) && (
-              <Box
-                sx={{
-                  background:
-                    'linear-gradient(135deg, #1a1a1a 0%, #242424 100%)',
-                  padding: 2,
-                  borderRadius: 1,
-                  border: '1px solid #333',
-                }}
-              >
-                <h3
-                  style={{
-                    marginTop: 0,
-                    marginBottom: '12px',
-                    color: '#e0e0e0',
-                  }}
-                >
-                  📋 Details
-                </h3>
-                <Box
-                  sx={{
-                    display: 'grid',
-                    gridTemplateColumns: '1fr 1fr',
-                    gap: 2,
-                    fontSize: '13px',
-                    color: '#e0e0e0',
-                  }}
-                >
-                  {selectedTask.category && (
-                    <Box>
-                      <strong style={{ color: '#00d9ff' }}>Category:</strong>
-                      <br />
-                      <span style={{ color: '#999' }}>
-                        {selectedTask.category}
-                      </span>
-                    </Box>
-                  )}
-                  {selectedTask.style && (
-                    <Box>
-                      <strong style={{ color: '#00d9ff' }}>Style:</strong>
-                      <br />
-                      <span style={{ color: '#999' }}>
-                        {selectedTask.style}
-                      </span>
-                    </Box>
-                  )}
-                  {selectedTask.target_audience && (
-                    <Box>
-                      <strong style={{ color: '#00d9ff' }}>Audience:</strong>
-                      <br />
-                      <span style={{ color: '#999' }}>
-                        {selectedTask.target_audience}
-                      </span>
-                    </Box>
-                  )}
-                  {selectedTask.metadata?.word_count && (
-                    <Box>
-                      <strong style={{ color: '#00d9ff' }}>Word Count:</strong>
-                      <br />
-                      <span style={{ color: '#999' }}>
-                        {selectedTask.metadata.word_count} words
-                      </span>
-                    </Box>
-                  )}
-                </Box>
-              </Box>
-            )}
-
-            {/* Approval Section */}
-            {(selectedTask.status === 'awaiting_approval' ||
-              selectedTask.status === 'rejected') && (
-              <Box
-                sx={{
-                  backgroundColor: '#f0fff4',
-                  padding: 2,
-                  borderRadius: 1,
-                  border: '1px solid #86efac',
-                }}
-              >
-                <h3 style={{ marginTop: 0 }}>✅ Review & Approve</h3>
-
-                <Box sx={{ mb: 2 }}>
-                  <TextField
-                    fullWidth
-                    label="Reviewer ID"
-                    size="small"
-                    value={reviewerId}
-                    onChange={(e) => setReviewerId(e.target.value)}
-                  />
-                </Box>
-
-                <Box sx={{ mb: 2 }}>
-                  <TextField
-                    fullWidth
-                    multiline
-                    rows={5}
-                    label="Approval Notes / Feedback"
-                    placeholder="Add any notes about this task (optional)"
-                    value={approvalFeedback}
-                    onChange={(e) => setApprovalFeedback(e.target.value)}
-                    variant="outlined"
-                  />
-                </Box>
-
-                <Box sx={{ display: 'flex', gap: 2 }}>
-                  <Button
-                    fullWidth
-                    variant="contained"
-                    sx={{
-                      backgroundColor: '#10b981',
-                      '&:hover': { backgroundColor: '#059669' },
-                    }}
-                    onClick={() =>
-                      handleApproveTask({
-                        ...selectedTask,
-                        featured_image_url:
-                          selectedImageUrl ||
-                          selectedTask.task_metadata?.featured_image_url,
-                      })
-                    }
-                    disabled={approvalLoading}
-                  >
-                    {approvalLoading
-                      ? '⟳ Publishing...'
-                      : '✅ Approve & Publish'}
-                  </Button>
-                  <Button
-                    fullWidth
-                    variant="contained"
-                    color="error"
-                    onClick={() => handleRejectTask(approvalFeedback)}
-                    disabled={approvalLoading}
-                  >
-                    {approvalLoading ? '⟳ Processing...' : '❌ Reject'}
-                  </Button>
-                </Box>
-              </Box>
-            )}
-
-            {!['awaiting_approval', 'rejected'].includes(
-              selectedTask.status
-            ) && (
-              <Box
-                sx={{
-                  backgroundColor: '#fef3c7',
-                  padding: 2,
-                  borderRadius: 1,
-                  border: '1px solid #fcd34d',
-                }}
-              >
-                <p style={{ margin: 0 }}>
-                  ℹ️ This task is not pending approval (Status:{' '}
-                  <strong>{selectedTask.status}</strong>)
-                </p>
-              </Box>
-            )}
+                    selectedTask.task_metadata?.featured_image_url,
+                })
+              }
+              onPublish={handlePublishTask}
+              onReject={() => handleRejectTask(approvalFeedback)}
+              onFeedbackChange={setApprovalFeedback}
+              onReviewerIdChange={setReviewerId}
+            />
           </Box>
         </TabPanel>
 
@@ -644,6 +329,6 @@ const TaskDetailModal = ({ onClose }) => {
       </DialogActions>
     </Dialog>
   );
-};
+};;
 
 export default TaskDetailModal;

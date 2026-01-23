@@ -137,12 +137,29 @@ export async function makeRequest(
         if (typeof result === 'string') {
           errorMessage = result || errorMessage;
         } else if (typeof result === 'object' && result !== null) {
-          errorMessage =
-            result.message || result.detail || JSON.stringify(result);
+          // Try different error message keys used by FastAPI
+          if (result.detail) {
+            errorMessage =
+              typeof result.detail === 'string'
+                ? result.detail
+                : JSON.stringify(result.detail);
+          } else if (result.message) {
+            errorMessage =
+              typeof result.message === 'string'
+                ? result.message
+                : JSON.stringify(result.message);
+          } else {
+            errorMessage = JSON.stringify(result);
+          }
         }
         const error = new Error(errorMessage);
         error.status = response.status;
         error.response = result; // Include full response for debugging
+        console.error('🔴 Error response details:', {
+          status: response.status,
+          message: errorMessage,
+          fullResponse: result,
+        });
         throw error;
       }
       console.log('✅ makeRequest: Returning result');

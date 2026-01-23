@@ -31,24 +31,8 @@ import {
   Delete as DeleteIcon,
   Visibility as ViewIcon,
 } from '@mui/icons-material';
+import { getStatusColor } from '../../lib/statusConfig';
 import { tableHeaderRow, loadingContainer } from '../../lib/muiStyles';
-
-const getStatusColor = (status) => {
-  // Map task statuses to Material-UI chip color variants
-  const colors = {
-    pending: 'warning',
-    in_progress: 'info',
-    awaiting_approval: 'warning', // Amber/Orange
-    approved: 'success',
-    published: 'success',
-    failed: 'error',
-    rejected: 'error',
-    on_hold: 'warning', // Purple would need custom styling
-    cancelled: 'default',
-    completed: 'success',
-  };
-  return colors[status] || 'default';
-};
 
 const TaskTable = ({
   tasks = [],

@@ -137,18 +137,20 @@ export const updateTask = async (taskId, updates) => {
 };
 
 /**
- * Approve a task
+ * Approve a task (WITHOUT publishing)
+ * Task will be moved to 'approved' status and WAIT for manual publishing
+ * Call publishTask() separately to publish an approved task
  *
  * @param {string} taskId - Task ID to approve
  * @param {string} feedback - Optional approval feedback
- * @returns {Promise<object>} Updated task object
+ * @returns {Promise<object>} Updated task object (status: 'approved')
  * @throws {Error} If approval fails
  */
 export const approveTask = async (taskId, feedback = '') => {
   const result = await makeRequest(
     `/api/tasks/${taskId}/approve`,
     'POST',
-    { feedback },
+    { feedback, auto_publish: false }, // ✅ CRITICAL: Approval does NOT publish
     false,
     null,
     API_TIMEOUT
@@ -156,6 +158,32 @@ export const approveTask = async (taskId, feedback = '') => {
 
   if (result.error) {
     throw new Error(`Could not approve task: ${result.error}`);
+  }
+
+  return result;
+};
+
+/**
+ * Publish an approved task
+ * Changes status from 'approved' to 'published' and creates the post
+ * Should only be called after approveTask() succeeds
+ *
+ * @param {string} taskId - Task ID to publish
+ * @returns {Promise<object>} Updated task object (status: 'published')
+ * @throws {Error} If publishing fails
+ */
+export const publishTask = async (taskId) => {
+  const result = await makeRequest(
+    `/api/tasks/${taskId}/publish`,
+    'POST',
+    {},
+    false,
+    null,
+    API_TIMEOUT
+  );
+
+  if (result.error) {
+    throw new Error(`Could not publish task: ${result.error}`);
   }
 
   return result;

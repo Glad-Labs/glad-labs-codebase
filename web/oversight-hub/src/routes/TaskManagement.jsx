@@ -1,10 +1,16 @@
 /**
  * TaskManagement.jsx - Enhanced Task Management Page
  * Features: Task creation, filtering, sorting, detail view, actions (pause/resume/cancel/delete)
+ * 
+ * Refactored to use:
+ * - useFetchTasks hook (eliminates duplicate fetch logic)
+ * - statusConfig (centralized status definitions)
+ * - formatTaskForDisplay (centralized task formatting)
  */
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import useStore from '../store/useStore';
-import { getTasks, bulkUpdateTasks } from '../services/cofounderAgentClient';
+import { bulkUpdateTasks } from '../services/cofounderAgentClient';
+import useFetchTasks from '../hooks/useFetchTasks';
 import CreateTaskModal from '../components/tasks/CreateTaskModal';
 import TaskDetailModal from '../components/tasks/TaskDetailModal';
 import TaskFilters from '../components/tasks/TaskFilters';
@@ -14,107 +20,28 @@ import './TaskManagement.css';
 
 function TaskManagement() {
   const { setTasks, setSelectedTask, selectedTask } = useStore();
-  const [localTasks, setLocalTasks] = useState([]);
   const [sortBy, setSortBy] = useState('created_at');
   const [sortDirection, setSortDirection] = useState('desc');
   const [statusFilter, setStatusFilter] = useState('');
-  const [loading, setLoading] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showDetailModal, setShowDetailModal] = useState(false);
   const [page, setPage] = useState(1);
   const [limit] = useState(10);
-  const [total, setTotal] = useState(0);
   const [error, setError] = useState(null);
   const [successMessage, setSuccessMessage] = useState(null);
 
-  // Fetch tasks from API
-  useEffect(() => {
-    const fetchTasksWrapper = async () => {
-      try {
-        setLoading(true);
-        console.log('🔵 TaskManagement: Fetching tasks from API...');
-        const offset = (page - 1) * limit;
-        const response = await getTasks(limit, offset);
-        console.log('🟢 TaskManagement: API Response received:', response);
-        console.log('🟢 TaskManagement: Response type:', typeof response);
-        console.log('🟢 TaskManagement: Response.tasks:', response?.tasks);
-        console.log(
-          '🟢 TaskManagement: Array.isArray(response.tasks):',
-          Array.isArray(response?.tasks)
-        );
-
-        if (response && response.tasks && Array.isArray(response.tasks)) {
-          console.log(
-            '✅ TaskManagement: Setting tasks to state:',
-            response.tasks.length,
-            'tasks'
-          );
-          setLocalTasks(response.tasks);
-          // Extract total from response or calculate it
-          if (response.total) {
-            setTotal(response.total);
-          } else {
-            // Fallback: if we got results, assume this is the total (for legacy APIs)
-            setTotal(response.tasks.length);
-          }
-          setTasks(response.tasks);
-        } else {
-          console.warn('❌ Unexpected response format:', response);
-          console.warn('❌ response:', response);
-          console.warn('❌ response.tasks:', response?.tasks);
-          console.warn(
-            '❌ Array.isArray(response.tasks):',
-            Array.isArray(response?.tasks)
-          );
-          setLocalTasks([]);
-          setTotal(0);
-        }
-      } catch (error) {
-        console.error('❌ Error fetching tasks:', error);
-        console.error('❌ Error message:', error?.message);
-        console.error('❌ Error stack:', error?.stack);
-        setLocalTasks([]);
-        setTotal(0);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchTasksWrapper();
-    // Auto-refresh every 30 seconds
-    const interval = setInterval(fetchTasksWrapper, 30000);
-    return () => clearInterval(interval);
-  }, [setTasks, page, limit]);
-
-  const fetchTasks = async () => {
-    try {
-      setLoading(true);
-      setError(null);
-      const offset = (page - 1) * limit;
-      const response = await getTasks(limit, offset);
-      if (response && response.tasks) {
-        setLocalTasks(response.tasks);
-        if (response.total) {
-          setTotal(response.total);
-        } else {
-          setTotal(response.tasks.length);
-        }
-        setTasks(response.tasks);
-      } else {
-        console.warn('Unexpected response format:', response);
-        setLocalTasks([]);
-        setTotal(0);
-      }
-    } catch (error) {
-      console.error('Error fetching tasks:', error);
-      setError(`Failed to fetch tasks: ${error.message}`);
-      setLocalTasks([]);
-      setTotal(0);
-    } finally {
-      setLoading(false);
-    }
-  };
+  // Use custom hook for task fetching - replaces duplicate fetchTasks/fetchTasksWrapper
+  const {
+    tasks: localTasks,
+    total,
+    loading,
+    refetch: refreshTasks,
+  } = useFetchTasks(
+    page,
+    limit,
+    30000 // Auto-refresh every 30 seconds
+  );
 
   // Handler to open detail modal for editing
   const handleEditTask = (task) => {
@@ -138,8 +65,8 @@ function TaskManagement() {
       if (result.updated_count > 0) {
         setSuccessMessage('Task deleted successfully');
         setTimeout(() => setSuccessMessage(null), 3000);
-        // Refresh task list
-        fetchTasks();
+        // Refresh task list using the hook
+        refreshTasks();
       } else {
         setError('Failed to delete task');
       }
@@ -155,7 +82,7 @@ function TaskManagement() {
   const handleTaskDetailUpdate = async () => {
     setShowDetailModal(false);
     setSelectedTask(null);
-    fetchTasks();
+    refreshTasks();
   };
 
   // Handler for task actions (pause, resume, cancel)
@@ -168,7 +95,7 @@ function TaskManagement() {
         setSuccessMessage(`Task ${action} successful`);
         setTimeout(() => setSuccessMessage(null), 3000);
         // Refresh task list
-        fetchTasks();
+        refreshTasks();
       } else {
         setError(`Failed to ${action} task`);
       }
@@ -313,7 +240,7 @@ function TaskManagement() {
           </button>
           <button
             className="btn-refresh"
-            onClick={fetchTasks}
+            onClick={refreshTasks}
             disabled={loading}
             title="Refresh task list"
           >
@@ -601,11 +528,11 @@ function TaskManagement() {
           isOpen={showCreateModal}
           onClose={() => {
             setShowCreateModal(false);
-            fetchTasks();
+            refreshTasks();
           }}
           onTaskCreated={() => {
             setShowCreateModal(false);
-            fetchTasks();
+            refreshTasks();
           }}
         />
       )}
