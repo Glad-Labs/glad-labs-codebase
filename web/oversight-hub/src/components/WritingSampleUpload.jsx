@@ -258,7 +258,7 @@ function WritingSampleUpload(props) {
 
         {/* Form Fields */}
         <Grid container spacing={2} sx={{ mb: 3 }}>
-          <Grid item xs={12}>
+          <Grid sx={{ width: '100%' }}>
             <TextField
               fullWidth
               label="Sample Title"
@@ -270,7 +270,12 @@ function WritingSampleUpload(props) {
             />
           </Grid>
 
-          <Grid item xs={12} sm={6}>
+          <Grid
+            sx={{
+              width: '100%',
+              '@media (min-width: 600px)': { width: 'calc(50% - 8px)' },
+            }}
+          >
             <FormControl fullWidth>
               <InputLabel>Writing Style</InputLabel>
               <Select
@@ -293,7 +298,12 @@ function WritingSampleUpload(props) {
             </FormControl>
           </Grid>
 
-          <Grid item xs={12} sm={6}>
+          <Grid
+            sx={{
+              width: '100%',
+              '@media (min-width: 600px)': { width: 'calc(50% - 8px)' },
+            }}
+          >
             <FormControl fullWidth>
               <InputLabel>Tone</InputLabel>
               <Select

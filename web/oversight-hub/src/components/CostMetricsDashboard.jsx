@@ -174,7 +174,12 @@ const CostMetricsDashboard = () => {
             📊 Monthly Budget Status
           </Typography>
           <Grid container spacing={2}>
-            <Grid item xs={12} md={6}>
+            <Grid
+              sx={{
+                width: '100%',
+                '@media (min-width: 960px)': { width: 'calc(50% - 8px)' },
+              }}
+            >
               <Typography variant="body2" color="text.secondary">
                 Budget Used
               </Typography>
@@ -182,7 +187,12 @@ const CostMetricsDashboard = () => {
                 ${amountSpent.toFixed(2)} / ${monthlyBudget.toFixed(2)}
               </Typography>
             </Grid>
-            <Grid item xs={12} md={6}>
+            <Grid
+              sx={{
+                width: '100%',
+                '@media (min-width: 960px)': { width: 'calc(50% - 8px)' },
+              }}
+            >
               <Typography variant="body2" color="text.secondary">
                 Remaining
               </Typography>
@@ -190,7 +200,7 @@ const CostMetricsDashboard = () => {
                 ${amountRemaining.toFixed(2)}
               </Typography>
             </Grid>
-            <Grid item xs={12}>
+            <Grid sx={{ width: '100%' }}>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                 <LinearProgress
                   variant="determinate"
@@ -389,7 +399,12 @@ const CostMetricsDashboard = () => {
               🚀 AI Cache Performance
             </Typography>
             <Grid container spacing={2}>
-              <Grid item xs={12} md={3}>
+              <Grid
+                sx={{
+                  width: '100%',
+                  '@media (min-width: 960px)': { width: 'calc(25% - 6px)' },
+                }}
+              >
                 <Typography variant="body2" color="text.secondary">
                   Hit Rate
                 </Typography>
@@ -404,7 +419,12 @@ const CostMetricsDashboard = () => {
                   )}
                 </Box>
               </Grid>
-              <Grid item xs={12} md={3}>
+              <Grid
+                sx={{
+                  width: '100%',
+                  '@media (min-width: 960px)': { width: 'calc(25% - 6px)' },
+                }}
+              >
                 <Typography variant="body2" color="text.secondary">
                   Cache Hits
                 </Typography>
@@ -412,7 +432,12 @@ const CostMetricsDashboard = () => {
                   {metrics.ai_cache.cache_hits.toLocaleString()}
                 </Typography>
               </Grid>
-              <Grid item xs={12} md={3}>
+              <Grid
+                sx={{
+                  width: '100%',
+                  '@media (min-width: 960px)': { width: 'calc(25% - 6px)' },
+                }}
+              >
                 <Typography variant="body2" color="text.secondary">
                   Memory Entries
                 </Typography>
@@ -420,7 +445,12 @@ const CostMetricsDashboard = () => {
                   {metrics.ai_cache.memory_entries.toLocaleString()}
                 </Typography>
               </Grid>
-              <Grid item xs={12} md={3}>
+              <Grid
+                sx={{
+                  width: '100%',
+                  '@media (min-width: 960px)': { width: 'calc(25% - 6px)' },
+                }}
+              >
                 <Typography variant="body2" color="text.secondary">
                   Estimated Savings
                 </Typography>
@@ -444,7 +474,12 @@ const CostMetricsDashboard = () => {
               🎯 Model Router Efficiency
             </Typography>
             <Grid container spacing={2}>
-              <Grid item xs={12} md={4}>
+              <Grid
+                sx={{
+                  width: '100%',
+                  '@media (min-width: 960px)': { width: 'calc(33.333% - 5px)' },
+                }}
+              >
                 <Typography variant="body2" color="text.secondary">
                   Budget Model Usage
                 </Typography>
@@ -457,7 +492,12 @@ const CostMetricsDashboard = () => {
                   requests
                 </Typography>
               </Grid>
-              <Grid item xs={12} md={4}>
+              <Grid
+                sx={{
+                  width: '100%',
+                  '@media (min-width: 960px)': { width: 'calc(33.333% - 5px)' },
+                }}
+              >
                 <Typography variant="body2" color="text.secondary">
                   Cost Savings
                 </Typography>
@@ -469,7 +509,12 @@ const CostMetricsDashboard = () => {
                   reduction
                 </Typography>
               </Grid>
-              <Grid item xs={12} md={4}>
+              <Grid
+                sx={{
+                  width: '100%',
+                  '@media (min-width: 960px)': { width: 'calc(33.333% - 5px)' },
+                }}
+              >
                 <Typography variant="body2" color="text.secondary">
                   Optimization Status
                 </Typography>
@@ -525,7 +570,12 @@ const CostMetricsDashboard = () => {
             💡 Monthly Cost Summary
           </Typography>
           <Grid container spacing={2}>
-            <Grid item xs={12} md={4}>
+            <Grid
+              sx={{
+                width: '100%',
+                '@media (min-width: 960px)': { width: 'calc(33.333% - 5px)' },
+              }}
+            >
               <Typography
                 variant="body2"
                 sx={{ color: 'rgba(255,255,255,0.8)' }}
@@ -538,7 +588,12 @@ const CostMetricsDashboard = () => {
                 </Typography>
               </Box>
             </Grid>
-            <Grid item xs={12} md={4}>
+            <Grid
+              sx={{
+                width: '100%',
+                '@media (min-width: 960px)': { width: 'calc(33.333% - 5px)' },
+              }}
+            >
               <Typography
                 variant="body2"
                 sx={{ color: 'rgba(255,255,255,0.8)' }}
@@ -551,7 +606,12 @@ const CostMetricsDashboard = () => {
                   monthlyBudget.toFixed(2)}
               </Typography>
             </Grid>
-            <Grid item xs={12} md={4}>
+            <Grid
+              sx={{
+                width: '100%',
+                '@media (min-width: 960px)': { width: 'calc(33.333% - 5px)' },
+              }}
+            >
               <Typography
                 variant="body2"
                 sx={{ color: 'rgba(255,255,255,0.8)' }}

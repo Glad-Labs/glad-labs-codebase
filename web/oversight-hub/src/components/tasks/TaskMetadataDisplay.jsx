@@ -74,7 +74,15 @@ const TaskMetadataDisplay = ({ task }) => {
 
       <Grid container spacing={1.5}>
         {metadataItems.map((item, idx) => (
-          <Grid item xs={12} sm={6} key={idx}>
+          <Grid
+            key={idx}
+            sx={{
+              width: '100%',
+              '@media (min-width: 600px)': {
+                width: 'calc(50% - 12px)',
+              },
+            }}
+          >
             <Paper
               sx={{
                 padding: '12px',
@@ -195,34 +203,34 @@ const TaskMetadataDisplay = ({ task }) => {
                 Keywords
               </p>
               <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
-                {Array.isArray(seoData.keywords)
-                  ? seoData.keywords.map((kw, idx) => (
-                      <Box
-                        key={idx}
-                        sx={{
-                          display: 'inline-block',
-                          padding: '4px 8px',
-                          backgroundColor: 'rgba(167, 139, 250, 0.2)',
-                          borderRadius: '3px',
-                          border: '1px solid rgba(167, 139, 250, 0.4)',
-                          color: '#d8b4fe',
-                          fontSize: '0.85rem',
-                        }}
-                      >
-                        {kw}
-                      </Box>
-                    ))
-                  : (
-                      <p
-                        style={{
-                          margin: 0,
-                          color: '#d8b4fe',
-                          fontSize: '0.85rem',
-                        }}
-                      >
-                        {seoData.keywords}
-                      </p>
-                    )}
+                {Array.isArray(seoData.keywords) ? (
+                  seoData.keywords.map((kw, idx) => (
+                    <Box
+                      key={idx}
+                      sx={{
+                        display: 'inline-block',
+                        padding: '4px 8px',
+                        backgroundColor: 'rgba(167, 139, 250, 0.2)',
+                        borderRadius: '3px',
+                        border: '1px solid rgba(167, 139, 250, 0.4)',
+                        color: '#d8b4fe',
+                        fontSize: '0.85rem',
+                      }}
+                    >
+                      {kw}
+                    </Box>
+                  ))
+                ) : (
+                  <p
+                    style={{
+                      margin: 0,
+                      color: '#d8b4fe',
+                      fontSize: '0.85rem',
+                    }}
+                  >
+                    {seoData.keywords}
+                  </p>
+                )}
               </Box>
             </Box>
           )}

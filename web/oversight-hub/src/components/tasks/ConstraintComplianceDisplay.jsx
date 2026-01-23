@@ -87,7 +87,7 @@ const ConstraintComplianceDisplay = ({
         <CardContent sx={{ p: 3 }}>
           <Grid container spacing={3}>
             {/* Word Count Section */}
-            <Grid item xs={12}>
+            <Grid sx={{ width: '100%' }}>
               <Typography
                 variant="subtitle1"
                 sx={{ color: '#cbd5e1', mb: 1, fontWeight: 600 }}
@@ -164,7 +164,12 @@ const ConstraintComplianceDisplay = ({
             </Grid>
 
             {/* Writing Style Section */}
-            <Grid item xs={12} sm={6}>
+            <Grid
+              sx={{
+                width: '100%',
+                '@media (min-width: 600px)': { width: 'calc(50% - 12px)' },
+              }}
+            >
               <Typography
                 variant="subtitle1"
                 sx={{ color: '#cbd5e1', mb: 1, fontWeight: 600 }}
@@ -177,7 +182,12 @@ const ConstraintComplianceDisplay = ({
             </Grid>
 
             {/* Strict Mode Section */}
-            <Grid item xs={12} sm={6}>
+            <Grid
+              sx={{
+                width: '100%',
+                '@media (min-width: 600px)': { width: 'calc(50% - 12px)' },
+              }}
+            >
               <Typography
                 variant="subtitle1"
                 sx={{ color: '#cbd5e1', mb: 1, fontWeight: 600 }}
@@ -197,7 +207,7 @@ const ConstraintComplianceDisplay = ({
 
             {/* Violation Message */}
             {compliance.violation_message && (
-              <Grid item xs={12}>
+              <Grid sx={{ width: '100%' }}>
                 <Alert
                   severity="warning"
                   sx={{ bgcolor: '#7c2d12', borderColor: '#ea580c' }}

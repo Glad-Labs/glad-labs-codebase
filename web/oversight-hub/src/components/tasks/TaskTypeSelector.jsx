@@ -22,7 +22,15 @@ const TaskTypeSelector = ({ taskTypes, selectedType, onSelect }) => {
       </Typography>
       <Grid container spacing={2}>
         {Object.entries(taskTypes).map(([key, taskType]) => (
-          <Grid item xs={12} sm={6} key={key}>
+          <Grid
+            key={key}
+            sx={{
+              width: '100%',
+              '@media (min-width: 600px)': {
+                width: 'calc(50% - 8px)',
+              },
+            }}
+          >
             <Button
               fullWidth
               variant={selectedType === key ? 'contained' : 'outlined'}
