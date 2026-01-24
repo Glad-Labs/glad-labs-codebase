@@ -20,10 +20,28 @@ const TaskContentPreview = ({ task, onTaskUpdate }) => {
   const [showPreview, setShowPreview] = useState(true);
   const [saving, setSaving] = useState(false);
 
+  // Extract title from content if it starts with markdown title
+  const extractTitleFromContent = (content) => {
+    if (!content) return { title: null, cleanedContent: content };
+
+    const match = content.match(/^#+\s+(.+?)(?:\n|$)/);
+    if (match) {
+      const title = match[1].trim();
+      const cleanedContent = content.replace(/^#+\s+.+?(?:\n|$)/, '').trim();
+      return { title, cleanedContent };
+    }
+    return { title: null, cleanedContent: content };
+  };
+
   useEffect(() => {
     if (task) {
-      setEditedTitle(task.topic || '');
-      setEditedContent(task.task_metadata?.content || '');
+      const content = task.task_metadata?.content || '';
+      const { title: extractedTitle, cleanedContent } =
+        extractTitleFromContent(content);
+
+      // Use extracted title if available, otherwise use topic
+      setEditedTitle(extractedTitle || task.topic || '');
+      setEditedContent(cleanedContent);
     }
   }, [task]);
 
@@ -31,8 +49,9 @@ const TaskContentPreview = ({ task, onTaskUpdate }) => {
 
   // Convert markdown to HTML (same logic as PostEditor)
   const renderMarkdown = (markdown) => {
-    if (!markdown) return '<p style="color: #999; font-style: italic;">No content available</p>';
-    
+    if (!markdown)
+      return '<p style="color: #999; font-style: italic;">No content available</p>';
+
     let html = markdown
       // Headers
       .replace(/^### (.*$)/gim, '<h3>$1</h3>')
@@ -47,10 +66,10 @@ const TaskContentPreview = ({ task, onTaskUpdate }) => {
       // Line breaks and paragraphs
       .replace(/\n\n/g, '</p><p>')
       .replace(/\n/g, '<br/>');
-    
+
     // Wrap list items in <ul>
     html = html.replace(/(<li>.*<\/li>)/s, '<ul>$1</ul>');
-    
+
     return `<div style="line-height: 1.8; font-family: 'Segoe UI', Arial, sans-serif;"><p>${html}</p></div>`;
   };
 
@@ -105,7 +124,7 @@ const TaskContentPreview = ({ task, onTaskUpdate }) => {
                 fontSize: '24px',
               }}
             >
-              {task.topic}
+              {editedTitle || task.topic || 'Untitled'}
             </h2>
             <small style={{ color: '#999' }}>ID: {task.id}</small>
           </>
@@ -204,9 +223,24 @@ const TaskContentPreview = ({ task, onTaskUpdate }) => {
               border: '1px solid #333',
               fontSize: '16px',
               color: '#e0e0e0',
-              '& h1': { fontSize: '32px', marginTop: '24px', marginBottom: '16px', color: '#00d9ff' },
-              '& h2': { fontSize: '28px', marginTop: '20px', marginBottom: '12px', color: '#00d9ff' },
-              '& h3': { fontSize: '24px', marginTop: '16px', marginBottom: '10px', color: '#00d9ff' },
+              '& h1': {
+                fontSize: '32px',
+                marginTop: '24px',
+                marginBottom: '16px',
+                color: '#00d9ff',
+              },
+              '& h2': {
+                fontSize: '28px',
+                marginTop: '20px',
+                marginBottom: '12px',
+                color: '#00d9ff',
+              },
+              '& h3': {
+                fontSize: '24px',
+                marginTop: '16px',
+                marginBottom: '10px',
+                color: '#00d9ff',
+              },
               '& p': { marginBottom: '16px' },
               '& ul': { marginLeft: '24px', marginBottom: '16px' },
               '& li': { marginBottom: '8px' },
@@ -244,14 +278,16 @@ const TaskContentPreview = ({ task, onTaskUpdate }) => {
       </Box>
 
       {/* Featured Image */}
-      {(task.task_metadata?.featured_image_url || task.result?.featured_image_url) && (
+      {(task.task_metadata?.featured_image_url ||
+        task.result?.featured_image_url) && (
         <Box>
-          <h3 style={{ marginTop: 0, color: '#e0e0e0' }}>
-            🖼️ Featured Image
-          </h3>
+          <h3 style={{ marginTop: 0, color: '#e0e0e0' }}>🖼️ Featured Image</h3>
           <Box
             component="img"
-            src={task.task_metadata?.featured_image_url || task.result?.featured_image_url}
+            src={
+              task.task_metadata?.featured_image_url ||
+              task.result?.featured_image_url
+            }
             alt="Featured"
             sx={{
               maxWidth: '100%',
@@ -265,7 +301,7 @@ const TaskContentPreview = ({ task, onTaskUpdate }) => {
       )}
     </Box>
   );
-};
+};;
 
 TaskContentPreview.propTypes = {
   task: PropTypes.shape({
