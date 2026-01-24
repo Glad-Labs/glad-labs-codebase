@@ -3,41 +3,219 @@
  * 
  * Displays:
  * - Task topic/title
- * - Generated content preview
+ * - Generated content preview WITH MARKDOWN RENDERING
  * - Featured image
+ * - Edit mode for all fields
  */
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
-import { Box } from '@mui/material';
+import { Box, Button, TextField, Switch, FormControlLabel } from '@mui/material';
+import { updateTask } from '../../services/taskService';
 
-const TaskContentPreview = ({ task }) => {
+const TaskContentPreview = ({ task, onTaskUpdate }) => {
+  const [isEditing, setIsEditing] = useState(false);
+  const [editedTitle, setEditedTitle] = useState('');
+  const [editedContent, setEditedContent] = useState('');
+  const [showPreview, setShowPreview] = useState(true);
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    if (task) {
+      setEditedTitle(task.topic || '');
+      setEditedContent(task.task_metadata?.content || '');
+    }
+  }, [task]);
+
   if (!task) return null;
+
+  // Convert markdown to HTML (same logic as PostEditor)
+  const renderMarkdown = (markdown) => {
+    if (!markdown) return '<p style="color: #999; font-style: italic;">No content available</p>';
+    
+    let html = markdown
+      // Headers
+      .replace(/^### (.*$)/gim, '<h3>$1</h3>')
+      .replace(/^## (.*$)/gim, '<h2>$1</h2>')
+      .replace(/^# (.*$)/gim, '<h1>$1</h1>')
+      // Bold and italic
+      .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+      .replace(/\*(.*?)\*/g, '<em>$1</em>')
+      // Lists
+      .replace(/^\* (.*$)/gim, '<li>$1</li>')
+      .replace(/^- (.*$)/gim, '<li>$1</li>')
+      // Line breaks and paragraphs
+      .replace(/\n\n/g, '</p><p>')
+      .replace(/\n/g, '<br/>');
+    
+    // Wrap list items in <ul>
+    html = html.replace(/(<li>.*<\/li>)/s, '<ul>$1</ul>');
+    
+    return `<div style="line-height: 1.8; font-family: 'Segoe UI', Arial, sans-serif;"><p>${html}</p></div>`;
+  };
+
+  const handleSave = async () => {
+    setSaving(true);
+    try {
+      const updatedTask = await updateTask(task.id, {
+        topic: editedTitle,
+        task_metadata: {
+          ...task.task_metadata,
+          content: editedContent,
+        },
+      });
+      setIsEditing(false);
+      if (onTaskUpdate) onTaskUpdate(updatedTask);
+      alert('✅ Changes saved successfully!');
+    } catch (error) {
+      console.error('Failed to save changes:', error);
+      alert('❌ Failed to save changes');
+    } finally {
+      setSaving(false);
+    }
+  };
 
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
       {/* Content Title */}
-      {task.topic && (
-        <Box sx={{ mb: 2 }}>
-          <h2
-            style={{
-              margin: '0 0 8px 0',
-              color: '#00d9ff',
-              fontSize: '24px',
+      <Box sx={{ mb: 2 }}>
+        {isEditing ? (
+          <TextField
+            fullWidth
+            value={editedTitle}
+            onChange={(e) => setEditedTitle(e.target.value)}
+            label="Title"
+            variant="outlined"
+            sx={{
+              '& .MuiOutlinedInput-root': {
+                color: '#00d9ff',
+                fontSize: '24px',
+                fontWeight: 'bold',
+              },
+              '& .MuiInputLabel-root': { color: '#999' },
+              '& .MuiOutlinedInput-notchedOutline': { borderColor: '#333' },
             }}
-          >
-            {task.topic}
-          </h2>
-          <small style={{ color: '#999' }}>ID: {task.id}</small>
-        </Box>
-      )}
+          />
+        ) : (
+          <>
+            <h2
+              style={{
+                margin: '0 0 8px 0',
+                color: '#00d9ff',
+                fontSize: '24px',
+              }}
+            >
+              {task.topic}
+            </h2>
+            <small style={{ color: '#999' }}>ID: {task.id}</small>
+          </>
+        )}
+      </Box>
 
-      {/* Content Preview */}
+      {/* Edit Controls */}
+      <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
+        {isEditing ? (
+          <>
+            <Button
+              variant="contained"
+              onClick={handleSave}
+              disabled={saving}
+              sx={{ backgroundColor: '#00d9ff', color: '#000' }}
+            >
+              {saving ? 'Saving...' : '💾 Save Changes'}
+            </Button>
+            <Button
+              variant="outlined"
+              onClick={() => {
+                setIsEditing(false);
+                setEditedTitle(task.topic || '');
+                setEditedContent(task.task_metadata?.content || '');
+              }}
+              disabled={saving}
+              sx={{ borderColor: '#999', color: '#999' }}
+            >
+              Cancel
+            </Button>
+          </>
+        ) : (
+          <Button
+            variant="outlined"
+            onClick={() => setIsEditing(true)}
+            sx={{ borderColor: '#00d9ff', color: '#00d9ff' }}
+          >
+            ✏️ Edit Content
+          </Button>
+        )}
+        {!isEditing && (
+          <FormControlLabel
+            control={
+              <Switch
+                checked={showPreview}
+                onChange={(e) => setShowPreview(e.target.checked)}
+                sx={{
+                  '& .MuiSwitch-switchBase.Mui-checked': {
+                    color: '#00d9ff',
+                  },
+                  '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': {
+                    backgroundColor: '#00d9ff',
+                  },
+                }}
+              />
+            }
+            label="Preview Mode"
+            sx={{ color: '#999' }}
+          />
+        )}
+      </Box>
+
+      {/* Content Preview/Editor */}
       <Box>
         <h3 style={{ marginTop: 0, color: '#e0e0e0' }}>
-          📝 Content Preview
+          📝 Content {showPreview && !isEditing ? 'Preview' : 'Editor'}
         </h3>
-        {task.task_metadata?.content ? (
+        {isEditing ? (
+          <TextField
+            fullWidth
+            multiline
+            rows={20}
+            value={editedContent}
+            onChange={(e) => setEditedContent(e.target.value)}
+            placeholder="Write your content in Markdown..."
+            variant="outlined"
+            sx={{
+              '& .MuiOutlinedInput-root': {
+                color: '#e0e0e0',
+                fontFamily: 'monospace',
+                fontSize: '13px',
+                backgroundColor: '#0f0f0f',
+              },
+              '& .MuiInputLabel-root': { color: '#999' },
+              '& .MuiOutlinedInput-notchedOutline': { borderColor: '#333' },
+            }}
+          />
+        ) : showPreview ? (
+          <Box
+            sx={{
+              backgroundColor: '#0f0f0f',
+              padding: 3,
+              borderRadius: 1,
+              maxHeight: '600px',
+              overflowY: 'auto',
+              border: '1px solid #333',
+              fontSize: '16px',
+              color: '#e0e0e0',
+              '& h1': { fontSize: '32px', marginTop: '24px', marginBottom: '16px', color: '#00d9ff' },
+              '& h2': { fontSize: '28px', marginTop: '20px', marginBottom: '12px', color: '#00d9ff' },
+              '& h3': { fontSize: '24px', marginTop: '16px', marginBottom: '10px', color: '#00d9ff' },
+              '& p': { marginBottom: '16px' },
+              '& ul': { marginLeft: '24px', marginBottom: '16px' },
+              '& li': { marginBottom: '8px' },
+              '& strong': { fontWeight: 'bold', color: '#fff' },
+              '& em': { fontStyle: 'italic' },
+            }}
+            dangerouslySetInnerHTML={{ __html: renderMarkdown(editedContent) }}
+          />
+        ) : (
           <Box
             sx={{
               backgroundColor: '#0f0f0f',
@@ -59,31 +237,28 @@ const TaskContentPreview = ({ task }) => {
                 margin: 0,
               }}
             >
-              {task.task_metadata.content}
+              {editedContent}
             </pre>
           </Box>
-        ) : (
-          <p style={{ color: '#999', fontStyle: 'italic' }}>
-            No content available for preview
-          </p>
         )}
       </Box>
 
       {/* Featured Image */}
-      {task.task_metadata?.featured_image_url && (
+      {(task.task_metadata?.featured_image_url || task.result?.featured_image_url) && (
         <Box>
           <h3 style={{ marginTop: 0, color: '#e0e0e0' }}>
             🖼️ Featured Image
           </h3>
           <Box
             component="img"
-            src={task.task_metadata.featured_image_url}
+            src={task.task_metadata?.featured_image_url || task.result?.featured_image_url}
             alt="Featured"
             sx={{
               maxWidth: '100%',
-              maxHeight: '300px',
+              maxHeight: '400px',
               borderRadius: 1,
               border: '1px solid #333',
+              objectFit: 'contain',
             }}
           />
         </Box>
@@ -96,11 +271,21 @@ TaskContentPreview.propTypes = {
   task: PropTypes.shape({
     id: PropTypes.string.isRequired,
     topic: PropTypes.string,
-    task_metadata: PropTypes.shape({
-      content: PropTypes.string,
-      featured_image_url: PropTypes.string,
-    }),
+    task_metadata: PropTypes.oneOfType([
+      PropTypes.string,
+      PropTypes.shape({
+        content: PropTypes.string,
+        featured_image_url: PropTypes.string,
+      }),
+    ]),
+    result: PropTypes.oneOfType([
+      PropTypes.string,
+      PropTypes.shape({
+        featured_image_url: PropTypes.string,
+      }),
+    ]),
   }),
+  onTaskUpdate: PropTypes.func,
 };
 
 export default TaskContentPreview;

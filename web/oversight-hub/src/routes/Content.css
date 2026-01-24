@@ -469,3 +469,29 @@
     display: none;
   }
 }
+
+/* ===== Loading & Error States ===== */
+.loading-state,
+.error-state {
+  text-align: center;
+  padding: 3rem 2rem;
+  background: var(--bg-secondary);
+  border-radius: 12px;
+  margin: 2rem 0;
+}
+
+.loading-state p {
+  font-size: 1.1rem;
+  color: var(--text-secondary);
+  margin: 0;
+}
+
+.error-state p {
+  font-size: 1.1rem;
+  color: var(--error-color, #e74c3c);
+  margin: 0 0 1rem 0;
+}
+
+.error-state .btn {
+  margin-top: 1rem;
+}

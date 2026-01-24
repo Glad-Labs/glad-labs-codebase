@@ -28,35 +28,142 @@ const getQualityBadge = (score) => {
 const TaskMetadataDisplay = ({ task }) => {
   if (!task) return null;
 
-  const extractedMetadata = task.extracted_metadata || {};
-  const seoData = task.seo_keywords || {};
-  const qualityBadge = getQualityBadge(task.quality_score);
+  // Extract metadata from multiple possible sources
+  const taskMeta = task.task_metadata || {};
+  const result = task.result || {};
+  const extractedMetadata =
+    task.extracted_metadata || taskMeta.extracted_metadata || {};
+
+  // Parse metadata if it's a JSON string
+  let parsedTaskMeta = taskMeta;
+  if (typeof taskMeta === 'string') {
+    try {
+      parsedTaskMeta = JSON.parse(taskMeta);
+    } catch (e) {
+      parsedTaskMeta = {};
+    }
+  }
+
+  // Parse result if it's a JSON string
+  let parsedResult = result;
+  if (typeof result === 'string') {
+    try {
+      parsedResult = JSON.parse(result);
+    } catch (e) {
+      parsedResult = {};
+    }
+  }
+
+  // Extract SEO data from multiple sources
+  const seoData =
+    task.seo_keywords ||
+    parsedTaskMeta.seo_keywords ||
+    parsedResult.seo_keywords ||
+    {};
+
+  // Get quality score from task or metadata
+  const qualityScore =
+    task.quality_score ||
+    parsedTaskMeta.quality_score ||
+    parsedResult.quality_score;
+  const qualityBadge = getQualityBadge(qualityScore);
+
+  // Get word count - try content length if not specified
+  let wordCount =
+    extractedMetadata.word_count ||
+    parsedTaskMeta.target_length ||
+    parsedTaskMeta.word_count ||
+    task.target_length;
+
+  if (!wordCount && (parsedTaskMeta.content || parsedResult.content)) {
+    const content = parsedTaskMeta.content || parsedResult.content;
+    wordCount = content.split(/\\s+/).length;
+  }
+
+  // Extract timing information
+  const createdAt = task.created_at
+    ? new Date(task.created_at).toLocaleString()
+    : 'N/A';
+  const startedAt = task.started_at
+    ? new Date(task.started_at).toLocaleString()
+    : 'N/A';
+  const completedAt = task.completed_at
+    ? new Date(task.completed_at).toLocaleString()
+    : 'N/A';
+
+  // Calculate execution time if available
+  let executionTime = 'N/A';
+  if (task.started_at && task.completed_at) {
+    const start = new Date(task.started_at);
+    const end = new Date(task.completed_at);
+    const diffMs = end - start;
+    const diffMins = Math.round(diffMs / 60000);
+    executionTime = `${diffMins} min${diffMins !== 1 ? 's' : ''}`;
+  }
 
   const metadataItems = [
     {
       label: 'Category',
-      value: extractedMetadata.category || 'Not specified',
+      value:
+        task.category ||
+        extractedMetadata.category ||
+        parsedTaskMeta.category ||
+        'Not specified',
     },
     {
       label: 'Style',
-      value: extractedMetadata.writing_style || 'Not specified',
+      value:
+        task.style ||
+        extractedMetadata.writing_style ||
+        parsedTaskMeta.style ||
+        'Not specified',
     },
     {
       label: 'Target Audience',
-      value: extractedMetadata.target_audience || 'Not specified',
+      value:
+        task.target_audience ||
+        extractedMetadata.target_audience ||
+        parsedTaskMeta.target_audience ||
+        'Not specified',
     },
     {
       label: 'Word Count',
-      value: extractedMetadata.word_count
-        ? `${extractedMetadata.word_count} words`
-        : 'Not specified',
+      value: wordCount ? `${wordCount} words` : 'Not specified',
     },
     {
       label: 'Quality Score',
-      value: task.quality_score
-        ? `${task.quality_score.toFixed(2)}/5.0 (${qualityBadge.label})`
+      value: qualityScore
+        ? `${qualityScore.toFixed(2)}/5.0 (${qualityBadge.label})`
         : 'Not rated',
       color: qualityBadge.color,
+    },
+    {
+      label: 'Status',
+      value: task.status || 'Unknown',
+      color:
+        task.status === 'completed'
+          ? '#4ade80'
+          : task.status === 'failed'
+            ? '#ef4444'
+            : task.status === 'published'
+              ? '#8b5cf6'
+              : '#eab308',
+    },
+    {
+      label: 'Created',
+      value: createdAt,
+    },
+    {
+      label: 'Started',
+      value: startedAt,
+    },
+    {
+      label: 'Completed',
+      value: completedAt,
+    },
+    {
+      label: 'Execution Time',
+      value: executionTime,
     },
   ];
 
@@ -238,7 +345,7 @@ const TaskMetadataDisplay = ({ task }) => {
       )}
     </Box>
   );
-};
+};;
 
 TaskMetadataDisplay.propTypes = {
   task: PropTypes.shape({

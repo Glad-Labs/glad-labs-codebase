@@ -41,7 +41,7 @@ function TabPanel(props) {
   );
 }
 
-const TaskDetailModal = ({ onClose }) => {
+const TaskDetailModal = ({ onClose, onUpdate }) => {
   const { selectedTask, setSelectedTask } = useStore();
   const [tabValue, setTabValue] = useState(0);
   const [approvalLoading, setApprovalLoading] = useState(false);
@@ -54,6 +54,15 @@ const TaskDetailModal = ({ onClose }) => {
   const handleTabChange = (event, newValue) => {
     setTabValue(newValue);
   };
+
+  // Handle task update from content preview
+  const handleTaskUpdate = useCallback(
+    (updatedTask) => {
+      setSelectedTask(updatedTask);
+      if (onUpdate) onUpdate(updatedTask);
+    },
+    [setSelectedTask, onUpdate]
+  );
 
   // Handle image generation
   const handleGenerateImage = useCallback(
@@ -255,7 +264,10 @@ const TaskDetailModal = ({ onClose }) => {
         <TabPanel value={tabValue} index={0}>
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
             {/* Content Preview Component */}
-            <TaskContentPreview task={selectedTask} />
+            <TaskContentPreview
+              task={selectedTask}
+              onTaskUpdate={handleTaskUpdate}
+            />
 
             {/* Image Manager Component */}
             <TaskImageManager

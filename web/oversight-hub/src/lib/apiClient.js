@@ -222,6 +222,9 @@ export const listPosts = async (
   }
 };
 
+// Alias for convenience
+export const getPosts = listPosts;
+
 /**
  * Create a new blog post
  * @param {Object} postData - Post creation data

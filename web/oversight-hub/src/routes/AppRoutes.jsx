@@ -3,6 +3,7 @@ import { Routes, Route, Navigate } from 'react-router-dom';
 import { Settings, TaskManagement, CostMetricsDashboard } from './index';
 import ExecutiveDashboard from '../components/pages/ExecutiveDashboard';
 import AIStudio from './AIStudio';
+import Content from './Content';
 import Login from '../pages/Login';
 import AuthCallback from '../pages/AuthCallback';
 import ProtectedRoute from '../components/ProtectedRoute';
@@ -32,6 +33,16 @@ function AppRoutes() {
           <ProtectedRoute>
             <LayoutWrapper>
               <TaskManagement />
+            </LayoutWrapper>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/content"
+        element={
+          <ProtectedRoute>
+            <LayoutWrapper>
+              <Content />
             </LayoutWrapper>
           </ProtectedRoute>
         }
