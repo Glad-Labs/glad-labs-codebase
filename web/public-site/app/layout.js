@@ -2,6 +2,7 @@ import AdSenseScript from '../components/AdSenseScript';
 import CookieConsentBanner from '../components/CookieConsentBanner';
 import Footer from '../components/Footer';
 import { TopNavigation } from '../components/TopNav';
+import { Analytics } from '@vercel/analytics/react';
 import '../styles/globals.css';
 
 export const metadata = {
@@ -68,6 +69,7 @@ export default function RootLayout({ children }) {
         {/* Client-side components that need hydration */}
         <AdSenseScript />
         <CookieConsentBanner />
+        <Analytics />
       </body>
     </html>
   );
