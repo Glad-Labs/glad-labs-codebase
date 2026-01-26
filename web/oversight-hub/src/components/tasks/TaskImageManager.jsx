@@ -1,6 +1,6 @@
 /**
  * TaskImageManager - Image selection and generation
- * 
+ *
  * Features:
  * - Image source selection (Pexels, SDXL)
  * - Manual image URL input
@@ -34,9 +34,7 @@ const TaskImageManager = ({
         border: '1px solid #00d9ff',
       }}
     >
-      <h3 style={{ marginTop: 0, color: '#00d9ff' }}>
-        🎨 Image Management
-      </h3>
+      <h3 style={{ marginTop: 0, color: '#00d9ff' }}>🎨 Image Management</h3>
 
       <Box sx={{ mb: 2 }}>
         <label
@@ -80,9 +78,7 @@ const TaskImageManager = ({
               borderColor: '#00d9ff',
               '&:hover': {
                 backgroundColor:
-                  imageSource === 'sdxl'
-                    ? '#00c2d4'
-                    : 'rgba(0, 217, 255, 0.1)',
+                  imageSource === 'sdxl' ? '#00c2d4' : 'rgba(0, 217, 255, 0.1)',
               },
             }}
           >

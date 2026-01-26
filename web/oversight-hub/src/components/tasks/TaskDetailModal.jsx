@@ -341,6 +341,6 @@ const TaskDetailModal = ({ onClose, onUpdate }) => {
       </DialogActions>
     </Dialog>
   );
-};;
+};
 
 export default TaskDetailModal;

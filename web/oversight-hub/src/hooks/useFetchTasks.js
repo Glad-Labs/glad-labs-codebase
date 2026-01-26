@@ -1,10 +1,10 @@
 /**
  * useFetchTasks - Custom hook for task fetching with auto-refresh
- * 
+ *
  * Eliminates duplication between TaskManagement component's:
  * - fetchTasksWrapper (in useEffect)
  * - fetchTasks (standalone function)
- * 
+ *
  * Features:
  * - Centralized task fetching logic
  * - Auto-refresh every 30 seconds
@@ -19,13 +19,17 @@ import { getTasks } from '../services/cofounderAgentClient';
 
 /**
  * Hook for fetching tasks with pagination and auto-refresh
- * 
+ *
  * @param {number} page - Current page number (1-indexed)
  * @param {number} limit - Items per page
  * @param {number} autoRefreshInterval - Auto-refresh interval in ms (0 = disabled, default 30000)
  * @returns {object} { tasks, total, loading, error, refetch }
  */
-export const useFetchTasks = (page = 1, limit = 10, autoRefreshInterval = 30000) => {
+export const useFetchTasks = (
+  page = 1,
+  limit = 10,
+  autoRefreshInterval = 30000
+) => {
   const [tasks, setTasks] = useState([]);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(false);
@@ -45,7 +49,11 @@ export const useFetchTasks = (page = 1, limit = 10, autoRefreshInterval = 30000)
       console.log('🟢 useFetchTasks: Response received:', response);
 
       if (response && response.tasks && Array.isArray(response.tasks)) {
-        console.log('✅ useFetchTasks: Setting tasks to state:', response.tasks.length, 'tasks');
+        console.log(
+          '✅ useFetchTasks: Setting tasks to state:',
+          response.tasks.length,
+          'tasks'
+        );
         setTasks(response.tasks);
         setTotal(response.total || response.tasks.length);
         setStoreTasks(response.tasks);

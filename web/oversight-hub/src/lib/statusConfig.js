@@ -1,9 +1,9 @@
 /**
  * Status Configuration - Centralized status definitions
- * 
+ *
  * Single source of truth for status colors, labels, icons, and styling.
  * Used by: TaskTable, StatusDashboardMetrics, TaskDetailModal, TaskFilters, etc.
- * 
+ *
  * Prevents duplication and ensures consistent UI across all components.
  */
 

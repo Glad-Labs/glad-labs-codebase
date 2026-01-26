@@ -352,9 +352,11 @@ export const StatusDashboardMetrics = () => {
   );
 };
 
-export default {
+const StatusComponentsExport = {
   StatusAuditTrail,
   StatusTimeline,
   ValidationFailureUI,
   StatusDashboardMetrics,
 };
+
+export default StatusComponentsExport;

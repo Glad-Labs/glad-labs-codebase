@@ -1,6 +1,6 @@
 /**
  * TaskApprovalForm - Approval and publishing workflow
- * 
+ *
  * Features:
  * - Approval feedback textarea
  * - Reviewer ID input
@@ -47,9 +47,7 @@ const TaskApprovalForm = ({
             marginBottom: 2,
           }}
         >
-          <h3 style={{ marginTop: 0, color: '#ff6b6b' }}>
-            📝 Approval Notes
-          </h3>
+          <h3 style={{ marginTop: 0, color: '#ff6b6b' }}>📝 Approval Notes</h3>
           <TextField
             fullWidth
             multiline

@@ -1,6 +1,6 @@
 /**
  * TaskContentPreview - Content display section
- * 
+ *
  * Displays:
  * - Task topic/title
  * - Generated content preview WITH MARKDOWN RENDERING
@@ -10,7 +10,13 @@
 
 import React, { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
-import { Box, Button, TextField, Switch, FormControlLabel } from '@mui/material';
+import {
+  Box,
+  Button,
+  TextField,
+  Switch,
+  FormControlLabel,
+} from '@mui/material';
 import { updateTask } from '../../services/taskService';
 
 const TaskContentPreview = ({ task, onTaskUpdate }) => {
@@ -301,7 +307,7 @@ const TaskContentPreview = ({ task, onTaskUpdate }) => {
       )}
     </Box>
   );
-};;
+};
 
 TaskContentPreview.propTypes = {
   task: PropTypes.shape({

@@ -12,10 +12,7 @@
  */
 
 import { makeRequest } from './cofounderAgentClient';
-import {
-  STATUS_ENUM,
-  STATUS_MAP_NEW_TO_LEGACY,
-} from '../Constants/statusEnums';
+import { STATUS_ENUM } from '../Constants/statusEnums';
 
 /**
  * Get current user ID from localStorage or auth context

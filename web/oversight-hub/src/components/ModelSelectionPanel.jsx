@@ -172,12 +172,13 @@ export function ModelSelectionPanel({
   // Load available models on mount
   useEffect(() => {
     fetchAvailableModels();
-    // fetchAvailableModels is defined in the component, so it's stable
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Update cost estimates when selections change
   useEffect(() => {
     estimateCosts();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [modelSelections, qualityPreference]);
 
   // Notify parent of changes
@@ -191,7 +192,13 @@ export function ModelSelectionPanel({
         combinedCost: totalCost + totalElectricityCost,
       });
     }
-  }, [modelSelections, qualityPreference, totalCost, totalElectricityCost]);
+  }, [
+    modelSelections,
+    qualityPreference,
+    totalCost,
+    totalElectricityCost,
+    onSelectionChange,
+  ]);
 
   const fetchAvailableModels = async () => {
     try {

@@ -1,7 +1,7 @@
 /**
  * TaskManagement.jsx - Enhanced Task Management Page
  * Features: Task creation, filtering, sorting, detail view, actions (pause/resume/cancel/delete)
- * 
+ *
  * Refactored to use:
  * - useFetchTasks hook (eliminates duplicate fetch logic)
  * - statusConfig (centralized status definitions)
@@ -14,12 +14,11 @@ import useFetchTasks from '../hooks/useFetchTasks';
 import CreateTaskModal from '../components/tasks/CreateTaskModal';
 import TaskDetailModal from '../components/tasks/TaskDetailModal';
 import TaskFilters from '../components/tasks/TaskFilters';
-import TaskActions from '../components/tasks/TaskActions';
 import { StatusDashboardMetrics } from '../components/tasks/StatusComponents';
 import './TaskManagement.css';
 
 function TaskManagement() {
-  const { setTasks, setSelectedTask, selectedTask } = useStore();
+  const { setSelectedTask } = useStore();
   const [sortBy, setSortBy] = useState('created_at');
   const [sortDirection, setSortDirection] = useState('desc');
   const [statusFilter, setStatusFilter] = useState('');

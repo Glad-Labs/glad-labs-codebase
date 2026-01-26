@@ -81,20 +81,18 @@ function AIStudio() {
   const [trainingLoading, setTrainingLoading] = useState(false);
   const [trainingError, setTrainingError] = useState(null);
 
-  const [filters, setFilters] = useState({
+  const [filters] = useState({
     quality_min: 0.7,
     quality_max: 1.0,
     exclude_tags: 'development,test',
     success_only: false,
   });
 
-  const [createDatasetName, setCreateDatasetName] = useState('production');
-  const [createDatasetDesc, setCreateDatasetDesc] = useState(
-    'Production-ready training data'
-  );
-
-  const [fineTuneTarget, setFineTuneTarget] = useState('ollama');
-  const [fineTuneDatasetPath, setFineTuneDatasetPath] = useState('');
+  // Unused variables commented out for future implementation
+  // const [createDatasetName, setCreateDatasetName] = useState('production');
+  // const [createDatasetDesc, setCreateDatasetDesc] = useState('Production-ready training data');
+  // const [fineTuneTarget, setFineTuneTarget] = useState('ollama');
+  // const [fineTuneDatasetPath, setFineTuneDatasetPath] = useState('');
 
   // ============================================================================
   // MAIN TAB STATE
@@ -126,6 +124,7 @@ function AIStudio() {
       }
     };
     fetch();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Load training data
@@ -133,6 +132,7 @@ function AIStudio() {
     if (activeTab === 'training') {
       loadTrainingAll();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeTab, filters]);
 
   // ============================================================================

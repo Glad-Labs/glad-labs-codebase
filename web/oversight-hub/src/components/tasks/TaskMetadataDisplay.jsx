@@ -1,6 +1,6 @@
 /**
  * TaskMetadataDisplay - Display task metadata in grid format
- * 
+ *
  * Features:
  * - Category
  * - Writing style
@@ -345,7 +345,7 @@ const TaskMetadataDisplay = ({ task }) => {
       )}
     </Box>
   );
-};;
+};
 
 TaskMetadataDisplay.propTypes = {
   task: PropTypes.shape({

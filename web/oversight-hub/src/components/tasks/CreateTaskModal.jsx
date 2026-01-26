@@ -410,7 +410,7 @@ const CreateTaskModal = ({ isOpen, onClose, onTaskCreated }) => {
     } catch (err) {
       // Properly extract error message from various error object formats
       let errorMessage = 'Unknown error';
-      
+
       if (typeof err === 'string') {
         errorMessage = err;
       } else if (err instanceof Error) {
@@ -418,18 +418,20 @@ const CreateTaskModal = ({ isOpen, onClose, onTaskCreated }) => {
       } else if (err && typeof err === 'object') {
         // Handle API error responses with detail/message fields
         if (err.response?.detail) {
-          errorMessage = typeof err.response.detail === 'string' 
-            ? err.response.detail 
-            : JSON.stringify(err.response.detail);
+          errorMessage =
+            typeof err.response.detail === 'string'
+              ? err.response.detail
+              : JSON.stringify(err.response.detail);
         } else if (err.response?.message) {
-          errorMessage = typeof err.response.message === 'string' 
-            ? err.response.message 
-            : JSON.stringify(err.response.message);
+          errorMessage =
+            typeof err.response.message === 'string'
+              ? err.response.message
+              : JSON.stringify(err.response.message);
         } else if (err.message) {
           errorMessage = err.message;
         }
       }
-      
+
       setError(`Failed to create task: ${errorMessage}`);
       console.error('Task creation error:', {
         message: errorMessage,
