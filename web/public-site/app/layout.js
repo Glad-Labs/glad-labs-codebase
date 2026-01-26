@@ -1,3 +1,4 @@
+import { Analytics } from '@vercel/analytics/next';
 import AdSenseScript from '../components/AdSenseScript';
 import CookieConsentBanner from '../components/CookieConsentBanner';
 import Footer from '../components/Footer';
@@ -68,6 +69,7 @@ export default function RootLayout({ children }) {
         {/* Client-side components that need hydration */}
         <AdSenseScript />
         <CookieConsentBanner />
+        <Analytics />
       </body>
     </html>
   );
