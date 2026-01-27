@@ -172,13 +172,13 @@ export function ModelSelectionPanel({
   // Load available models on mount
   useEffect(() => {
     fetchAvailableModels();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+     
   }, []);
 
   // Update cost estimates when selections change
   useEffect(() => {
     estimateCosts();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+     
   }, [modelSelections, qualityPreference]);
 
   // Notify parent of changes
