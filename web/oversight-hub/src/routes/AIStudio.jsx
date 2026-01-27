@@ -124,7 +124,7 @@ function AIStudio() {
       }
     };
     fetch();
-     
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Load training data
@@ -132,7 +132,7 @@ function AIStudio() {
     if (activeTab === 'training') {
       loadTrainingAll();
     }
-     
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeTab, filters]);
 
   // ============================================================================
