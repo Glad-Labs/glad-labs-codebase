@@ -113,7 +113,7 @@ const TaskDetailModal = ({ onClose, onUpdate }) => {
 
   // Handle task approval (WITHOUT publishing)
   const handleApproveTask = useCallback(
-    async (updatedTask) => {
+    async (_updatedTask) => {
       setApprovalLoading(true);
       try {
         // Use the proper taskService method which handles auth headers correctly

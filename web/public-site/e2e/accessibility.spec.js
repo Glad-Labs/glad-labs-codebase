@@ -198,7 +198,7 @@ test.describe('Performance & Load Time', () => {
 
 test.describe('Error Handling', () => {
   test('should handle 404 gracefully', async ({ page }) => {
-    const response = await page.goto('/non-existent-page');
+    const _response = await page.goto('/non-existent-page');
 
     // Should show error page or redirect
     const hasContent = await page

@@ -1,3 +1,4 @@
+/* eslint-disable react/prop-types */
 /**
  * integration.test.jsx
  * Integration test suite for form validation across components

@@ -4,11 +4,13 @@
  * Location: web/oversight-hub/__tests__/components/SettingsManager.test.jsx
  */
 
+/* eslint-disable no-unused-vars */
 import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import '@testing-library/jest-dom';
 import SettingsManager from '../../src/components/SettingsManager';
+/* eslint-enable no-unused-vars */
 
 // Mock Material-UI components if needed
 jest.mock('@mui/material', () => ({

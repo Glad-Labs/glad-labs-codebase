@@ -202,7 +202,7 @@ test.describe('Archive Search & Filtering', () => {
   });
 
   test('should handle 404 for non-existent pages', async ({ page }) => {
-    const response = await page.goto('/archive/9999');
+    const _response = await page.goto('/archive/9999');
 
     // Should either show 404 or redirect to available page
     const url = page.url();

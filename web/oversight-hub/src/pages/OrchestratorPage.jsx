@@ -79,7 +79,7 @@ const OrchestratorPage = () => {
 
     try {
       setLoading(true);
-      const response = await makeRequest('/api/orchestrator/process', 'POST', {
+      const _response = await makeRequest('/api/orchestrator/process', 'POST', {
         user_request: userRequest,
       });
 

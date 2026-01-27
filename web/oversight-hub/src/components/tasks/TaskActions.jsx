@@ -27,9 +27,9 @@ import { unifiedStatusService } from '../../services/unifiedStatusService';
 const TaskActions = ({
   selectedTask = null,
   isLoading = false,
-  onApprove,
-  onReject,
-  onDelete,
+  _onApprove,
+  _onReject,
+  _onDelete,
   onClose,
 }) => {
   const [dialogType, setDialogType] = useState(null); // 'approve', 'reject', 'delete', null

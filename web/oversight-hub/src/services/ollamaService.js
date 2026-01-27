@@ -43,7 +43,7 @@ export async function getOllamaModels() {
 
     const data = await response.json();
     return data.models || [];
-  } catch (error) {
+  } catch {
     return [];
   }
 }
@@ -70,7 +70,7 @@ export async function isOllamaAvailable() {
 
     const data = await response.json();
     return data.connected === true;
-  } catch (error) {
+  } catch {
     return false;
   }
 }
@@ -201,29 +201,25 @@ export async function streamOllamaGeneration(
  * @returns {Promise<object>} Model information
  */
 export async function getOllamaModelInfo(modelId) {
-  try {
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 5000);
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 5000);
 
-    const response = await fetch(`${getOllamaEndpoint()}/show`, {
-      method: 'POST',
-      signal: controller.signal,
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        name: modelId,
-      }),
-    });
+  const response = await fetch(`${getOllamaEndpoint()}/show`, {
+    method: 'POST',
+    signal: controller.signal,
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      name: modelId,
+    }),
+  });
 
-    clearTimeout(timeoutId);
+  clearTimeout(timeoutId);
 
-    if (!response.ok) {
-      throw new Error(`Could not fetch model info: ${response.status}`);
-    }
-
-    return await response.json();
-  } catch (error) {
-    throw error;
+  if (!response.ok) {
+    throw new Error(`Could not fetch model info: ${response.status}`);
   }
+
+  return await response.json();
 }

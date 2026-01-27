@@ -190,7 +190,7 @@ export const formatDate = (date) => {
       month: 'short',
       day: 'numeric',
     });
-  } catch (e) {
+  } catch {
     console.warn('Invalid date:', date);
     return '';
   }
@@ -214,7 +214,7 @@ export const formatDateTime = (date) => {
       minute: '2-digit',
       meridiem: 'short',
     });
-  } catch (e) {
+  } catch {
     console.warn('Invalid date:', date);
     return '';
   }
@@ -248,7 +248,7 @@ export const getDurationDisplay = (startDate, endDate) => {
     }
 
     return `${hours}h ${mins}m`;
-  } catch (e) {
+  } catch {
     console.warn('Invalid dates:', startDate, endDate);
     return '';
   }

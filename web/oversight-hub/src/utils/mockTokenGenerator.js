@@ -62,35 +62,31 @@ export const createMockJWTToken = async (userData = {}) => {
  * @returns {Promise<string>} - Base64url encoded signature
  */
 async function hmacSha256Sign(message, secret) {
-  try {
-    // Convert secret and message to Uint8Array
-    const encoder = new TextEncoder();
-    const key = await crypto.subtle.importKey(
-      'raw',
-      encoder.encode(secret),
-      { name: 'HMAC', hash: 'SHA-256' },
-      false,
-      ['sign']
-    );
+  // Convert secret and message to Uint8Array
+  const encoder = new TextEncoder();
+  const key = await crypto.subtle.importKey(
+    'raw',
+    encoder.encode(secret),
+    { name: 'HMAC', hash: 'SHA-256' },
+    false,
+    ['sign']
+  );
 
-    // Sign the message
-    const signature = await crypto.subtle.sign(
-      'HMAC',
-      key,
-      encoder.encode(message)
-    );
+  // Sign the message
+  const signature = await crypto.subtle.sign(
+    'HMAC',
+    key,
+    encoder.encode(message)
+  );
 
-    // Convert ArrayBuffer to base64url
-    // More robust than String.fromCharCode.apply() for larger buffers
-    const signatureArray = new Uint8Array(signature);
-    let binaryString = '';
-    for (let i = 0; i < signatureArray.length; i++) {
-      binaryString += String.fromCharCode(signatureArray[i]);
-    }
-    return base64UrlEncode(binaryString);
-  } catch (_error) {
-    throw _error;
+  // Convert ArrayBuffer to base64url
+  // More robust than String.fromCharCode.apply() for larger buffers
+  const signatureArray = new Uint8Array(signature);
+  let binaryString = '';
+  for (let i = 0; i < signatureArray.length; i++) {
+    binaryString += String.fromCharCode(signatureArray[i]);
   }
+  return base64UrlEncode(binaryString);
 }
 
 /**
@@ -120,7 +116,7 @@ export const decodeJWTToken = (token) => {
     );
 
     return JSON.parse(payloadDecoded);
-  } catch (_error) {
+  } catch {
     return null;
   }
 };

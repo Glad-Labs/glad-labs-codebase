@@ -39,7 +39,7 @@ const TaskMetadataDisplay = ({ task }) => {
   if (typeof taskMeta === 'string') {
     try {
       parsedTaskMeta = JSON.parse(taskMeta);
-    } catch (e) {
+    } catch {
       parsedTaskMeta = {};
     }
   }
@@ -49,7 +49,7 @@ const TaskMetadataDisplay = ({ task }) => {
   if (typeof result === 'string') {
     try {
       parsedResult = JSON.parse(result);
-    } catch (e) {
+    } catch {
       parsedResult = {};
     }
   }

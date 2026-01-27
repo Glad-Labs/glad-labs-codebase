@@ -68,17 +68,12 @@ export const unifiedStatusService = {
       };
 
       // Try new endpoint first
-      try {
-        const response = await makeRequest(
-          `/api/tasks/${taskId}/status/validated`,
-          'PUT',
-          payload
-        );
-        return response;
-      } catch (newError) {
-        // If new endpoint not available, throw error - don't fall back to legacy
-        throw newError;
-      }
+      const response = await makeRequest(
+        `/api/tasks/${taskId}/status/validated`,
+        'PUT',
+        payload
+      );
+      return response;
     } catch (error) {
       throw new Error(
         error.message || 'Failed to update task status. Please try again.'

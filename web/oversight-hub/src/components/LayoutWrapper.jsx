@@ -202,7 +202,7 @@ const LayoutWrapper = ({ children }) => {
           timestamp: new Date().toISOString(),
         },
       ]);
-    } catch (_error) {
+    } catch {
       // Silently handle errors for chat display
       setChatMessages((prev) => [
         ...prev,

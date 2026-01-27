@@ -380,7 +380,7 @@ function TaskManagement() {
                             });
                           }
                           return '-';
-                        } catch (e) {
+                        } catch {
                           return '-';
                         }
                       })()}
