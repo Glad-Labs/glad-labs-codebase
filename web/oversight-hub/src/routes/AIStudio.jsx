@@ -124,7 +124,6 @@ function AIStudio() {
       }
     };
     fetch();
-     
   }, []);
 
   // Load training data
@@ -132,7 +131,6 @@ function AIStudio() {
     if (activeTab === 'training') {
       loadTrainingAll();
     }
-     
   }, [activeTab, filters]);
 
   // ============================================================================

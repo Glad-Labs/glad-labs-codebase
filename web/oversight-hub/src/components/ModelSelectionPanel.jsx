@@ -172,13 +172,11 @@ export function ModelSelectionPanel({
   // Load available models on mount
   useEffect(() => {
     fetchAvailableModels();
-     
   }, []);
 
   // Update cost estimates when selections change
   useEffect(() => {
     estimateCosts();
-     
   }, [modelSelections, qualityPreference]);
 
   // Notify parent of changes
