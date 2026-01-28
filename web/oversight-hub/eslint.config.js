@@ -72,7 +72,7 @@ module.exports = [
     },
     settings: {
       react: {
-        version: 'detect',
+        version: '18.0',
       },
     },
   },
@@ -107,6 +107,11 @@ module.exports = [
         'warn',
         { argsIgnorePattern: '^_', varsIgnorePattern: '^_' },
       ],
+    },
+    settings: {
+      react: {
+        version: '18.0',
+      },
     },
   },
 ];
