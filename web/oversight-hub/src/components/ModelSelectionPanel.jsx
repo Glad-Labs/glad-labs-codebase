@@ -169,36 +169,185 @@ export function ModelSelectionPanel({
   const [phaseModels, setPhaseModels] = useState({});
   const [activeTab, setActiveTab] = useState(0); // Tab state
 
-  // Load available models on mount
-  // eslint-disable-next-line no-use-before-define
-  useEffect(() => {
-    fetchAvailableModels();
-  }, [fetchAvailableModels]);
+  // ============================================================================
+  // FUNCTION DEFINITIONS (MUST BE BEFORE useEffect HOOKS THAT CALL THEM)
+  // ============================================================================
 
-  // Update cost estimates when selections change
-  // eslint-disable-next-line no-use-before-define
-  useEffect(() => {
-    estimateCosts();
-  }, [modelSelections, qualityPreference, estimateCosts]);
-
-  // Notify parent of changes
-  useEffect(() => {
-    if (onSelectionChange) {
-      onSelectionChange({
-        modelSelections,
-        qualityPreference,
-        estimatedCost: totalCost,
-        electricityCost: totalElectricityCost,
-        combinedCost: totalCost + totalElectricityCost,
-      });
+  const getModelPowerConsumption = (modelId) => {
+    // Return power consumption in watts for a model
+    if (modelId === 'auto') {
+      return MODEL_POWER_CONSUMPTION.default;
     }
-  }, [
-    modelSelections,
-    qualityPreference,
-    totalCost,
-    totalElectricityCost,
-    onSelectionChange,
-  ]);
+
+    // Get exact match or find closest match
+    if (MODEL_POWER_CONSUMPTION[modelId]) {
+      return MODEL_POWER_CONSUMPTION[modelId];
+    }
+
+    // Try to match by base model name
+    const baseModel = modelId.split(':')[0];
+    for (const [key, power] of Object.entries(MODEL_POWER_CONSUMPTION)) {
+      if (key.includes(baseModel)) {
+        return power;
+      }
+    }
+
+    // Return default for unknown models
+    return MODEL_POWER_CONSUMPTION.default;
+  };
+
+  const calculateElectricityCost = useCallback((modelId, phaseIndex) => {
+    // Only calculate electricity for Ollama models
+    const isOllamaModel =
+      !modelId.includes('gpt') && !modelId.includes('claude');
+    if (!isOllamaModel) {
+      return 0; // Cloud API models don't have local electricity costs
+    }
+
+    const powerWatts = getModelPowerConsumption(modelId);
+
+    // Estimate processing time per phase (in seconds)
+    // Research: 100s, Outline: 80s, Draft: 150s, Assess: 60s, Refine: 100s, Finalize: 50s
+    const phaseProcessingTimes = {
+      research: 100,
+      outline: 80,
+      draft: 150,
+      assess: 60,
+      refine: 100,
+      finalize: 50,
+    };
+
+    const phases = [
+      'research',
+      'outline',
+      'draft',
+      'assess',
+      'refine',
+      'finalize',
+    ];
+    const processingSeconds = phaseProcessingTimes[phases[phaseIndex]] || 100;
+
+    // Calculate energy consumption: (watts / 1000) * (seconds / 3600) = kWh
+    const energyKwh = (powerWatts / 1000) * (processingSeconds / 3600);
+
+    // Calculate cost: kWh * price per kWh
+    const cost = energyKwh * ELECTRICITY_COST_CONFIG.pricePerKwh;
+
+    return cost;
+  }, []);
+
+  const estimateCosts = useCallback(async () => {
+    try {
+      // Calculate costs based on model selections
+      const getModelCost = (modelId) => {
+        if (modelId === 'auto') return 0.002; // Default estimate for auto-select
+
+        // Search through AVAILABLE_MODELS for the matching model
+        for (const provider of Object.values(AVAILABLE_MODELS)) {
+          const model = provider.models.find((m) => m.id === modelId);
+          if (model) return model.cost;
+        }
+        return 0; // Default if not found
+      };
+
+      const phases = [
+        'research',
+        'outline',
+        'draft',
+        'assess',
+        'refine',
+        'finalize',
+      ];
+      const mockCosts = {};
+      const mockElectricityCosts = {};
+      let total = 0;
+      let totalElectricity = 0;
+
+      phases.forEach((phase, index) => {
+        const modelId = modelSelections[phase];
+        mockCosts[phase] = getModelCost(modelId);
+        mockElectricityCosts[phase] = calculateElectricityCost(modelId, index);
+        total += mockCosts[phase];
+        totalElectricity += mockElectricityCosts[phase];
+      });
+
+      setCostEstimates(mockCosts);
+      setElectricityCosts(mockElectricityCosts);
+      setTotalCost(parseFloat(total.toFixed(4)));
+      setTotalElectricityCost(parseFloat(totalElectricity.toFixed(4)));
+    } catch (err) {
+      console.error('Error estimating costs:', err);
+      setError('Failed to estimate costs');
+    }
+  }, [modelSelections, calculateElectricityCost]);
+
+  const getDefaultPhaseModels = () => {
+    // Fallback models when Ollama API is not available
+    const defaultOllamaModels = [
+      { id: 'mistral:latest', name: 'Mistral 7B', cost: 0 },
+      { id: 'neural-chat:latest', name: 'Neural Chat 7B', cost: 0 },
+      { id: 'llama2:latest', name: 'Llama 2 7B', cost: 0 },
+      { id: 'qwen2:7b', name: 'Qwen 2 7B', cost: 0 },
+      { id: 'qwen2.5:14b', name: 'Qwen 2.5 14B', cost: 0 },
+      { id: 'mixtral:latest', name: 'Mixtral 8x7B', cost: 0 },
+      { id: 'gemma3:12b', name: 'Gemma 3 12B', cost: 0 },
+    ];
+
+    const defaultModels = { ...AVAILABLE_MODELS };
+    defaultModels.ollama.models = defaultOllamaModels;
+
+    return {
+      research: defaultModels,
+      outline: defaultModels,
+      draft: defaultModels,
+      assess: defaultModels,
+      refine: defaultModels,
+      finalize: defaultModels,
+    };
+  };
+
+  const formatOllamaModelName = (modelId) => {
+    // Convert "mistral:latest" to "Mistral" or "qwen2:7b" to "Qwen 2 7B"
+    const name = modelId.split(':')[0]; // Get base name without tag
+
+    // Create human-readable names
+    const nameMap = {
+      mistral: 'Mistral 7B',
+      'neural-chat': 'Neural Chat 7B',
+      llama2: 'Llama 2 7B',
+      llama3: 'Llama 3',
+      qwen2: 'Qwen 2 7B',
+      'qwen2.5': 'Qwen 2.5 14B',
+      qwen3: 'Qwen 3 14B',
+      'qwen3-coder': 'Qwen 3 Coder 30B',
+      'qwen3-vl': 'Qwen 3 Vision 30B',
+      mixtral: 'Mixtral 8x7B',
+      gemma3: 'Gemma 3',
+      'deepseek-coder': 'DeepSeek Coder 33B',
+      'deepseek-r1': 'DeepSeek R1',
+      llava: 'LLaVA (Vision)',
+      'gpt-oss': 'GPT-OSS',
+      qwq: 'QwQ',
+    };
+
+    // Look up the display name
+    let displayName = nameMap[name] || name;
+
+    // Add parameter size info if available
+    if (modelId.includes('70b')) displayName += ' 70B';
+    else if (modelId.includes('32b')) displayName += ' 32B';
+    else if (modelId.includes('30b')) displayName += ' 30B';
+    else if (modelId.includes('27b')) displayName += ' 27B';
+    else if (modelId.includes('14b')) displayName += ' 14B';
+    else if (modelId.includes('13b')) displayName += ' 13B';
+    else if (modelId.includes('12b')) displayName += ' 12B';
+
+    // Add quantization info for clarity
+    if (modelId.includes('fp16')) displayName += ' (FP16)';
+    else if (modelId.includes('q5')) displayName += ' (Q5)';
+
+    return displayName;
+  };
 
   const fetchAvailableModels = useCallback(async () => {
     try {
@@ -299,119 +448,38 @@ export function ModelSelectionPanel({
     }
   }, []);
 
-  const getDefaultPhaseModels = () => {
-    // Fallback models when Ollama API is not available
-    const defaultOllamaModels = [
-      { id: 'mistral:latest', name: 'Mistral 7B', cost: 0 },
-      { id: 'neural-chat:latest', name: 'Neural Chat 7B', cost: 0 },
-      { id: 'llama2:latest', name: 'Llama 2 7B', cost: 0 },
-      { id: 'qwen2:7b', name: 'Qwen 2 7B', cost: 0 },
-      { id: 'qwen2.5:14b', name: 'Qwen 2.5 14B', cost: 0 },
-      { id: 'mixtral:latest', name: 'Mixtral 8x7B', cost: 0 },
-      { id: 'gemma3:12b', name: 'Gemma 3 12B', cost: 0 },
-    ];
+  // ============================================================================
+  // EFFECTS
+  // ============================================================================
 
-    const defaultModels = { ...AVAILABLE_MODELS };
-    defaultModels.ollama.models = defaultOllamaModels;
+  // Load available models on mount
+  useEffect(() => {
+    fetchAvailableModels();
+  }, [fetchAvailableModels]);
 
-    return {
-      research: defaultModels,
-      outline: defaultModels,
-      draft: defaultModels,
-      assess: defaultModels,
-      refine: defaultModels,
-      finalize: defaultModels,
-    };
-  };
+  // Update cost estimates when selections change
+  useEffect(() => {
+    estimateCosts();
+  }, [modelSelections, qualityPreference, estimateCosts]);
 
-  const formatOllamaModelName = (modelId) => {
-    // Convert "mistral:latest" to "Mistral" or "qwen2:7b" to "Qwen 2 7B"
-    const name = modelId.split(':')[0]; // Get base name without tag
-
-    // Create human-readable names
-    const nameMap = {
-      mistral: 'Mistral 7B',
-      'neural-chat': 'Neural Chat 7B',
-      llama2: 'Llama 2 7B',
-      llama3: 'Llama 3',
-      qwen2: 'Qwen 2 7B',
-      'qwen2.5': 'Qwen 2.5 14B',
-      qwen3: 'Qwen 3 14B',
-      'qwen3-coder': 'Qwen 3 Coder 30B',
-      'qwen3-vl': 'Qwen 3 Vision 30B',
-      mixtral: 'Mixtral 8x7B',
-      gemma3: 'Gemma 3',
-      'deepseek-coder': 'DeepSeek Coder 33B',
-      'deepseek-r1': 'DeepSeek R1',
-      llava: 'LLaVA (Vision)',
-      'gpt-oss': 'GPT-OSS',
-      qwq: 'QwQ',
-    };
-
-    // Look up the display name
-    let displayName = nameMap[name] || name;
-
-    // Add parameter size info if available
-    if (modelId.includes('70b')) displayName += ' 70B';
-    else if (modelId.includes('32b')) displayName += ' 32B';
-    else if (modelId.includes('30b')) displayName += ' 30B';
-    else if (modelId.includes('27b')) displayName += ' 27B';
-    else if (modelId.includes('14b')) displayName += ' 14B';
-    else if (modelId.includes('13b')) displayName += ' 13B';
-    else if (modelId.includes('12b')) displayName += ' 12B';
-
-    // Add quantization info for clarity
-    if (modelId.includes('fp16')) displayName += ' (FP16)';
-    else if (modelId.includes('q5')) displayName += ' (Q5)';
-
-    return displayName;
-  };
-
-  const estimateCosts = useCallback(async () => {
-    try {
-      // Calculate costs based on model selections
-      const getModelCost = (modelId) => {
-        if (modelId === 'auto') return 0.002; // Default estimate for auto-select
-
-        // Search through AVAILABLE_MODELS for the matching model
-        for (const provider of Object.values(AVAILABLE_MODELS)) {
-          const model = provider.models.find((m) => m.id === modelId);
-          if (model) return model.cost;
-        }
-        return 0; // Default if not found
-      };
-
-      const phases = [
-        'research',
-        'outline',
-        'draft',
-        'assess',
-        'refine',
-        'finalize',
-      ];
-      const mockCosts = {};
-      const mockElectricityCosts = {};
-      let total = 0;
-      let totalElectricity = 0;
-
-      phases.forEach((phase, index) => {
-        const modelId = modelSelections[phase];
-        mockCosts[phase] = getModelCost(modelId);
-        // eslint-disable-next-line no-use-before-define
-        mockElectricityCosts[phase] = calculateElectricityCost(modelId, index);
-        total += mockCosts[phase];
-        totalElectricity += mockElectricityCosts[phase];
+  // Notify parent of changes
+  useEffect(() => {
+    if (onSelectionChange) {
+      onSelectionChange({
+        modelSelections,
+        qualityPreference,
+        estimatedCost: totalCost,
+        electricityCost: totalElectricityCost,
+        combinedCost: totalCost + totalElectricityCost,
       });
-
-      setCostEstimates(mockCosts);
-      setElectricityCosts(mockElectricityCosts);
-      setTotalCost(parseFloat(total.toFixed(4)));
-      setTotalElectricityCost(parseFloat(totalElectricity.toFixed(4)));
-    } catch (err) {
-      console.error('Error estimating costs:', err);
-      setError('Failed to estimate costs');
     }
-  }, [modelSelections, calculateElectricityCost]);
+  }, [
+    modelSelections,
+    qualityPreference,
+    totalCost,
+    totalElectricityCost,
+    onSelectionChange,
+  ]);
 
   const applyQualityPreset = async (preset) => {
     setQualityPreference(preset);
@@ -486,69 +554,6 @@ export function ModelSelectionPanel({
     };
     return icons[phase] || '•';
   };
-
-  const getModelPowerConsumption = (modelId) => {
-    // Return power consumption in watts for a model
-    if (modelId === 'auto') {
-      return MODEL_POWER_CONSUMPTION.default;
-    }
-
-    // Get exact match or find closest match
-    if (MODEL_POWER_CONSUMPTION[modelId]) {
-      return MODEL_POWER_CONSUMPTION[modelId];
-    }
-
-    // Try to match by base model name
-    const baseModel = modelId.split(':')[0];
-    for (const [key, power] of Object.entries(MODEL_POWER_CONSUMPTION)) {
-      if (key.includes(baseModel)) {
-        return power;
-      }
-    }
-
-    // Return default for unknown models
-    return MODEL_POWER_CONSUMPTION.default;
-  };
-
-  const calculateElectricityCost = useCallback((modelId, phaseIndex) => {
-    // Only calculate electricity for Ollama models
-    const isOllamaModel =
-      !modelId.includes('gpt') && !modelId.includes('claude');
-    if (!isOllamaModel) {
-      return 0; // Cloud API models don't have local electricity costs
-    }
-
-    const powerWatts = getModelPowerConsumption(modelId);
-
-    // Estimate processing time per phase (in seconds)
-    // Research: 100s, Outline: 80s, Draft: 150s, Assess: 60s, Refine: 100s, Finalize: 50s
-    const phaseProcessingTimes = {
-      research: 100,
-      outline: 80,
-      draft: 150,
-      assess: 60,
-      refine: 100,
-      finalize: 50,
-    };
-
-    const phases = [
-      'research',
-      'outline',
-      'draft',
-      'assess',
-      'refine',
-      'finalize',
-    ];
-    const processingSeconds = phaseProcessingTimes[phases[phaseIndex]] || 100;
-
-    // Calculate energy consumption: (watts / 1000) * (seconds / 3600) = kWh
-    const energyKwh = (powerWatts / 1000) * (processingSeconds / 3600);
-
-    // Calculate cost: kWh * price per kWh
-    const cost = energyKwh * ELECTRICITY_COST_CONFIG.pricePerKwh;
-
-    return cost;
-  }, []);
 
   return (
     <Box sx={{ width: '100%' }}>

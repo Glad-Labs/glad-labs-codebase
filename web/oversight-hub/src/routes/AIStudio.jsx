@@ -107,6 +107,65 @@ function AIStudio() {
   // Track if we've already fetched Ollama models
   const hasInitializedRef = useRef(false);
 
+  // ============================================================================
+  // TRAINING DATA FUNCTIONS (MUST BE BEFORE useEffect THAT CALLS THEM)
+  // ============================================================================
+
+  const loadTrainingStats = useCallback(async () => {
+    try {
+      const excludeTags = filters.exclude_tags
+        ? `?exclude_tags=${filters.exclude_tags}`
+        : '';
+      const response = await makeRequest(
+        `/api/orchestrator/training/stats${excludeTags}`,
+        'GET'
+      );
+      setStats(response);
+    } catch (err) {
+      console.error('Error loading stats:', err);
+    }
+  }, [filters]);
+
+  const loadDatasets = useCallback(async () => {
+    try {
+      const response = await makeRequest(
+        '/api/orchestrator/training/datasets',
+        'GET'
+      );
+      setDatasets(response.datasets || []);
+    } catch (err) {
+      console.error('Error loading datasets:', err);
+    }
+  }, []);
+
+  const loadJobs = useCallback(async () => {
+    try {
+      const response = await makeRequest(
+        '/api/orchestrator/training/jobs',
+        'GET'
+      );
+      setTrainingJobs(response.jobs || []);
+    } catch (err) {
+      console.error('Error loading jobs:', err);
+    }
+  }, []);
+
+  const loadTrainingAll = useCallback(async () => {
+    try {
+      setTrainingLoading(true);
+      setTrainingError(null);
+      await Promise.all([loadTrainingStats(), loadDatasets(), loadJobs()]);
+    } catch (err) {
+      setTrainingError(err.message);
+    } finally {
+      setTrainingLoading(false);
+    }
+  }, [loadTrainingStats, loadDatasets, loadJobs]);
+
+  // ============================================================================
+  // EFFECTS
+  // ============================================================================
+
   // Fetch Ollama models on component mount
   useEffect(() => {
     if (hasInitializedRef.current) return;
@@ -134,7 +193,6 @@ function AIStudio() {
 
   // Load training data
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  // eslint-disable-next-line no-use-before-define
   useEffect(() => {
     if (activeTab === 'training') {
       loadTrainingAll();
@@ -196,61 +254,6 @@ function AIStudio() {
       setTestLoading(false);
     }
   };
-
-  // ============================================================================
-  // TRAINING DATA FUNCTIONS
-  // ============================================================================
-
-  const loadTrainingAll = useCallback(async () => {
-    try {
-      setTrainingLoading(true);
-      setTrainingError(null);
-      await Promise.all([loadTrainingStats(), loadDatasets(), loadJobs()]);
-    } catch (err) {
-      setTrainingError(err.message);
-    } finally {
-      setTrainingLoading(false);
-    }
-  }, [loadTrainingStats, loadDatasets, loadJobs]);
-
-  const loadTrainingStats = useCallback(async () => {
-    try {
-      const excludeTags = filters.exclude_tags
-        ? `?exclude_tags=${filters.exclude_tags}`
-        : '';
-      const response = await makeRequest(
-        `/api/orchestrator/training/stats${excludeTags}`,
-        'GET'
-      );
-      setStats(response);
-    } catch (err) {
-      console.error('Error loading stats:', err);
-    }
-  }, [filters]);
-
-  const loadDatasets = useCallback(async () => {
-    try {
-      const response = await makeRequest(
-        '/api/orchestrator/training/datasets',
-        'GET'
-      );
-      setDatasets(response.datasets || []);
-    } catch (err) {
-      console.error('Error loading datasets:', err);
-    }
-  }, []);
-
-  const loadJobs = useCallback(async () => {
-    try {
-      const response = await makeRequest(
-        '/api/orchestrator/training/jobs',
-        'GET'
-      );
-      setTrainingJobs(response.jobs || []);
-    } catch (err) {
-      console.error('Error loading jobs:', err);
-    }
-  }, []);
 
   // ============================================================================
   // RENDER
