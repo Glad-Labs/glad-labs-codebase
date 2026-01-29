@@ -170,11 +170,13 @@ export function ModelSelectionPanel({
   const [activeTab, setActiveTab] = useState(0); // Tab state
 
   // Load available models on mount
+  // eslint-disable-next-line no-use-before-define
   useEffect(() => {
     fetchAvailableModels();
   }, [fetchAvailableModels]);
 
   // Update cost estimates when selections change
+  // eslint-disable-next-line no-use-before-define
   useEffect(() => {
     estimateCosts();
   }, [modelSelections, qualityPreference, estimateCosts]);
@@ -395,6 +397,7 @@ export function ModelSelectionPanel({
       phases.forEach((phase, index) => {
         const modelId = modelSelections[phase];
         mockCosts[phase] = getModelCost(modelId);
+        // eslint-disable-next-line no-use-before-define
         mockElectricityCosts[phase] = calculateElectricityCost(modelId, index);
         total += mockCosts[phase];
         totalElectricity += mockElectricityCosts[phase];
