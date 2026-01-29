@@ -61,6 +61,7 @@ module.exports = [
       'react-hooks/rules-of-hooks': 'error',
       'react-hooks/exhaustive-deps': 'off',
       'no-console': process.env.NODE_ENV === 'production' ? 'error' : 'off',
+      'no-use-before-define': 'off', // Functions can be referenced before definition (JavaScript hoisting)
       'no-unused-vars': [
         'warn',
         {
