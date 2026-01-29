@@ -8,7 +8,7 @@
  * Provides unified interface for all AI/ML operations
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import './ModelManagement.css'; // Reuse existing styles
 import { makeRequest } from '../services/cofounderAgentClient';
 
@@ -104,8 +104,13 @@ function AIStudio() {
   // EFFECTS
   // ============================================================================
 
+  // Track if we've already fetched Ollama models
+  const hasInitializedRef = useRef(false);
+
   // Fetch Ollama models on component mount
   useEffect(() => {
+    if (hasInitializedRef.current) return;
+
     const fetch = async () => {
       try {
         const response = await fetch('http://localhost:11434/api/tags');
@@ -123,15 +128,17 @@ function AIStudio() {
         setOllamaModels([]);
       }
     };
+    hasInitializedRef.current = true;
     fetch();
-  }, []);
+  }, [selectedModel]);
 
   // Load training data
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     if (activeTab === 'training') {
       loadTrainingAll();
     }
-  }, [activeTab, filters]);
+  }, [activeTab, filters, loadTrainingAll]);
 
   // ============================================================================
   // MODEL TESTING FUNCTIONS
@@ -193,7 +200,7 @@ function AIStudio() {
   // TRAINING DATA FUNCTIONS
   // ============================================================================
 
-  const loadTrainingAll = async () => {
+  const loadTrainingAll = useCallback(async () => {
     try {
       setTrainingLoading(true);
       setTrainingError(null);
@@ -203,9 +210,9 @@ function AIStudio() {
     } finally {
       setTrainingLoading(false);
     }
-  };
+  }, [loadTrainingStats, loadDatasets, loadJobs]);
 
-  const loadTrainingStats = async () => {
+  const loadTrainingStats = useCallback(async () => {
     try {
       const excludeTags = filters.exclude_tags
         ? `?exclude_tags=${filters.exclude_tags}`
@@ -218,9 +225,9 @@ function AIStudio() {
     } catch (err) {
       console.error('Error loading stats:', err);
     }
-  };
+  }, [filters]);
 
-  const loadDatasets = async () => {
+  const loadDatasets = useCallback(async () => {
     try {
       const response = await makeRequest(
         '/api/orchestrator/training/datasets',
@@ -230,9 +237,9 @@ function AIStudio() {
     } catch (err) {
       console.error('Error loading datasets:', err);
     }
-  };
+  }, []);
 
-  const loadJobs = async () => {
+  const loadJobs = useCallback(async () => {
     try {
       const response = await makeRequest(
         '/api/orchestrator/training/jobs',
@@ -242,7 +249,7 @@ function AIStudio() {
     } catch (err) {
       console.error('Error loading jobs:', err);
     }
-  };
+  }, []);
 
   // ============================================================================
   // RENDER

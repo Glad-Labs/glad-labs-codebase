@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   Box,
   Card,
@@ -172,12 +172,12 @@ export function ModelSelectionPanel({
   // Load available models on mount
   useEffect(() => {
     fetchAvailableModels();
-  }, []);
+  }, [fetchAvailableModels]);
 
   // Update cost estimates when selections change
   useEffect(() => {
     estimateCosts();
-  }, [modelSelections, qualityPreference]);
+  }, [modelSelections, qualityPreference, estimateCosts]);
 
   // Notify parent of changes
   useEffect(() => {
@@ -198,7 +198,7 @@ export function ModelSelectionPanel({
     onSelectionChange,
   ]);
 
-  const fetchAvailableModels = async () => {
+  const fetchAvailableModels = useCallback(async () => {
     try {
       // First, try to fetch from unified API (includes all providers)
       const models = await modelService.getAvailableModels(true); // Force refresh
@@ -295,7 +295,7 @@ export function ModelSelectionPanel({
       setPhaseModels(getDefaultPhaseModels());
       setError('Using default models - API unavailable');
     }
-  };
+  }, []);
 
   const getDefaultPhaseModels = () => {
     // Fallback models when Ollama API is not available
@@ -365,7 +365,7 @@ export function ModelSelectionPanel({
     return displayName;
   };
 
-  const estimateCosts = async () => {
+  const estimateCosts = useCallback(async () => {
     try {
       // Calculate costs based on model selections
       const getModelCost = (modelId) => {
@@ -408,7 +408,7 @@ export function ModelSelectionPanel({
       console.error('Error estimating costs:', err);
       setError('Failed to estimate costs');
     }
-  };
+  }, [modelSelections, calculateElectricityCost]);
 
   const applyQualityPreset = async (preset) => {
     setQualityPreference(preset);
@@ -507,7 +507,7 @@ export function ModelSelectionPanel({
     return MODEL_POWER_CONSUMPTION.default;
   };
 
-  const calculateElectricityCost = (modelId, phaseIndex) => {
+  const calculateElectricityCost = useCallback((modelId, phaseIndex) => {
     // Only calculate electricity for Ollama models
     const isOllamaModel =
       !modelId.includes('gpt') && !modelId.includes('claude');
@@ -545,7 +545,7 @@ export function ModelSelectionPanel({
     const cost = energyKwh * ELECTRICITY_COST_CONFIG.pricePerKwh;
 
     return cost;
-  };
+  }, []);
 
   return (
     <Box sx={{ width: '100%' }}>
