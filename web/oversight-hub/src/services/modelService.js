@@ -317,6 +317,15 @@ class ModelService {
       provider = 'gemini';
     }
     const name = model.name || model.id || 'default';
+    
+    // Don't duplicate provider prefix - if name already starts with provider, just return name
+    // e.g., if provider='gemini' and name='gemini-2.5-flash', return 'gemini-2.5-flash'
+    // not 'gemini-gemini-2.5-flash'
+    const nameProviderPrefix = name.toLowerCase().split('-')[0];
+    if (nameProviderPrefix === provider) {
+      return name;  // Name already has provider prefix
+    }
+    
     return `${provider}-${name}`;
   }
 

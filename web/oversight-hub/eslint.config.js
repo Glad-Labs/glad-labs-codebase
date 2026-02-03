@@ -59,8 +59,12 @@ module.exports = [
       'react/react-in-jsx-scope': 'off',
       'react/prop-types': 'off', // Disabled - TypeScript/JSDoc would be better
       'react-hooks/rules-of-hooks': 'error',
-      'react-hooks/exhaustive-deps': 'off',
+      'react-hooks/exhaustive-deps': 'warn', // Critical for preventing stale state bugs
       'no-console': process.env.NODE_ENV === 'production' ? 'error' : 'off',
+      'no-duplicate-imports': 'warn', // Catch accidental duplicate imports
+      'prefer-const': 'warn', // Use const instead of let when possible
+      eqeqeq: ['warn', 'always'], // Use === instead of ==
+      'no-var': 'warn', // Use let/const instead of var
       'no-unused-vars': [
         'warn',
         {
