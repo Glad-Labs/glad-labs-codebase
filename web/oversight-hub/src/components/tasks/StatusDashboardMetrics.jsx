@@ -193,7 +193,7 @@ const StatusDashboardMetrics = ({ statusHistory = [] }) => {
         mostCommonStatus,
         timeRange,
       });
-    };;
+    };
 
     calculateMetrics();
   }, [statusHistory, timeRange]);

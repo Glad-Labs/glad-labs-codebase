@@ -39,7 +39,7 @@ export const formatTaskForDisplay = (task) => {
     featuredImageUrl: task.task_metadata?.featured_image_url,
 
     // Quality formatting
-    qualityScore: Math.round((task.quality_score || 0) * 10) / 10,
+    qualityScore: task.quality_score || 0, // Already on 0-100 scale from backend
     qualityBadge: getQualityBadge(task.quality_score),
 
     // Metadata

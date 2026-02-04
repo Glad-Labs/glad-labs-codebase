@@ -192,7 +192,7 @@ function AIStudio() {
   }, [selectedModel]);
 
   // Load training data
-   
+
   useEffect(() => {
     if (activeTab === 'training') {
       loadTrainingAll();

@@ -83,17 +83,17 @@ export const formatCost = (cost) => {
 };
 
 /**
- * Format quality score 0-100 as 0-10
- * @param {number} score - Quality score (0-1 or 0-100)
- * @returns {string} Formatted score (e.g., "8/10")
+ * Format quality score on 0-100 scale
+ * @param {number} score - Quality score (0-100)
+ * @returns {string} Formatted score (e.g., "85/100")
  */
 export const formatQualityScore = (score) => {
   if (typeof score !== 'number') {
     return 'N/A';
   }
-  // Handle both 0-1 and 0-100 scales
+  // Score is on 0-100 scale
   const normalized = score > 1 ? score : score * 100;
-  return `${Math.round(normalized / 10)}/10`;
+  return `${Math.round(normalized)}/100`;
 };
 
 /**
