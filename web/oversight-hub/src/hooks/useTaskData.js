@@ -51,7 +51,7 @@ export function useTaskData(
       });
 
       // Store all tasks for KPI calculation
-      let fetchedAllTasks = allTasksData || [];
+      const fetchedAllTasks = allTasksData || [];
       setAllTasks(fetchedAllTasks);
       setTotal(fetchedAllTasks.length);
 

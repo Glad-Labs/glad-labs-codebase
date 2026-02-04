@@ -73,28 +73,57 @@ const TaskContentPreview = ({ task, onTaskUpdate }) => {
 
   if (!task) return null;
 
-  // Convert markdown to HTML (same logic as PostEditor)
+  // Convert markdown to HTML with better header detection (handles underline-style headers)
   const renderMarkdown = (markdown) => {
     if (!markdown)
       return '<p style="color: #999; font-style: italic;">No content available</p>';
 
     let html = markdown
-      // Headers
+      // Headers with dashes/equals (underline style) - must come BEFORE regular markdown headers
+      .replace(/^(.*?)\n={3,}\n/gm, '<h1>$1</h1>')
+      .replace(/^(.*?)\n-{3,}\n/gm, '<h2>$1</h2>')
+      // Regular markdown headers
       .replace(/^### (.*$)/gim, '<h3>$1</h3>')
       .replace(/^## (.*$)/gim, '<h2>$1</h2>')
       .replace(/^# (.*$)/gim, '<h1>$1</h1>')
+      // Horizontal rules
+      .replace(/^={3,}$/gm, '<hr/>')
+      .replace(/^_{3,}$/gm, '<hr/>')
       // Bold and italic
       .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+      .replace(/__(.*?)__/g, '<strong>$1</strong>')
       .replace(/\*(.*?)\*/g, '<em>$1</em>')
+      .replace(/_(.*?)_/g, '<em>$1</em>')
+      // Links
+      .replace(
+        /\[(.*?)\]\((.*?)\)/g,
+        '<a href="$2" style="color: #00d9ff; text-decoration: underline;">$1</a>'
+      )
       // Lists
       .replace(/^\* (.*$)/gim, '<li>$1</li>')
       .replace(/^- (.*$)/gim, '<li>$1</li>')
+      // Code blocks and inline code
+      .replace(
+        /```([\s\S]*?)```/g,
+        '<pre style="background: #1a1a1a; padding: 12px; border-radius: 4px; overflow-x: auto;"><code>$1</code></pre>'
+      )
+      .replace(
+        /`(.*?)`/g,
+        '<code style="background: #1a1a1a; padding: 2px 6px; border-radius: 3px; font-family: monospace;">$1</code>'
+      )
       // Line breaks and paragraphs
-      .replace(/\n\n/g, '</p><p>')
+      .replace(/\n\n+/g, '</p><p>')
       .replace(/\n/g, '<br/>');
 
     // Wrap list items in <ul>
-    html = html.replace(/(<li>.*<\/li>)/s, '<ul>$1</ul>');
+    html = html.replace(
+      /(<li>.*?<\/li>)/s,
+      '<ul style="margin-left: 24px;">$1</ul>'
+    );
+    // Fix improperly nested tags
+    html = html
+      .replace(/<p>\s*<(h[123]|pre|ul|ol|hr)/g, '<$1')
+      .replace(/<\/(h[123]|pre|ul|ol|hr)>\s*<\/p>/g, '</$1>');
 
     return `<div style="line-height: 1.8; font-family: 'Segoe UI', Arial, sans-serif;"><p>${html}</p></div>`;
   };

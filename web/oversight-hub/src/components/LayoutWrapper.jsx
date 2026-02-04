@@ -12,6 +12,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import * as cofounderAgentClient from '../services/cofounderAgentClient';
 import { modelService } from '../services/modelService';
+import ModelSelectDropdown from './ModelSelectDropdown';
 import '../OversightHub.css';
 
 const LayoutWrapper = ({ children }) => {
@@ -299,79 +300,12 @@ const LayoutWrapper = ({ children }) => {
                 🔄 Agent
               </button>
             </div>
-            <select
+            <ModelSelectDropdown
               value={selectedModel}
-              onChange={(e) => setSelectedModel(e.target.value)}
+              onChange={(value) => setSelectedModel(value)}
+              modelsByProvider={modelsByProvider}
               className="model-selector"
-              title="Select AI Model - Groups: Ollama (Local), OpenAI, Anthropic, Google"
-            >
-              <option value="">-- Select Model --</option>
-
-              {/* Ollama Models Group */}
-              {modelsByProvider.ollama &&
-                modelsByProvider.ollama.length > 0 && (
-                  <optgroup label="🖥️  Ollama (Local)">
-                    {modelsByProvider.ollama.map((m) => (
-                      <option
-                        key={modelService.getModelValue(m)}
-                        value={modelService.getModelValue(m)}
-                      >
-                        {modelService.formatModelDisplayName(
-                          m.name || m.displayName
-                        )}
-                      </option>
-                    ))}
-                  </optgroup>
-                )}
-
-              {/* OpenAI Models Group */}
-              {modelsByProvider.openai &&
-                modelsByProvider.openai.length > 0 && (
-                  <optgroup label="⚡ OpenAI">
-                    {modelsByProvider.openai.map((m) => (
-                      <option
-                        key={modelService.getModelValue(m)}
-                        value={modelService.getModelValue(m)}
-                      >
-                        {m.displayName ||
-                          modelService.formatModelDisplayName(m.name)}
-                      </option>
-                    ))}
-                  </optgroup>
-                )}
-
-              {/* Anthropic Models Group */}
-              {modelsByProvider.anthropic &&
-                modelsByProvider.anthropic.length > 0 && (
-                  <optgroup label="🧠 Anthropic">
-                    {modelsByProvider.anthropic.map((m) => (
-                      <option
-                        key={modelService.getModelValue(m)}
-                        value={modelService.getModelValue(m)}
-                      >
-                        {m.displayName ||
-                          modelService.formatModelDisplayName(m.name)}
-                      </option>
-                    ))}
-                  </optgroup>
-                )}
-
-              {/* Google Models Group */}
-              {modelsByProvider.google &&
-                modelsByProvider.google.length > 0 && (
-                  <optgroup label="☁️ Google">
-                    {modelsByProvider.google.map((m) => (
-                      <option
-                        key={modelService.getModelValue(m)}
-                        value={modelService.getModelValue(m)}
-                      >
-                        {m.displayName ||
-                          modelService.formatModelDisplayName(m.name)}
-                      </option>
-                    ))}
-                  </optgroup>
-                )}
-            </select>
+            />
             {chatMode === 'agent' && (
               <select
                 value={selectedAgent}

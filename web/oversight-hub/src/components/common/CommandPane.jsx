@@ -5,6 +5,7 @@ import {
   MessageList,
   MessageInput,
   TypingIndicator,
+  Message,
 } from '@chatscope/chat-ui-kit-react';
 import '@chatscope/chat-ui-kit-styles/dist/default/styles.min.css';
 import '../CommandPane.css';
@@ -15,7 +16,6 @@ import OrchestratorCommandMessage from '../OrchestratorCommandMessage';
 import OrchestratorStatusMessage from '../OrchestratorStatusMessage';
 import OrchestratorResultMessage from '../OrchestratorResultMessage';
 import OrchestratorErrorMessage from '../OrchestratorErrorMessage';
-import { Message } from '@chatscope/chat-ui-kit-react';
 
 // Available AI Models
 const AI_MODELS = [

@@ -249,7 +249,7 @@ describe('TaskFilters Component', () => {
       const { rerender } = render(<TaskFilters {...defaultProps} />);
 
       // Change sort
-      let sortButton = screen.getByLabelText(/Sort By/i);
+      const sortButton = screen.getByLabelText(/Sort By/i);
       fireEvent.mouseDown(sortButton);
       fireEvent.click(screen.getByText('Name'));
       expect(defaultProps.onSortChange).toHaveBeenCalledWith('name');
@@ -258,7 +258,7 @@ describe('TaskFilters Component', () => {
 
       // Change direction
       rerender(<TaskFilters {...defaultProps} sortBy="name" />);
-      let directionButton = screen.getByLabelText(/Direction/i);
+      const directionButton = screen.getByLabelText(/Direction/i);
       fireEvent.mouseDown(directionButton);
       fireEvent.click(screen.getByText('Ascending'));
       expect(defaultProps.onDirectionChange).toHaveBeenCalledWith('asc');
@@ -269,7 +269,7 @@ describe('TaskFilters Component', () => {
       rerender(
         <TaskFilters {...defaultProps} sortBy="name" sortDirection="asc" />
       );
-      let statusButton = screen.getByLabelText(/Status/i);
+      const statusButton = screen.getByLabelText(/Status/i);
       fireEvent.mouseDown(statusButton);
       fireEvent.click(screen.getByText('Completed'));
       expect(defaultProps.onStatusChange).toHaveBeenCalledWith('completed');

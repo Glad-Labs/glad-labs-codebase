@@ -192,7 +192,7 @@ function AIStudio() {
   }, [selectedModel]);
 
   // Load training data
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+   
   useEffect(() => {
     if (activeTab === 'training') {
       loadTrainingAll();

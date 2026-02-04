@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
 import './StatusTimeline.css';
-import './StatusTimeline.css';
 
 /**
  * StatusTimeline Component
@@ -59,25 +58,25 @@ const StatusTimeline = ({ currentStatus, statusHistory = [] }) => {
 
   useEffect(() => {
     // Calculate duration in each state
+    const calculateDurations = () => {
+      const durationMap = {};
+
+      for (let i = 0; i < statusHistory.length - 1; i++) {
+        const current = statusHistory[i];
+        const next = statusHistory[i + 1];
+
+        const currentTime = new Date(current.timestamp).getTime();
+        const nextTime = new Date(next.timestamp).getTime();
+        const durationMs = nextTime - currentTime;
+
+        durationMap[current.new_status] = formatDuration(durationMs);
+      }
+
+      setDurations(durationMap);
+    };
+
     calculateDurations();
   }, [statusHistory]);
-
-  const calculateDurations = () => {
-    const durationMap = {};
-
-    for (let i = 0; i < statusHistory.length - 1; i++) {
-      const current = statusHistory[i];
-      const next = statusHistory[i + 1];
-
-      const currentTime = new Date(current.timestamp).getTime();
-      const nextTime = new Date(next.timestamp).getTime();
-      const durationMs = nextTime - currentTime;
-
-      durationMap[current.new_status] = formatDuration(durationMs);
-    }
-
-    setDurations(durationMap);
-  };
 
   const formatDuration = (ms) => {
     const seconds = Math.floor(ms / 1000);

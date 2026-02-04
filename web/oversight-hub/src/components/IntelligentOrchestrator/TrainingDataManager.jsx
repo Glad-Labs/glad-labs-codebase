@@ -22,26 +22,26 @@ function TrainingDataManager({ taskId, onReset }) {
 
   // Fetch training data stats on mount
   useEffect(() => {
+    const fetchStats = async () => {
+      try {
+        // Get a preview of the training data
+        const data = await exportOrchestratorTrainingData(taskId, 'json', true);
+        if (data && data.training_data) {
+          setStats({
+            total_records: data.training_data.length,
+            timestamp: data.timestamp,
+            task_id: data.task_id,
+          });
+        }
+      } catch (err) {
+        console.error('Error fetching stats:', err);
+      }
+    };
+
     if (taskId) {
       fetchStats();
     }
   }, [taskId]);
-
-  const fetchStats = async () => {
-    try {
-      // Get a preview of the training data
-      const data = await exportOrchestratorTrainingData(taskId, 'json', true);
-      if (data && data.training_data) {
-        setStats({
-          total_records: data.training_data.length,
-          timestamp: data.timestamp,
-          task_id: data.task_id,
-        });
-      }
-    } catch (err) {
-      console.error('Error fetching stats:', err);
-    }
-  };
 
   const handleExport = async () => {
     try {

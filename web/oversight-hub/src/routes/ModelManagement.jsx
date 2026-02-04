@@ -70,7 +70,7 @@ function ModelManagement() {
         const modelsArray = data.models || [];
 
         setOllamaModels(modelsArray);
-        if (modelsArray.length > 0 && !selectedModel) {
+        if (modelsArray.length > 0) {
           setSelectedModel(modelsArray[0].name);
         }
       } catch (error) {

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   AlertCircle,
   Filter,
@@ -38,25 +38,7 @@ const TrainingDataDashboard = () => {
   // Tab state
   const [activeTab, setActiveTab] = useState('data');
 
-  useEffect(() => {
-    loadAll();
-    const interval = setInterval(loadAll, 10000); // Refresh every 10s
-    return () => clearInterval(interval);
-  }, []);
-
-  const loadAll = async () => {
-    try {
-      setLoading(true);
-      await Promise.all([loadStats(), loadDatasets(), loadJobs()]);
-      setError(null);
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const loadStats = async () => {
+  const loadStats = useCallback(async () => {
     try {
       const excludeTags = filters.exclude_tags
         ? `?exclude_tags=${filters.exclude_tags}`
@@ -69,9 +51,9 @@ const TrainingDataDashboard = () => {
     } catch (err) {
       console.error('Error loading stats:', err);
     }
-  };
+  }, [filters]);
 
-  const loadDatasets = async () => {
+  const loadDatasets = useCallback(async () => {
     try {
       const response = await makeRequest(
         '/api/orchestrator/training/datasets',
@@ -81,9 +63,9 @@ const TrainingDataDashboard = () => {
     } catch (err) {
       console.error('Error loading datasets:', err);
     }
-  };
+  }, []);
 
-  const loadJobs = async () => {
+  const loadJobs = useCallback(async () => {
     try {
       const response = await makeRequest(
         '/api/orchestrator/training/jobs',
@@ -93,7 +75,25 @@ const TrainingDataDashboard = () => {
     } catch (err) {
       console.error('Error loading jobs:', err);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    const loadAll = async () => {
+      try {
+        setLoading(true);
+        await Promise.all([loadStats(), loadDatasets(), loadJobs()]);
+        setError(null);
+      } catch (err) {
+        setError(err.message);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadAll();
+    const interval = setInterval(loadAll, 10000); // Refresh every 10s
+    return () => clearInterval(interval);
+  }, [loadStats, loadDatasets, loadJobs]);
 
   const handleTagByDate = async () => {
     try {

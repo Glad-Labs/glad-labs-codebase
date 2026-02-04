@@ -457,12 +457,12 @@ export function ModelSelectionPanel({
     fetchAvailableModels();
   }, [fetchAvailableModels]);
 
-  // Update cost estimates when selections change
+  // Update cost estimates when selections or quality preference changes
   useEffect(() => {
     estimateCosts();
   }, [modelSelections, qualityPreference, estimateCosts]);
 
-  // Notify parent of changes
+  // Notify parent of changes - only include actual data dependencies
   useEffect(() => {
     if (onSelectionChange) {
       onSelectionChange({

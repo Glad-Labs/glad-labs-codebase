@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import { createTask, makeRequest } from '../../services/cofounderAgentClient';
 import ModelSelectionPanel from '../ModelSelectionPanel';
 
@@ -19,6 +19,11 @@ const CreateTaskModal = ({ isOpen, onClose, onTaskCreated }) => {
     qualityPreference: 'balanced',
     estimatedCost: 0.015,
   });
+
+  // Memoize the model selection callback to prevent infinite re-renders
+  const handleModelSelectionChange = useCallback((selection) => {
+    setModelSelection(selection);
+  }, []);
 
   // Task type definitions with required fields
   const taskTypes = {
@@ -639,9 +644,7 @@ const CreateTaskModal = ({ isOpen, onClose, onTaskCreated }) => {
                   style={{ maxHeight: '600px', overflowY: 'auto' }}
                 >
                   <ModelSelectionPanel
-                    onSelectionChange={(selection) => {
-                      setModelSelection(selection);
-                    }}
+                    onSelectionChange={handleModelSelectionChange}
                     initialQuality="balanced"
                   />
                 </div>

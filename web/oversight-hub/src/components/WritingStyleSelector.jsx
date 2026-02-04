@@ -64,7 +64,7 @@ export const WritingStyleSelector = ({
     };
 
     loadSamples();
-  }, []);
+  }, [onChange, value]);
 
   if (loading) {
     return (

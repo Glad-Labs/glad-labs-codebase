@@ -75,7 +75,7 @@
     "eslint": "^9.39.2",
     "eslint-plugin-jest": "^28.14.0",
     "eslint-plugin-react": "^7.37.5",
-    "eslint-plugin-react-hooks": "^4.6.2",
+    "eslint-plugin-react-hooks": "^5.0.0",
     "globals": "^15.14.0",
     "jsdom": "^27.4.0",
     "natural-compare-lite": "^1.4.0",

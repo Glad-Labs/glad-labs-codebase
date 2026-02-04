@@ -72,7 +72,7 @@ function PostEditor({ post, onClose, onSave }) {
     if (!markdown) return '<p>No content</p>';
 
     // Basic markdown conversion
-    let html = markdown
+    const html = markdown
       .replace(/^### (.*$)/gim, '<h3>$1</h3>')
       .replace(/^## (.*$)/gim, '<h2>$1</h2>')
       .replace(/^# (.*$)/gim, '<h1>$1</h1>')
