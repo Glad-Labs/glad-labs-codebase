@@ -2,6 +2,10 @@ import { Metadata } from 'next';
 import Image from 'next/image';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
+import {
+  BlogPostingSchema,
+  BreadcrumbSchema,
+} from '../../../components/StructuredData';
 import { generateBlogPostingSchema } from '../../../lib/structured-data';
 import {
   buildMetaDescription,
@@ -61,9 +65,10 @@ async function getPost(slug: string): Promise<Post | null> {
 export async function generateMetadata({
   params,
 }: {
-  params: { slug: string };
+  params: Promise<{ slug: string }>;
 }): Promise<Metadata> {
-  const post = await getPost(params.slug);
+  const { slug } = await params;
+  const post = await getPost(slug);
 
   if (!post) {
     return {
@@ -81,16 +86,18 @@ export async function generateMetadata({
 
   return {
     title: buildSEOTitle(title),
-    description: buildMetaDescription(description, 160),
+    description: buildMetaDescription(description),
     keywords: post.seo_keywords
       ? post.seo_keywords.split(',').map((k) => k.trim())
       : [],
-    canonical: canonicalUrl,
+    alternates: {
+      canonical: canonicalUrl,
+    },
     openGraph: {
       type: 'article',
       url: canonicalUrl,
       title: title,
-      description: buildMetaDescription(description, 160),
+      description: buildMetaDescription(description),
       images: [
         {
           url: imageUrl,
@@ -100,12 +107,12 @@ export async function generateMetadata({
         },
       ],
       publishedTime: publishDate,
-      authors: ['Glad Labs'],
+      modifiedTime: publishDate,
     },
     twitter: {
       card: 'summary_large_image',
       title: title,
-      description: buildMetaDescription(description, 160),
+      description: buildMetaDescription(description),
       images: [imageUrl],
       creator: '@GladLabsAI',
     },
@@ -122,39 +129,46 @@ export async function generateMetadata({
 export default async function PostPage({
   params,
 }: {
-  params: { slug: string };
+  params: Promise<{ slug: string }>;
 }) {
-  const post = await getPost(params.slug);
+  const { slug } = await params;
+  const post = await getPost(slug);
 
   if (!post) {
     notFound();
   }
 
   const imageUrl = post.cover_image_url || post.featured_image_url;
-  const publishDate = post.published_at
-    ? new Date(post.published_at).toLocaleDateString('en-US', {
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric',
-      })
-    : new Date(post.created_at).toLocaleDateString('en-US', {
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric',
-      });
+  const publishDate = post.published_at || post.created_at;
+
+  const breadcrumbs = [
+    { label: 'Home', url: '/' },
+    { label: 'Articles', url: '/archive/1' },
+    { label: post.title, url: `/posts/${post.slug}` },
+  ];
 
   const canonicalUrl = generateCanonicalURL(post.slug, SITE_URL);
   const structuredData = generateBlogPostingSchema(
     {
       ...post,
       coverImage: imageUrl ? { url: imageUrl } : undefined,
-      date: post.published_at || post.created_at,
+      date: publishDate,
     },
     SITE_URL
   );
 
   return (
     <>
+      {/* Schema Markup Components */}
+      <BlogPostingSchema
+        headline={post.seo_title || post.title}
+        description={post.seo_description || post.excerpt || ''}
+        image={imageUrl || '/og-image.jpg'}
+        datePublished={publishDate}
+        dateModified={publishDate}
+      />
+      <BreadcrumbSchema items={breadcrumbs} />
+
       {/* JSON-LD Structured Data */}
       {structuredData && (
         <script

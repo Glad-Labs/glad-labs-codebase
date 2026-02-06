@@ -26,6 +26,5 @@ export default function robots(): MetadataRoute.Robots {
       },
     ],
     sitemap: `${baseUrl}/sitemap.xml`,
-    crawlDelay: undefined, // No crawl delay specified
   };
 }

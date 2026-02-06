@@ -99,6 +99,13 @@ const Footer = () => {
                 <span className="w-1 h-1 rounded-full bg-cyan-400 opacity-0 group-hover:opacity-100 transition-opacity" />
                 Cookie Policy
               </Link>
+              <Link
+                href="/legal/data-requests"
+                className="text-sm text-slate-400 hover:text-cyan-300 transition-colors duration-200 font-medium group inline-flex items-center gap-2"
+              >
+                <span className="w-1 h-1 rounded-full bg-cyan-400 opacity-0 group-hover:opacity-100 transition-opacity" />
+                Data Requests
+              </Link>
             </nav>
           </div>
 
