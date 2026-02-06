@@ -58,26 +58,6 @@ function AppRoutes() {
         }
       />
       <Route
-        path="/training"
-        element={
-          <ProtectedRoute>
-            <LayoutWrapper>
-              <AIStudio />
-            </LayoutWrapper>
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/models"
-        element={
-          <ProtectedRoute>
-            <LayoutWrapper>
-              <AIStudio />
-            </LayoutWrapper>
-          </ProtectedRoute>
-        }
-      />
-      <Route
         path="/settings"
         element={
           <ProtectedRoute>

@@ -44,6 +44,7 @@ const LayoutWrapper = ({ children }) => {
   const navigationItems = [
     { label: 'Dashboard', icon: '📊', path: 'dashboard' },
     { label: 'Tasks', icon: '✅', path: 'tasks' },
+    { label: 'Content', icon: '📄', path: 'content' },
     { label: 'AI Studio', icon: '🤖', path: 'ai' },
     { label: 'Costs', icon: '💰', path: 'costs' },
     { label: 'Settings', icon: '⚙️', path: 'settings' },
@@ -155,11 +156,8 @@ const LayoutWrapper = ({ children }) => {
     const routeMap = {
       dashboard: '/',
       tasks: '/tasks',
-      execution: '/execution',
       content: '/content',
-      social: '/social',
-      training: '/training',
-      analytics: '/analytics',
+      ai: '/ai',
       costs: '/costs',
       settings: '/settings',
     };

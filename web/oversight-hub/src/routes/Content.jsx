@@ -20,7 +20,17 @@ function Content() {
     try {
       setLoading(true);
       const response = await getPosts();
-      setContentItems(response.items || response.posts || response);
+
+      // Handle various response formats from backend
+      let posts = [];
+      if (Array.isArray(response)) {
+        posts = response;
+      } else if (response && typeof response === 'object') {
+        posts = response.items || response.posts || response.data || [];
+      }
+
+      // Ensure it's an array
+      setContentItems(Array.isArray(posts) ? posts : []);
       setError(null);
     } catch (err) {
       console.error('Failed to fetch posts:', err);

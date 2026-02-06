@@ -9,7 +9,7 @@
  */
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import './ModelManagement.css'; // Reuse existing styles
+import './AIStudio.css';
 import { makeRequest } from '../services/cofounderAgentClient';
 
 function AIStudio() {
