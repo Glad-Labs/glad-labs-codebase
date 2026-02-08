@@ -104,16 +104,16 @@ Consolidation reduces maintenance burden. All AI/training/model features are now
 
 **Routes currently in use:**
 
-| Route | Component | Status |
-|-------|-----------|--------|
-| `/` | ExecutiveDashboard | ✅ Active |
-| `/tasks` | TaskManagement | ✅ Active |
-| `/content` | Content | ✅ Active |
-| `/ai` | AIStudio | ✅ Active |
-| `/costs` | CostMetricsDashboard | ✅ Active |
-| `/settings` | Settings | ✅ Active |
-| `/login` | Login | ✅ Active |
-| `/auth/callback` | AuthCallback | ✅ Active |
+| Route            | Component            | Status    |
+| ---------------- | -------------------- | --------- |
+| `/`              | ExecutiveDashboard   | ✅ Active |
+| `/tasks`         | TaskManagement       | ✅ Active |
+| `/content`       | Content              | ✅ Active |
+| `/ai`            | AIStudio             | ✅ Active |
+| `/costs`         | CostMetricsDashboard | ✅ Active |
+| `/settings`      | Settings             | ✅ Active |
+| `/login`         | Login                | ✅ Active |
+| `/auth/callback` | AuthCallback         | ✅ Active |
 
 ---
 

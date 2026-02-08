@@ -7,6 +7,7 @@ import {
   BreadcrumbSchema,
 } from '../../../components/StructuredData';
 import { generateBlogPostingSchema } from '../../../lib/structured-data';
+import { GiscusWrapper } from '../../../components/GiscusWrapper';
 import {
   buildMetaDescription,
   buildSEOTitle,
@@ -41,22 +42,25 @@ interface Post {
 // Fetch post data
 async function getPost(slug: string): Promise<Post | null> {
   try {
-    const response = await fetch(`${API_BASE}/api/posts?populate=*`, {
-      next: { revalidate: 3600 }, // ISR: revalidate every hour
+    // Use direct endpoint for single post by slug (much faster than fetching all posts)
+    const response = await fetch(`${API_BASE}/api/posts/${slug}`, {
+      next: { revalidate: 300 }, // ISR: revalidate every 5 minutes (was 1 hour)
     });
 
     if (!response.ok) {
-      console.error(`Failed to fetch posts: ${response.status}`);
+      if (response.status === 404) {
+        return null;
+      }
+      console.error(`Failed to fetch post: ${response.status}`);
       return null;
     }
 
     const data = await response.json();
-    const posts = data.data || data || [];
-    const post = posts.find((p: Post) => p.slug === slug);
+    const post = data.data || data;
 
     return post || null;
   } catch (error) {
-    console.error('Error fetching post:', error);
+    console.error(`Error fetching post "${slug}":`, error);
     return null;
   }
 }
@@ -284,6 +288,13 @@ export default async function PostPage({
         <div className="px-4 sm:px-6 lg:px-8 pb-12">
           <div className="max-w-4xl mx-auto bg-slate-800/50 border border-slate-700 rounded-lg p-8 text-center">
             <p className="text-slate-400 text-sm">Advertisement</p>
+          </div>
+        </div>
+
+        {/* Comments Section */}
+        <div className="px-4 sm:px-6 lg:px-8 pb-20 bg-slate-800/30">
+          <div className="max-w-4xl mx-auto">
+            <GiscusWrapper postSlug={post.slug} postTitle={post.title} />
           </div>
         </div>
       </main>

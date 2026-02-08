@@ -7,7 +7,11 @@
  * Breadcrumb Schema
  * Shows breadcrumb navigation in Google search results
  */
-export function BreadcrumbSchema({ items = [] }: { items?: Array<{ label: string; url: string }> }) {
+export function BreadcrumbSchema({
+  items = [],
+}: {
+  items?: Array<{ label: string; url: string }>;
+}) {
   const schema = {
     '@context': 'https://schema.org',
     '@type': 'BreadcrumbList',
@@ -31,7 +35,11 @@ export function BreadcrumbSchema({ items = [] }: { items?: Array<{ label: string
  * FAQ Schema
  * Enables FAQ rich snippets in Google SERP
  */
-export function FAQSchema({ faqs = [] }: { faqs?: Array<{ question: string; answer: string }> }) {
+export function FAQSchema({
+  faqs = [],
+}: {
+  faqs?: Array<{ question: string; answer: string }>;
+}) {
   const schema = {
     '@context': 'https://schema.org',
     '@type': 'FAQPage',

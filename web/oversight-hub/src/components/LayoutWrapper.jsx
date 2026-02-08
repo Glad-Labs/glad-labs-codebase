@@ -96,8 +96,16 @@ const LayoutWrapper = ({ children }) => {
     },
   ];
 
-  // Check Ollama availability on mount
+  // Check Ollama availability on mount only in development (local dev mode)
   useEffect(() => {
+    // Only check Ollama in development environment
+    const isDevelopment = process.env.NODE_ENV === 'development';
+
+    if (!isDevelopment) {
+      setOllamaConnected(false); // Disable in production
+      return;
+    }
+
     const checkOllama = async () => {
       try {
         const { isOllamaAvailable } = await import('../services/ollamaService');
@@ -109,10 +117,11 @@ const LayoutWrapper = ({ children }) => {
       }
     };
 
+    // Check once on mount
     checkOllama();
 
-    // Check every 10 seconds
-    const interval = setInterval(checkOllama, 10000);
+    // Optionally check every 5 minutes in development
+    const interval = setInterval(checkOllama, 300000); // 5 minutes
     return () => clearInterval(interval);
   }, []);
 
@@ -374,6 +383,6 @@ const LayoutWrapper = ({ children }) => {
       </div>
     </div>
   );
-};
+};;
 
 export default LayoutWrapper;
