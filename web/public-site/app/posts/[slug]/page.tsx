@@ -44,7 +44,7 @@ async function getPost(slug: string): Promise<Post | null> {
   try {
     // Use direct endpoint for single post by slug (much faster than fetching all posts)
     const response = await fetch(`${API_BASE}/api/posts/${slug}`, {
-      next: { revalidate: 300 }, // ISR: revalidate every 5 minutes (was 1 hour)
+      next: { revalidate: 86400 }, // ISR: revalidate every 24 hours - on-demand revalidation via webhook triggers updates
     });
 
     if (!response.ok) {

@@ -164,6 +164,43 @@ export const approveTask = async (taskId, feedback = '') => {
 };
 
 /**
+ * Trigger frontend cache revalidation for post pages
+ * Called after a post is published to update the public site
+ *
+ * @param {Array<string>} paths - Specific paths to revalidate (optional)
+ * @returns {Promise<object>} Revalidation result
+ */
+export const revalidatePublicSite = async (paths = []) => {
+  try {
+    const REVALIDATE_SECRET = process.env.REACT_APP_REVALIDATE_SECRET || 'dev-secret-key';
+    const PUBLIC_SITE_URL = process.env.REACT_APP_PUBLIC_SITE_URL || 'http://localhost:3000';
+
+    const response = await fetch(`${PUBLIC_SITE_URL}/api/revalidate`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-revalidate-secret': REVALIDATE_SECRET,
+      },
+      body: JSON.stringify({ paths }),
+    });
+
+    if (!response.ok) {
+      console.warn(`⚠️  Frontend revalidation returned status ${response.status}`);
+      // Don't throw - revalidation failure shouldn't break the publish flow
+      return { success: false, status: response.status };
+    }
+
+    const data = await response.json();
+    console.log('✅ Frontend cache revalidated:', data);
+    return data;
+  } catch (error) {
+    console.warn('⚠️  Could not trigger frontend revalidation:', error.message);
+    // Don't throw - publish should succeed even if revalidation fails
+    return { success: false, error: error.message };
+  }
+};
+
+/**
  * Publish an approved task
  * Changes status from 'approved' to 'published' and creates the post
  * Should only be called after approveTask() succeeds
@@ -186,8 +223,17 @@ export const publishTask = async (taskId) => {
     throw new Error(`Could not publish task: ${result.error}`);
   }
 
+  // Trigger frontend cache revalidation after successful publish
+  // This is non-blocking - doesn't fail the publish if it fails
+  if (result && typeof result === 'object') {
+    // Revalidate homepage and archive pages
+    revalidatePublicSite(['/', '/archive']).catch((err) => {
+      console.warn('Revalidation failed silently:', err);
+    });
+  }
+
   return result;
-};
+};;
 
 /**
  * Reject a task
