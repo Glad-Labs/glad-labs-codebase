@@ -44,7 +44,7 @@ export const metadata = {
 
 export default function RootLayout({ children }) {
   return (
-    <html lang="en">
+    <html lang="en" data-scroll-behavior="smooth">
       <head>
         {/* Analytics - If using Google Analytics */}
         {process.env.NEXT_PUBLIC_GA_ID && (

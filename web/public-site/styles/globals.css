@@ -7,11 +7,13 @@
 @layer base {
   /* Premium typography system with modern accessibility */
   html {
-    scroll-behavior: smooth;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     color-scheme: dark;
   }
+    html[data-scroll-behavior="smooth"] {
+      scroll-behavior: smooth;
+    }
 
   body {
     @apply font-sans text-slate-100 bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950;

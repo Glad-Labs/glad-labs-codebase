@@ -50,28 +50,32 @@ function TaskManagement() {
     setShowDetailModal(true);
   };
 
-  // Handler to delete a single task
-  const handleDeleteTask = async (taskId) => {
-    if (!window.confirm('Are you sure you want to delete this task?')) {
+  // Handler to reject a single task (set status to REJECTED instead of deleting)
+  const handleDeleteTask = async (event, taskId) => {
+    // Prevent the row click from opening the detail modal
+    event.stopPropagation();
+
+    if (!window.confirm('Are you sure you want to reject this task?')) {
       return;
     }
 
     try {
       setDeleting(true);
       setError(null);
-      const result = await bulkUpdateTasks([taskId], 'delete');
+      // Use 'reject' action instead of 'delete' to set status to REJECTED
+      const result = await bulkUpdateTasks([taskId], 'reject');
 
       if (result.updated_count > 0) {
-        setSuccessMessage('Task deleted successfully');
+        setSuccessMessage('Task rejected successfully');
         setTimeout(() => setSuccessMessage(null), 3000);
         // Refresh task list using the hook
         refreshTasks();
       } else {
-        setError('Failed to delete task');
+        setError('Failed to reject task');
       }
     } catch (err) {
-      console.error('Error deleting task:', err);
-      setError(`Failed to delete task: ${err.message}`);
+      console.error('Error rejecting task:', err);
+      setError(`Failed to reject task: ${err.message}`);
     } finally {
       setDeleting(false);
     }
@@ -436,8 +440,8 @@ function TaskManagement() {
                       )}
                       <button
                         className="action-btn delete"
-                        onClick={() => handleDeleteTask(task.id)}
-                        title="Delete Task"
+                        onClick={(e) => handleDeleteTask(e, task.id)}
+                        title="Reject Task"
                         disabled={deleting}
                       >
                         🗑️
