@@ -601,6 +601,22 @@ header h1 {
   opacity: 1;
 }
 
+.chat-resize-handle.resizing {
+  background: linear-gradient(180deg, var(--accent-primary) 0%, var(--accent-secondary) 50%, var(--accent-primary) 100%);
+  height: 12px;
+  box-shadow: 0 0 12px rgba(0, 217, 255, 0.5);
+}
+
+.chat-resize-handle.resizing .drag-indicator {
+  color: var(--accent-primary);
+  opacity: 1;
+}
+
+body.resizing-chat {
+  cursor: ns-resize !important;
+  -webkit-user-select: none;
+  user-select: none;
+}
 /* Visual resize hint - hover effect */
 .chat-panel::after {
   content: '';
@@ -810,7 +826,7 @@ header h1 {
   flex: 1;
   background: var(--bg-tertiary);
   border: 1px solid var(--border-secondary);
-  color: #000000;
+  color: var(--text-primary);
   padding: 0.75rem 1rem;
   border-radius: 4px;
   font-size: 0.9rem;
@@ -830,7 +846,7 @@ header h1 {
 }
 
 .chat-input::placeholder {
-  color: #cccccc;
+  color: var(--text-tertiary);
 }
 
 /* Chat Messages Container */

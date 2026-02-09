@@ -18,6 +18,7 @@ import '../OversightHub.css';
 const LayoutWrapper = ({ children }) => {
   const navigate = useNavigate();
   const chatEndRef = useRef(null);
+  const chatPanelRef = useRef(null);
   const [navMenuOpen, setNavMenuOpen] = useState(false);
   const [chatMessages, setChatMessages] = useState([
     { id: 1, sender: 'system', text: 'Poindexter ready. How can I help?' },
@@ -26,9 +27,10 @@ const LayoutWrapper = ({ children }) => {
   const [chatMode, setChatMode] = useState('conversation');
   const [selectedModel, setSelectedModel] = useState('ollama-mistral');
   const [selectedAgent, setSelectedAgent] = useState('orchestrator');
-  const [chatHeight] = useState(
+  const [chatHeight, setChatHeight] = useState(
     parseInt(localStorage.getItem('chatHeight') || '300', 10)
   );
+  const [isResizing, setIsResizing] = useState(false);
   const [ollamaConnected, setOllamaConnected] = useState(false);
   // const [availableOllamaModels, setAvailableOllamaModels] = useState([]);
   // const [selectedOllamaModel, setSelectedOllamaModel] = useState(null);
@@ -232,6 +234,40 @@ const LayoutWrapper = ({ children }) => {
     ]);
   };
 
+  // Chat resize handle
+  const handleResizeStart = (e) => {
+    e.preventDefault();
+    setIsResizing(true);
+    document.body.classList.add('resizing-chat');
+    const startY = e.clientY || e.touches?.[0]?.clientY;
+    const startHeight = chatHeight;
+
+    const handleMouseMove = (moveEvent) => {
+      const currentY = moveEvent.clientY || moveEvent.touches?.[0]?.clientY;
+      const diff = startY - currentY; // Negative diff = bigger chat
+      const newHeight = Math.max(
+        150,
+        Math.min(startHeight + diff, window.innerHeight * 0.8)
+      );
+      setChatHeight(newHeight);
+    };
+
+    const handleMouseUp = () => {
+      setIsResizing(false);
+      document.body.classList.remove('resizing-chat');
+      localStorage.setItem('chatHeight', Math.round(chatHeight));
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('touchmove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
+      document.removeEventListener('touchend', handleMouseUp);
+    };
+
+    document.addEventListener('mousemove', handleMouseMove);
+    document.addEventListener('touchmove', handleMouseMove);
+    document.addEventListener('mouseup', handleMouseUp);
+    document.addEventListener('touchend', handleMouseUp);
+  };
+
   return (
     <div className="oversight-hub-container">
       {/* Header with Navigation */}
@@ -284,8 +320,19 @@ const LayoutWrapper = ({ children }) => {
       <div className="oversight-hub-layout">
         <div className="main-panel">{children}</div>
 
+        {/* Chat Panel Resize Handle */}
+        <div
+          className={`chat-resize-handle ${isResizing ? 'resizing' : ''}`}
+          onMouseDown={handleResizeStart}
+          onTouchStart={handleResizeStart}
+          title="Drag to resize chat panel"
+        >
+          <span className="drag-indicator">⋮⋮</span>
+        </div>
+
         {/* Chat Panel */}
         <div
+          ref={chatPanelRef}
           className="chat-panel"
           style={{
             height: `${chatHeight}px`,
@@ -360,6 +407,7 @@ const LayoutWrapper = ({ children }) => {
           {/* Chat Input */}
           <div className="chat-input-area">
             <input
+              className="chat-input"
               type="text"
               value={chatInput}
               onChange={(e) => setChatInput(e.target.value)}
@@ -383,6 +431,6 @@ const LayoutWrapper = ({ children }) => {
       </div>
     </div>
   );
-};;
+};;;;;
 
 export default LayoutWrapper;
