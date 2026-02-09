@@ -13,6 +13,52 @@ const safeFormatDate = (value) => {
       });
 };
 
+/**
+ * Simple markdown text renderer for excerpts
+ * Handles: **bold**, *italic*, ***bold italic***
+ * Returns JSX with styled formatting
+ */
+const MarkdownText = ({ text }) => {
+  if (!text) return null;
+
+  // Split text by markdown patterns while preserving the markdown markers
+  const parts = text.split(/(\*\*\*[\s\S]*?\*\*\*|\*\*[\s\S]*?\*\*|\*[\s\S]*?\*)/);
+
+  return parts.map((part, index) => {
+    if (!part) return null;
+
+    // Bold italic: ***text***
+    if (part.startsWith('***') && part.endsWith('***')) {
+      return (
+        <strong key={index} className="italic font-semibold text-cyan-300">
+          {part.slice(3, -3)}
+        </strong>
+      );
+    }
+
+    // Bold: **text**
+    if (part.startsWith('**') && part.endsWith('**')) {
+      return (
+        <strong key={index} className="font-semibold text-slate-100">
+          {part.slice(2, -2)}
+        </strong>
+      );
+    }
+
+    // Italic: *text*
+    if (part.startsWith('*') && part.endsWith('*')) {
+      return (
+        <em key={index} className="italic text-slate-200">
+          {part.slice(1, -1)}
+        </em>
+      );
+    }
+
+    // Regular text
+    return <span key={index}>{part}</span>;
+  });
+};
+
 const PostCard = ({ post }) => {
   const { title, excerpt, slug, published_at, cover_image_url } = post;
 
@@ -81,9 +127,9 @@ const PostCard = ({ post }) => {
           </Link>
         </h3>
 
-        {/* Excerpt - Premium typography */}
+        {/* Excerpt - Premium typography with markdown formatting */}
         <p className="text-slate-300 mb-6 flex-grow line-clamp-3 text-sm leading-relaxed">
-          {excerpt}
+          <MarkdownText text={excerpt} />
         </p>
 
         {/* Read More Link - Premium style */}

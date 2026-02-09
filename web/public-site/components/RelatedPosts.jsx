@@ -3,6 +3,51 @@ import OptimizedImage from './OptimizedImage';
 import { formatDate } from '../lib/content-utils';
 
 /**
+ * Simple markdown text renderer for excerpts
+ * Handles: **bold**, *italic*, ***bold italic***
+ */
+const MarkdownText = ({ text }) => {
+  if (!text) return null;
+
+  // Split text by markdown patterns while preserving the markdown markers
+  const parts = text.split(/(\*\*\*[\s\S]*?\*\*\*|\*\*[\s\S]*?\*\*|\*[\s\S]*?\*)/);
+
+  return parts.map((part, index) => {
+    if (!part) return null;
+
+    // Bold italic: ***text***
+    if (part.startsWith('***') && part.endsWith('***')) {
+      return (
+        <strong key={index} className="italic font-semibold text-cyan-600">
+          {part.slice(3, -3)}
+        </strong>
+      );
+    }
+
+    // Bold: **text**
+    if (part.startsWith('**') && part.endsWith('**')) {
+      return (
+        <strong key={index} className="font-semibold text-gray-900">
+          {part.slice(2, -2)}
+        </strong>
+      );
+    }
+
+    // Italic: *text*
+    if (part.startsWith('*') && part.endsWith('*')) {
+      return (
+        <em key={index} className="italic text-gray-700">
+          {part.slice(1, -1)}
+        </em>
+      );
+    }
+
+    // Regular text
+    return <span key={index}>{part}</span>;
+  });
+};
+
+/**
  * Related Posts Component
  * Displays a grid of related articles at the bottom of article pages
  *
@@ -112,7 +157,7 @@ function RelatedPostCard({ post, onPostClick = null }) {
 
           {/* Excerpt */}
           <p className="text-sm text-gray-600 mb-3 line-clamp-2 flex-grow">
-            {excerpt}
+            <MarkdownText text={excerpt} />
           </p>
 
           {/* Meta Information */}
