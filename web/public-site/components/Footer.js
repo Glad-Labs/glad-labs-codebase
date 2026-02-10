@@ -2,10 +2,12 @@
 
 import Link from 'next/link';
 import { useState, useEffect } from 'react';
+import NewsletterModal from './NewsletterModal';
 
 const Footer = () => {
   const [mounted, setMounted] = useState(false);
   const [currentYear, setCurrentYear] = useState(new Date().getFullYear());
+  const [isNewsletterModalOpen, setIsNewsletterModalOpen] = useState(false);
 
   useEffect(() => {
     setMounted(true);
@@ -130,10 +132,10 @@ const Footer = () => {
               Stay updated with the latest AI insights and innovations.
             </p>
             <button
-              disabled
-              className="inline-flex items-center gap-2 px-5 py-3 bg-gradient-to-r from-cyan-500/20 to-blue-600/20 border border-cyan-500/30 text-cyan-300 rounded-lg font-medium text-sm cursor-default"
+              onClick={() => setIsNewsletterModalOpen(true)}
+              className="inline-flex items-center gap-2 px-5 py-3 bg-gradient-to-r from-cyan-500/20 to-blue-600/20 border border-cyan-500/30 text-cyan-300 rounded-lg font-medium text-sm hover:bg-gradient-to-r hover:from-cyan-500/30 hover:to-blue-600/30 hover:border-cyan-500/50 transition-all duration-200 cursor-pointer"
             >
-              Get Updates (Coming Soon)
+              Get Updates
               <span>→</span>
             </button>
           </div>
@@ -156,6 +158,11 @@ const Footer = () => {
           </div>
         </div>
       </div>
+
+      <NewsletterModal
+        isOpen={isNewsletterModalOpen}
+        onClose={() => setIsNewsletterModalOpen(false)}
+      />
     </footer>
   );
 };
