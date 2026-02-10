@@ -7,7 +7,7 @@ export const metadata: Metadata = {
 };
 
 export default function PrivacyPolicy() {
-  const lastUpdated = new Date('2026-02-05').toLocaleDateString('en-US', {
+  const lastUpdated = new Date('2026-02-10').toLocaleDateString('en-US', {
     year: 'numeric',
     month: 'long',
     day: 'numeric',
@@ -69,7 +69,35 @@ export default function PrivacyPolicy() {
         </p>
 
         <h2 className="text-2xl font-bold text-cyan-300 mt-8 mb-4">
-          2. Information We Collect
+          2. Legal Basis for Processing (GDPR)
+        </h2>
+        <p>
+          Under the GDPR, we process your personal data based on one or more of
+          the following legal bases:
+        </p>
+        <ul className="list-disc list-inside space-y-2 mb-4">
+          <li>
+            <strong>Consent (Article 6(1)(a)):</strong> For analytics and
+            advertising cookies (you provide explicit consent via our cookie
+            banner)
+          </li>
+          <li>
+            <strong>Contract Performance (Article 6(1)(b)):</strong> For session
+            cookies and website functionality necessary to provide our services
+          </li>
+          <li>
+            <strong>Legal Obligation (Article 6(1)(c)):</strong> For security
+            logs, fraud prevention, and compliance with applicable laws
+          </li>
+          <li>
+            <strong>Legitimate Interest (Article 6(1)(f)):</strong> For website
+            optimization, performance improvement, and user experience
+            enhancement (with no consent required for essential functionality)
+          </li>
+        </ul>
+
+        <h2 className="text-2xl font-bold text-cyan-300 mt-8 mb-4">
+          3. Information We Collect
         </h2>
         <p>
           We may collect information about you in a variety of ways. The
@@ -77,7 +105,7 @@ export default function PrivacyPolicy() {
         </p>
 
         <h3 className="text-xl font-semibold text-cyan-200 mt-6 mb-3">
-          2.1 Automatic Data Collection
+          3.1 Automatic Data Collection
         </h3>
         <ul className="list-disc list-inside space-y-2 mb-4">
           <li>
@@ -97,7 +125,7 @@ export default function PrivacyPolicy() {
         </ul>
 
         <h3 className="text-xl font-semibold text-cyan-200 mt-6 mb-3">
-          2.2 Information from Third Parties
+          3.2 Information from Third Parties
         </h3>
         <ul className="list-disc list-inside space-y-2 mb-4">
           <li>
@@ -113,7 +141,7 @@ export default function PrivacyPolicy() {
         </ul>
 
         <h2 className="text-2xl font-bold text-cyan-300 mt-8 mb-4">
-          3. How We Use Your Information
+          4. How We Use Your Information
         </h2>
         <p>We use the information we collect to:</p>
         <ul className="list-disc list-inside space-y-2 mb-4">
@@ -127,7 +155,7 @@ export default function PrivacyPolicy() {
         </ul>
 
         <h2 className="text-2xl font-bold text-cyan-300 mt-8 mb-4">
-          4. Information Sharing & Disclosure
+          5. Information Sharing & Disclosure
         </h2>
         <p>
           We do <strong>NOT</strong> sell, trade, or rent your personal
@@ -152,7 +180,7 @@ export default function PrivacyPolicy() {
         </ul>
 
         <h2 className="text-2xl font-bold text-cyan-300 mt-8 mb-4">
-          5. Cookies & Tracking Technologies
+          6. Cookies & Tracking Technologies
         </h2>
         <p>
           Our website uses cookies to enhance your experience. Most browsers
@@ -178,7 +206,7 @@ export default function PrivacyPolicy() {
         </ul>
 
         <h2 className="text-2xl font-bold text-cyan-300 mt-8 mb-4">
-          6. Your Privacy Rights
+          7. Your Privacy Rights
         </h2>
         <p>Depending on your location, you may have the following rights:</p>
         <ul className="list-disc list-inside space-y-2 mb-4">
@@ -200,7 +228,7 @@ export default function PrivacyPolicy() {
         </ul>
 
         <h2 className="text-2xl font-bold text-cyan-300 mt-8 mb-4">
-          7. Data Security
+          8. Data Security
         </h2>
         <p>
           We implement appropriate technical and organizational measures to
@@ -210,7 +238,7 @@ export default function PrivacyPolicy() {
         </p>
 
         <h2 className="text-2xl font-bold text-cyan-300 mt-8 mb-4">
-          8. Third-Party Links
+          9. Third-Party Links
         </h2>
         <p>
           Our website may contain links to third-party websites. We are not
@@ -219,7 +247,7 @@ export default function PrivacyPolicy() {
         </p>
 
         <h2 className="text-2xl font-bold text-cyan-300 mt-8 mb-4">
-          9. Data Retention
+          10. Data Retention
         </h2>
         <p>
           We retain your personal data only for as long as necessary to provide
@@ -251,7 +279,7 @@ export default function PrivacyPolicy() {
         </ul>
 
         <h2 className="text-2xl font-bold text-cyan-300 mt-8 mb-4">
-          10. Data Processors & Third Parties
+          11. Data Processors & Third Parties
         </h2>
         <p>
           We work with the following third parties who may process your personal
@@ -324,7 +352,7 @@ export default function PrivacyPolicy() {
         </div>
 
         <h2 className="text-2xl font-bold text-cyan-300 mt-8 mb-4">
-          11. International Data Transfers
+          12. International Data Transfers
         </h2>
         <p>
           Your data may be transferred to and stored in the United States for
@@ -349,7 +377,7 @@ export default function PrivacyPolicy() {
         </p>
 
         <h2 className="text-2xl font-bold text-cyan-300 mt-8 mb-4">
-          12. Automated Decision Making
+          13. Automated Decision Making
         </h2>
         <p>
           We do not use automated decision-making or profiling that produces
@@ -364,7 +392,7 @@ export default function PrivacyPolicy() {
         </p>
 
         <h2 className="text-2xl font-bold text-cyan-300 mt-8 mb-4">
-          13. Children's Privacy
+          14. Children's Privacy
         </h2>
         <p>
           We do not knowingly collect personal information from children under
@@ -377,7 +405,7 @@ export default function PrivacyPolicy() {
         </p>
 
         <h2 className="text-2xl font-bold text-cyan-300 mt-8 mb-4">
-          14. Contact Us
+          15. Contact Us
         </h2>
         <p>
           If you have questions about this Privacy Policy or our privacy
@@ -412,7 +440,7 @@ export default function PrivacyPolicy() {
         </p>
 
         <h2 className="text-2xl font-bold text-cyan-300 mt-8 mb-4">
-          15. Policy Updates
+          16. Policy Updates
         </h2>
         <p>
           We may update this Privacy Policy from time to time. Changes will be
@@ -422,7 +450,7 @@ export default function PrivacyPolicy() {
         </p>
 
         <h2 className="text-2xl font-bold text-cyan-300 mt-8 mb-4">
-          16. Your GDPR Rights
+          17. Your GDPR Rights
         </h2>
         <p>
           If you are located in the EU or EEA, you have the following rights

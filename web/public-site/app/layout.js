@@ -46,29 +46,11 @@ export default function RootLayout({ children }) {
   return (
     <html lang="en" data-scroll-behavior="smooth">
       <head>
-        {/* Analytics - If using Google Analytics */}
-        {process.env.NEXT_PUBLIC_GA_ID && (
-          <>
-            <script
-              async
-              src={`https://www.googletagmanager.com/gtag/js?id=${process.env.NEXT_PUBLIC_GA_ID}`}
-            />
-            <script
-              dangerouslySetInnerHTML={{
-                __html: `
-                  window.dataLayer = window.dataLayer || [];
-                  function gtag(){dataLayer.push(arguments);}
-                  gtag('js', new Date());
-                  gtag('config', '${process.env.NEXT_PUBLIC_GA_ID}', {
-                    'anonymize_ip': true,
-                    'allow_google_signals': false,
-                    'allow_ad_personalization_signals': false
-                  });
-                `,
-              }}
-            />
-          </>
-        )}
+        {/* 
+          GDPR COMPLIANCE: Analytics scripts are NOT loaded here.
+          They are only loaded AFTER user consent via CookieConsentBanner.tsx
+          See: components/CookieConsentBanner.tsx loadGoogleAnalytics()
+        */}
       </head>
       <body>
         <TopNavigation />
