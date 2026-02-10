@@ -325,7 +325,8 @@ const CreateTaskModal = ({ isOpen, onClose, onTaskCreated }) => {
 
         // Create task record with image results
         taskPayload = {
-          task_type: 'blog_post', // Use blog_post as generic type for now
+          task_type: 'image_generation', // Correct type for image generation tasks
+          task_name: `Image: ${formData.description.substring(0, 40)}...`,
           topic: formData.description || '',
           category: 'image_generation',
           metadata: {

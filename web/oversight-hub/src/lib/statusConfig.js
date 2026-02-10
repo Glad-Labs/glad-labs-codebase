@@ -31,9 +31,9 @@ export const STATUS_CONFIG = {
     label: 'Awaiting Approval',
     description: 'Content generated, needs human review & approval',
     icon: '👁️',
-    backgroundColor: '#fef3c7',
-    borderColor: '#fcd34d',
-    textColor: '#78350f',
+    backgroundColor: '#fed7aa',
+    borderColor: '#fdba74',
+    textColor: '#92400e',
   },
   approved: {
     color: 'success',
