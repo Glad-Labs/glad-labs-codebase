@@ -1,3 +1,9 @@
+---
+name: Enterprise Documentation Framework
+description: Comprehensive framework for maintaining high-quality, stable, and architecture-focused documentation at Glad Labs.
+invokable: true
+---
+
 # Enterprise Documentation Framework - Glad Labs
 
 **Status:** Enterprise-Ready  
