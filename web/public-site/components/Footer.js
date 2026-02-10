@@ -1,7 +1,41 @@
+'use client';
+
 import Link from 'next/link';
+import { useState, useEffect } from 'react';
+import NewsletterModal from './NewsletterModal';
 
 const Footer = () => {
-  const currentYear = new Date().getFullYear();
+  const [mounted, setMounted] = useState(false);
+  const [currentYear, setCurrentYear] = useState(new Date().getFullYear());
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+    setCurrentYear(new Date().getFullYear());
+  }, []);
+
+  if (!mounted) {
+    // Return empty footer placeholder with same structure to match server-side render
+    return (
+      <footer
+        className="relative bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 border-t border-slate-800/50 mt-auto overflow-hidden"
+        role="contentinfo"
+      >
+        <div className="relative container mx-auto px-4 sm:px-6 lg:px-8 py-16 md:py-20">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-8 md:gap-12 mb-16"></div>
+          <div className="h-px bg-gradient-to-r from-transparent via-slate-700/30 to-transparent my-12"></div>
+          <div className="flex flex-col md:flex-row justify-between items-center gap-6">
+            <div className="text-center md:text-left">
+              <p className="text-sm text-slate-400 font-medium"></p>
+            </div>
+            <div className="flex items-center gap-6">
+              <p className="text-xs text-slate-500"></p>
+            </div>
+          </div>
+        </div>
+      </footer>
+    );
+  }
 
   return (
     <footer
@@ -118,15 +152,15 @@ const Footer = () => {
             <p className="text-sm text-slate-400 mb-6 leading-relaxed">
               Stay updated with the latest AI insights and innovations.
             </p>
-            <Link
-              href="/"
+            <button
+              onClick={() => setIsModalOpen(true)}
               className="inline-flex items-center gap-2 px-5 py-3 bg-gradient-to-r from-cyan-500/20 to-blue-600/20 border border-cyan-500/30 hover:border-cyan-400/60 text-cyan-300 hover:text-cyan-200 rounded-lg font-medium text-sm transition-all duration-300 hover:bg-cyan-500/30 group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400"
             >
               Get Updates
               <span className="group-hover:translate-x-1 transition-transform duration-300">
                 →
               </span>
-            </Link>
+            </button>
           </div>
         </div>
 
@@ -147,6 +181,12 @@ const Footer = () => {
           </div>
         </div>
       </div>
+
+      {/* Newsletter Modal */}
+      <NewsletterModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+      />
     </footer>
   );
 };

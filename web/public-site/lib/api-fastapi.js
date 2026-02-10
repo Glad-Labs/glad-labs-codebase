@@ -549,6 +549,89 @@ export async function testModelProvider(provider, model = null) {
   return fetchAPI(endpoint);
 }
 
+// ===== NEWSLETTER & EMAIL CAMPAIGNS =====
+
+/**
+ * Subscribe email to newsletter campaign list
+ * @param {Object} data - Subscription data
+ * @param {string} data.email - Email address (required)
+ * @param {string} data.first_name - First name (optional)
+ * @param {string} data.last_name - Last name (optional)
+ * @param {string} data.company - Company (optional)
+ * @param {Array<string>} data.interest_categories - Interest categories (optional)
+ * @param {boolean} data.marketing_consent - Marketing consent (optional)
+ * @returns {Promise} Subscription response with subscriber_id
+ */
+export async function subscribeToNewsletter(data) {
+  try {
+    const response = await fetch(`${API_BASE}/newsletter/subscribe`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(data),
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.detail || 'Subscription failed');
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('[FastAPI] Newsletter subscription error:', error.message);
+    throw error;
+  }
+}
+
+/**
+ * Unsubscribe email from newsletter
+ * @param {Object} data - Unsubscribe data
+ * @param {string} data.email - Email address (required)
+ * @param {string} data.reason - Unsubscribe reason (optional)
+ * @returns {Promise} Unsubscribe response
+ */
+export async function unsubscribeFromNewsletter(data) {
+  try {
+    const response = await fetch(`${API_BASE}/newsletter/unsubscribe`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(data),
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.detail || 'Unsubscribe failed');
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('[FastAPI] Newsletter unsubscribe error:', error.message);
+    throw error;
+  }
+}
+
+/**
+ * Get newsletter subscriber count
+ * @returns {Promise} Subscriber count data
+ */
+export async function getNewsletterSubscriberCount() {
+  try {
+    const response = await fetch(`${API_BASE}/newsletter/subscribers/count`);
+
+    if (!response.ok) {
+      throw new Error('Failed to fetch subscriber count');
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('[FastAPI] Error fetching subscriber count:', error.message);
+    throw error;
+  }
+}
+
 // Default export for compatibility
 export default {
   // CMS Functions
@@ -579,4 +662,8 @@ export default {
   // Model Functions
   getAvailableModels,
   testModelProvider,
+  // Newsletter Functions
+  subscribeToNewsletter,
+  unsubscribeFromNewsletter,
+  getNewsletterSubscriberCount,
 };
