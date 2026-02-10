@@ -1,7 +1,7 @@
 import AdSenseScript from '../components/AdSenseScript';
 import CookieConsentBanner from '../components/CookieConsentBanner.jsx';
 import Footer from '../components/Footer';
-import { TopNavigation } from '../components/TopNav.jsx';
+import TopNavigation from '../components/TopNav.js';
 // import { Analytics } from '@vercel/analytics/react'; // Temporarily disabled for local dev
 import '../styles/globals.css';
 

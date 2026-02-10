@@ -46,7 +46,7 @@ export default function CookieConsentBanner() {
   }, []);
 
   if (!mounted) {
-    return null;
+    return <></>; // Return empty fragment instead of null to keep hydration consistent
   }
 
   // Show nothing if user has accepted/rejected and modal is not open

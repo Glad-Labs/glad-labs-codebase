@@ -2,12 +2,10 @@
 
 import Link from 'next/link';
 import { useState, useEffect } from 'react';
-import NewsletterModal from './NewsletterModal';
 
 const Footer = () => {
   const [mounted, setMounted] = useState(false);
   const [currentYear, setCurrentYear] = useState(new Date().getFullYear());
-  const [isModalOpen, setIsModalOpen] = useState(false);
 
   useEffect(() => {
     setMounted(true);
@@ -15,24 +13,10 @@ const Footer = () => {
   }, []);
 
   if (!mounted) {
-    // Return empty footer placeholder with same structure to match server-side render
+    // Return minimal server-side placeholder
     return (
-      <footer
-        className="relative bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 border-t border-slate-800/50 mt-auto overflow-hidden"
-        role="contentinfo"
-      >
-        <div className="relative container mx-auto px-4 sm:px-6 lg:px-8 py-16 md:py-20">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-8 md:gap-12 mb-16"></div>
-          <div className="h-px bg-gradient-to-r from-transparent via-slate-700/30 to-transparent my-12"></div>
-          <div className="flex flex-col md:flex-row justify-between items-center gap-6">
-            <div className="text-center md:text-left">
-              <p className="text-sm text-slate-400 font-medium"></p>
-            </div>
-            <div className="flex items-center gap-6">
-              <p className="text-xs text-slate-500"></p>
-            </div>
-          </div>
-        </div>
+      <footer className="bg-slate-950 py-8">
+        <p className="text-slate-500 text-center text-sm">Loading...</p>
       </footer>
     );
   }
@@ -42,7 +26,7 @@ const Footer = () => {
       className="relative bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 border-t border-slate-800/50 mt-auto overflow-hidden"
       role="contentinfo"
     >
-      {/* Animated gradient overlay - subtle background effect */}
+      {/* Animated gradient overlay */}
       <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-transparent to-transparent pointer-events-none" />
 
       {/* Decorative glow elements */}
@@ -52,7 +36,7 @@ const Footer = () => {
       <div className="relative container mx-auto px-4 sm:px-6 lg:px-8 py-16 md:py-20">
         {/* Main content grid */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8 md:gap-12 mb-16">
-          {/* Brand Column - Enhanced with description */}
+          {/* Brand Column */}
           <div className="col-span-1 md:col-span-1">
             <Link
               href="/"
@@ -63,24 +47,18 @@ const Footer = () => {
               </div>
             </Link>
             <p className="text-sm text-slate-400 leading-relaxed mb-6">
-              Transforming digital innovation with AI-powered insights and
-              autonomous intelligence.
+              Transforming digital innovation with AI-powered insights and autonomous intelligence.
             </p>
-            <p className="text-xs text-slate-500">
-              Building the future, one algorithm at a time.
-            </p>
+            <p className="text-xs text-slate-500">Building the future, one algorithm at a time.</p>
           </div>
 
           {/* Explore Column */}
-          <div className="animate-fade-in" style={{ animationDelay: '100ms' }}>
+          <div>
             <h3 className="text-sm font-semibold text-white mb-6 uppercase tracking-widest flex items-center gap-2">
               <span className="w-2 h-2 rounded-full bg-gradient-to-r from-cyan-400 to-blue-500" />
               Explore
             </h3>
-            <nav
-              aria-label="Explore navigation"
-              className="flex flex-col space-y-3"
-            >
+            <nav aria-label="Explore navigation" className="flex flex-col space-y-3">
               <Link
                 href="/"
                 className="text-sm text-slate-400 hover:text-cyan-300 transition-colors duration-200 font-medium group inline-flex items-center gap-2"
@@ -106,7 +84,7 @@ const Footer = () => {
           </div>
 
           {/* Legal Column */}
-          <div className="animate-fade-in" style={{ animationDelay: '200ms' }}>
+          <div>
             <h3 className="text-sm font-semibold text-white mb-6 uppercase tracking-widest flex items-center gap-2">
               <span className="w-2 h-2 rounded-full bg-gradient-to-r from-cyan-400 to-blue-500" />
               Legal
@@ -133,18 +111,11 @@ const Footer = () => {
                 <span className="w-1 h-1 rounded-full bg-cyan-400 opacity-0 group-hover:opacity-100 transition-opacity" />
                 Cookie Policy
               </Link>
-              <Link
-                href="/legal/data-requests"
-                className="text-sm text-slate-400 hover:text-cyan-300 transition-colors duration-200 font-medium group inline-flex items-center gap-2"
-              >
-                <span className="w-1 h-1 rounded-full bg-cyan-400 opacity-0 group-hover:opacity-100 transition-opacity" />
-                Data Requests
-              </Link>
             </nav>
           </div>
 
-          {/* Connect Column - Enhanced CTA */}
-          <div className="animate-fade-in" style={{ animationDelay: '300ms' }}>
+          {/* Connect Column */}
+          <div>
             <h3 className="text-sm font-semibold text-white mb-6 uppercase tracking-widest flex items-center gap-2">
               <span className="w-2 h-2 rounded-full bg-gradient-to-r from-cyan-400 to-blue-500" />
               Connect
@@ -153,13 +124,11 @@ const Footer = () => {
               Stay updated with the latest AI insights and innovations.
             </p>
             <button
-              onClick={() => setIsModalOpen(true)}
-              className="inline-flex items-center gap-2 px-5 py-3 bg-gradient-to-r from-cyan-500/20 to-blue-600/20 border border-cyan-500/30 hover:border-cyan-400/60 text-cyan-300 hover:text-cyan-200 rounded-lg font-medium text-sm transition-all duration-300 hover:bg-cyan-500/30 group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400"
+              disabled
+              className="inline-flex items-center gap-2 px-5 py-3 bg-gradient-to-r from-cyan-500/20 to-blue-600/20 border border-cyan-500/30 text-cyan-300 rounded-lg font-medium text-sm cursor-default"
             >
-              Get Updates
-              <span className="group-hover:translate-x-1 transition-transform duration-300">
-                →
-              </span>
+              Get Updates (Coming Soon)
+              <span>→</span>
             </button>
           </div>
         </div>
@@ -167,7 +136,7 @@ const Footer = () => {
         {/* Gradient divider */}
         <div className="h-px bg-gradient-to-r from-transparent via-slate-700/30 to-transparent my-12" />
 
-        {/* Bottom Footer - Enhanced */}
+        {/* Bottom Footer */}
         <div className="flex flex-col md:flex-row justify-between items-center gap-6">
           <div className="text-center md:text-left">
             <p className="text-sm text-slate-400 font-medium">
@@ -175,20 +144,14 @@ const Footer = () => {
             </p>
           </div>
           <div className="flex items-center gap-6">
-            <p className="text-xs text-slate-500">
-              Built for innovation, powered by AI.
-            </p>
+            <p className="text-xs text-slate-500">Built for innovation, powered by AI.</p>
           </div>
         </div>
       </div>
-
-      {/* Newsletter Modal */}
-      <NewsletterModal
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-      />
     </footer>
   );
 };
 
 export default Footer;
+
+

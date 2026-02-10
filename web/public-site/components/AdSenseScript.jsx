@@ -22,7 +22,7 @@ export default function AdSenseScript() {
   }, []);
 
   if (!mounted || !adSenseId) {
-    return null;
+    return <></>; // Return empty fragment instead of null to keep hydration consistent
   }
 
   return (
