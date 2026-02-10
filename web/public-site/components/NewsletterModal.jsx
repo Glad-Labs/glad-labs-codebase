@@ -27,7 +27,8 @@ const NewsletterModal = ({ isOpen, onClose }) => {
     'Technology',
     'Automation',
     'Business',
-    'Innovation',
+    'Hardware',
+    'Gaming',
   ];
 
   const handleInputChange = (e) => {
