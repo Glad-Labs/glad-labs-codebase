@@ -172,8 +172,10 @@ export const approveTask = async (taskId, feedback = '') => {
  */
 export const revalidatePublicSite = async (paths = []) => {
   try {
-    const REVALIDATE_SECRET = process.env.REACT_APP_REVALIDATE_SECRET || 'dev-secret-key';
-    const PUBLIC_SITE_URL = process.env.REACT_APP_PUBLIC_SITE_URL || 'http://localhost:3000';
+    const REVALIDATE_SECRET =
+      process.env.REACT_APP_REVALIDATE_SECRET || 'dev-secret-key';
+    const PUBLIC_SITE_URL =
+      process.env.REACT_APP_PUBLIC_SITE_URL || 'http://localhost:3000';
 
     const response = await fetch(`${PUBLIC_SITE_URL}/api/revalidate`, {
       method: 'POST',
@@ -185,7 +187,9 @@ export const revalidatePublicSite = async (paths = []) => {
     });
 
     if (!response.ok) {
-      console.warn(`⚠️  Frontend revalidation returned status ${response.status}`);
+      console.warn(
+        `⚠️  Frontend revalidation returned status ${response.status}`
+      );
       // Don't throw - revalidation failure shouldn't break the publish flow
       return { success: false, status: response.status };
     }
@@ -233,7 +237,7 @@ export const publishTask = async (taskId) => {
   }
 
   return result;
-};;
+};
 
 /**
  * Reject a task

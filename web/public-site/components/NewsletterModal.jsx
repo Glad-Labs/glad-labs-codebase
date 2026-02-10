@@ -22,7 +22,13 @@ const NewsletterModal = ({ isOpen, onClose }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [message, setMessage] = useState({ type: '', text: '' });
 
-  const interestOptions = ['AI', 'Technology', 'Automation', 'Business', 'Innovation'];
+  const interestOptions = [
+    'AI',
+    'Technology',
+    'Automation',
+    'Business',
+    'Innovation',
+  ];
 
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -43,7 +49,7 @@ const NewsletterModal = ({ isOpen, onClose }) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     if (!formData.email) {
       setMessage({ type: 'error', text: 'Email is required' });
       return;
@@ -125,7 +131,8 @@ const NewsletterModal = ({ isOpen, onClose }) => {
           {/* Content */}
           <div className="p-6">
             <p className="text-slate-300 text-sm mb-6">
-              Get the latest AI insights, technology trends, and automation strategies delivered to your inbox.
+              Get the latest AI insights, technology trends, and automation
+              strategies delivered to your inbox.
             </p>
 
             {message.text && (
@@ -235,7 +242,8 @@ const NewsletterModal = ({ isOpen, onClose }) => {
                   className="w-4 h-4 bg-slate-800 border border-slate-600 rounded mt-1 cursor-pointer accent-cyan-500"
                 />
                 <span className="text-xs text-slate-400">
-                  I agree to receive marketing emails and campaign updates from Glad Labs
+                  I agree to receive marketing emails and campaign updates from
+                  Glad Labs
                 </span>
               </label>
 

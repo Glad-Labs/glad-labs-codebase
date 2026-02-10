@@ -431,6 +431,6 @@ const LayoutWrapper = ({ children }) => {
       </div>
     </div>
   );
-};;;;;
+};
 
 export default LayoutWrapper;

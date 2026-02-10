@@ -10,14 +10,20 @@ export default function TopNavigation() {
           GL
         </Link>
         <div className="flex gap-8">
-          <Link href="/archive/1" className="text-slate-300 hover:text-cyan-300">
+          <Link
+            href="/archive/1"
+            className="text-slate-300 hover:text-cyan-300"
+          >
             Articles
           </Link>
           <Link href="/about" className="text-slate-300 hover:text-cyan-300">
             About
           </Link>
         </div>
-        <Link href="/archive/1" className="px-6 py-2.5 bg-cyan-600 text-white rounded-lg">
+        <Link
+          href="/archive/1"
+          className="px-6 py-2.5 bg-cyan-600 text-white rounded-lg"
+        >
           Explore
         </Link>
       </nav>

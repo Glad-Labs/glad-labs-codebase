@@ -22,7 +22,9 @@ const MarkdownText = ({ text }) => {
   if (!text) return null;
 
   // Split text by markdown patterns while preserving the markdown markers
-  const parts = text.split(/(\*\*\*[\s\S]*?\*\*\*|\*\*[\s\S]*?\*\*|\*[\s\S]*?\*)/);
+  const parts = text.split(
+    /(\*\*\*[\s\S]*?\*\*\*|\*\*[\s\S]*?\*\*|\*[\s\S]*?\*)/
+  );
 
   return parts.map((part, index) => {
     if (!part) return null;

@@ -47,9 +47,12 @@ const Footer = () => {
               </div>
             </Link>
             <p className="text-sm text-slate-400 leading-relaxed mb-6">
-              Transforming digital innovation with AI-powered insights and autonomous intelligence.
+              Transforming digital innovation with AI-powered insights and
+              autonomous intelligence.
             </p>
-            <p className="text-xs text-slate-500">Building the future, one algorithm at a time.</p>
+            <p className="text-xs text-slate-500">
+              Building the future, one algorithm at a time.
+            </p>
           </div>
 
           {/* Explore Column */}
@@ -58,7 +61,10 @@ const Footer = () => {
               <span className="w-2 h-2 rounded-full bg-gradient-to-r from-cyan-400 to-blue-500" />
               Explore
             </h3>
-            <nav aria-label="Explore navigation" className="flex flex-col space-y-3">
+            <nav
+              aria-label="Explore navigation"
+              className="flex flex-col space-y-3"
+            >
               <Link
                 href="/"
                 className="text-sm text-slate-400 hover:text-cyan-300 transition-colors duration-200 font-medium group inline-flex items-center gap-2"
@@ -144,7 +150,9 @@ const Footer = () => {
             </p>
           </div>
           <div className="flex items-center gap-6">
-            <p className="text-xs text-slate-500">Built for innovation, powered by AI.</p>
+            <p className="text-xs text-slate-500">
+              Built for innovation, powered by AI.
+            </p>
           </div>
         </div>
       </div>
@@ -153,5 +161,3 @@ const Footer = () => {
 };
 
 export default Footer;
-
-
