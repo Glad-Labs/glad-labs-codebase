@@ -31,8 +31,8 @@
 ## 🎯 Key Features
 
 - **Next.js 13+** - React framework with server-side rendering
-- **Strapi Integration** - Headless CMS content fetching with 10-second timeout
-- **Markdown Fallbacks** - Graceful degradation when Strapi is unavailable
+- **Markdown-based Content** - Static Markdown files for content (Strapi deprecated)
+- **Database Integration** - Fallback to PostgreSQL for dynamic content
 - **ISR Support** - Incremental Static Regeneration for fresh content
 - **Blog System** - Posts, categories, tags with full-text search
 - **Responsive Design** - Mobile-first Tailwind CSS styling

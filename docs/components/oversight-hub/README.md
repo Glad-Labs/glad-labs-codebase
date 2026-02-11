@@ -95,7 +95,7 @@ Key integrations:
 Connects to:
 
 - Co-founder Agent (`http://localhost:8000`)
-- Strapi CMS (`http://localhost:1337`)
+- PostgreSQL Database (for content management)
 
 ### Pub/Sub Integration
 
@@ -183,7 +183,7 @@ REACT_APP_FIREBASE_STORAGE_BUCKET=<bucket>
 REACT_APP_FIREBASE_MESSAGING_SENDER_ID=<sender>
 REACT_APP_FIREBASE_APP_ID=<app>
 REACT_APP_COFOUNDER_API_URL=http://localhost:8000
-REACT_APP_STRAPI_API_URL=http://localhost:1337
+REACT_APP_API_URL=http://localhost:8000  # FastAPI backend
 ```
 
 ---
