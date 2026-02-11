@@ -27,25 +27,13 @@ function capitalizeWords(str) {
     .join(' ');
 }
 
-// Log API configuration for debugging (remove in production if verbose)
-if (!process.env.REACT_APP_API_URL) {
-  console.warn(
-    '⚠️ REACT_APP_API_URL not configured. Using localhost fallback. ' +
-      'In production, set REACT_APP_API_URL environment variable.'
-  );
-}
+// API configuration validation - REACT_APP_API_URL should be set in environment
 
 function getAuthHeaders() {
   const accessToken = getAuthToken();
   const headers = { 'Content-Type': 'application/json' };
   if (accessToken) {
     headers['Authorization'] = `Bearer ${accessToken}`;
-    console.log(
-      '[getAuthHeaders] Auth header set:',
-      headers['Authorization'].substring(0, 20) + '...'
-    );
-  } else {
-    console.warn('[getAuthHeaders] NO AUTH TOKEN FOUND!');
   }
   return headers;
 }
@@ -60,16 +48,7 @@ export async function makeRequest(
 ) {
   try {
     const url = `${API_BASE_URL}${endpoint}`;
-    console.log(`🔵 makeRequest: ${method} ${url}`);
     const config = { method, headers: getAuthHeaders() };
-
-    // Debug: Log headers being sent
-    console.log(`[makeRequest] Headers for ${method} request:`, {
-      Authorization: config.headers['Authorization']
-        ? config.headers['Authorization'].substring(0, 30) + '...'
-        : 'NOT SET',
-      'Content-Type': config.headers['Content-Type'],
-    });
 
     // Handle FormData (file uploads) - must NOT set Content-Type header
     if (data instanceof FormData) {
@@ -87,20 +66,13 @@ export async function makeRequest(
     try {
       const response = await fetch(url, config);
       clearTimeout(timeoutId);
-      console.log(
-        `🟡 makeRequest: Response status: ${response.status} ${response.statusText}`
-      );
 
       if (response.status === 401 && !retry) {
         // Try to refresh token in development
         if (process.env.NODE_ENV === 'development') {
-          console.log(
-            '🔄 Token expired, attempting to refresh development token...'
-          );
           try {
             const { initializeDevToken } = await import('./authService');
             await initializeDevToken();
-            console.log('✅ Token refreshed, retrying request...');
             // Retry the request with new token
             return makeRequest(
               endpoint,
@@ -111,7 +83,7 @@ export async function makeRequest(
               timeout
             );
           } catch (refreshError) {
-            console.error('❌ Failed to refresh token:', refreshError);
+            console.error('Failed to refresh token:', refreshError);
           }
         }
 
@@ -124,13 +96,10 @@ export async function makeRequest(
 
       // Handle 204 No Content response (no body to parse)
       if (response.status === 204) {
-        console.log('🟢 makeRequest: 204 No Content response');
-        console.log('✅ makeRequest: Returning empty result');
         return { success: true };
       }
 
       const result = await response.json().catch(() => response.text());
-      console.log('🟢 makeRequest: Response parsed:', result);
       if (!response.ok) {
         // Extract error message from response
         let errorMessage = `HTTP ${response.status}`;
@@ -155,14 +124,12 @@ export async function makeRequest(
         const error = new Error(errorMessage);
         error.status = response.status;
         error.response = result; // Include full response for debugging
-        console.error('🔴 Error response details:', {
+        console.error('API error response:', {
           status: response.status,
           message: errorMessage,
-          fullResponse: result,
         });
         throw error;
       }
-      console.log('✅ makeRequest: Returning result');
       return result;
     } catch (fetchError) {
       clearTimeout(timeoutId);
@@ -175,7 +142,7 @@ export async function makeRequest(
       throw fetchError;
     }
   } catch (error) {
-    console.error(`❌ API request failed: ${endpoint}`, error);
+    console.error(`API request failed: ${endpoint}`, error);
     throw error;
   }
 }
@@ -191,7 +158,6 @@ export async function logout() {
     // Attempt to notify backend of logout
     await makeRequest('/api/auth/logout', 'POST');
   } catch (error) {
-    console.warn('Logout failed:', error);
     // Continue with local logout even if API call fails
   }
   // Note: Actual state clearing happens in AuthContext.logout()
@@ -203,9 +169,7 @@ export async function refreshAccessToken() {
   try {
     const refreshToken = localStorage.getItem('refresh_token');
     if (!refreshToken) {
-      console.warn(
-        '⚠️ No refresh token available - user needs to re-authenticate'
-      );
+      // No refresh token available - user needs to re-authenticate
       return false;
     }
 
@@ -252,7 +216,6 @@ export async function getTaskStatus(taskId) {
   } catch (error) {
     // If 404, the task ID doesn't exist
     if (error.status === 404) {
-      console.warn(`Task ${taskId} not found`);
       return null;
     }
     throw error;
@@ -315,15 +278,6 @@ export async function createBlogPost(
       metadata: {},
     };
 
-    console.log('📤 Sending task payload:', JSON.stringify(payload, null, 2));
-    console.log('✅ Validation - Required Fields:', {
-      topic_valid: Boolean(payload.topic),
-      task_name_valid: Boolean(payload.task_name),
-      model_selections: payload.model_selections,
-      quality_preference: payload.quality_preference,
-      estimated_cost: payload.estimated_cost,
-    });
-
     return makeRequest(
       '/api/tasks',
       'POST',
@@ -363,15 +317,6 @@ export async function createBlogPost(
     estimated_cost: options.estimated_cost || options.estimatedCost || 0.0,
     metadata: options.metadata || {},
   };
-
-  console.log('📤 Sending task payload:', JSON.stringify(payload, null, 2));
-  console.log('✅ Validation - Required Fields:', {
-    topic_valid: Boolean(payload.topic),
-    task_name_valid: Boolean(payload.task_name),
-    model_selections: payload.model_selections,
-    quality_preference: payload.quality_preference,
-    estimated_cost: payload.estimated_cost,
-  });
 
   return makeRequest(
     '/api/tasks',
@@ -493,6 +438,19 @@ export async function getTaskById(taskId) {
  */
 export async function getTaskMetrics() {
   return makeRequest('/api/tasks/metrics/summary', 'GET');
+}
+
+/**
+ * Generate an image for a task using AI
+ * @param {string} taskId - Task ID
+ * @param {Object} options - Image generation options
+ * @param {string} options.source - Image source/model
+ * @param {string} options.topic - Topic for image generation
+ * @param {string} options.content_summary - Brief summary of content
+ * @returns {Promise<Object>} Generated image data with image_url
+ */
+export async function generateTaskImage(taskId, options = {}) {
+  return makeRequest(`/api/tasks/${taskId}/generate-image`, 'POST', options);
 }
 
 // ============================================================================
@@ -988,6 +946,7 @@ export const cofounderAgentClient = {
   listTasks,
   getTaskById,
   getTaskMetrics,
+  generateTaskImage,
   // Bulk operations
   bulkUpdateTasks,
   // Metrics & Analytics

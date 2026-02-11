@@ -1,0 +1,205 @@
+import { logError, logErrorToBackend, logErrorToSentry } from '../errorLoggingService';
+import * as cofounderAgentClient from '../cofounderAgentClient';
+
+// Mock cofounderAgentClient
+jest.mock('../cofounderAgentClient');
+
+describe('errorLoggingService', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+    console.error = jest.fn();
+  });
+
+  describe('logErrorToBackend', () => {
+    test('sends error to backend via makeRequest', async () => {
+      const mockError = new Error('Test error');
+      cofounderAgentClient.makeRequest.mockResolvedValue({ success: true });
+
+      const result = await logErrorToBackend(mockError, {
+        componentStack: 'Component > Parent > Root',
+      });
+
+      expect(cofounderAgentClient.makeRequest).toHaveBeenCalledWith(
+        '/api/errors',
+        'POST',
+        expect.objectContaining({
+          type: 'client_error',
+          message: 'Test error',
+          componentStack: 'Component > Parent > Root',
+        })
+      );
+
+      expect(result).toEqual({ success: true });
+    });
+
+    test('includes custom context in error payload', async () => {
+      const mockError = new Error('Test error');
+      cofounderAgentClient.makeRequest.mockResolvedValue({ success: true });
+
+      await logErrorToBackend(mockError, {
+        customContext: { userId: '123', feature: 'tasks' },
+      });
+
+      expect(cofounderAgentClient.makeRequest).toHaveBeenCalledWith(
+        '/api/errors',
+        'POST',
+        expect.objectContaining({
+          custom_context: { userId: '123', feature: 'tasks' },
+        })
+      );
+    });
+
+    test('sets severity level in payload', async () => {
+      const mockError = new Error('Critical error');
+      cofounderAgentClient.makeRequest.mockResolvedValue({ success: true });
+
+      await logErrorToBackend(mockError, { severity: 'critical' });
+
+      expect(cofounderAgentClient.makeRequest).toHaveBeenCalledWith(
+        '/api/errors',
+        'POST',
+        expect.objectContaining({
+          severity: 'critical',
+        })
+      );
+    });
+
+    test('returns null on failure without throwing', async () => {
+      const mockError = new Error('Test error');
+      cofounderAgentClient.makeRequest.mockRejectedValue(
+        new Error('Network error')
+      );
+
+      const result = await logErrorToBackend(mockError);
+
+      expect(result).toBeNull();
+      expect(console.error).toHaveBeenCalled();
+    });
+
+    test('includes node environment in payload', async () => {
+      const mockError = new Error('Test error');
+      cofounderAgentClient.makeRequest.mockResolvedValue({ success: true });
+
+      await logErrorToBackend(mockError);
+
+      expect(cofounderAgentClient.makeRequest).toHaveBeenCalledWith(
+        '/api/errors',
+        'POST',
+        expect.objectContaining({
+          environment: process.env.NODE_ENV,
+        })
+      );
+    });
+  });
+
+  describe('logErrorToSentry', () => {
+    test('sends error to Sentry if available', () => {
+      const mockCapture = jest.fn();
+      window.__SENTRY__ = { captureException: mockCapture };
+
+      const mockError = new Error('Test error');
+
+      logErrorToSentry(mockError, {
+        componentStack: 'Component > Root',
+      });
+
+      expect(mockCapture).toHaveBeenCalledWith(
+        mockError,
+        expect.objectContaining({
+          contexts: expect.objectContaining({
+            react: expect.objectContaining({
+              componentStack: 'Component > Root',
+            }),
+          }),
+        })
+      );
+
+      delete window.__SENTRY__;
+    });
+
+    test('does not throw if Sentry is not available', () => {
+      delete window.__SENTRY__;
+      const mockError = new Error('Test error');
+
+      expect(() => {
+        logErrorToSentry(mockError);
+      }).not.toThrow();
+    });
+
+    test('includes custom context when sending to Sentry', () => {
+      const mockCapture = jest.fn();
+      window.__SENTRY__ = { captureException: mockCapture };
+
+      const mockError = new Error('Test error');
+      const customContext = { userId: '123' };
+
+      logErrorToSentry(mockError, { customContext });
+
+      expect(mockCapture).toHaveBeenCalledWith(
+        mockError,
+        expect.objectContaining({
+          contexts: expect.objectContaining({
+            custom: customContext,
+          }),
+        })
+      );
+
+      delete window.__SENTRY__;
+    });
+  });
+
+  describe('logError', () => {
+    test('calls both Sentry and backend logging', async () => {
+      const mockCapture = jest.fn();
+      window.__SENTRY__ = { captureException: mockCapture };
+      cofounderAgentClient.makeRequest.mockResolvedValue({ success: true });
+
+      const mockError = new Error('Test error');
+
+      await logError(mockError, {
+        componentStack: 'Component > Root',
+        severity: 'critical',
+      });
+
+      expect(mockCapture).toHaveBeenCalled();
+      expect(cofounderAgentClient.makeRequest).toHaveBeenCalled();
+
+      delete window.__SENTRY__;
+    });
+
+    test('continues even if Sentry fails', async () => {
+      const mockCapture = jest.fn(() => {
+        throw new Error('Sentry failed');
+      });
+      window.__SENTRY__ = { captureException: mockCapture };
+      cofounderAgentClient.makeRequest.mockResolvedValue({ success: true });
+
+      const mockError = new Error('Test error');
+
+      await logError(mockError);
+
+      // Should not throw and should still call backend
+      expect(cofounderAgentClient.makeRequest).toHaveBeenCalled();
+
+      delete window.__SENTRY__;
+    });
+
+    test('continues even if backend fails', async () => {
+      const mockCapture = jest.fn();
+      window.__SENTRY__ = { captureException: mockCapture };
+      cofounderAgentClient.makeRequest.mockRejectedValue(
+        new Error('Backend failed')
+      );
+
+      const mockError = new Error('Test error');
+
+      const result = await logError(mockError);
+
+      // Should not throw
+      expect(mockCapture).toHaveBeenCalled();
+      expect(result).toBeNull();
+
+      delete window.__SENTRY__;
+    });
+  });
+});

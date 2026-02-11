@@ -7,6 +7,14 @@ import {
   getCostHistory,
   getBudgetStatus,
 } from '../services/cofounderAgentClient';
+import {
+  validateCostMetrics,
+  validateCostsByPhase,
+  validateCostsByModel,
+  validateCostHistory,
+  validateBudgetStatus,
+  safeValidate,
+} from '../services/responseValidationSchemas';
 
 function CostMetricsDashboard() {
   const [costMetrics, setCostMetrics] = useState(null);
@@ -32,30 +40,46 @@ function CostMetricsDashboard() {
             getCostsByModel(timeRange),
             getCostHistory(timeRange),
             getBudgetStatus(150.0),
-          ]).catch(() => {
-            // Return mock data if API calls fail (during development)
-            return [
-              {
-                total_cost: 127.5,
-                avg_cost_per_task: 0.0087,
-                total_tasks: 15000,
-              },
-              { phases: {} },
-              { models: {} },
-              { daily_data: [] },
-              {
-                monthly_budget: 150.0,
-                amount_spent: 127.5,
-                amount_remaining: 22.5,
-                percent_used: 85,
-              },
-            ];
-          });
+          ]);
 
-        // Process metrics data
-        const totalCost = metrics?.total_cost || 0;
-        const avgCostPerTask = metrics?.avg_cost_per_task || 0;
-        const totalTasks = metrics?.total_tasks || 0;
+        // Validate all responses before processing
+        const validatedMetrics = safeValidate(
+          validateCostMetrics,
+          metrics,
+          'Cost metrics'
+        );
+        const validatedPhaseData = safeValidate(
+          validateCostsByPhase,
+          phaseData,
+          'Phase data'
+        );
+        const validatedModelData = safeValidate(
+          validateCostsByModel,
+          modelData,
+          'Model data'
+        );
+        const validatedHistoryData = safeValidate(
+          validateCostHistory,
+          historyData,
+          'History data'
+        );
+        const validatedBudgetData = safeValidate(
+          validateBudgetStatus,
+          budgetData,
+          'Budget data'
+        );
+
+        // If any validation fails, throw error
+        if (!validatedMetrics || !validatedBudgetData) {
+          throw new Error(
+            'Invalid API response format - check backend contract'
+          );
+        }
+
+        // Process metrics data with validated values
+        const totalCost = validatedMetrics.total_cost || 0;
+        const avgCostPerTask = validatedMetrics.avg_cost_per_task || 0;
+        const totalTasks = validatedMetrics.total_tasks || 0;
 
         setCostMetrics([
           {
@@ -79,20 +103,26 @@ function CostMetricsDashboard() {
           {
             label: 'Monthly Budget',
             value: '$150.00',
-            change: `${budgetData?.percent_used || 0}% used`,
-            positive: (budgetData?.percent_used || 0) < 80,
+            change: `${validatedBudgetData?.percent_used || 0}% used`,
+            positive: (validatedBudgetData?.percent_used || 0) < 80,
           },
         ]);
 
-        setCostsByPhase(phaseData?.phases || {});
-        setCostsByModel(modelData?.models || {});
-        setCostHistory(historyData?.daily_data || []);
-        setBudgetStatus(budgetData);
+        setCostsByPhase(validatedPhaseData?.phases || {});
+        setCostsByModel(validatedModelData?.models || {});
+        setCostHistory(validatedHistoryData?.daily_data || []);
+        setBudgetStatus(validatedBudgetData);
       } catch (err) {
         console.error('Error fetching cost data:', err);
         setError(
           err instanceof Error ? err.message : 'Failed to fetch cost data'
         );
+        // Do NOT fall back to mock data - show error instead
+        setCostMetrics([]);
+        setCostsByPhase({});
+        setCostsByModel({});
+        setCostHistory([]);
+        setBudgetStatus(null);
       } finally {
         setLoading(false);
       }
@@ -151,7 +181,7 @@ function CostMetricsDashboard() {
       {error && (
         <div className="error">
           <p>⚠️ {error}</p>
-          <small>Showing mock data for development</small>
+          <small>Please check your database connection and try again.</small>
         </div>
       )}
 

@@ -1,4 +1,5 @@
 import React from 'react';
+import { logError } from '../services/errorLoggingService';
 import { Box, Typography, Button, Container } from '@mui/material';
 import ErrorOutlineIcon from '@mui/icons-material/ErrorOutline';
 
@@ -42,45 +43,21 @@ class ErrorBoundary extends React.Component {
   }
 
   logErrorToService = (error, errorInfo) => {
-    // Send error to monitoring service (Sentry, DataDog, LogRocket, etc.)
-    try {
-      // Check if Sentry is available
-      if (window.__SENTRY__) {
-        window.__SENTRY__.captureException(error, {
-          contexts: {
-            react: {
-              componentStack: errorInfo.componentStack,
-            },
-          },
-        });
-      }
-
-      // Fallback: Send to custom error logging endpoint
-      const errorPayload = {
-        type: 'client_error',
-        message: error?.message || 'Unknown error',
-        stack: error?.stack || '',
-        componentStack: errorInfo?.componentStack || '',
+    // Use centralized error logging service
+    // This handles Sentry, backend logging, and proper auth headers
+    logError(error, {
+      componentStack: errorInfo?.componentStack || '',
+      severity: 'critical',
+      customContext: {
         userAgent: navigator.userAgent,
-        timestamp: new Date().toISOString(),
         url: window.location.href,
         environment: process.env.NODE_ENV,
-      };
-
-      // Log to backend for aggregation
-      if (process.env.REACT_APP_API_URL) {
-        fetch(`${process.env.REACT_APP_API_URL}/api/errors`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(errorPayload),
-        }).catch((fetchErr) => {
-          console.error('Failed to log error to backend:', fetchErr);
-        });
-      }
-    } catch (loggingError) {
-      console.error('Error in error logging:', loggingError);
-    }
-  };
+      },
+    }).catch((err) => {
+      // Silently fail - error logging should never break the app
+      console.error('Error logging failed:', err);
+    });
+  };;
 
   handleReset = () => {
     // Reset error state

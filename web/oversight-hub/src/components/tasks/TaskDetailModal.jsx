@@ -15,6 +15,7 @@ import {
   rejectTask,
   publishTask,
 } from '../../services/taskService';
+import { generateTaskImage } from '../../services/cofounderAgentClient';
 import {
   StatusAuditTrail,
   StatusTimeline,
@@ -69,37 +70,18 @@ const TaskDetailModal = ({ onClose, onUpdate }) => {
     async (source) => {
       setImageGenerating(true);
       try {
-        // Use direct fetch for image generation with proper auth headers
-        const token = localStorage.getItem('auth_token');
-        const headers = {
-          'Content-Type': 'application/json',
-        };
-        if (token) {
-          headers['Authorization'] = `Bearer ${token}`;
-        }
+        const result = await generateTaskImage(selectedTask.id, {
+          source: source || imageSource,
+          topic: selectedTask.topic,
+          content_summary:
+            selectedTask.task_metadata?.content?.substring(0, 500) || '',
+        });
 
-        const response = await fetch(
-          `http://localhost:8000/api/tasks/${selectedTask.id}/generate-image`,
-          {
-            method: 'POST',
-            headers,
-            body: JSON.stringify({
-              source: source || imageSource,
-              topic: selectedTask.topic,
-              content_summary:
-                selectedTask.task_metadata?.content?.substring(0, 500) || '',
-            }),
-          }
-        );
-
-        if (!response.ok) {
-          throw new Error(`Image generation failed: ${response.statusText}`);
-        }
-
-        const result = await response.json();
         if (result.image_url) {
           setSelectedImageUrl(result.image_url);
           alert('✅ Image generated successfully!');
+        } else {
+          throw new Error('No image URL in response');
         }
       } catch (error) {
         console.error('❌ Image generation error:', error);

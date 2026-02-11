@@ -3,13 +3,57 @@
  *
  * Handles:
  * - Fetching tasks from backend with pagination
- * - Managing task list state
- * - Auto-refresh functionality
+ * - Managing task list state with useReducer
+ * - Memoized pagination calculation
  * - KPI calculation from all tasks
  */
 
-import { useState, useEffect, useRef, useCallback } from 'react';
+import {
+  useState,
+  useEffect,
+  useRef,
+  useCallback,
+  useReducer,
+  useMemo,
+} from 'react';
 import { getTasks } from '../services/taskService';
+
+/**
+ * Reducer for managing task data state
+ */
+const taskDataReducer = (state, action) => {
+  switch (action.type) {
+    case 'FETCH_START':
+      return { ...state, loading: true, isFetching: true, error: null };
+    
+    case 'FETCH_SUCCESS':
+      return {
+        ...state,
+        allTasks: action.payload,
+        total: action.payload.length,
+        loading: false,
+        isFetching: false,
+        error: null,
+      };
+    
+    case 'FETCH_ERROR':
+      return {
+        ...state,
+        loading: false,
+        isFetching: false,
+        error: action.payload,
+      };
+    
+    case 'SET_TASKS':
+      return { ...state, tasks: action.payload };
+    
+    case 'SET_ALL_TASKS':
+      return { ...state, allTasks: action.payload, total: action.payload.length };
+    
+    default:
+      return state;
+  }
+};
 
 export function useTaskData(
   page = 1,
@@ -17,73 +61,66 @@ export function useTaskData(
   sortBy = 'created_at',
   sortDirection = 'desc'
 ) {
-  const [tasks, setTasks] = useState([]);
-  const [allTasks, setAllTasks] = useState([]); // Store ALL tasks for KPI calculation
-  const [total, setTotal] = useState(0);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [isFetching, setIsFetching] = useState(false);
+  // Centralized state management with useReducer
+  const [state, dispatch] = useReducer(taskDataReducer, {
+    tasks: [],
+    allTasks: [],
+    total: 0,
+    loading: true,
+    error: null,
+    isFetching: false,
+  });
+
   const isFetchingRef = useRef(false); // Prevent concurrent requests
 
   const fetchTasks = useCallback(async () => {
     // Guard: prevent concurrent requests
     if (isFetchingRef.current) {
-      console.log('⏳ useTaskData: Request already in flight, skipping...');
       return;
     }
 
     try {
-      setError(null);
-      setIsFetching(true);
+      dispatch({ type: 'FETCH_START' });
       isFetchingRef.current = true;
 
       // Fetch ALL tasks first (with high limit) for accurate KPI stats
-      // Then use pagination for display
       const allTasksData = await getTasks(0, 1000, {
         sortBy,
         sortDirection,
       });
 
-      console.log('✅ useTaskData: Fetched all tasks:', {
-        length: allTasksData?.length || 0,
-        sortBy,
-        sortDirection,
-      });
-
-      // Store all tasks for KPI calculation
       const fetchedAllTasks = allTasksData || [];
-      setAllTasks(fetchedAllTasks);
-      setTotal(fetchedAllTasks.length);
-
-      // For display, use the current page
-      const offset = (page - 1) * limit;
-      const paginatedTasks = fetchedAllTasks.slice(offset, offset + limit);
-
-      console.log(
-        '✅ useTaskData: Displaying page',
-        page,
-        'with',
-        paginatedTasks.length,
-        'tasks, total:',
-        fetchedAllTasks.length
-      );
-
-      setTasks(paginatedTasks);
+      dispatch({
+        type: 'FETCH_SUCCESS',
+        payload: fetchedAllTasks,
+      });
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Unknown error';
-      setError(`Unable to load tasks: ${errorMessage}`);
+      dispatch({
+        type: 'FETCH_ERROR',
+        payload: `Unable to load tasks: ${errorMessage}`,
+      });
       console.error('Failed to fetch tasks:', err);
     } finally {
-      setLoading(false);
-      setIsFetching(false);
       isFetchingRef.current = false;
     }
-  }, [page, limit, sortBy, sortDirection]);
+  }, [sortBy, sortDirection]);
+
+  // Memoized pagination calculation - only recalculates when dependencies change
+  const paginatedTasks = useMemo(() => {
+    const offset = (page - 1) * limit;
+    return state.allTasks.slice(offset, offset + limit);
+  }, [state.allTasks, page, limit]);
+
+  // Update tasks when pagination changes
+  useEffect(() => {
+    dispatch({ type: 'SET_TASKS', payload: paginatedTasks });
+  }, [paginatedTasks]);
 
   // Fetch on mount and when dependencies change
   useEffect(() => {
     fetchTasks();
-  }, [fetchTasks, page, limit, sortBy, sortDirection]);
+  }, [fetchTasks, sortBy, sortDirection]);
 
   // Note: Auto-refresh disabled (was causing modal scrolling)
   // Users can manually refresh with the Refresh button
@@ -95,14 +132,15 @@ export function useTaskData(
   // }, [fetchTasks]);
 
   return {
-    tasks,
-    allTasks,
-    total,
-    loading,
-    error,
-    isFetching,
+    tasks: state.tasks,
+    allTasks: state.allTasks,
+    total: state.total,
+    loading: state.loading,
+    error: state.error,
+    isFetching: state.isFetching,
     fetchTasks,
-    setTasks,
-    setAllTasks,
+    setTasks: (tasks) => dispatch({ type: 'SET_TASKS', payload: tasks }),
+    setAllTasks: (allTasks) =>
+      dispatch({ type: 'SET_ALL_TASKS', payload: allTasks }),
   };
 }
