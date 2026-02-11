@@ -35,8 +35,9 @@ async function getPosts() {
     console.log('📡 Fetching posts from:', url);
 
     const response = await fetch(url, {
-      // ISR: Revalidate every 24 hours (86400 seconds) - on-demand revalidation via webhook triggers faster updates
-      next: { revalidate: 86400 },
+      // ISR: Revalidate every 1 hour (3600 seconds) - much faster than 24 hours for development
+      // For production, consider webhook-triggered revalidation for instant updates when posts are published
+      next: { revalidate: 3600 },
       headers: {
         'Content-Type': 'application/json',
       },

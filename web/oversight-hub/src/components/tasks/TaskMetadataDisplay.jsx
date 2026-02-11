@@ -19,11 +19,13 @@ import { Box, Grid, Paper } from '@mui/material';
  */
 const getQualityBadge = (score) => {
   if (typeof score !== 'number') return { label: 'N/A', color: '#666' };
-  if (score >= 4.5) return { label: 'Excellent', color: '#4ade80' };
-  if (score >= 3.5) return { label: 'Good', color: '#22c55e' };
-  if (score >= 2.5) return { label: 'Fair', color: '#eab308' };
+  // Handle both 0-100 scale and 0-5 scale
+  const normalizedScore = score > 10 ? score : score * 20; // Convert 0-5 to 0-100
+  if (normalizedScore >= 90) return { label: 'Excellent', color: '#4ade80' };
+  if (normalizedScore >= 75) return { label: 'Good', color: '#22c55e' };
+  if (normalizedScore >= 50) return { label: 'Fair', color: '#eab308' };
   return { label: 'Poor', color: '#ef4444' };
-};
+};;
 
 const TaskMetadataDisplay = ({ task }) => {
   if (!task) return null;
@@ -133,7 +135,7 @@ const TaskMetadataDisplay = ({ task }) => {
     {
       label: 'Quality Score',
       value: qualityScore
-        ? `${qualityScore.toFixed(2)}/5.0 (${qualityBadge.label})`
+        ? `${qualityScore.toFixed(2)}/100 (${qualityBadge.label})`
         : 'Not rated',
       color: qualityBadge.color,
     },
@@ -164,6 +166,35 @@ const TaskMetadataDisplay = ({ task }) => {
     {
       label: 'Execution Time',
       value: executionTime,
+    },
+    {
+      label: 'Task Type',
+      value: task.task_type || 'Standard',
+    },
+    {
+      label: 'Published',
+      value: task.is_published ? 'Yes' : 'No',
+      color: task.is_published ? '#4ade80' : '#ef4444',
+    },
+    {
+      label: 'Featured Image Source',
+      value: parsedTaskMeta.featured_image_source || 'Not set',
+    },
+    {
+      label: 'Last Modified',
+      value: task.updated_at
+        ? new Date(task.updated_at).toLocaleString()
+        : 'Not available',
+    },
+    {
+      label: 'Approval Status',
+      value: task.approval_status || 'Not specified',
+      color:
+        task.approval_status === 'approved'
+          ? '#4ade80'
+          : task.approval_status === 'rejected'
+            ? '#ef4444'
+            : '#eab308',
     },
   ];
 
