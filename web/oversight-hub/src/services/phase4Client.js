@@ -63,28 +63,32 @@ async function makeRequest(endpoint, options = {}) {
         endpoint,
       });
 
-      throw {
-        status: response.status,
-        message: errorMessage,
-        endpoint,
-      };
+      const error = new Error(errorMessage);
+      error.status = response.status;
+      error.endpoint = endpoint;
+      throw error;
     }
 
     return await response.json();
   } catch (error) {
     if (error.name === 'AbortError') {
-      const timeoutError = {
-        message: `Request timeout after ${timeout}ms`,
+      const timeoutError = new Error(`Request timeout after ${timeout}ms`);
+      timeoutError.endpoint = endpoint;
+      logError('Phase4 API Timeout', {
+        message: timeoutError.message,
         endpoint,
-      };
-      logError('Phase4 API Timeout', timeoutError);
+      });
       throw timeoutError;
     }
 
     if (error.message) throw error;
 
-    const unexpectedError = { message: String(error), endpoint };
-    logError('Phase4 API Error', unexpectedError);
+    const unexpectedError = new Error(String(error));
+    unexpectedError.endpoint = endpoint;
+    logError('Phase4 API Error', {
+      message: unexpectedError.message,
+      endpoint,
+    });
     throw unexpectedError;
   }
 }
