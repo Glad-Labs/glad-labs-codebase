@@ -57,12 +57,17 @@ export const exchangeCodeForToken = async (code) => {
     }
 
     // Real GitHub OAuth
-    const response = await fetch(`${API_BASE_URL}/api/auth/github-callback`, {
+    const state = sessionStorage.getItem('oauth_state');
+    if (!state) {
+      throw new Error('CSRF state not found - session expired');
+    }
+
+    const response = await fetch(`${API_BASE_URL}/api/auth/github/callback`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ code }),
+      body: JSON.stringify({ code, state }),
       credentials: 'include', // Include cookies for session
     });
 

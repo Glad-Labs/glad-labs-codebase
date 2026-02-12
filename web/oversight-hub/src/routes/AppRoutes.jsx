@@ -2,6 +2,7 @@ import React from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { Settings, TaskManagement, CostMetricsDashboard } from './index';
 import ExecutiveDashboard from '../components/pages/ExecutiveDashboard';
+import UnifiedServicesPanel from '../components/pages/UnifiedServicesPanel';
 import AIStudio from './AIStudio';
 import Content from './Content';
 import Login from '../pages/Login';
@@ -73,6 +74,16 @@ function AppRoutes() {
           <ProtectedRoute>
             <LayoutWrapper>
               <CostMetricsDashboard />
+            </LayoutWrapper>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/services"
+        element={
+          <ProtectedRoute>
+            <LayoutWrapper>
+              <UnifiedServicesPanel />
             </LayoutWrapper>
           </ProtectedRoute>
         }

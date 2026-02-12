@@ -9,27 +9,39 @@ const Login = () => {
   const navigate = useNavigate();
   const { isAuthenticated } = useAuth();
   const clientId = process.env.REACT_APP_GH_OAUTH_CLIENT_ID;
-  const useMockAuth = process.env.REACT_APP_USE_MOCK_AUTH === 'true';
+  // Mock auth ONLY allowed in development
+  const isDevelopment = process.env.NODE_ENV === 'development';
+  const useMockAuth =
+    isDevelopment && process.env.REACT_APP_USE_MOCK_AUTH === 'true';
   const [debugInfo, setDebugInfo] = useState('');
 
   useEffect(() => {
     const info = {
+      environment: process.env.NODE_ENV,
       clientId: clientId ? 'Set' : 'NOT SET',
-      mockAuth: useMockAuth ? 'ENABLED' : 'DISABLED',
+      mockAuth:
+        isDevelopment && useMockAuth ? 'ENABLED (DEV ONLY)' : 'DISABLED',
     };
     setDebugInfo(JSON.stringify(info, null, 2));
-  }, [clientId, useMockAuth]);
+
+    // Warn if mock auth is enabled in production
+    if (!isDevelopment && process.env.REACT_APP_USE_MOCK_AUTH === 'true') {
+      console.error('❌ SECURITY: Mock auth enabled in non-development mode!');
+    }
+  }, [clientId, useMockAuth, isDevelopment]);
 
   useEffect(() => {
     if (isAuthenticated) navigate('/');
   }, [isAuthenticated, navigate]);
 
   const handleGitHubLogin = () => {
-    if (useMockAuth) {
+    if (useMockAuth && isDevelopment) {
       window.location.href = generateMockGitHubAuthURL(clientId || 'mock_id');
     } else {
       if (!clientId) {
-        alert('GitHub Client ID not configured');
+        alert(
+          'GitHub Client ID not configured. Check REACT_APP_GH_OAUTH_CLIENT_ID environment variable.'
+        );
         return;
       }
       window.location.href = generateGitHubAuthURL(clientId);
@@ -49,7 +61,9 @@ const Login = () => {
             onClick={handleGitHubLogin}
             type="button"
           >
-            {useMockAuth ? 'Sign in (Mock)' : 'Sign in with GitHub'}
+            {useMockAuth && isDevelopment
+              ? 'Sign in (Mock - Dev Only)'
+              : 'Sign in with GitHub'}
           </button>
           <div style={{ marginTop: '20px', fontSize: '11px', opacity: 0.5 }}>
             <pre>{debugInfo}</pre>
@@ -58,6 +72,6 @@ const Login = () => {
       </div>
     </div>
   );
-};
+};;
 
 export default Login;
