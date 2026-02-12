@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { generateGitHubAuthURL } from '../services/authService';
-import { generateMockGitHubAuthURL } from '../services/mockAuthService';
 import useAuth from '../hooks/useAuth';
 import './Login.css';
 
@@ -34,8 +33,11 @@ const Login = () => {
     if (isAuthenticated) navigate('/');
   }, [isAuthenticated, navigate]);
 
-  const handleGitHubLogin = () => {
+  const handleGitHubLogin = async () => {
     if (useMockAuth && isDevelopment) {
+      // Dynamically import mockAuthService only when needed in dev mode
+      const { generateMockGitHubAuthURL } =
+        await import('../services/mockAuthService');
       window.location.href = generateMockGitHubAuthURL(clientId || 'mock_id');
     } else {
       if (!clientId) {
