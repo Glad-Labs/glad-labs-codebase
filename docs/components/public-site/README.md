@@ -30,12 +30,13 @@
 
 ## 🎯 Key Features
 
-- **Next.js 13+** - React framework with server-side rendering
-- **Markdown-based Content** - Static Markdown files for content (Strapi deprecated)
-- **Database Integration** - Fallback to PostgreSQL for dynamic content
-- **ISR Support** - Incremental Static Regeneration for fresh content
-- **Blog System** - Posts, categories, tags with full-text search
-- **Responsive Design** - Mobile-first Tailwind CSS styling
+- **Next.js 15** - React framework with server-side rendering and API routes
+- **Markdown-based Content** - Static markdown files stored in git for versioning and offline availability
+- **PostgreSQL Fallback** - Dynamic content via FastAPI endpoints when needed (posts, metadata, analytics)
+- **ISR Support** - Incremental Static Regeneration for fresh content without full rebuilds
+- **Blog System** - Posts, categories, tags with full-text search via PostgreSQL backend
+- **Responsive Design** - Mobile-first TailwindCSS styling for all screen sizes
+- **SEO Optimized** - Meta tags, structured data, sitemap generation for search engines
 
 ---
 
