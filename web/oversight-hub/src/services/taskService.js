@@ -174,8 +174,31 @@ export const revalidatePublicSite = async (paths = []) => {
   try {
     const REVALIDATE_SECRET =
       process.env.REACT_APP_REVALIDATE_SECRET || 'dev-secret-key';
-    const PUBLIC_SITE_URL =
-      process.env.REACT_APP_PUBLIC_SITE_URL || 'http://localhost:3000';
+    const PUBLIC_SITE_URL = process.env.REACT_APP_PUBLIC_SITE_URL;
+
+    // If PUBLIC_SITE_URL is not configured, skip revalidation but don't fail
+    if (!PUBLIC_SITE_URL) {
+      console.warn(
+        '⚠️  REACT_APP_PUBLIC_SITE_URL not configured - skipping frontend cache revalidation'
+      );
+      return { success: false, error: 'PUBLIC_SITE_URL not configured' };
+    }
+
+    // Don't attempt to call localhost from production/cloud deployments
+    if (
+      PUBLIC_SITE_URL.includes('localhost') ||
+      PUBLIC_SITE_URL.includes('127.0.0.1')
+    ) {
+      if (process.env.NODE_ENV === 'production') {
+        console.warn(
+          '⚠️  Cannot revalidate localhost from production environment'
+        );
+        return {
+          success: false,
+          error: 'Localhost inaccessible from production',
+        };
+      }
+    }
 
     const response = await fetch(`${PUBLIC_SITE_URL}/api/revalidate`, {
       method: 'POST',

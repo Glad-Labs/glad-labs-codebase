@@ -34,29 +34,47 @@ async function getPosts() {
     const url = `${FASTAPI_URL}/api/posts?skip=0&limit=20&published_only=true`;
     console.log('📡 Fetching posts from:', url);
 
-    const response = await fetch(url, {
-      // ISR: Revalidate every 1 hour (3600 seconds) - much faster than 24 hours for development
-      // For production, consider webhook-triggered revalidation for instant updates when posts are published
-      next: { revalidate: 3600 },
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    });
+    // Add timeout support using AbortController
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
 
-    if (!response.ok) {
-      console.error(
-        `❌ Failed to fetch posts: ${response.status} ${response.statusText}`
+    try {
+      const response = await fetch(url, {
+        // ISR: Revalidate every 1 hour (3600 seconds) - much faster than 24 hours for development
+        // For production, consider webhook-triggered revalidation for instant updates when posts are published
+        next: { revalidate: 3600 },
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        signal: controller.signal,
+      });
+
+      clearTimeout(timeoutId);
+
+      if (!response.ok) {
+        console.error(
+          `❌ Failed to fetch posts: ${response.status} ${response.statusText}`
+        );
+        return [];
+      }
+
+      const data = await response.json();
+      console.log(
+        '✅ Posts fetched successfully, got',
+        data.data?.length || 0,
+        'posts'
       );
+      return data.data || [];
+    } catch (fetchError) {
+      clearTimeout(timeoutId);
+      // Specific handling for timeout vs other errors
+      if (fetchError.name === 'AbortError') {
+        console.error('❌ Request timeout (10s) fetching posts from', url);
+      } else {
+        console.error('❌ Network error fetching posts:', fetchError.message);
+      }
       return [];
     }
-
-    const data = await response.json();
-    console.log(
-      '✅ Posts fetched successfully, got',
-      data.data?.length || 0,
-      'posts'
-    );
-    return data.data || [];
   } catch (error) {
     console.error('❌ Error fetching posts for homepage:', error.message);
     return [];
