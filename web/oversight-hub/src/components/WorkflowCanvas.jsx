@@ -29,7 +29,7 @@ import {
 import { Plus, Save, Play, Trash2 } from 'lucide-react';
 import PhaseNode from './PhaseNode';
 import PhaseConfigPanel from './PhaseConfigPanel';
-import { makeRequest } from '../../services/cofounderAgentClient';
+import { makeRequest } from '../services/cofounderAgentClient';
 
 const nodeTypes = {
   phase: PhaseNode,

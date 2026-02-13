@@ -451,115 +451,125 @@ const UnifiedServicesPanel = () => {
 
       {/* Tab 0: Phase 4 Services */}
       {currentTab === 0 && (
-      {/* Header */}
-      <div className="panel-header">
-        <h1>Unified Services</h1>
-        <p className="panel-subtitle">
-          Phase 4 Architecture - Integrated service discovery and execution
-        </p>
+        <>
+          {/* Header */}
+          <div className="panel-header">
+            <h1>Unified Services</h1>
+            <p className="panel-subtitle">
+              Phase 4 Architecture - Integrated service discovery and execution
+            </p>
 
-        {healthStatus && (
-          <div
-            className={`health-status ${healthStatus.healthy ? 'healthy' : 'unhealthy'}`}
-          >
-            <span className="health-indicator"></span>
-            <span>
-              {healthStatus.healthy
-                ? 'All systems operational'
-                : 'Service issues detected'}
-            </span>
+            {healthStatus && (
+              <div
+                className={`health-status ${healthStatus.healthy ? 'healthy' : 'unhealthy'}`}
+              >
+                <span className="health-indicator"></span>
+                <span>
+                  {healthStatus.healthy
+                    ? 'All systems operational'
+                    : 'Service issues detected'}
+                </span>
+              </div>
+            )}
           </div>
-        )}
-      </div>
 
-      {/* Error Display */}
-      {error && (
-        <div className="error-banner">
-          <span className="error-icon">⚠️</span>
-          <span>{error}</span>
-        </div>
-      )}
-
-      {/* Controls Section */}
-      <div className="controls-section">
-        {/* Search */}
-        <div className="search-box">
-          <input
-            type="text"
-            placeholder="Search services by name or description..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="search-input"
-          />
-          <span className="search-icon">🔍</span>
-        </div>
-
-        {/* Filters */}
-        <div className="filters-container">
-          <CapabilityFilter
-            allCapabilities={allCapabilities}
-            selectedCapabilities={selectedCapabilities}
-            onFilterChange={setSelectedCapabilities}
-          />
-          <PhaseFilter
-            allPhases={allPhases}
-            selectedPhases={selectedPhases}
-            onFilterChange={setSelectedPhases}
-          />
-        </div>
-      </div>
-
-      {/* Services Display */}
-      <div className="services-section">
-        {filteredServices.length > 0 ? (
-          <>
-            <div className="services-count">
-              Showing {filteredServices.length} of {services.length} services
+          {/* Error Display */}
+          {error && (
+            <div className="error-banner">
+              <span className="error-icon">⚠️</span>
+              <span>{error}</span>
             </div>
-            <div className="services-grid">
-              {filteredServices.map((service) => (
-                <ServiceCard
-                  key={service.id}
-                  service={service}
-                  onExecuteAction={handleExecuteAction}
-                />
-              ))}
-            </div>
-          </>
-        ) : (
-          <div className="no-results">
-            <span className="no-results-icon">🔭</span>
-            <h3>No services found</h3>
-            <p>Try adjusting your search or filters</p>
-          </div>
-        )}
-      </div>
+          )}
 
-      {/* Footer Info */}
-      <div className="panel-footer">
-        <div className="footer-info">
-          <div className="info-item">
-            <strong>{services.length}</strong> Total Services
+          {/* Controls Section */}
+          <div className="controls-section">
+            {/* Search */}
+            <div className="search-box">
+              <input
+                type="text"
+                placeholder="Search services by name or description..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="search-input"
+              />
+              <span className="search-icon">🔍</span>
+            </div>
+
+            {/* Filters */}
+            <div className="filters-container">
+              <CapabilityFilter
+                allCapabilities={allCapabilities}
+                selectedCapabilities={selectedCapabilities}
+                onFilterChange={setSelectedCapabilities}
+              />
+              <PhaseFilter
+                allPhases={allPhases}
+                selectedPhases={selectedPhases}
+                onFilterChange={setSelectedPhases}
+              />
+            </div>
           </div>
-          <div className="info-item">
-            <strong>{allCapabilities.length}</strong> Capabilities
+
+          {/* Services Display */}
+          <div className="services-section">
+            {filteredServices.length > 0 ? (
+              <>
+                <div className="services-count">
+                  Showing {filteredServices.length} of {services.length}{' '}
+                  services
+                </div>
+                <div className="services-grid">
+                  {filteredServices.map((service) => (
+                    <ServiceCard
+                      key={service.id}
+                      service={service}
+                      onExecuteAction={handleExecuteAction}
+                    />
+                  ))}
+                </div>
+              </>
+            ) : (
+              <div className="no-results">
+                <span className="no-results-icon">🔭</span>
+                <h3>No services found</h3>
+                <p>Try adjusting your search or filters</p>
+              </div>
+            )}
           </div>
-          <div className="info-item">
-            <strong>{allPhases.length}</strong> Processing Phases
+
+          {/* Footer Info */}
+          <div className="panel-footer">
+            <div className="footer-info">
+              <div className="info-item">
+                <strong>{services.length}</strong> Total Services
+              </div>
+              <div className="info-item">
+                <strong>{allCapabilities.length}</strong> Capabilities
+              </div>
+              <div className="info-item">
+                <strong>{allPhases.length}</strong> Processing Phases
+              </div>
+            </div>
+            <p className="footer-text">
+              Phase 4 unified architecture | Real-time service discovery |
+              Dynamic capability matching
+            </p>
           </div>
-        </div>
-        <p className="footer-text">
-          Phase 4 unified architecture | Real-time service discovery | Dynamic
-          capability matching
-        </p>
-      </div>
+        </>
       )}
 
       {/* Tab 1: Create Custom Workflow */}
       {currentTab === 1 && (
         <Box sx={{ p: 3 }}>
           {loadingWorkflows ? (
-            <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: 600 }}>
+            <Box
+              sx={{
+                display: 'flex',
+                justifyContent: 'center',
+                alignItems: 'center',
+                minHeight: 600,
+              }}
+            >
               <CircularProgress />
             </Box>
           ) : availablePhases.length > 0 ? (
@@ -579,7 +589,8 @@ const UnifiedServicesPanel = () => {
         <Box sx={{ p: 3 }}>
           {workflows.length === 0 ? (
             <Typography color="textSecondary" align="center" sx={{ py: 4 }}>
-              No custom workflows yet. Create one in the "Create Custom Workflow" tab.
+              No custom workflows yet. Create one in the "Create Custom
+              Workflow" tab.
             </Typography>
           ) : (
             <TableContainer>
@@ -597,7 +608,10 @@ const UnifiedServicesPanel = () => {
                   {workflows.map((workflow) => (
                     <TableRow key={workflow.id}>
                       <TableCell>
-                        <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
+                        <Typography
+                          variant="subtitle2"
+                          sx={{ fontWeight: 600 }}
+                        >
                           {workflow.name}
                         </Typography>
                       </TableCell>
@@ -607,7 +621,12 @@ const UnifiedServicesPanel = () => {
                         </Typography>
                       </TableCell>
                       <TableCell align="center">
-                        <Chip label={workflow.phase_count || workflow.phases?.length || 0} size="small" />
+                        <Chip
+                          label={
+                            workflow.phase_count || workflow.phases?.length || 0
+                          }
+                          size="small"
+                        />
                       </TableCell>
                       <TableCell align="right">
                         <Typography variant="body2" color="textSecondary">
@@ -615,7 +634,11 @@ const UnifiedServicesPanel = () => {
                         </Typography>
                       </TableCell>
                       <TableCell align="center">
-                        <Stack direction="row" spacing={0.5} justifyContent="center">
+                        <Stack
+                          direction="row"
+                          spacing={0.5}
+                          justifyContent="center"
+                        >
                           <IconButton
                             size="small"
                             title="Edit"
@@ -669,7 +692,10 @@ const UnifiedServicesPanel = () => {
                     {template.description}
                   </Typography>
                   <Box sx={{ mt: 1 }}>
-                    <Chip label={`${template.phase_count} phases`} size="small" />
+                    <Chip
+                      label={`${template.phase_count} phases`}
+                      size="small"
+                    />
                   </Box>
                 </Box>
                 <Stack direction="row" spacing={1}>
