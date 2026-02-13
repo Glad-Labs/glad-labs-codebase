@@ -415,33 +415,6 @@ const UnifiedServicesPanel = () => {
     setCurrentTab(newValue);
   };
 
-  // Get all unique capabilities and phases for filtering
-  const allCapabilities = Array.from(
-    new Set(services.flatMap((s) => s.capabilities))
-  ).sort();
-
-  const allPhases = Array.from(
-    new Set(services.flatMap((s) => s.phases))
-  ).sort();
-
-  // Filter services based on selected filters and search
-  const filteredServices = services.filter((service) => {
-    const matchesSearch =
-      searchQuery === '' ||
-      service.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      service.description.toLowerCase().includes(searchQuery.toLowerCase());
-
-    const matchesCapabilities =
-      selectedCapabilities.length === 0 ||
-      selectedCapabilities.some((cap) => service.capabilities.includes(cap));
-
-    const matchesPhases =
-      selectedPhases.length === 0 ||
-      selectedPhases.some((phase) => service.phases.includes(phase));
-
-    return matchesSearch && matchesCapabilities && matchesPhases;
-  });
-
   if (loadingServices && currentTab === 0) {
     return (
       <div className="unified-services-panel">
