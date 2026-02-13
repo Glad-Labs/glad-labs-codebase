@@ -19,6 +19,7 @@
 import React, { useState, useEffect } from 'react';
 import phase4Client from '../../services/phase4Client';
 import WorkflowCanvas from '../WorkflowCanvas';
+import CapabilityComposer from '../CapabilityComposer';
 import * as workflowBuilderService from '../../services/workflowBuilderService';
 import {
   Box,
@@ -325,7 +326,9 @@ const UnifiedServicesPanel = () => {
       setAvailablePhases(phasesRes.phases || []);
 
       // Load user workflows
-      const workflowsRes = await workflowBuilderService.listWorkflows({ limit: 100 });
+      const workflowsRes = await workflowBuilderService.listWorkflows({
+        limit: 100,
+      });
       setWorkflows(workflowsRes.workflows || []);
 
       // Load templates
@@ -333,7 +336,8 @@ const UnifiedServicesPanel = () => {
         {
           id: 'blog_post',
           name: 'Blog Post',
-          description: 'Full blog post generation with research, drafting, assessment, refinement',
+          description:
+            'Full blog post generation with research, drafting, assessment, refinement',
           phase_count: 7,
           is_template: true,
         },
@@ -396,7 +400,8 @@ const UnifiedServicesPanel = () => {
   };
 
   const handleDeleteWorkflow = async (workflowId) => {
-    if (!window.confirm('Are you sure you want to delete this workflow?')) return;
+    if (!window.confirm('Are you sure you want to delete this workflow?'))
+      return;
 
     try {
       await workflowBuilderService.deleteWorkflow(workflowId);
@@ -440,6 +445,7 @@ const UnifiedServicesPanel = () => {
           <Tab label="Create Custom Workflow" id="tab-1" />
           <Tab label="My Workflows" id="tab-2" />
           <Tab label="Templates" id="tab-3" />
+          <Tab label="Capability Composer" id="tab-4" />
         </Tabs>
       </div>
 
@@ -725,6 +731,9 @@ const UnifiedServicesPanel = () => {
           </Stack>
         </Box>
       )}
+
+      {/* Tab 4: Capability Composer */}
+      {currentTab === 4 && <CapabilityComposer />}
     </div>
   );
 };
