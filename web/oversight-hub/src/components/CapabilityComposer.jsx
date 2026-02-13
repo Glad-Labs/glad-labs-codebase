@@ -35,9 +35,12 @@ import {
   TableContainer,
   TableHead,
   TableRow,
+  Tabs,
+  Tab,
 } from '@mui/material';
 import { Trash2, Play, Settings } from 'lucide-react';
 import CapabilityTasksService from '../services/capabilityTasksService';
+import NaturalLanguageTaskComposer from './NaturalLanguageTaskComposer';
 
 /**
  * Capability Card - Shows a single capability
@@ -75,7 +78,12 @@ const CapabilityCard = ({ capability, onAdd }) => {
       </Card>
 
       {/* Details Dialog */}
-      <Dialog open={showDetails} onClose={() => setShowDetails(false)} maxWidth="sm" fullWidth>
+      <Dialog
+        open={showDetails}
+        onClose={() => setShowDetails(false)}
+        maxWidth="sm"
+        fullWidth
+      >
         <DialogTitle>{capability.name}</DialogTitle>
         <DialogContent sx={{ pt: 2 }}>
           <Typography variant="body2" sx={{ mb: 2 }}>
@@ -93,7 +101,8 @@ const CapabilityCard = ({ capability, onAdd }) => {
                   {param.required && <span style={{ color: 'red' }}>*</span>}
                   <br />
                   <span style={{ color: '#666' }}>
-                    {param.type} {param.default ? `(default: ${param.default})` : ''}
+                    {param.type}{' '}
+                    {param.default ? `(default: ${param.default})` : ''}
                   </span>
                   <br />
                   <span style={{ color: '#999' }}>{param.description}</span>
@@ -115,7 +124,13 @@ const CapabilityCard = ({ capability, onAdd }) => {
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setShowDetails(false)}>Close</Button>
-          <Button variant="contained" onClick={() => { onAdd(capability); setShowDetails(false); }}>
+          <Button
+            variant="contained"
+            onClick={() => {
+              onAdd(capability);
+              setShowDetails(false);
+            }}
+          >
             Add to Task
           </Button>
         </DialogActions>
@@ -127,10 +142,19 @@ const CapabilityCard = ({ capability, onAdd }) => {
 /**
  * Step Editor - Edit a single step in the task
  */
-const StepEditor = ({ step, stepIndex, allCapabilities, onUpdate, onRemove, previousOutputs }) => {
+const StepEditor = ({
+  step,
+  stepIndex,
+  allCapabilities,
+  onUpdate,
+  onRemove,
+  previousOutputs,
+}) => {
   const [editing, setEditing] = useState(false);
   const [inputs, setInputs] = useState(step.inputs || {});
-  const [outputKey, setOutputKey] = useState(step.output_key || `output_${stepIndex}`);
+  const [outputKey, setOutputKey] = useState(
+    step.output_key || `output_${stepIndex}`
+  );
   const [capability, setCapability] = useState(
     allCapabilities.find((c) => c.name === step.capability_name)
   );
@@ -178,7 +202,9 @@ const StepEditor = ({ step, stepIndex, allCapabilities, onUpdate, onRemove, prev
             label="Capability"
             value={capability?.name || ''}
             onChange={(e) => {
-              const cap = allCapabilities.find((c) => c.name === e.target.value);
+              const cap = allCapabilities.find(
+                (c) => c.name === e.target.value
+              );
               setCapability(cap);
               setInputs({}); // Reset inputs
             }}
@@ -210,12 +236,17 @@ const StepEditor = ({ step, stepIndex, allCapabilities, onUpdate, onRemove, prev
                 }}
                 fullWidth
                 helperText={`${param.description} (type: ${param.type})`}
-                placeholder={param.default ? `default: ${param.default}` : undefined}
+                placeholder={
+                  param.default ? `default: ${param.default}` : undefined
+                }
               />
 
               {/* Quick reference to previous outputs */}
               {stepIndex > 0 && (
-                <Typography variant="caption" sx={{ display: 'block', mt: 1, color: '#666' }}>
+                <Typography
+                  variant="caption"
+                  sx={{ display: 'block', mt: 1, color: '#666' }}
+                >
                   Available refs: {previousOutputs.join(', ')}
                 </Typography>
               )}
@@ -234,16 +265,10 @@ const StepEditor = ({ step, stepIndex, allCapabilities, onUpdate, onRemove, prev
 
           {/* Save/Cancel */}
           <Stack direction="row" spacing={1} justifyContent="flex-end">
-            <Button
-              variant="outlined"
-              onClick={() => setEditing(false)}
-            >
+            <Button variant="outlined" onClick={() => setEditing(false)}>
               Cancel
             </Button>
-            <Button
-              variant="contained"
-              onClick={handleSave}
-            >
+            <Button variant="contained" onClick={handleSave}>
               Save Step
             </Button>
           </Stack>
@@ -257,6 +282,9 @@ const StepEditor = ({ step, stepIndex, allCapabilities, onUpdate, onRemove, prev
  * Main Capability Composer Component
  */
 export default function CapabilityComposer() {
+  // Tabs
+  const [currentTab, setCurrentTab] = useState(0);
+
   // State
   const [capabilities, setCapabilities] = useState([]);
   const [loadingCapabilities, setLoadingCapabilities] = useState(true);
@@ -378,7 +406,9 @@ export default function CapabilityComposer() {
     }
   };
 
-  const previousOutputs = steps.map((_, i) => `$${steps[i].output_key}`).slice(0, -1);
+  const previousOutputs = steps
+    .map((_, i) => `$${steps[i].output_key}`)
+    .slice(0, -1);
 
   return (
     <Box sx={{ p: 3, maxWidth: 1200, mx: 'auto' }}>
@@ -392,228 +422,313 @@ export default function CapabilityComposer() {
         </Typography>
       </Box>
 
-      {error && (
-        <Alert severity="error" onClose={() => setError(null)} sx={{ mb: 2 }}>
-          {error}
-        </Alert>
-      )}
+      {/* Tab Navigation */}
+      <Tabs
+        value={currentTab}
+        onChange={(_, val) => setCurrentTab(val)}
+        sx={{ mb: 3, borderBottom: '1px solid #e0e0e0' }}
+      >
+        <Tab label="Manual Composition" id="tab-0" />
+        <Tab label="Natural Language" id="tab-1" />
+      </Tabs>
 
-      {success && (
-        <Alert severity="success" onClose={() => setSuccess(null)} sx={{ mb: 2 }}>
-          {success}
-        </Alert>
-      )}
+      {/* Tab 0: Manual Composition */}
+      {currentTab === 0 && (
+        <>
+          {error && (
+            <Alert
+              severity="error"
+              onClose={() => setError(null)}
+              sx={{ mb: 2 }}
+            >
+              {error}
+            </Alert>
+          )}
 
-      {/* Main Content */}
-      {loadingCapabilities ? (
-        <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
-          <CircularProgress />
-        </Box>
-      ) : (
-        <Box sx={{ display: 'grid', gridTemplateColumns: '300px 1fr', gap: 3 }}>
-          {/* Left: Available Capabilities */}
-          <Box>
-            <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 2 }}>
-              Available Capabilities ({capabilities.length})
-            </Typography>
-            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, maxHeight: 'calc(100vh - 300px)', overflowY: 'auto' }}>
-              {capabilities.map((cap) => (
-                <CapabilityCard
-                  key={cap.name}
-                  capability={cap}
-                  onAdd={handleAddCapability}
-                />
-              ))}
+          {success && (
+            <Alert
+              severity="success"
+              onClose={() => setSuccess(null)}
+              sx={{ mb: 2 }}
+            >
+              {success}
+            </Alert>
+          )}
+
+          {/* Main Content */}
+          {loadingCapabilities ? (
+            <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
+              <CircularProgress />
             </Box>
-          </Box>
-
-          {/* Right: Task Builder */}
-          <Box>
-            {/* Task Info */}
-            <Card sx={{ mb: 3 }}>
-              <CardHeader title="Task Details" />
-              <CardContent>
-                <TextField
-                  label="Task Name"
-                  value={taskName}
-                  onChange={(e) => setTaskName(e.target.value)}
-                  fullWidth
-                  sx={{ mb: 2 }}
-                  required
-                />
-
-                <TextField
-                  label="Description"
-                  value={taskDescription}
-                  onChange={(e) => setTaskDescription(e.target.value)}
-                  fullWidth
-                  multiline
-                  rows={2}
-                  sx={{ mb: 2 }}
-                />
-
-                {/* Tags */}
-                <Box sx={{ mb: 2 }}>
-                  <Typography variant="caption" sx={{ display: 'block', fontWeight: 600, mb: 1 }}>
-                    Tags
-                  </Typography>
-                  <Stack direction="row" spacing={1} sx={{ mb: 1 }}>
-                    {taskTags.map((tag) => (
-                      <Chip
-                        key={tag}
-                        label={tag}
-                        onDelete={() => handleRemoveTag(tag)}
-                        size="small"
-                      />
-                    ))}
-                  </Stack>
-                  <Stack direction="row" spacing={1}>
-                    <TextField
-                      size="small"
-                      placeholder="Add tag..."
-                      value={tagInput}
-                      onChange={(e) => setTagInput(e.target.value)}
-                      onKeyPress={(e) => {
-                        if (e.key === 'Enter') {
-                          handleAddTag();
-                        }
-                      }}
-                      sx={{ flex: 1 }}
+          ) : (
+            <Box
+              sx={{ display: 'grid', gridTemplateColumns: '300px 1fr', gap: 3 }}
+            >
+              {/* Left: Available Capabilities */}
+              <Box>
+                <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 2 }}>
+                  Available Capabilities ({capabilities.length})
+                </Typography>
+                <Box
+                  sx={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: 2,
+                    maxHeight: 'calc(100vh - 300px)',
+                    overflowY: 'auto',
+                  }}
+                >
+                  {capabilities.map((cap) => (
+                    <CapabilityCard
+                      key={cap.name}
+                      capability={cap}
+                      onAdd={handleAddCapability}
                     />
-                    <Button size="small" onClick={handleAddTag}>
-                      Add
-                    </Button>
-                  </Stack>
+                  ))}
                 </Box>
-              </CardContent>
-            </Card>
+              </Box>
 
-            {/* Steps */}
-            <Card>
-              <CardHeader
-                title={`Steps (${steps.length})`}
-                action={
-                  steps.length > 0 ? (
-                    <Stack direction="row" spacing={1}>
-                      <Button
-                        size="small"
-                        startIcon={<Play size={16} />}
-                        onClick={handleExecuteTask}
-                        disabled={executing || !taskName.trim()}
-                        variant="contained"
+              {/* Right: Task Builder */}
+              <Box>
+                {/* Task Info */}
+                <Card sx={{ mb: 3 }}>
+                  <CardHeader title="Task Details" />
+                  <CardContent>
+                    <TextField
+                      label="Task Name"
+                      value={taskName}
+                      onChange={(e) => setTaskName(e.target.value)}
+                      fullWidth
+                      sx={{ mb: 2 }}
+                      required
+                    />
+
+                    <TextField
+                      label="Description"
+                      value={taskDescription}
+                      onChange={(e) => setTaskDescription(e.target.value)}
+                      fullWidth
+                      multiline
+                      rows={2}
+                      sx={{ mb: 2 }}
+                    />
+
+                    {/* Tags */}
+                    <Box sx={{ mb: 2 }}>
+                      <Typography
+                        variant="caption"
+                        sx={{ display: 'block', fontWeight: 600, mb: 1 }}
                       >
-                        {executing ? 'Executing...' : 'Execute'}
-                      </Button>
-                      <Button
-                        size="small"
-                        onClick={handleSaveTask}
-                        disabled={!taskName.trim()}
-                      >
-                        Save Task
-                      </Button>
-                    </Stack>
-                  ) : null
-                }
-              />
-              <CardContent>
-                {steps.length === 0 ? (
-                  <Typography variant="body2" color="textSecondary" align="center">
-                    Click on a capability to add it to your task
-                  </Typography>
-                ) : (
-                  <TableContainer>
-                    <Table size="small">
-                      <TableHead>
-                        <TableRow sx={{ backgroundColor: '#f5f5f5' }}>
-                          <TableCell align="center" width={50}>
-                            #
-                          </TableCell>
-                          <TableCell>Capability</TableCell>
-                          <TableCell>Output</TableCell>
-                          <TableCell align="right" width={100}>
-                            Actions
-                          </TableCell>
-                        </TableRow>
-                      </TableHead>
-                      <TableBody>
-                        {steps.map((step, idx) => (
-                          <StepEditor
-                            key={idx}
-                            step={step}
-                            stepIndex={idx}
-                            allCapabilities={capabilities}
-                            onUpdate={handleUpdateStep}
-                            onRemove={handleRemoveStep}
-                            previousOutputs={previousOutputs.slice(0, idx)}
+                        Tags
+                      </Typography>
+                      <Stack direction="row" spacing={1} sx={{ mb: 1 }}>
+                        {taskTags.map((tag) => (
+                          <Chip
+                            key={tag}
+                            label={tag}
+                            onDelete={() => handleRemoveTag(tag)}
+                            size="small"
                           />
                         ))}
-                      </TableBody>
-                    </Table>
-                  </TableContainer>
-                )}
-              </CardContent>
-            </Card>
-
-            {/* Execution Results */}
-            {showResults && executionResult && (
-              <Card sx={{ mt: 3 }}>
-                <CardHeader
-                  title="Execution Results"
-                  subheader={`Status: ${executionResult.status}`}
-                />
-                <CardContent>
-                  <Typography variant="caption" sx={{ display: 'block', mb: 2 }}>
-                    Duration: {executionResult.total_duration_ms?.toFixed(0)}ms | Progress: {executionResult.progress_percent}%
-                  </Typography>
-
-                  {executionResult.step_results && (
-                    <Box>
-                      {executionResult.step_results.map((result, idx) => (
-                        <Card key={idx} variant="outlined" sx={{ mb: 1, p: 1.5 }}>
-                          <Stack direction="row" spacing={1} sx={{ mb: 1 }}>
-                            <Chip label={`Step ${idx + 1}`} size="small" />
-                            <Chip
-                              label={result.capability_name}
-                              size="small"
-                              variant="outlined"
-                            />
-                            <Chip
-                              label={result.status}
-                              size="small"
-                              color={result.status === 'completed' ? 'success' : 'error'}
-                              variant="outlined"
-                            />
-                            <Typography variant="caption" sx={{ ml: 'auto' }}>
-                              {result.duration_ms?.toFixed(0)}ms
-                            </Typography>
-                          </Stack>
-                          {result.error && (
-                            <Typography variant="caption" sx={{ color: 'red' }}>
-                              Error: {result.error}
-                            </Typography>
-                          )}
-                        </Card>
-                      ))}
+                      </Stack>
+                      <Stack direction="row" spacing={1}>
+                        <TextField
+                          size="small"
+                          placeholder="Add tag..."
+                          value={tagInput}
+                          onChange={(e) => setTagInput(e.target.value)}
+                          onKeyPress={(e) => {
+                            if (e.key === 'Enter') {
+                              handleAddTag();
+                            }
+                          }}
+                          sx={{ flex: 1 }}
+                        />
+                        <Button size="small" onClick={handleAddTag}>
+                          Add
+                        </Button>
+                      </Stack>
                     </Box>
-                  )}
+                  </CardContent>
+                </Card>
 
-                  {executionResult.final_outputs && (
-                    <Box sx={{ mt: 2 }}>
-                      <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 1 }}>
-                        Final Outputs
+                {/* Steps */}
+                <Card>
+                  <CardHeader
+                    title={`Steps (${steps.length})`}
+                    action={
+                      steps.length > 0 ? (
+                        <Stack direction="row" spacing={1}>
+                          <Button
+                            size="small"
+                            startIcon={<Play size={16} />}
+                            onClick={handleExecuteTask}
+                            disabled={executing || !taskName.trim()}
+                            variant="contained"
+                          >
+                            {executing ? 'Executing...' : 'Execute'}
+                          </Button>
+                          <Button
+                            size="small"
+                            onClick={handleSaveTask}
+                            disabled={!taskName.trim()}
+                          >
+                            Save Task
+                          </Button>
+                        </Stack>
+                      ) : null
+                    }
+                  />
+                  <CardContent>
+                    {steps.length === 0 ? (
+                      <Typography
+                        variant="body2"
+                        color="textSecondary"
+                        align="center"
+                      >
+                        Click on a capability to add it to your task
                       </Typography>
-                      <Paper sx={{ p: 2, backgroundColor: '#f5f5f5', maxHeight: 300, overflowY: 'auto' }}>
-                        <pre style={{ margin: 0, fontSize: 12 }}>
-                          {JSON.stringify(executionResult.final_outputs, null, 2)}
-                        </pre>
-                      </Paper>
-                    </Box>
-                  )}
-                </CardContent>
-              </Card>
-            )}
-          </Box>
-        </Box>
+                    ) : (
+                      <TableContainer>
+                        <Table size="small">
+                          <TableHead>
+                            <TableRow sx={{ backgroundColor: '#f5f5f5' }}>
+                              <TableCell align="center" width={50}>
+                                #
+                              </TableCell>
+                              <TableCell>Capability</TableCell>
+                              <TableCell>Output</TableCell>
+                              <TableCell align="right" width={100}>
+                                Actions
+                              </TableCell>
+                            </TableRow>
+                          </TableHead>
+                          <TableBody>
+                            {steps.map((step, idx) => (
+                              <StepEditor
+                                key={idx}
+                                step={step}
+                                stepIndex={idx}
+                                allCapabilities={capabilities}
+                                onUpdate={handleUpdateStep}
+                                onRemove={handleRemoveStep}
+                                previousOutputs={previousOutputs.slice(0, idx)}
+                              />
+                            ))}
+                          </TableBody>
+                        </Table>
+                      </TableContainer>
+                    )}
+                  </CardContent>
+                </Card>
+
+                {/* Execution Results */}
+                {showResults && executionResult && (
+                  <Card sx={{ mt: 3 }}>
+                    <CardHeader
+                      title="Execution Results"
+                      subheader={`Status: ${executionResult.status}`}
+                    />
+                    <CardContent>
+                      <Typography
+                        variant="caption"
+                        sx={{ display: 'block', mb: 2 }}
+                      >
+                        Duration:{' '}
+                        {executionResult.total_duration_ms?.toFixed(0)}ms |
+                        Progress: {executionResult.progress_percent}%
+                      </Typography>
+
+                      {executionResult.step_results && (
+                        <Box>
+                          {executionResult.step_results.map((result, idx) => (
+                            <Card
+                              key={idx}
+                              variant="outlined"
+                              sx={{ mb: 1, p: 1.5 }}
+                            >
+                              <Stack direction="row" spacing={1} sx={{ mb: 1 }}>
+                                <Chip label={`Step ${idx + 1}`} size="small" />
+                                <Chip
+                                  label={result.capability_name}
+                                  size="small"
+                                  variant="outlined"
+                                />
+                                <Chip
+                                  label={result.status}
+                                  size="small"
+                                  color={
+                                    result.status === 'completed'
+                                      ? 'success'
+                                      : 'error'
+                                  }
+                                  variant="outlined"
+                                />
+                                <Typography
+                                  variant="caption"
+                                  sx={{ ml: 'auto' }}
+                                >
+                                  {result.duration_ms?.toFixed(0)}ms
+                                </Typography>
+                              </Stack>
+                              {result.error && (
+                                <Typography
+                                  variant="caption"
+                                  sx={{ color: 'red' }}
+                                >
+                                  Error: {result.error}
+                                </Typography>
+                              )}
+                            </Card>
+                          ))}
+                        </Box>
+                      )}
+
+                      {executionResult.final_outputs && (
+                        <Box sx={{ mt: 2 }}>
+                          <Typography
+                            variant="subtitle2"
+                            sx={{ fontWeight: 600, mb: 1 }}
+                          >
+                            Final Outputs
+                          </Typography>
+                          <Paper
+                            sx={{
+                              p: 2,
+                              backgroundColor: '#f5f5f5',
+                              maxHeight: 300,
+                              overflowY: 'auto',
+                            }}
+                          >
+                            <pre style={{ margin: 0, fontSize: 12 }}>
+                              {JSON.stringify(
+                                executionResult.final_outputs,
+                                null,
+                                2
+                              )}
+                            </pre>
+                          </Paper>
+                        </Box>
+                      )}
+                    </CardContent>
+                  </Card>
+                )}
+              </Box>
+            </Box>
+          )}
+        </>
+      )}
+
+      {/* Tab 1: Natural Language Composition */}
+      {currentTab === 1 && (
+        <NaturalLanguageTaskComposer
+          onTaskComposed={(task) => {
+            console.log('Task composed from NL:', task);
+          }}
+          onTaskExecuted={(result) => {
+            console.log('Task executed from NL:', result);
+          }}
+        />
       )}
     </Box>
   );

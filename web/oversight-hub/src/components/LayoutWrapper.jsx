@@ -12,6 +12,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import * as cofounderAgentClient from '../services/cofounderAgentClient';
 import { modelService } from '../services/modelService';
+import { composeAndExecuteTask } from '../services/naturalLanguageComposerService';
 import ModelSelectDropdown from './ModelSelectDropdown';
 import '../OversightHub.css';
 
@@ -21,7 +22,11 @@ const LayoutWrapper = ({ children }) => {
   const chatPanelRef = useRef(null);
   const [navMenuOpen, setNavMenuOpen] = useState(false);
   const [chatMessages, setChatMessages] = useState([
-    { id: 1, sender: 'system', text: 'Poindexter ready. How can I help?' },
+    {
+      id: 1,
+      sender: 'system',
+      text: '👋 Poindexter Assistant ready!\n\n💭 **Conversation Mode**: Direct Q&A with AI\n🔄 **Agent Mode**: Compose and execute capability tasks\n\nChoose a mode to get started!',
+    },
   ]);
   const [chatInput, setChatInput] = useState('');
   const [chatMode, setChatMode] = useState('conversation');
@@ -135,6 +140,25 @@ const LayoutWrapper = ({ children }) => {
     }
   }, [chatMessages]);
 
+  // Show mode help when switching modes
+  useEffect(() => {
+    if (chatMessages.length === 0) return; // Skip on initial load
+
+    const modeHelpMessage = {
+      id: chatMessages.length + 1,
+      sender: 'system',
+      text:
+        chatMode === 'agent'
+          ? "🔄 **Agent Mode Active**\n\nDescribe what you want to do, and I'll compose a capability task chain to execute it.\n\nExample: 'Write a blog post about AI trends and publish it'"
+          : "💭 **Conversation Mode Active**\n\nAsk me anything! I'll respond with helpful information.",
+    };
+
+    // Only add if last message isn't already a mode help
+    if (chatMessages[chatMessages.length - 1]?.text !== modeHelpMessage.text) {
+      setChatMessages((prev) => [...prev, modeHelpMessage]);
+    }
+  }, [chatMode]);
+
   // Initialize available models from API
   useEffect(() => {
     const loadModels = async () => {
@@ -169,6 +193,7 @@ const LayoutWrapper = ({ children }) => {
       dashboard: '/',
       tasks: '/tasks',
       content: '/content',
+      services: '/services',
       ai: '/ai',
       costs: '/costs',
       settings: '/settings',
@@ -191,14 +216,44 @@ const LayoutWrapper = ({ children }) => {
     setIsLoading(true);
 
     try {
-      // ✅ Use API client instead of hardcoded fetch
+      // Route based on chat mode
+      if (chatMode === 'agent') {
+        // Agent Mode: NLP Task Composition
+        await handleAgentModeMessage(userMessage, chatMessages.length + 1);
+      } else {
+        // Conversation Mode: Regular chat
+        await handleConversationModeMessage(
+          userMessage,
+          chatMessages.length + 1
+        );
+      }
+    } catch (error) {
+      console.error('Chat error:', error);
+      setChatMessages((prev) => [
+        ...prev,
+        {
+          id: prev.length + 1,
+          sender: 'ai',
+          text: `❌ Error: ${error.message}`,
+          error: true,
+        },
+      ]);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleConversationModeMessage = async (userMessage, nextId) => {
+    /**
+     * Conversation Mode: Simple request/response with selected agent
+     */
+    try {
       const response = await cofounderAgentClient.sendChatMessage(
         userMessage,
         selectedModel,
         selectedAgent || 'default'
       );
 
-      // ✅ Validate response
       if (!response || !response.response) {
         throw new Error('Invalid response: missing response field');
       }
@@ -206,26 +261,92 @@ const LayoutWrapper = ({ children }) => {
       setChatMessages((prev) => [
         ...prev,
         {
-          id: prev.length + 1,
+          id: nextId + 1,
           sender: 'ai',
           text: response.response,
           model: response.model,
           timestamp: new Date().toISOString(),
         },
       ]);
-    } catch {
-      // Silently handle errors for chat display
+    } catch (error) {
+      throw new Error(`Chat failed: ${error.message}`);
+    }
+  };
+
+  const handleAgentModeMessage = async (userMessage, nextId) => {
+    /**
+     * Agent Mode: NLP-powered task composition and execution
+     *
+     * Flow:
+     * 1. Analyze user request to compose capability task
+     * 2. Display composed task and confirmation
+     * 3. Auto-execute the task
+     * 4. Show results as they complete
+     */
+    try {
+      // Show "analyzing" indicator
       setChatMessages((prev) => [
         ...prev,
         {
-          id: prev.length + 1,
-          sender: 'ai',
-          text: '❌ Error: Could not get response',
-          error: true,
+          id: nextId + 1,
+          sender: 'system',
+          text: '🤔 Analyzing request and composing task chain...',
+          isLoading: true,
         },
       ]);
-    } finally {
-      setIsLoading(false);
+
+      // Compose and execute task
+      const result = await composeAndExecuteTask(userMessage, {
+        saveTask: true,
+      });
+
+      // Remove loading message
+      setChatMessages((prev) => prev.filter((msg) => !msg.isLoading));
+
+      if (!result.success) {
+        throw new Error(result.error || 'Failed to compose task');
+      }
+
+      // Show composed task
+      const taskSummary = result.task_definition
+        ? `✅ **Task Composed**: ${result.task_definition.name}\n\n` +
+          `**Steps**: ${result.task_definition.steps
+            .map((s) => s.capability_name)
+            .join(' → ')}\n\n` +
+          `${result.explanation}\n\n` +
+          (result.execution_id
+            ? `🚀 Executing: ${result.execution_id}`
+            : '⏳ Ready to execute')
+        : result.explanation;
+
+      setChatMessages((prev) => [
+        ...prev,
+        {
+          id: nextId + 1,
+          sender: 'ai',
+          text: taskSummary,
+          model: 'nlp-composer',
+          task: result.task_definition,
+          executionId: result.execution_id,
+          isTaskComposition: true,
+          timestamp: new Date().toISOString(),
+        },
+      ]);
+
+      // If auto-executed, show status
+      if (result.execution_id) {
+        setChatMessages((prev) => [
+          ...prev,
+          {
+            id: prev.length + 1,
+            sender: 'system',
+            text: `⏳ Task executing... Check Services → Capability Composer for details`,
+            timestamp: new Date().toISOString(),
+          },
+        ]);
+      }
+    } catch (error) {
+      throw new Error(`Task composition failed: ${error.message}`);
     }
   };
 
@@ -380,13 +501,80 @@ const LayoutWrapper = ({ children }) => {
             {chatMessages.map((msg) => (
               <div key={msg.id} className={`message message-${msg.sender}`}>
                 <div className="message-avatar">
-                  {msg.sender === 'user' ? '👤' : '🤖'}
+                  {msg.sender === 'user'
+                    ? '👤'
+                    : msg.sender === 'system'
+                      ? '⚙️'
+                      : '🤖'}
                 </div>
                 <div className="message-content">
                   {msg.error && (
                     <div className="message-error">⚠️ {msg.text}</div>
                   )}
-                  {!msg.error && <p>{msg.text}</p>}
+                  {msg.isTaskComposition && (
+                    <div className="message-task-composition">
+                      {/* Render markdown-style text */}
+                      {msg.text.split('\n\n').map((paragraph, idx) => (
+                        <div key={idx} style={{ marginBottom: '8px' }}>
+                          {paragraph.split('\n').map((line, lineIdx) => {
+                            // Bold for **text**
+                            const boldRegex = /\*\*([^*]+)\*\*/g;
+                            const parts = [];
+                            let lastIndex = 0;
+
+                            line.replace(
+                              boldRegex,
+                              (match, content, offset) => {
+                                if (offset > lastIndex) {
+                                  parts.push(
+                                    <span key={`text-${lastIndex}`}>
+                                      {line.substring(lastIndex, offset)}
+                                    </span>
+                                  );
+                                }
+                                parts.push(
+                                  <strong key={`bold-${offset}`}>
+                                    {content}
+                                  </strong>
+                                );
+                                lastIndex = offset + match.length;
+                                return match;
+                              }
+                            );
+
+                            if (lastIndex < line.length) {
+                              parts.push(
+                                <span key={`text-end`}>
+                                  {line.substring(lastIndex)}
+                                </span>
+                              );
+                            }
+
+                            return (
+                              <div
+                                key={lineIdx}
+                                style={{ marginBottom: '4px' }}
+                              >
+                                {parts.length > 0 ? parts : line}
+                              </div>
+                            );
+                          })}
+                        </div>
+                      ))}
+                      {msg.executionId && (
+                        <div
+                          style={{
+                            marginTop: '12px',
+                            fontSize: '12px',
+                            color: '#999',
+                          }}
+                        >
+                          Execution ID: {msg.executionId}
+                        </div>
+                      )}
+                    </div>
+                  )}
+                  {!msg.error && !msg.isTaskComposition && <p>{msg.text}</p>}
                 </div>
               </div>
             ))}
@@ -417,16 +605,27 @@ const LayoutWrapper = ({ children }) => {
                   handleSendMessage();
                 }
               }}
-              placeholder="Ask Poindexter..."
+              placeholder={
+                chatMode === 'agent'
+                  ? 'Describe a task (e.g., "Write a blog post about AI and publish it")...'
+                  : 'Ask Poindexter...'
+              }
               disabled={isLoading}
             />
             <button
               onClick={handleSendMessage}
               disabled={!chatInput.trim() || isLoading}
+              title={
+                chatMode === 'agent'
+                  ? 'Compose and execute task'
+                  : 'Send message'
+              }
             >
-              📤
+              {chatMode === 'agent' ? '⚡' : '📤'}
             </button>
-            <button onClick={handleClearHistory}>🗑️</button>
+            <button onClick={handleClearHistory} title="Clear history">
+              🗑️
+            </button>
           </div>
         </div>
       </div>
