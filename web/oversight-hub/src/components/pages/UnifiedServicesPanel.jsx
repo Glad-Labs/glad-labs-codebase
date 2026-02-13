@@ -1,10 +1,13 @@
 /**
  * Unified Services Panel
  *
- * Modern React dashboard showcasing all Phase 4 unified services
- * Displays service metadata, capabilities, phases, and enables live action execution
+ * Modern React dashboard with multiple tabs:
+ * 1. Services: Displays Phase 4 unified services, metadata, capabilities, phases
+ * 2. Create Workflow: Visual workflow builder with drag-drop canvas
+ * 3. My Workflows: List of user-created custom workflows
+ * 4. Templates: Pre-built workflow templates
  *
- * Services:
+ * Services include:
  * - Content Service: Content generation, critique, refinement
  * - Financial Service: Cost tracking, budget optimization, analysis
  * - Market Service: Trend analysis, opportunity identification, competitive analysis
@@ -15,6 +18,29 @@
 
 import React, { useState, useEffect } from 'react';
 import phase4Client from '../../services/phase4Client';
+import WorkflowCanvas from '../WorkflowCanvas';
+import * as workflowBuilderService from '../../services/workflowBuilderService';
+import {
+  Box,
+  Tabs,
+  Tab,
+  CircularProgress,
+  Alert,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Button,
+  Chip,
+  Stack,
+  Typography,
+  IconButton,
+  Container,
+  Paper,
+} from '@mui/material';
+import { Play, Trash, FileText } from 'lucide-react';
 import '../../styles/UnifiedServicesPanel.css';
 
 /**
@@ -222,19 +248,30 @@ const PhaseFilter = ({ allPhases, selectedPhases, onFilterChange }) => {
  * Main Unified Services Panel Component
  */
 const UnifiedServicesPanel = () => {
+  // Tabs state
+  const [currentTab, setCurrentTab] = useState(0);
+
+  // Services tab state
   const [services, setServices] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [loadingServices, setLoadingServices] = useState(true);
   const [error, setError] = useState(null);
   const [selectedCapabilities, setSelectedCapabilities] = useState([]);
   const [selectedPhases, setSelectedPhases] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [healthStatus, setHealthStatus] = useState(null);
 
+  // Workflow builder state
+  const [availablePhases, setAvailablePhases] = useState([]);
+  const [workflows, setWorkflows] = useState([]);
+  const [templates, setTemplates] = useState([]);
+  const [loadingWorkflows, setLoadingWorkflows] = useState(false);
+  const [selectedWorkflow, setSelectedWorkflow] = useState(null);
+
   // Fetch services on mount
   useEffect(() => {
     const fetchData = async () => {
       try {
-        setLoading(true);
+        setLoadingServices(true);
         setError(null);
 
         // Get health check
@@ -266,12 +303,63 @@ const UnifiedServicesPanel = () => {
         setError(`Error loading services: ${errorMessage}`);
         console.error('UnifiedServicesPanel error:', err);
       } finally {
-        setLoading(false);
+        setLoadingServices(false);
       }
     };
 
     fetchData();
   }, []);
+
+  // Load workflow data when tab changes to workflow tabs
+  useEffect(() => {
+    if (currentTab >= 1) {
+      loadWorkflowData();
+    }
+  }, [currentTab]);
+
+  const loadWorkflowData = async () => {
+    setLoadingWorkflows(true);
+    try {
+      // Load available phases
+      const phasesRes = await workflowBuilderService.getAvailablePhases();
+      setAvailablePhases(phasesRes.phases || []);
+
+      // Load user workflows
+      const workflowsRes = await workflowBuilderService.listWorkflows({ limit: 100 });
+      setWorkflows(workflowsRes.workflows || []);
+
+      // Load templates
+      setTemplates([
+        {
+          id: 'blog_post',
+          name: 'Blog Post',
+          description: 'Full blog post generation with research, drafting, assessment, refinement',
+          phase_count: 7,
+          is_template: true,
+        },
+        {
+          id: 'social_media',
+          name: 'Social Media',
+          description: 'Quick social media content generation',
+          phase_count: 5,
+          is_template: true,
+        },
+        {
+          id: 'email',
+          name: 'Email',
+          description: 'Email content generation with assessment',
+          phase_count: 4,
+          is_template: true,
+        },
+      ]);
+
+      setError(null);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoadingWorkflows(false);
+    }
+  };
 
   // Get all unique capabilities and phases for filtering
   const allCapabilities = Array.from(
@@ -307,7 +395,54 @@ const UnifiedServicesPanel = () => {
     // For now, just log it
   };
 
-  if (loading) {
+  const handleDeleteWorkflow = async (workflowId) => {
+    if (!window.confirm('Are you sure you want to delete this workflow?')) return;
+
+    try {
+      await workflowBuilderService.deleteWorkflow(workflowId);
+      setWorkflows((w) => w.filter((wf) => wf.id !== workflowId));
+    } catch (err) {
+      setError(err.message);
+    }
+  };
+
+  const handleWorkflowSaved = (newWorkflow) => {
+    setWorkflows((w) => [...w, newWorkflow]);
+    setCurrentTab(2); // Switch to My Workflows tab
+  };
+
+  const handleTabChange = (event, newValue) => {
+    setCurrentTab(newValue);
+  };
+
+  // Get all unique capabilities and phases for filtering
+  const allCapabilities = Array.from(
+    new Set(services.flatMap((s) => s.capabilities))
+  ).sort();
+
+  const allPhases = Array.from(
+    new Set(services.flatMap((s) => s.phases))
+  ).sort();
+
+  // Filter services based on selected filters and search
+  const filteredServices = services.filter((service) => {
+    const matchesSearch =
+      searchQuery === '' ||
+      service.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      service.description.toLowerCase().includes(searchQuery.toLowerCase());
+
+    const matchesCapabilities =
+      selectedCapabilities.length === 0 ||
+      selectedCapabilities.some((cap) => service.capabilities.includes(cap));
+
+    const matchesPhases =
+      selectedPhases.length === 0 ||
+      selectedPhases.some((phase) => service.phases.includes(phase));
+
+    return matchesSearch && matchesCapabilities && matchesPhases;
+  });
+
+  if (loadingServices && currentTab === 0) {
     return (
       <div className="unified-services-panel">
         <div className="loading-state">
@@ -320,6 +455,29 @@ const UnifiedServicesPanel = () => {
 
   return (
     <div className="unified-services-panel">
+      {/* Tab Navigation */}
+      <div className="tab-navigation">
+        <Tabs
+          value={currentTab}
+          onChange={handleTabChange}
+          aria-label="unified panel tabs"
+          sx={{ borderBottom: '1px solid #e0e0e0' }}
+        >
+          <Tab label="Phase 4 Services" id="tab-0" />
+          <Tab label="Create Custom Workflow" id="tab-1" />
+          <Tab label="My Workflows" id="tab-2" />
+          <Tab label="Templates" id="tab-3" />
+        </Tabs>
+      </div>
+
+      {error && (
+        <Alert severity="error" onClose={() => setError(null)} sx={{ m: 2 }}>
+          {error}
+        </Alert>
+      )}
+
+      {/* Tab 0: Phase 4 Services */}
+      {currentTab === 0 && (
       {/* Header */}
       <div className="panel-header">
         <h1>Unified Services</h1>
@@ -422,6 +580,152 @@ const UnifiedServicesPanel = () => {
           capability matching
         </p>
       </div>
+      )}
+
+      {/* Tab 1: Create Custom Workflow */}
+      {currentTab === 1 && (
+        <Box sx={{ p: 3 }}>
+          {loadingWorkflows ? (
+            <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: 600 }}>
+              <CircularProgress />
+            </Box>
+          ) : availablePhases.length > 0 ? (
+            <WorkflowCanvas
+              availablePhases={availablePhases}
+              onSave={handleWorkflowSaved}
+              workflow={selectedWorkflow}
+            />
+          ) : (
+            <Alert severity="warning">Loading available phases...</Alert>
+          )}
+        </Box>
+      )}
+
+      {/* Tab 2: My Workflows */}
+      {currentTab === 2 && (
+        <Box sx={{ p: 3 }}>
+          {workflows.length === 0 ? (
+            <Typography color="textSecondary" align="center" sx={{ py: 4 }}>
+              No custom workflows yet. Create one in the "Create Custom Workflow" tab.
+            </Typography>
+          ) : (
+            <TableContainer>
+              <Table>
+                <TableHead>
+                  <TableRow sx={{ backgroundColor: '#f5f5f5' }}>
+                    <TableCell>Name</TableCell>
+                    <TableCell>Description</TableCell>
+                    <TableCell align="center">Phases</TableCell>
+                    <TableCell align="right">Created</TableCell>
+                    <TableCell align="center">Actions</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {workflows.map((workflow) => (
+                    <TableRow key={workflow.id}>
+                      <TableCell>
+                        <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
+                          {workflow.name}
+                        </Typography>
+                      </TableCell>
+                      <TableCell>
+                        <Typography variant="body2" color="textSecondary">
+                          {workflow.description}
+                        </Typography>
+                      </TableCell>
+                      <TableCell align="center">
+                        <Chip label={workflow.phase_count || workflow.phases?.length || 0} size="small" />
+                      </TableCell>
+                      <TableCell align="right">
+                        <Typography variant="body2" color="textSecondary">
+                          {new Date(workflow.created_at).toLocaleDateString()}
+                        </Typography>
+                      </TableCell>
+                      <TableCell align="center">
+                        <Stack direction="row" spacing={0.5} justifyContent="center">
+                          <IconButton
+                            size="small"
+                            title="Edit"
+                            onClick={() => {
+                              setSelectedWorkflow(workflow);
+                              setCurrentTab(1);
+                            }}
+                          >
+                            <FileText size={18} />
+                          </IconButton>
+                          <IconButton size="small" title="Execute">
+                            <Play size={18} />
+                          </IconButton>
+                          <IconButton
+                            size="small"
+                            title="Delete"
+                            color="error"
+                            onClick={() => handleDeleteWorkflow(workflow.id)}
+                          >
+                            <Trash size={18} />
+                          </IconButton>
+                        </Stack>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </TableContainer>
+          )}
+        </Box>
+      )}
+
+      {/* Tab 3: Templates */}
+      {currentTab === 3 && (
+        <Box sx={{ p: 3 }}>
+          <Stack spacing={2}>
+            {templates.map((template) => (
+              <Paper
+                key={template.id}
+                sx={{
+                  p: 2,
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  '&:hover': { boxShadow: 3 },
+                }}
+              >
+                <Box sx={{ flex: 1 }}>
+                  <Typography variant="h6">{template.name}</Typography>
+                  <Typography variant="body2" color="textSecondary">
+                    {template.description}
+                  </Typography>
+                  <Box sx={{ mt: 1 }}>
+                    <Chip label={`${template.phase_count} phases`} size="small" />
+                  </Box>
+                </Box>
+                <Stack direction="row" spacing={1}>
+                  <Button
+                    variant="contained"
+                    size="small"
+                    onClick={() => {
+                      // TODO: Load and view template
+                    }}
+                  >
+                    View
+                  </Button>
+                  <Button
+                    variant="contained"
+                    color="success"
+                    size="small"
+                    onClick={() => {
+                      // TODO: Implement template execution
+                      console.log('Execute template:', template);
+                    }}
+                  >
+                    Execute
+                  </Button>
+                </Stack>
+              </Paper>
+            ))}
+          </Stack>
+        </Box>
+      )}
     </div>
   );
 };
