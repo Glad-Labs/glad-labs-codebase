@@ -22,7 +22,10 @@ import { makeRequest } from './cofounderAgentClient';
  */
 export const getAvailablePhases = async () => {
   try {
-    const response = await makeRequest('GET', '/api/workflows/available-phases');
+    const response = await makeRequest(
+      '/api/workflows/available-phases',
+      'GET'
+    );
     return response;
   } catch (error) {
     console.error('Error fetching available phases:', error);
@@ -54,7 +57,11 @@ export const createWorkflow = async (workflowDefinition) => {
       is_template: workflowDefinition.is_template || false,
     };
 
-    const response = await makeRequest('POST', '/api/workflows/custom', payload);
+    const response = await makeRequest(
+      '/api/workflows/custom',
+      'POST',
+      payload
+    );
     return response;
   } catch (error) {
     console.error('Error creating workflow:', error);
@@ -81,8 +88,8 @@ export const listWorkflows = async (options = {}) => {
     });
 
     const response = await makeRequest(
-      'GET',
-      `/api/workflows/custom?${queryParams.toString()}`
+      `/api/workflows/custom?${queryParams.toString()}`,
+      'GET'
     );
     return response;
   } catch (error) {
@@ -102,7 +109,10 @@ export const getWorkflow = async (workflowId) => {
       throw new Error('Workflow ID is required');
     }
 
-    const response = await makeRequest('GET', `/api/workflows/custom/${workflowId}`);
+    const response = await makeRequest(
+      `/api/workflows/custom/${workflowId}`,
+      'GET'
+    );
     return response;
   } catch (error) {
     console.error('Error fetching workflow:', error);
@@ -132,7 +142,8 @@ export const updateWorkflow = async (workflowId, updates) => {
 
     const payload = {
       name: updates.name ? updates.name.trim() : undefined,
-      description: updates.description !== undefined ? updates.description : undefined,
+      description:
+        updates.description !== undefined ? updates.description : undefined,
       phases: updates.phases,
       tags: updates.tags,
       is_template: updates.is_template,
@@ -144,8 +155,8 @@ export const updateWorkflow = async (workflowId, updates) => {
     );
 
     const response = await makeRequest(
-      'PUT',
       `/api/workflows/custom/${workflowId}`,
+      'PUT',
       payload
     );
     return response;
@@ -166,7 +177,10 @@ export const deleteWorkflow = async (workflowId) => {
       throw new Error('Workflow ID is required');
     }
 
-    const response = await makeRequest('DELETE', `/api/workflows/custom/${workflowId}`);
+    const response = await makeRequest(
+      `/api/workflows/custom/${workflowId}`,
+      'DELETE'
+    );
     return response;
   } catch (error) {
     console.error('Error deleting workflow:', error);
@@ -191,8 +205,8 @@ export const executeWorkflow = async (workflowId, inputData = {}) => {
     };
 
     const response = await makeRequest(
-      'POST',
       `/api/workflows/custom/${workflowId}/execute`,
+      'POST',
       payload
     );
     return response;
@@ -215,8 +229,8 @@ export const getExecutionStatus = async (executionId) => {
 
     // This endpoint may need to be added to the backend
     const response = await makeRequest(
-      'GET',
-      `/api/workflows/executions/${executionId}`
+      `/api/workflows/executions/${executionId}`,
+      'GET'
     );
     return response;
   } catch (error) {
