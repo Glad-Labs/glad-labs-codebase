@@ -1,12 +1,9 @@
 import React, { useState, useCallback } from 'react';
 import ReactFlow, {
-  Node,
-  Edge,
   Controls,
   Background,
   MiniMap,
   addEdge,
-  Connection,
   useNodesState,
   useEdgesState,
 } from 'reactflow';
@@ -26,7 +23,7 @@ import {
   Typography,
   Alert,
 } from '@mui/material';
-import { Plus, Save, Play, Trash2 } from 'lucide-react';
+import { Plus, Save, Play } from 'lucide-react';
 import PhaseNode from './PhaseNode';
 import PhaseConfigPanel from './PhaseConfigPanel';
 import { makeRequest } from '../services/cofounderAgentClient';
@@ -40,7 +37,9 @@ const WorkflowCanvas = ({ onSave, availablePhases, workflow = null }) => {
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
   const [selectedNode, setSelectedNode] = useState(null);
   const [workflowName, setWorkflowName] = useState(workflow?.name || '');
-  const [workflowDescription, setWorkflowDescription] = useState(workflow?.description || '');
+  const [workflowDescription, setWorkflowDescription] = useState(
+    workflow?.description || ''
+  );
   const [saveDialogOpen, setSaveDialogOpen] = useState(false);
   const [error, setError] = useState(null);
 
@@ -63,7 +62,7 @@ const WorkflowCanvas = ({ onSave, availablePhases, workflow = null }) => {
       setNodes(newNodes);
       setEdges(newEdges);
     }
-  }, [workflow]);
+  }, [workflow, setNodes, setEdges]);
 
   const onConnect = useCallback(
     (connection) => {
@@ -108,14 +107,9 @@ const WorkflowCanvas = ({ onSave, availablePhases, workflow = null }) => {
   };
 
   const removePhase = (nodeId) => {
-    const nodeIndex = nodes.findIndex((n) => n.id === nodeId);
     setNodes((nds) => nds.filter((n) => n.id !== nodeId));
     setEdges((eds) =>
-      eds.filter(
-        (e) =>
-          e.source !== nodeId &&
-          e.target !== nodeId
-      )
+      eds.filter((e) => e.source !== nodeId && e.target !== nodeId)
     );
   };
 
@@ -157,7 +151,11 @@ const WorkflowCanvas = ({ onSave, availablePhases, workflow = null }) => {
     const definition = buildWorkflowDefinition();
     if (definition) {
       try {
-        const response = await makeRequest('POST', '/api/workflows/custom', definition);
+        const response = await makeRequest(
+          'POST',
+          '/api/workflows/custom',
+          definition
+        );
         onSave(response);
         setSaveDialogOpen(false);
       } catch (err) {
@@ -179,7 +177,9 @@ const WorkflowCanvas = ({ onSave, availablePhases, workflow = null }) => {
       {/* Sidebar: Available Phases */}
       <Card sx={{ width: 280, overflow: 'auto' }}>
         <CardContent>
-          <Typography variant="h6" gutterBottom>Available Phases</Typography>
+          <Typography variant="h6" gutterBottom>
+            Available Phases
+          </Typography>
           <Stack spacing={1}>
             {availablePhases.map((phase) => (
               <Button
@@ -198,7 +198,14 @@ const WorkflowCanvas = ({ onSave, availablePhases, workflow = null }) => {
       </Card>
 
       {/* Canvas: React Flow */}
-      <Box sx={{ flex: 1, borderRadius: 1, overflow: 'hidden', border: '1px solid #ddd' }}>
+      <Box
+        sx={{
+          flex: 1,
+          borderRadius: 1,
+          overflow: 'hidden',
+          border: '1px solid #ddd',
+        }}
+      >
         <ReactFlow
           nodes={nodes}
           edges={edges}
@@ -214,7 +221,10 @@ const WorkflowCanvas = ({ onSave, availablePhases, workflow = null }) => {
         </ReactFlow>
 
         {error && (
-          <Alert severity="error" sx={{ position: 'absolute', top: 16, left: 16 }}>
+          <Alert
+            severity="error"
+            sx={{ position: 'absolute', top: 16, left: 16 }}
+          >
             {error}
           </Alert>
         )}
@@ -232,7 +242,9 @@ const WorkflowCanvas = ({ onSave, availablePhases, workflow = null }) => {
             />
           ) : (
             <>
-              <Typography variant="h6" gutterBottom>Workflow Details</Typography>
+              <Typography variant="h6" gutterBottom>
+                Workflow Details
+              </Typography>
               <Stack spacing={2}>
                 <TextField
                   label="Workflow Name"
@@ -251,7 +263,9 @@ const WorkflowCanvas = ({ onSave, availablePhases, workflow = null }) => {
                   size="small"
                 />
                 <Box>
-                  <Typography variant="subtitle2" gutterBottom>Phases: {nodes.length}</Typography>
+                  <Typography variant="subtitle2" gutterBottom>
+                    Phases: {nodes.length}
+                  </Typography>
                   <Stack direction="row" spacing={1} flexWrap="wrap">
                     {nodes.map((node) => (
                       <Chip
@@ -289,7 +303,12 @@ const WorkflowCanvas = ({ onSave, availablePhases, workflow = null }) => {
       </Card>
 
       {/* Save Dialog */}
-      <Dialog open={saveDialogOpen} onClose={() => setSaveDialogOpen(false)} maxWidth="sm" fullWidth>
+      <Dialog
+        open={saveDialogOpen}
+        onClose={() => setSaveDialogOpen(false)}
+        maxWidth="sm"
+        fullWidth
+      >
         <DialogTitle>Save Workflow</DialogTitle>
         <DialogContent>
           <Typography variant="body2" color="textSecondary" gutterBottom>

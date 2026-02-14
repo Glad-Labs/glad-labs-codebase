@@ -274,7 +274,7 @@ export const importWorkflowFromJSON = (jsonString) => {
   }
 };
 
-export default {
+const workflowBuilderService = {
   getAvailablePhases,
   createWorkflow,
   listWorkflows,
@@ -286,3 +286,5 @@ export default {
   exportWorkflowToJSON,
   importWorkflowFromJSON,
 };
+
+export default workflowBuilderService;

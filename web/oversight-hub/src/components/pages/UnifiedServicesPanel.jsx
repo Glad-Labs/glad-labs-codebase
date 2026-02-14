@@ -38,7 +38,6 @@ import {
   Stack,
   Typography,
   IconButton,
-  Container,
   Paper,
 } from '@mui/material';
 import { Play, Trash, FileText } from 'lucide-react';

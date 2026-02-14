@@ -157,7 +157,7 @@ const LayoutWrapper = ({ children }) => {
     if (chatMessages[chatMessages.length - 1]?.text !== modeHelpMessage.text) {
       setChatMessages((prev) => [...prev, modeHelpMessage]);
     }
-  }, [chatMode]);
+  }, [chatMode, chatMessages]);
 
   // Initialize available models from API
   useEffect(() => {
